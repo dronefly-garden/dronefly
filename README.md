@@ -36,5 +36,6 @@ region (Nova Scotia, Canada).
 - permissions (restrict command usage to specific roles)
 - configuration (.ini file for region, task schedule, etc.)
 - commands (start & stop reporting task(s), status, etc.)
+- iNaturalist commands
 - better doc (deferred until some of the above have been sorted out)
 
