@@ -14,10 +14,10 @@ over the next little while. This bot requires:
 ## Usage
 
 An API key for eBird API 2.0 & bot token for discord.py are required
-in order to run the bot. Once both are obtained & placed in the
-directory where the bot is run, edit qgriff.py to change any
-parameters (e.g.  command prefix, get_observations region which is
-'CA-NS'), and start the bot with:
+in order to run the bot. Once both are obtained & placed in ebird.key
+and discord.key files, respectively, in the directory where the bot is
+run, edit qgriff.py to change any parameters (e.g.  command prefix,
+get_observations region which is 'CA-NS'), and start the bot with:
 
 ```
 python qgriff.py
