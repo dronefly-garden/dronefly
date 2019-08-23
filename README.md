@@ -31,3 +31,10 @@ Reports daily at 05:00 which hybrids have been observed at ebird.org
 (with or without confirmation) within the last 30 days in the CA-NS
 region (Nova Scotia, Canada).
 
+## TODO
+
+- permissions (restrict command usage to specific roles)
+- configuration (.ini file for region, task schedule, etc.)
+- commands (start & stop reporting task(s), status, etc.)
+- better doc (deferred until some of the above have been sorted out)
+
