@@ -8,6 +8,7 @@ class HybridsCog(commands.Cog):
     """The hybrids command and scheduled task."""
     def __init__(self, bot):
         self.bot = bot
+        self.log = logging.getLogger('discord')
 
         # Run daily at specified time:
         (self.run_hr, self.run_min) = (5, 0) # scheduled for 05:00
@@ -16,11 +17,18 @@ class HybridsCog(commands.Cog):
         with open('ebird.key') as ebird_key_file:
             self.ebird_key = ebird_key_file.readline().rstrip()
 
+    def cog_unload(self):
+        self.hybrids_task.cancel() # pylint: disable=no-member
+
     @commands.command()
     async def hybrids(self, ctx):
         """The command to start daily scan & report hybrids on eBird."""
         # TODO: ensure only 1 hybrids_task & support cancelling it
-        self.hybrids_task.start(ctx) # pylint: disable=no-member
+        if not self.hybrids_task.get_task(): # pylint: disable=no-member
+            self.log.info("Starting hybrids task.")
+            self.hybrids_task.start(ctx) # pylint: disable=no-member
+        else:
+            self.log.info("Ignoring request to start hybrids task (already started).")
 
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
     @tasks.loop(seconds=60)
