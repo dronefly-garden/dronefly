@@ -1,14 +1,21 @@
 # quaggagriff
-Half zebra, half gryphon, the quaggagriff is a Discord bot for
-naturalists. This legendary beast circles the globe, scanning for
-interesting life & reporting its findings.
+Half zebra, half gryphon, Quaggagriff is a Discord bot for naturalists.
+
+eBird commands:
+
+- ,hybrids
+    - starts daily reporting of hybrids seen on eBird recently for a selected region
+
+iNaturalist commands:
+
+- coming soon
 
 Development is early alpha. The code is likely to change considerably
 over the next little while. This bot requires:
 
 - python >= 3.5
-- ebird-api
-- discord.py
+- a discord.py bot token
+- an eBird API key (for eBird commands)
 
 ## Install
 
@@ -18,29 +25,68 @@ pip install quaggagriff
 
 ## Usage
 
-An API key for eBird API 2.0 & bot token for discord.py are required
-in order to run the bot. Once both are obtained & placed in ebird.key
-and discord.key files, respectively, in the directory where the bot is
-run, edit qgriff.py to change any parameters (e.g.  command prefix,
-get_observations region which is 'CA-NS'), and start the bot with:
+- obtain a bot token for discord.py
+- obtain An API key for eBird API 2.0
+- create qgriff.ini and copy the keys into the file as follows
+
+```
+[discord]
+key = your-bot-token-goes-here
+
+[ebird]
+key = your-ebird-api-key-goes-here
+```
+
+Tailor the default options for bot commands in the corresponding section of
+qgriff.ini:
+
+```
+[hybrids]
+days = 30
+region = CA-NS
+run_hr = 5
+run_min = 0
+```
+
+The above values, which are also the defaults if none are specified in qgriff.ini,
+will report eBird hybrids seen within the past 30 days in CA-NS (Nova Scotia,
+Canada, where the author lives), at 05:00 daily.
 
 ```
 python -m qgriff.qgriff
 ```
 
+Note: One or more qgriff.ini files can be located in the working directory
+for the above command, in your user config dir, or your site config dir.
+
+If you want to keep it simple, just put qgriff.ini in the working directory.
+Otherwise, where the user & site config dirs are depends on which OS/platform
+you are on, as determined by:
+
+```python
+dirs = AppDirs('qgriff', 'Quaggagriff')
+user_config_dir = dirs.user_config_dir
+site_config_dir = dirs.site_config_dir
+```
+
+See https://github.com/ActiveState/appdirs for details. A future release will
+support writing configuration values to this directory, and then the user
+will not normally need to know where the configuration is stored.
+
 ## Commands
 
 .hybrids
 
-Reports daily at 05:00 which hybrids have been observed at ebird.org
-(with or without confirmation) within the last 30 days in the CA-NS
-region (Nova Scotia, Canada).
+Reports daily at the configured *run_hr*:*run_min* which hybrids have been
+observed at ebird.org (with or without confirmation) within the last
+configured *days* in the configured *region*.
+
+After reporting has started, re-triggering the command only reports when the
+reporting period started & how many reports have been issued since then.
 
 ## TODO
 
 - permissions (restrict command usage to specific roles)
-- configuration (.ini file for region, task schedule, etc.)
 - commands (start & stop reporting task(s), status, etc.)
 - iNaturalist commands
 - better doc (deferred until some of the above have been sorted out)
-

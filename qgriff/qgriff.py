@@ -9,20 +9,25 @@ class HybridsCog(commands.Cog):
     """The hybrids command and scheduled task."""
     def __init__(self, bot):
         self.bot = bot
-        self.region = 'CA-NS'
-        self.days = 30
+
         self.count = 0
         self.start_time = datetime.now()
         self.timezone = get_localzone()
-        self.datetime_format = '%H:%M %Z%z, %d %b'
-        self.log = logging.getLogger('discord')
-
-        # Run daily at specified time:
-        (self.run_hr, self.run_min) = (5, 0) # scheduled for 05:00
+        self.datetime_format = self.bot.config.get('hybrids', 'datetime_format', fallback='%H:%M %Z%z, %d %b')
+        self.region = self.bot.config.get('hybrids', 'region', fallback='CA-NS')
+        self.days = self.bot.config.getint('hybrids', 'days', fallback=30)
+        self.run_hr = self.bot.config.getint('hybrids', 'run_hr', fallback=5)
+        self.run_min = self.bot.config.getint('hybrids', 'run_min', fallback=0)
         self.run_at = datetime(1, 1, 1) # never (run immediately)
 
-        with open('ebird.key') as ebird_key_file:
-            self.ebird_key = ebird_key_file.readline().rstrip()
+        try:
+            self.ebird_key = self.bot.config.get('ebird', 'key')
+        except configparser.NoSectionError:
+            self.bot.log.warning('No ebird section in qgriff.ini; eBird commands disabled')
+            self.ebird_key = None
+        except configparser.NoOptionError:
+            self.bot.log.warning('No ebird.key in qgriff.ini; eBird commands disabled')
+            self.ebird_key = None
 
     def cog_unload(self):
         self.hybrids_task.cancel() # pylint: disable=no-member
@@ -31,8 +36,11 @@ class HybridsCog(commands.Cog):
     async def hybrids(self, ctx):
         """The command to start daily scan & report hybrids on eBird."""
         if not self.hybrids_task.get_task(): # pylint: disable=no-member
-            self.log.info("Starting hybrids task.")
-            self.hybrids_task.start(ctx) # pylint: disable=no-member
+            if self.ebird_key:
+                self.bot.log.info("Starting hybrids task.")
+                self.hybrids_task.start(ctx) # pylint: disable=no-member
+            else:
+                await ctx.send("Configuration missing: ebird.key must be set in qgriff.ini.")
         else:
             times = 'once' if self.count == 1 else '%d times' % self.count
             message = "%s hybrids have been reported %s since %s and will report next at %s." % (
@@ -41,7 +49,7 @@ class HybridsCog(commands.Cog):
                 self.start_time.astimezone(self.timezone).strftime(self.datetime_format),
                 self.run_at.astimezone(self.timezone).strftime(self.datetime_format),
             )
-            self.log.info(message)
+            self.bot.log.info(message)
             await ctx.send(message)
 
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
@@ -88,20 +96,44 @@ class HybridsCog(commands.Cog):
             )
             message.append(line)
         for line in message:
-            self.log.info(line)
+            self.bot.log.info(line)
         await ctx.send("\n".join(message))
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    import os.path
+    import sys
 
+    from appdirs import AppDirs
+    import configparser
+
+    DIRS = AppDirs('qgriff', 'Quaggagriff')
+    CONFIG_FILES = list(map(
+        lambda path: os.path.join(path, 'qgriff.ini'),
+        [DIRS.site_config_dir, DIRS.user_config_dir, '.'],
+    ))
+
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(CONFIG_FILES)
+
+    try:
+        if CONFIG.has_section('discord'):
+            DISCORD_KEY = CONFIG.get('discord', 'key')
+            # Precautionary measure to ensure no code in the bot has access to the key:
+            CONFIG.remove_option('discord', 'key')
+    except configparser.NoSectionError:
+        sys.exit('Missing required discord section in qgriff.ini')
+    except configparser.NoOptionError:
+        sys.exit('Missing required discord.key in qgriff.ini')
+
+    logging.basicConfig(level=logging.INFO)
     CLIENT = commands.Bot(command_prefix=',')
+    CLIENT.config = CONFIG
+    CLIENT.log = logging.getLogger('discord')
+
     @CLIENT.event
     async def on_ready():
         """Announce when bot is ready."""
-        logging.getLogger('discord').info('Quaggagriff bot %s is ready.', CLIENT.user.name)
-
-    with open('discord.key') as discord_key_file:
-        DISCORD_KEY = discord_key_file.readline().rstrip()
+        CLIENT.log.info('Quaggagriff bot %s is ready.', CLIENT.user.name)
 
     CLIENT.add_cog(HybridsCog(CLIENT))
     CLIENT.run(DISCORD_KEY)
