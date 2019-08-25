@@ -12,6 +12,7 @@ class HybridsCog(commands.Cog):
         self.days = 30
         self.count = 0
         self.start_time = datetime.now()
+        self.datetime_format = '%H:%M, %d %B, %Y'
         self.log = logging.getLogger('discord')
 
         # Run daily at specified time:
@@ -31,12 +32,12 @@ class HybridsCog(commands.Cog):
             self.log.info("Starting hybrids task.")
             self.hybrids_task.start(ctx) # pylint: disable=no-member
         else:
-            plural = '' if self.count == 1 else 's'
-            message = "Hybrids for %s have been reported %d time%s since %s" % (
+            times = 'once' if self.count == 1 else '%d times' % self.count
+            message = "%s hybrids have been reported %s since %s and will report next at %s." % (
                 self.region,
-                self.count,
-                plural,
-                self.start_time,
+                times,
+                self.start_time.strftime(self.datetime_format),
+                self.run_at.strftime(self.datetime_format),
             )
             self.log.info(message)
             await ctx.send(message)
