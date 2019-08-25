@@ -14,7 +14,7 @@ class HybridsCog(commands.Cog):
         self.count = 0
         self.start_time = datetime.now()
         self.timezone = get_localzone()
-        self.datetime_format = '%H:%M %Z%z, %d %B, %Y'
+        self.datetime_format = '%H:%M %Z%z, %d %b'
         self.log = logging.getLogger('discord')
 
         # Run daily at specified time:
@@ -79,7 +79,13 @@ class HybridsCog(commands.Cog):
             sciname = record['sciName']
             comname = record['comName']
             locname = record['locName']
-            line = 'Common name: %s Scientific name: %s Location: %s' % (comname, sciname, locname)
+            obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M')
+            line = '%s: %s (%s) at %s' % (
+                obsdt.astimezone(self.timezone).strftime(self.datetime_format),
+                comname,
+                sciname,
+                locname,
+            )
             message.append(line)
         for line in message:
             self.log.info(line)
