@@ -4,18 +4,6 @@ import logging
 from datetime import datetime, timedelta
 from discord.ext import tasks, commands
 
-logging.basicConfig(level=logging.INFO)
-
-CLIENT = commands.Bot(command_prefix=',')
-
-with open('discord.key') as discord_key_file:
-    DISCORD_KEY = discord_key_file.readline().rstrip()
-
-@CLIENT.event
-async def on_ready():
-    """Announce when bot is ready."""
-    print('CuckooBee is ready.')
-
 class HybridsCog(commands.Cog):
     """The hybrids command and scheduled task."""
     def __init__(self, bot):
@@ -72,5 +60,17 @@ class HybridsCog(commands.Cog):
             message.append(f'Common name: {comname} Scientific name:{sciname} Location: {locname}')
         await ctx.send("\n".join(message))
 
-CLIENT.add_cog(HybridsCog(CLIENT))
-CLIENT.run(DISCORD_KEY)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    CLIENT = commands.Bot(command_prefix=',')
+    @CLIENT.event
+    async def on_ready():
+        """Announce when bot is ready."""
+        print('CuckooBee is ready.')
+
+    with open('discord.key') as discord_key_file:
+        DISCORD_KEY = discord_key_file.readline().rstrip()
+
+    CLIENT.add_cog(HybridsCog(CLIENT))
+    CLIENT.run(DISCORD_KEY)
