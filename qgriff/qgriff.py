@@ -1,3 +1,4 @@
+"""The quaggagriff bot itself."""
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -5,16 +6,18 @@ from discord.ext import tasks, commands
 
 logging.basicConfig(level=logging.INFO)
 
-client = commands.Bot(command_prefix=',')
+CLIENT = commands.Bot(command_prefix=',')
 
 with open('discord.key') as discord_key_file:
-    discord_key = discord_key_file.readline().rstrip()
+    DISCORD_KEY = discord_key_file.readline().rstrip()
 
-@client.event
+@CLIENT.event
 async def on_ready():
+    """Announce when bot is ready."""
     print('CuckooBee is ready.')
 
 class HybridsCog(commands.Cog):
+    """The hybrids command and scheduled task."""
     def __init__(self, bot):
         self.bot = bot
 
@@ -27,13 +30,14 @@ class HybridsCog(commands.Cog):
 
     @commands.command()
     async def hybrids(self, ctx):
+        """The command to start daily scan & report hybrids on eBird."""
         # TODO: ensure only 1 hybrids_task & support cancelling it
         self.hybrids_task.start(ctx) # pylint: disable=no-member
 
-    # Wake up every 60 seconds to see if it's time to run
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
     @tasks.loop(seconds=60)
     async def hybrids_task(self, ctx):
+        """Check scheduled time & when reached, do a hybrids report."""
         now = datetime.now()
         # Past time to run & hasn't run yet:
         if now >= self.run_at:
@@ -49,6 +53,7 @@ class HybridsCog(commands.Cog):
             await asyncio.sleep(1)
 
     async def report_hybrids(self, ctx):
+        """From eBird, get recent hybrid sightings for a region and report them."""
         from ebird.api import get_observations
         # Docs at: https://github.com/ProjectBabbler/ebird-api
         records = get_observations(
@@ -67,5 +72,5 @@ class HybridsCog(commands.Cog):
             message.append(f'Common name: {comname} Scientific name:{sciname} Location: {locname}')
         await ctx.send("\n".join(message))
 
-client.add_cog(HybridsCog(client))
-client.run(discord_key)
+CLIENT.add_cog(HybridsCog(CLIENT))
+CLIENT.run(DISCORD_KEY)
