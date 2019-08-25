@@ -2,6 +2,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from tzlocal import get_localzone
 from discord.ext import tasks, commands
 
 class HybridsCog(commands.Cog):
@@ -12,7 +13,8 @@ class HybridsCog(commands.Cog):
         self.days = 30
         self.count = 0
         self.start_time = datetime.now()
-        self.datetime_format = '%H:%M, %d %B, %Y'
+        self.timezone = get_localzone()
+        self.datetime_format = '%H:%M %Z%z, %d %B, %Y'
         self.log = logging.getLogger('discord')
 
         # Run daily at specified time:
@@ -36,8 +38,8 @@ class HybridsCog(commands.Cog):
             message = "%s hybrids have been reported %s since %s and will report next at %s." % (
                 self.region,
                 times,
-                self.start_time.strftime(self.datetime_format),
-                self.run_at.strftime(self.datetime_format),
+                self.start_time.astimezone(self.timezone).strftime(self.datetime_format),
+                self.run_at.astimezone(self.timezone).strftime(self.datetime_format),
             )
             self.log.info(message)
             await ctx.send(message)
