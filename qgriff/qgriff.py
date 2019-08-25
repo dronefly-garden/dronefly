@@ -29,7 +29,7 @@ class HybridsCog(commands.Cog):
     @commands.command()
     async def hybrids(self, ctx):
         # TODO: ensure only 1 hybrids_task & support cancelling it
-        self.hybrids_task.start(ctx)
+        self.hybrids_task.start(ctx) # pylint: disable=no-member
 
     # Wake up every 60 seconds to see if it's time to run
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
