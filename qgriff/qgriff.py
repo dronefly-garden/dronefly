@@ -8,6 +8,10 @@ class HybridsCog(commands.Cog):
     """The hybrids command and scheduled task."""
     def __init__(self, bot):
         self.bot = bot
+        self.region = 'CA-NS'
+        self.days = 30
+        self.count = 0
+        self.start_time = datetime.now()
         self.log = logging.getLogger('discord')
 
         # Run daily at specified time:
@@ -23,12 +27,19 @@ class HybridsCog(commands.Cog):
     @commands.command()
     async def hybrids(self, ctx):
         """The command to start daily scan & report hybrids on eBird."""
-        # TODO: ensure only 1 hybrids_task & support cancelling it
         if not self.hybrids_task.get_task(): # pylint: disable=no-member
             self.log.info("Starting hybrids task.")
             self.hybrids_task.start(ctx) # pylint: disable=no-member
         else:
-            self.log.info("Ignoring request to start hybrids task (already started).")
+            plural = '' if self.count == 1 else 's'
+            message = "Hybrids for %s have been reported %d time%s since %s" % (
+                self.region,
+                self.count,
+                plural,
+                self.start_time,
+            )
+            self.log.info(message)
+            await ctx.send(message)
 
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
     @tasks.loop(seconds=60)
@@ -51,11 +62,12 @@ class HybridsCog(commands.Cog):
     async def report_hybrids(self, ctx):
         """From eBird, get recent hybrid sightings for a region and report them."""
         from ebird.api import get_observations
+        self.count += 1
         # Docs at: https://github.com/ProjectBabbler/ebird-api
         records = get_observations(
             self.ebird_key,
-            'CA-NS',
-            back=30,
+            self.region,
+            back=self.days,
             category="hybrid",
             provisional=True,
         )
@@ -64,8 +76,10 @@ class HybridsCog(commands.Cog):
             sciname = record['sciName']
             comname = record['comName']
             locname = record['locName']
-            print(f'Common name: {comname} Scientific name:{sciname} Location: {locname}')
-            message.append(f'Common name: {comname} Scientific name:{sciname} Location: {locname}')
+            line = 'Common name: %s Scientific name: %s Location: %s' % (comname, sciname, locname)
+            message.append(line)
+        for line in message:
+            self.log.info(line)
         await ctx.send("\n".join(message))
 
 if __name__ == "__main__":
