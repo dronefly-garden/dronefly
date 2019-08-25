@@ -3,8 +3,8 @@ Half zebra, half gryphon, Quaggagriff is a Discord bot for naturalists.
 
 eBird commands:
 
-- ,hybrids
-    - starts daily reporting of hybrids seen on eBird recently for a selected region
+- hybrids
+    - starts daily reporting of hybrids seen on eBird recently for the configured region
 
 iNaturalist commands:
 
@@ -27,7 +27,7 @@ pip install quaggagriff
 
 - obtain a bot token for discord.py
 - obtain An API key for eBird API 2.0
-- create qgriff.ini and copy the keys into the file as follows
+- create qgriff.ini and configure as follows
 
 ```
 [discord]
@@ -35,12 +35,10 @@ key = your-bot-token-goes-here
 
 [ebird]
 key = your-ebird-api-key-goes-here
-```
 
-Tailor the default options for bot commands in the corresponding section of
-qgriff.ini:
+[bot]
+command_prefix = ,
 
-```
 [hybrids]
 days = 30
 region = CA-NS
@@ -49,8 +47,13 @@ run_min = 0
 ```
 
 The above values, which are also the defaults if none are specified in qgriff.ini,
-will report eBird hybrids seen within the past 30 days in CA-NS (Nova Scotia,
-Canada, where the author lives), at 05:00 daily.
+will:
+
+- set the bot command prefix to comma (",")
+- set the 'hybrids' command defaults to report hybrids from eBird:
+    - seen within the past 30 days
+    - in CA-NS (Nova Scotia, Canada, where the author lives)
+    - at 05:00 daily
 
 ```
 python -m qgriff.qgriff

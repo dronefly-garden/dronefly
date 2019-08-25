@@ -115,18 +115,14 @@ if __name__ == "__main__":
     CONFIG = configparser.ConfigParser()
     CONFIG.read(CONFIG_FILES)
 
-    try:
-        if CONFIG.has_section('discord'):
-            DISCORD_KEY = CONFIG.get('discord', 'key')
-            # Precautionary measure to ensure no code in the bot has access to the key:
-            CONFIG.remove_option('discord', 'key')
-    except configparser.NoSectionError:
-        sys.exit('Missing required discord section in qgriff.ini')
-    except configparser.NoOptionError:
+    DISCORD_KEY = CONFIG.get('discord', 'key', fallback=None)
+    if DISCORD_KEY is None:
         sys.exit('Missing required discord.key in qgriff.ini')
+    # Precautionary measure to ensure no code in the bot has access to the key:
+    CONFIG.remove_option('discord', 'key')
 
     logging.basicConfig(level=logging.INFO)
-    CLIENT = commands.Bot(command_prefix=',')
+    CLIENT = commands.Bot(CONFIG.get('bot', 'command_prefix', fallback=','))
     CLIENT.config = CONFIG
     CLIENT.log = logging.getLogger('discord')
 
