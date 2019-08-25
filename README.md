@@ -10,6 +10,11 @@ over the next little while. This bot requires:
 - ebird-api
 - discord.py
 
+## Install
+
+```
+pip install quaggagriff
+```
 
 ## Usage
 
@@ -20,7 +25,7 @@ run, edit qgriff.py to change any parameters (e.g.  command prefix,
 get_observations region which is 'CA-NS'), and start the bot with:
 
 ```
-python qgriff.py
+python -m qgriff.qgriff
 ```
 
 ## Commands
