@@ -67,7 +67,7 @@ if __name__ == "__main__":
     @CLIENT.event
     async def on_ready():
         """Announce when bot is ready."""
-        print('CuckooBee is ready.')
+        logging.getLogger('discord').info('Quaggagriff bot %s is ready.', CLIENT.user.name)
 
     with open('discord.key') as discord_key_file:
         DISCORD_KEY = discord_key_file.readline().rstrip()
