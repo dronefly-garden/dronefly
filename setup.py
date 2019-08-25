@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="synrg",
+    name="quaggagriff",
     version="0.1.1",
     author="Ben Armstrong",
     author_email="synrg@debian.org",
