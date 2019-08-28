@@ -95,18 +95,22 @@ class HybridsCog(commands.Cog):
             self.region,
             back=self.days,
             category="hybrid",
+            detail="simple",
             provisional=True,
         )
         message = []
         for record in records:
+            self.bot.log.info(str(record))
             sciname = record['sciName']
             comname = record['comName']
             locname = record['locName']
+            howmany = record['howMany']
             obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M')
-            line = '%s: %s (%s) at %s' % (
-                obsdt.astimezone(self.timezone).strftime(self.datetime_format),
+            line = '%d %s (%s); latest: %s from: %s' % (
+                howmany,
                 comname,
                 sciname,
+                obsdt.astimezone(self.timezone).strftime(self.datetime_format),
                 locname,
             )
             message.append(line)
