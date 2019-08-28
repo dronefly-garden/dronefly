@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="quaggagriff",
-    version="0.1.4",
+    version="0.1.5",
     author="Ben Armstrong",
     author_email="synrg@debian.org",
     description="A Discord bot for naturalists",
