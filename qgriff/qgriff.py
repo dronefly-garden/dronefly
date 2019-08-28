@@ -9,16 +9,13 @@ class HybridsCog(commands.Cog):
     """The hybrids command and scheduled task."""
     def __init__(self, bot):
         self.bot = bot
-
-        self.count = 0
-        self.start_time = datetime.now()
         self.timezone = get_localzone()
         self.datetime_format = self.bot.config.get('hybrids', 'datetime_format', fallback='%H:%M %Z%z, %d %b')
         self.region = self.bot.config.get('hybrids', 'region', fallback='CA-NS')
         self.days = self.bot.config.getint('hybrids', 'days', fallback=30)
         self.run_hr = self.bot.config.getint('hybrids', 'run_hr', fallback=5)
         self.run_min = self.bot.config.getint('hybrids', 'run_min', fallback=0)
-        self.run_at = datetime(1, 1, 1) # never (run immediately)
+        self.tasks = {}
 
         try:
             self.ebird_key = self.bot.config.get('ebird', 'key')
@@ -35,45 +32,62 @@ class HybridsCog(commands.Cog):
     @commands.command()
     async def hybrids(self, ctx):
         """The command to start daily scan & report hybrids on eBird."""
-        if not self.hybrids_task.get_task(): # pylint: disable=no-member
+        start_tasks = False
+        if not self.tasks:
             if self.ebird_key:
-                self.bot.log.info("Starting hybrids task.")
-                self.hybrids_task.start(ctx) # pylint: disable=no-member
+                self.bot.log.info("Initializing hybrids tasks.")
+                start_tasks = True
             else:
                 await ctx.send("Configuration missing: ebird.key must be set in qgriff.ini.")
+        if not ctx.channel.id in self.tasks:
+            self.tasks[ctx.channel.id] = {
+                "count": 0,
+                "ctx": ctx,
+                "run_at": datetime(1, 1, 1), # Never
+                "start": datetime.now(),
+            }
+            if start_tasks:
+                self.hybrids_task.start() # pylint: disable=no-member
+            else:
+                self.hybrids_task.restart() # pylint: disable=no-member
         else:
-            times = 'once' if self.count == 1 else '%d times' % self.count
+            task = self.tasks[ctx.channel.id]
+            times = 'once' if task["count"] == 1 else '%d times' % task["count"]
             message = "%s hybrids have been reported %s since %s and will report next at %s." % (
                 self.region,
                 times,
-                self.start_time.astimezone(self.timezone).strftime(self.datetime_format),
-                self.run_at.astimezone(self.timezone).strftime(self.datetime_format),
+                task["start"].astimezone(self.timezone).strftime(self.datetime_format),
+                task["run_at"].astimezone(self.timezone).strftime(self.datetime_format),
             )
             self.bot.log.info(message)
-            await ctx.send(message)
+            await task["ctx"].send(message)
 
     # - see https://discordpy.readthedocs.io/en/latest/ext/tasks/
     @tasks.loop(seconds=60)
-    async def hybrids_task(self, ctx):
+    async def hybrids_task(self):
         """Check scheduled time & when reached, do a hybrids report."""
         now = datetime.now()
         # Past time to run & hasn't run yet:
-        if now >= self.run_at:
-            # Schedule for today (in case running ahead of schedule):
-            self.run_at = datetime(now.year, now.month, now.day, self.run_hr, self.run_min)
-            running_ahead_of_schedule = (now.hour, now.minute) < (self.run_hr, self.run_min)
-            if not running_ahead_of_schedule:
-               # Reschedule for tomorrow (i.e. the normal case):
-                self.run_at += timedelta(days=1)
-            await self.report_hybrids(ctx)
-        else:
-            # Not time to run yet. Allow other tasks to run.
+        reported = False
+        for channel_id in self.tasks:
+            task = self.tasks[channel_id]
+            if now >= task["run_at"]:
+                # Schedule for today (in case running ahead of schedule):
+                task["run_at"] = datetime(now.year, now.month, now.day, self.run_hr, self.run_min)
+                running_ahead_of_schedule = (now.hour, now.minute) < (self.run_hr, self.run_min)
+                if not running_ahead_of_schedule:
+                # Reschedule for tomorrow (i.e. the normal case):
+                    task["run_at"] += timedelta(days=1)
+                reported = True
+                await self.report_hybrids(task)
+        if not reported:
+            # No reports made. Allow other tasks to run.
             await asyncio.sleep(1)
 
-    async def report_hybrids(self, ctx):
+    async def report_hybrids(self, task):
         """From eBird, get recent hybrid sightings for a region and report them."""
         from ebird.api import get_observations
-        self.count += 1
+        task["count"] += 1
         # Docs at: https://github.com/ProjectBabbler/ebird-api
         records = get_observations(
             self.ebird_key,
@@ -97,7 +111,7 @@ class HybridsCog(commands.Cog):
             message.append(line)
         for line in message:
             self.bot.log.info(line)
-        await ctx.send("\n".join(message))
+        await task["ctx"].send("\n".join(message))
 
 if __name__ == "__main__":
     import os.path
