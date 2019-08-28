@@ -10,15 +10,16 @@ class HybridsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.timezone = get_localzone()
-        self.datetime_format = self.bot.config.get('hybrids', 'datetime_format', fallback='%H:%M %Z%z, %d %b')
-        self.region = self.bot.config.get('hybrids', 'region', fallback='CA-NS')
-        self.days = self.bot.config.getint('hybrids', 'days', fallback=30)
-        self.run_hr = self.bot.config.getint('hybrids', 'run_hr', fallback=5)
-        self.run_min = self.bot.config.getint('hybrids', 'run_min', fallback=0)
+        cfg = self.bot.config
+        self.datetime_format = cfg.get('hybrids', 'datetime_format', fallback='%H:%M %Z%z, %d %b')
+        self.region = cfg.get('hybrids', 'region', fallback='CA-NS')
+        self.days = cfg.getint('hybrids', 'days', fallback=30)
+        self.run_hr = cfg.getint('hybrids', 'run_hr', fallback=5)
+        self.run_min = cfg.getint('hybrids', 'run_min', fallback=0)
         self.tasks = {}
 
         try:
-            self.ebird_key = self.bot.config.get('ebird', 'key')
+            self.ebird_key = cfg.get('ebird', 'key')
         except configparser.NoSectionError:
             self.bot.log.warning('No ebird section in qgriff.ini; eBird commands disabled')
             self.ebird_key = None
