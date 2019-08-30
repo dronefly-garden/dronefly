@@ -13,7 +13,7 @@ iNaturalist commands:
 Development is early alpha. The code is likely to change considerably
 over the next little while. The biggest change will be to convert it
 from a bot to a collection of Discord Cogs, running on Red Discord Bot
-instead (see #1, #2, #3, #4, #5, etc.). This bot requires:
+instead (see Issues: #1, #2, #3, #4, #5, etc.). This bot requires:
 
 - python >= 3.5
 - a discord.py bot token
