@@ -1,6 +1,6 @@
 """Module to access eBird API."""
 from datetime import datetime
-from redbot.core import commands, Config
+from redbot.core import commands, checks, Config
 from ebird.api import get_observations
 
 class EBirdCog(commands.Cog):
@@ -44,15 +44,17 @@ class EBirdCog(commands.Cog):
         await ctx.send("\n".join(message))
 
     @ebird.command()
-    async def setregion(self, ctx, value):
+    @checks.is_owner()
+    async def setregion(self, ctx, value: str):
         """Set eBird region."""
         await self.config.region.set(value)
         await ctx.send('eBird region has been changed.')
 
     @ebird.command()
-    async def setdays(self, ctx, value):
+    @checks.is_owner()
+    async def setdays(self, ctx, value: int):
         """Set eBird days to include in recent observations."""
-        await self.config.days.set(int(value))
+        await self.config.days.set(value)
         await ctx.send('eBird days to include in recent observations has been changed.')
 
     async def get_hybrid_observations(self, ctx):
