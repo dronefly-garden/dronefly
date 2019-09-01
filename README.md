@@ -1,8 +1,6 @@
 # quaggagriff
 Half zebra, half gryphon, Quaggagriff is a Discord Cog repo for naturalists.
 
-**Please note, this repo is still in development so the installation instructions will not work yet as shown below.**
-
 ## Cogs:
 
 - ebirdcog
@@ -23,11 +21,11 @@ These Cogs provide commands for Red Bot V3. If you don't have that already, go g
 ## Installation
 
 ```
-[p]repo add Quaggagriff https://github.com/synrg/quaggagriff
-[p]cog install Quaggagriff <cog-name>
-```
+$ git clone https://github.com/synrg/quaggagriff
 
-Where [p] is your prefix.
+[p]addpath quaggagriff
+[p]load <cog-name>
+```
 
 ## TODO
 
