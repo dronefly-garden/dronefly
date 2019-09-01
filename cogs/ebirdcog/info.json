@@ -1,0 +1,10 @@
+{
+  "author" : ["SyntheticBee"],
+  "install_msg": "Flap, flap.",
+  "name" : "eBirdCog",
+  "short" : "Commands using the eBird API 2.0 (https://api.ebird.org/v2).",
+  "description" : "Commands using the eBird API 2.0 (https://api.ebird.org/v2).",
+  "requirements" : [],
+  "tags": ["ebird", "bird", "birder", "naturalist", "nature"],
+  "hidden": false
+}
