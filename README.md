@@ -1,5 +1,5 @@
 # quaggagriff
-Half zebra, half gryphon, Quaggagriff is Discord Cog repo for naturalists.
+Half zebra, half gryphon, Quaggagriff is a Discord Cog repo for naturalists.
 
 ## Cogs:
 
