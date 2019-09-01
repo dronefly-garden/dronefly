@@ -16,7 +16,11 @@ class EBirdCog(commands.Cog):
         }
         self.config.register_global(**default_global)
 
-    @commands.command()
+    @commands.group()
+    async def ebird(self, ctx):
+        """Access the eBird platform."""
+
+    @ebird.command()
     async def hybrids(self, ctx):
         """Report recent hybrid observations."""
         datetime_format = await self.config.datetime_format()
@@ -38,6 +42,18 @@ class EBirdCog(commands.Cog):
             )
             message.append(line)
         await ctx.send("\n".join(message))
+
+    @ebird.command()
+    async def setregion(self, ctx, value):
+        """Set eBird region."""
+        await self.config.region.set(value)
+        await ctx.send('eBird region has been changed.')
+
+    @ebird.command()
+    async def setdays(self, ctx, value):
+        """Set eBird days to include in recent observations."""
+        await self.config.days.set(int(value))
+        await ctx.send('eBird days to include in recent observations has been changed.')
 
     async def get_hybrid_observations(self, ctx):
         """Get recent hybrid observations."""
