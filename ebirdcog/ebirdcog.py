@@ -24,24 +24,28 @@ class EBirdCog(commands.Cog):
     async def hybrids(self, ctx):
         """Report recent hybrid observations."""
         datetime_format = await self.config.datetime_format()
+        days = await self.config.days()
 
         records = await self.get_hybrid_observations(ctx)
-        message = []
-        for record in records:
-            sciname = record['sciName']
-            comname = record['comName']
-            locname = record['locName']
-            howmany = record['howMany']
-            obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M')
-            line = '%d %s (%s); latest: %s from: %s' % (
-                howmany,
-                comname,
-                sciname,
-                obsdt.strftime(datetime_format),
-                locname,
-            )
-            message.append(line)
-        await ctx.send("\n".join(message))
+        if records:
+            message = []
+            for record in records:
+                sciname = record['sciName']
+                comname = record['comName']
+                locname = record['locName']
+                howmany = record['howMany']
+                obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M')
+                line = '%d %s (%s); latest: %s from: %s' % (
+                    howmany,
+                    comname,
+                    sciname,
+                    obsdt.strftime(datetime_format),
+                    locname,
+                )
+                message.append(line)
+            await ctx.send("\n".join(message))
+        else:
+            await ctx.send("No hybrids observed in the past %d days." % days)
 
     @ebird.command()
     @checks.is_owner()
