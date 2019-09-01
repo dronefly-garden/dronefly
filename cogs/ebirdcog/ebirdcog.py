@@ -42,6 +42,8 @@ class EBirdCog(commands.Cog):
     async def get_hybrid_observations(self, ctx):
         """Get recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
+        if ebird_key is None:
+            return
         region = await self.config.region()
         days = await self.config.days()
         # Docs at: https://github.com/ProjectBabbler/ebird-api
@@ -58,5 +60,6 @@ class EBirdCog(commands.Cog):
         """Get API key."""
         key = await self.bot.db.api_tokens.get_raw("ebird", default={"api_key": None})
         if key["api_key"] is None:
-            return await ctx.send("The eBird API key has not been set.")
+            await ctx.send("The eBird API key has not been set.")
+            return None
         return key
