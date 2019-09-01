@@ -107,3 +107,6 @@ venv.bak/
 *.key
 
 qgriff.ini
+
+# Red Bot V3 stuff
+red_setup_logs
