@@ -38,6 +38,8 @@ class EBirdCog(commands.Cog):
     async def hybrids(self, ctx):
         """Report recent hybrid observations."""
         records = await self.get_hybrid_observations(ctx) or []
+        if records is False:
+            return
         fmt = await self.config.datetime_format()
         for record in records:
             rec = ObsRecord(fmt, **record)
@@ -68,7 +70,7 @@ class EBirdCog(commands.Cog):
         """Get recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
-            return
+            return False
         region = await self.config.region()
         days = await self.config.days()
         # Docs at: https://github.com/ProjectBabbler/ebird-api
