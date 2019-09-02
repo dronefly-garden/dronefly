@@ -3,8 +3,21 @@ from datetime import datetime
 from redbot.core import commands, checks, Config
 from ebird.api import get_observations
 
+class ObsRecord(dict):
+    """A human-readable observation record."""
+    def __init__(self, datetime_format='%H:%M, %d %b, %Y', **kwargs):
+        self.datetime_format = datetime_format
+        super().__init__(**kwargs)
+
+    def __getitem__(self, key):
+        """Reformat datetime into human-readable format."""
+        val = super().__getitem__(self, key)
+        if key == 'obsDt':
+            return datetime.strptime(val, '%Y-%m-%d %H:%M').strftime(self.datetime_format)
+        return val
+
 class EBirdCog(commands.Cog):
-    """eBird commands cog"""
+    """An eBird commands cog."""
 
     def __init__(self, bot):
         self.bot = bot
@@ -23,18 +36,15 @@ class EBirdCog(commands.Cog):
     @ebird.command()
     async def hybrids(self, ctx):
         """Report recent hybrid observations."""
-        datetime_format = await self.config.datetime_format()
-        days = await self.config.days()
-
-        records = await self.get_hybrid_observations(ctx)
-        if records:
-            message = []
-            for record in records:
-                obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M').strftime(datetime_format)
-                line = '{comName} ({sciName}); latest: {howMany} at: %s from: {locName}'.format(**record) % obsdt
-                message.append(line)
-            await ctx.send("\n".join(message))
-        else:
+        records = await self.get_hybrid_observations(ctx) or []
+        fmt = await self.config.datetime_format()
+        for record in records:
+            rec = ObsRecord(fmt, **record)
+            msg = '{comName} ({sciName}); {howMany} observed at {obsDt}, from {locName}' \
+                .format_map(rec)
+            await ctx.send(msg)
+        if not records:
+            days = await self.config.days()
             await ctx.send("No hybrids observed in the past %d days." % days)
 
     @ebird.command()
