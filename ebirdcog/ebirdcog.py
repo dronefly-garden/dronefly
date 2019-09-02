@@ -1,7 +1,7 @@
 """Module to access eBird API."""
 from datetime import datetime
 from redbot.core import commands, checks, Config
-from ebird.api import get_observations
+from ebird.api import get_observations, get_region
 
 class ObsRecord(dict):
     """A human-readable observation record."""
@@ -43,8 +43,25 @@ class EBirdCog(commands.Cog):
     @checks.is_owner()
     async def checkregion(self, ctx):
         """Checks region setting."""
-        region = await self.config.region()
-        await ctx.send('eBird region is {}.'.format(region))
+        region_code = await self.config.region()
+        region = {}
+        try:
+            region = await self.get_region(ctx, region_code)
+        except ValueError as err:
+            msg = (
+                "eBird region not valid: {code}; error: {err}.\n"
+                "Please set to a valid code with:\n"
+                "    [p]ebird setregion code"
+            ).format(code=region_code, err=err)
+            await ctx.send(msg)
+            return
+
+        await ctx.send(
+            'eBird region is {region} ({code}).'.format(
+                region=region['result'],
+                code=region_code,
+            )
+        )
 
     @ebird.command()
     async def hybrids(self, ctx):
@@ -66,9 +83,26 @@ class EBirdCog(commands.Cog):
 
     @ebird.command()
     @checks.is_owner()
-    async def setregion(self, ctx, value: str):
+    async def setregion(self, ctx, region_code: str):
         """Sets region."""
-        await self.config.region.set(value)
+        region = None
+
+        if region_code.lower() == 'world':
+            await ctx.send('eBird region cannot be world')
+            return
+
+        try:
+            region = await self.get_region(ctx, region_code)
+        except ValueError as err:
+            await ctx.send('eBird region not valid: {}'.format(err))
+            return
+
+        if not region:
+            await ctx.send('eBird region not found: {}'.format(region_code))
+            return
+
+
+        await self.config.region.set(region_code)
         await ctx.send('eBird region has been changed.')
 
     @ebird.command()
@@ -98,6 +132,16 @@ class EBirdCog(commands.Cog):
             category="hybrid",
             detail="simple",
             provisional=True,
+        )
+
+    async def get_region(self, ctx, region):
+        """Gets recent hybrid observations."""
+        ebird_key = await self.get_api_key(ctx)
+        if ebird_key is None:
+            return False
+        return get_region(
+            ebird_key["api_key"],
+            region,
         )
 
     async def get_api_key(self, ctx):
