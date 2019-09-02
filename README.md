@@ -21,11 +21,11 @@ These Cogs provide commands for Red Bot V3. If you don't have that already, go g
 ## Installation
 
 ```
-$ git clone https://github.com/synrg/quaggagriff
-
-[p]addpath quaggagriff
-[p]load <cog-name>
+[p]repo add Quaggagriff https://github.com/synrg/quaggagriff
+[p]cog install Quaggagriff <cog-name>
 ```
+
+Where [p] is your prefix.
 
 ## TODO
 
