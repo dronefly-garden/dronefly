@@ -4,7 +4,7 @@
   "name" : "eBirdCog",
   "short" : "Commands using the eBird API 2.0.",
   "description" : "Commands using the eBird API 2.0 (https://api.ebird.org/v2).",
-  "requirements" : [],
+  "requirements" : ["ebird-api"],
   "tags": ["ebird", "bird", "birder", "naturalist", "nature"],
   "hidden": false,
   "min_bot_version": "3.1.5"
