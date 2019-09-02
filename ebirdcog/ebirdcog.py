@@ -32,7 +32,7 @@ class EBirdCog(commands.Cog):
     @commands.group()
     async def ebird(self, ctx):
         """Access the eBird platform."""
-        pass
+        pass # pylint: disable=unnecessary-pass
 
     @ebird.command()
     async def hybrids(self, ctx):
