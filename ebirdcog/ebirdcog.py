@@ -18,16 +18,14 @@ class ObsRecord(dict):
 
 class EBirdCog(commands.Cog):
     """An eBird commands cog."""
-
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=8008)
-        default_global = {
-            "region": 'CA-NS',
-            "days": 30,
-            "datetime_format": '%H:%M, %d %b',
-        }
-        self.config.register_global(**default_global)
+        self.config.register_global(
+            region='CA-NS',
+            days=30,
+            datetime_format='%H:%M, %d %b'
+        )
 
     @commands.group()
     async def ebird(self, ctx):
