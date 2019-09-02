@@ -35,8 +35,22 @@ class EBirdCog(commands.Cog):
         pass # pylint: disable=unnecessary-pass
 
     @ebird.command()
+    @checks.is_owner()
+    async def checkdays(self, ctx):
+        """Checks days setting."""
+        days = await self.config.days()
+        await ctx.send('eBird days is {}.'.format(days))
+
+    @ebird.command()
+    @checks.is_owner()
+    async def checkregion(self, ctx):
+        """Checks region setting."""
+        region = await self.config.region()
+        await ctx.send('eBird region is {}.'.format(region))
+
+    @ebird.command()
     async def hybrids(self, ctx):
-        """Report recent hybrid observations."""
+        """Reports recent hybrid observations."""
         records = await self.get_hybrid_observations(ctx) or []
         if records is False:
             return
@@ -55,14 +69,14 @@ class EBirdCog(commands.Cog):
     @ebird.command()
     @checks.is_owner()
     async def setregion(self, ctx, value: str):
-        """Set eBird region."""
+        """Sets region."""
         await self.config.region.set(value)
         await ctx.send('eBird region has been changed.')
 
     @ebird.command()
     @checks.is_owner()
     async def setdays(self, ctx, value: int):
-        """Set eBird days for recent observations (1 through 30; default: 30)."""
+        """Sets days considered recent (1 through 30; default: 30)."""
         days = int(value)
         if days in range(1, 31):
             await self.config.days.set(days)
@@ -72,7 +86,7 @@ class EBirdCog(commands.Cog):
 
 
     async def get_hybrid_observations(self, ctx):
-        """Get recent hybrid observations."""
+        """Gets recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
             return False
@@ -89,7 +103,7 @@ class EBirdCog(commands.Cog):
         )
 
     async def get_api_key(self, ctx):
-        """Get API key."""
+        """Gets API key."""
         key = await self.bot.db.api_tokens.get_raw("ebird", default={"api_key": None})
         if key["api_key"] is None:
             await ctx.send(

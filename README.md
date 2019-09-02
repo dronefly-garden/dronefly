@@ -7,12 +7,16 @@ Quaggagriff is a Discord Cog collection for naturalists.
     - Provides commands to access the eBird platform.
     - Note: you must apply for an eBird API key to use this cog.
     - Commands:
+        - **ebird checkdays**
+            - Checks days setting.
+        - **ebird checkregion**
+            - Checks region setting.
         - **ebird hybrids**
-            - Reports hybrids seen recently.
-        - **ebird setregion**
-            - Sets the region for reports (default: CA-NS; e.g. US-MA, etc. See eBird API documentation for ).
+            - Reports recent hybrid observations.
         - **ebird setdays**
-            - Sets days to consider "recent" (default: 30, maximum: 30).
+            - Sets days considered recent (1 through 30; default: 30).
+        - **ebird setregion**
+            - Sets region (default: CA-NS; e.g. US-MA, etc.).
 
 ## Prerequisites
 
