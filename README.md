@@ -4,19 +4,25 @@ Quaggagriff is a Discord Cog collection for naturalists.
 ## Cogs:
 
 - ebirdcog
-    - provides access to the eBird platform
-    - note: you must apply for an eBird API key to use this cog
-    - commands:
+    - Provides commands to access the eBird platform.
+    - Note: you must apply for an eBird API key to use this cog.
+    - Commands:
         - **ebird hybrids**
-            - reports hybrids seen recently
+            - Reports hybrids seen recently.
         - **ebird setregion**
-            - sets the region (e.g. US-MA, CA-NS)
+            - Sets the region for reports (default: CA-NS; e.g. US-MA, etc. See eBird API documentation for ).
         - **ebird setdays**
-            - sets days to consider "recent" (default: 30, maximum: 30)
+            - Sets days to consider "recent" (default: 30, maximum: 30).
 
 ## Prerequisites
 
 These Cogs provide commands for Red Bot V3. If you don't have that already, go get it, following the installation guide for your platform here: https://red-discordbot.readthedocs.io/en/latest/index.html
+
+To use ebirdcog, you must install the ebird-api Python package, e.g.
+
+```
+pip install ebird-api
+```
 
 ## Installation
 
@@ -64,13 +70,14 @@ Change default settings to values suitable for your bot, e.g.
 Report hybrids observed recently:
 
 ```
-[p]ebird hybrids
-[8:52 AM] BOT CuckooBee: Mallard x American Black Duck (hybrid) (Anas platyrhynchos x rubripes); 1 observed at 09:04, 27 Aug, from Hartlen Point West Beach (44.5926,-63.4546)
+,ebird hybrids
+[8:52 AM] BOT CuckooBee: Mallard x American Black Duck (hybrid) (Anas platyrhynchos x rubripes);
+1 observed at 09:04, 27 Aug, from Hartlen Point West Beach (44.5926,-63.4546)
 ```
 
 ### Scheduled reports
 
-See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an ebird subcommand, such as to alert channel users to new observations of hybrids found in the region.
+See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.
 
 ## TODO
 
