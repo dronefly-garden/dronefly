@@ -30,18 +30,8 @@ class EBirdCog(commands.Cog):
         if records:
             message = []
             for record in records:
-                sciname = record['sciName']
-                comname = record['comName']
-                locname = record['locName']
-                howmany = record['howMany']
-                obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M')
-                line = '%d %s (%s); latest: %s from: %s' % (
-                    howmany,
-                    comname,
-                    sciname,
-                    obsdt.strftime(datetime_format),
-                    locname,
-                )
+                obsdt = datetime.strptime(record['obsDt'], '%Y-%m-%d %H:%M').strftime(datetime_format)
+                line = '{comName} ({sciName}); latest: {howMany} at: %s from: {locName}'.format(**record) % obsdt
                 message.append(line)
             await ctx.send("\n".join(message))
         else:
