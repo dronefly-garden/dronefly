@@ -87,6 +87,12 @@ class EBirdCog(commands.Cog):
         """Get API key."""
         key = await self.bot.db.api_tokens.get_raw("ebird", default={"api_key": None})
         if key["api_key"] is None:
-            await ctx.send("The eBird API key has not been set.")
+            await ctx.send(
+                "The eBird API key is not set yet.\n"
+                "1. Get one here:\n"
+                "   https://ebird.org/api/keygen\n"
+                "2. Set the key:\n"
+                "   [p]set api ebird api_key,your-key-goes-here"
+            )
             return None
         return key
