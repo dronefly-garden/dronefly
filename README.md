@@ -18,15 +18,9 @@ Quaggagriff is a Discord Cog collection for naturalists.
 
 These Cogs provide commands for Red Bot V3. If you don't have that already, go get it, following the installation guide for your platform here: https://red-discordbot.readthedocs.io/en/latest/index.html
 
-To use ebirdcog, you must install the ebird-api Python package, e.g.
-
-```
-pip install ebird-api
-```
-
 ## Installation
 
-If you have not already, load the V3 downloader:
+If you have not already, load the Red V3 downloader cog:
 
 ```
 [p]load downloader
