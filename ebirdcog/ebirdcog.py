@@ -32,6 +32,7 @@ class EBirdCog(commands.Cog):
     @commands.group()
     async def ebird(self, ctx):
         """Access the eBird platform."""
+        pass
 
     @ebird.command()
     async def hybrids(self, ctx):
@@ -40,8 +41,10 @@ class EBirdCog(commands.Cog):
         fmt = await self.config.datetime_format()
         for record in records:
             rec = ObsRecord(fmt, **record)
-            msg = '{comName} ({sciName}); {howMany} observed at {obsDt}, from {locName}' \
-                .format_map(rec)
+            msg = (
+                '{comName} ({sciName});'
+                '{howMany} observed at {obsDt}, from {locName}'
+            ).format_map(rec)
             await ctx.send(msg)
         if not records:
             days = await self.config.days()
