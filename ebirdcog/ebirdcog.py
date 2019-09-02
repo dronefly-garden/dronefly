@@ -62,9 +62,14 @@ class EBirdCog(commands.Cog):
     @ebird.command()
     @checks.is_owner()
     async def setdays(self, ctx, value: int):
-        """Set eBird days to include in recent observations."""
-        await self.config.days.set(value)
-        await ctx.send('eBird days to include in recent observations has been changed.')
+        """Set eBird days for recent observations (1 through 30; default: 30)."""
+        days = int(value)
+        if days in range(1, 31):
+            await self.config.days.set(days)
+            await ctx.send('eBird days has been changed.')
+        else:
+            await ctx.send('eBird days must be a number from 1 through 30.')
+
 
     async def get_hybrid_observations(self, ctx):
         """Get recent hybrid observations."""
