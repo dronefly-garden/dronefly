@@ -11,7 +11,7 @@ class ObsRecord(dict):
 
     def __getitem__(self, key):
         """Reformat datetime into human-readable format."""
-        val = super().__getitem__(self, key)
+        val = super().__getitem__(key)
         if key == 'obsDt':
             return datetime.strptime(val, '%Y-%m-%d %H:%M').strftime(self.datetime_format)
         return val
