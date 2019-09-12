@@ -74,8 +74,9 @@ class EBirdCog(commands.Cog):
         embed = discord.Embed()
         for record in records:
             rec = ObsRecord(fmt, **record)
+            name = rec["comName"].replace(" (hybrid)", "")
             embed.add_field(
-                name='{comName.replace(" (hybrid)","")}'.format_map(rec),
+                name=name,
                 value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
             )
         await ctx.send(embed=embed)
