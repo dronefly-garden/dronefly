@@ -72,9 +72,9 @@ class EBirdCog(commands.Cog):
         )
 
     @ebird.command()
-    async def hybrids(self, ctx):
+    async def hybrids(self, ctx, region_code):
         """Reports recent hybrid observations."""
-        records = await self.get_hybrid_observations(ctx) or []
+        records = await self.get_hybrid_observations(ctx, region_code) or []
         if records is False:
             return
         fmt = await self.config.datetime_format()
@@ -127,31 +127,45 @@ class EBirdCog(commands.Cog):
             await ctx.send('eBird days must be a number from 1 through 30.')
 
 
-    async def get_hybrid_observations(self, ctx):
+    async def get_hybrid_observations(self, ctx, region_code):
         """Gets recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
             return False
-        region = await self.config.region()
+
+        # TODO: refactor common code to report invalid region here and in get_region
+        if region_code:
+            try:
+                region = await self.get_region(ctx, region_code)
+            except ValueError as err:
+                await ctx.send('eBird region not valid: {}'.format(err))
+                return
+
+            if not region:
+                await ctx.send('eBird region not found: {}'.format(region_code))
+                return
+        else:
+            region_code = await self.config.region()
+
         days = await self.config.days()
         # Docs at: https://github.com/ProjectBabbler/ebird-api
         return get_observations(
             ebird_key["api_key"],
-            region,
+            region_code,
             back=days,
             category="hybrid",
             detail="simple",
             provisional=True,
         )
 
-    async def get_region(self, ctx, region):
+    async def get_region(self, ctx, region_code):
         """Gets recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
             return False
         return get_region(
             ebird_key["api_key"],
-            region,
+            region_code,
         )
 
     async def get_api_key(self, ctx):
