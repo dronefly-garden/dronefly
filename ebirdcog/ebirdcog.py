@@ -75,7 +75,7 @@ class EBirdCog(commands.Cog):
     @ebird.command()
     async def hybrids(self, ctx, region_code=None, days=None):
         """Reports recent hybrid observations."""
-        days_back = days or await self.config.days()
+        days_back = int(days) if days else await self.config.days()
         if days_back not in range(1, 31):
             await ctx.send('Value for days, %s, must be a number from 1 through 30.' % days_back)
             return
