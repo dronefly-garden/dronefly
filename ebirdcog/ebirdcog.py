@@ -71,14 +71,14 @@ class EBirdCog(commands.Cog):
         if records is False:
             return
         fmt = await self.config.datetime_format()
+        embed = discord.Embed()
         for record in records:
             rec = ObsRecord(fmt, **record)
-            embed = discord.Embed()
             embed.add_field(
                 name='{comName}'.format_map(rec),
                 value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
             )
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
         if not records:
             days = await self.config.days()
             await ctx.send("No hybrids observed in the past %d days." % days)
