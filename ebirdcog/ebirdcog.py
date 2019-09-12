@@ -75,7 +75,7 @@ class EBirdCog(commands.Cog):
         for record in records:
             rec = ObsRecord(fmt, **record)
             embed.add_field(
-                name='{comName}'.format_map(rec),
+                name='{comName.replace(" (hybrid)","")}'.format_map(rec),
                 value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
             )
         await ctx.send(embed=embed)
