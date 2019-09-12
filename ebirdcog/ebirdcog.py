@@ -126,7 +126,8 @@ class EBirdCog(commands.Cog):
                 embed.title = ('%s (Page %d of %d)' % (title, page, pages))
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send(embed=embed, title=title)
+            embed.title = title
+            await ctx.send(embed=embed)
 
     @ebird.command()
     @checks.is_owner()
