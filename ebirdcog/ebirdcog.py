@@ -1,6 +1,7 @@
 """Module to access eBird API."""
 from datetime import datetime
 from redbot.core import commands, checks, Config
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ebird.api import get_observations, get_region
 import discord
 
@@ -74,22 +75,40 @@ class EBirdCog(commands.Cog):
     @ebird.command()
     async def hybrids(self, ctx, region_code):
         """Reports recent hybrid observations."""
+        days = await self.config.days()
         records = await self.get_hybrid_observations(ctx, region_code) or []
         if records is False:
             return
+        if not records:
+            await ctx.send("No hybrids observed in the past %d days." % days)
+            return
+
         fmt = await self.config.datetime_format()
-        embed = discord.Embed()
+        embeds = []
+        title = f'Hybrids in {region_code} from past {days} days'
+        color = 0x90ee90
+        embed = discord.Embed(color=color)
+
         for record in records:
+            if len(embed.fields) == 5:
+                embeds.append(embed)
+                embed = discord.Embed(color=color)
             rec = ObsRecord(fmt, **record)
             name = rec["comName"].replace(" (hybrid)", "")
             embed.add_field(
                 name=name,
                 value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
+                inline=False,
             )
-        await ctx.send(embed=embed)
-        if not records:
-            days = await self.config.days()
-            await ctx.send("No hybrids observed in the past %d days." % days)
+
+        if embeds:
+            embeds.append(embed)
+            pages = len(embeds)
+            for page, embed in enumerate(embeds, start=1):
+                embed.title = ('%s (Page %d of %d)' % (title, page, pages))
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=embed)
 
     @ebird.command()
     @checks.is_owner()
