@@ -14,7 +14,14 @@ class ObsRecord(dict):
         """Reformat datetime into human-readable format."""
         val = super().__getitem__(key)
         if key == 'obsDt':
-            return datetime.strptime(val, '%Y-%m-%d %H:%M').strftime(self.datetime_format)
+            try:
+                parsed_time = datetime.strptime(val, '%Y-%m-%d %H:%M')
+            except ValueError:
+                parsed_time = datetime.strptime(val, '%Y-%m-%d')
+            # TODO: Support config item for date without time & use that if
+            # parsed_time has only a date. Currently this will report such
+            # times as 00:00 which is inaccurate.
+            return parsed_time.strftime(self.datetime_format)
         return val
 
 class EBirdCog(commands.Cog):
