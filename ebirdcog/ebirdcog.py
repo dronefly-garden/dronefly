@@ -2,6 +2,7 @@
 from datetime import datetime
 from redbot.core import commands, checks, Config
 from ebird.api import get_observations, get_region
+import discord
 
 class ObsRecord(dict):
     """A human-readable observation record."""
@@ -72,11 +73,12 @@ class EBirdCog(commands.Cog):
         fmt = await self.config.datetime_format()
         for record in records:
             rec = ObsRecord(fmt, **record)
-            msg = (
-                '{comName} ({sciName});'
-                '{howMany} observed at {obsDt}, from {locName}'
-            ).format_map(rec)
-            await ctx.send(msg)
+            embed = discord.Embed()
+            embed.add_field(
+                name='{comName}'.format_map(rec),
+                value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
+            )
+            await ctx.send(embed=embed)
         if not records:
             days = await self.config.days()
             await ctx.send("No hybrids observed in the past %d days." % days)
