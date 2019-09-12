@@ -7,7 +7,8 @@ import discord
 
 class ObsRecord(dict):
     """A human-readable observation record."""
-    def __init__(self, datetime_format='%H:%M, %d %b, %Y', **kwargs):
+    def __init__(self, date_format='%d %b, %Y', datetime_format='%H:%M, %d %b, %Y', **kwargs):
+        self.date_format = date_format
         self.datetime_format = datetime_format
         super().__init__(**kwargs)
 
@@ -17,12 +18,10 @@ class ObsRecord(dict):
         if key == 'obsDt':
             try:
                 parsed_time = datetime.strptime(val, '%Y-%m-%d %H:%M')
+                return parsed_time.strftime(self.datetime_format)
             except ValueError:
                 parsed_time = datetime.strptime(val, '%Y-%m-%d')
-            # TODO: Support config item for date without time & use that if
-            # parsed_time has only a date. Currently this will report such
-            # times as 00:00 which is inaccurate.
-            return parsed_time.strftime(self.datetime_format)
+                return parsed_time.strftime(self.date_format)
         return val
 
 class EBirdCog(commands.Cog):
@@ -33,7 +32,8 @@ class EBirdCog(commands.Cog):
         self.config.register_global(
             region='CA-NS',
             days=30,
-            datetime_format='%H:%M, %d %b'
+            date_format='%d %b',
+            datetime_format='%H:%M, %d %b',
         )
 
     @commands.group()
@@ -73,18 +73,18 @@ class EBirdCog(commands.Cog):
         )
 
     @ebird.command()
-    async def hybrids(self, ctx, region_code, days: int):
+    async def hybrids(self, ctx, region_code=None, days=None):
         """Reports recent hybrid observations."""
         days_back = days or await self.config.days()
         if days_back not in range(1, 31):
-            await ctx.send('Past days must be a number from 1 through 30.')
+            await ctx.send('Value for days, %s, must be a number from 1 through 30.' % days_back)
             return
 
         if region_code:
             try:
                 region = await self.get_region(ctx, region_code)
             except ValueError as err:
-                await ctx.send('Region not valid: {}'.format(err))
+                await ctx.send(str(err) % region_code)
                 return
 
             if not region:
@@ -100,7 +100,8 @@ class EBirdCog(commands.Cog):
             await ctx.send("No hybrids observed in the past %d days." % days_back)
             return
 
-        fmt = await self.config.datetime_format()
+        date_fmt = await self.config.date_format()
+        datetime_fmt = await self.config.datetime_format()
         embeds = []
         title = f'Hybrids in {region_code} from past {days_back} days'
         color = 0x90ee90
@@ -110,7 +111,7 @@ class EBirdCog(commands.Cog):
             if len(embed.fields) == 5:
                 embeds.append(embed)
                 embed = discord.Embed(color=color)
-            rec = ObsRecord(fmt, **record)
+            rec = ObsRecord(date_fmt, datetime_fmt, **record)
             name = rec["comName"].replace(" (hybrid)", "")
             embed.add_field(
                 name=name,
@@ -140,7 +141,7 @@ class EBirdCog(commands.Cog):
         try:
             region = await self.get_region(ctx, region_code)
         except ValueError as err:
-            await ctx.send('eBird region not valid: {}'.format(err))
+            await ctx.send(str(err) % region_code)
             return
 
         if not region:
