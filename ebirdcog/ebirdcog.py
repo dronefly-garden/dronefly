@@ -73,19 +73,36 @@ class EBirdCog(commands.Cog):
         )
 
     @ebird.command()
-    async def hybrids(self, ctx, region_code):
+    async def hybrids(self, ctx, region_code, days: int):
         """Reports recent hybrid observations."""
-        days = await self.config.days()
-        records = await self.get_hybrid_observations(ctx, region_code) or []
+        days_back = days or await self.config.days()
+        if days_back not in range(1, 31):
+            await ctx.send('Past days must be a number from 1 through 30.')
+            return
+
+        if region_code:
+            try:
+                region = await self.get_region(ctx, region_code)
+            except ValueError as err:
+                await ctx.send('Region not valid: {}'.format(err))
+                return
+
+            if not region:
+                await ctx.send('Region not found: {}'.format(region_code))
+                return
+        else:
+            region_code = await self.config.region()
+
+        records = await self.get_hybrid_observations(ctx, region_code, days_back) or []
         if records is False:
             return
         if not records:
-            await ctx.send("No hybrids observed in the past %d days." % days)
+            await ctx.send("No hybrids observed in the past %d days." % days_back)
             return
 
         fmt = await self.config.datetime_format()
         embeds = []
-        title = f'Hybrids in {region_code} from past {days} days'
+        title = f'Hybrids in {region_code} from past {days_back} days'
         color = 0x90ee90
         embed = discord.Embed(color=color)
 
@@ -146,27 +163,12 @@ class EBirdCog(commands.Cog):
             await ctx.send('eBird days must be a number from 1 through 30.')
 
 
-    async def get_hybrid_observations(self, ctx, region_code):
+    async def get_hybrid_observations(self, ctx, region_code, days):
         """Gets recent hybrid observations."""
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
             return False
 
-        # TODO: refactor common code to report invalid region here and in get_region
-        if region_code:
-            try:
-                region = await self.get_region(ctx, region_code)
-            except ValueError as err:
-                await ctx.send('eBird region not valid: {}'.format(err))
-                return
-
-            if not region:
-                await ctx.send('eBird region not found: {}'.format(region_code))
-                return
-        else:
-            region_code = await self.config.region()
-
-        days = await self.config.days()
         # Docs at: https://github.com/ProjectBabbler/ebird-api
         return get_observations(
             ebird_key["api_key"],
