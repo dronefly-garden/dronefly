@@ -28,6 +28,8 @@ class INatCog(commands.Cog):
             thumbnail = None
             name = record['name']
             key = 'preferred_common_name'
+            inat_id = record['id']
+            url = f'https://www.inaturalist.org/taxa/{inat_id}'
             if key in record:
                 common = record[key]
             key = 'default_photo'
@@ -37,12 +39,8 @@ class INatCog(commands.Cog):
                 if key in photo:
                     thumbnail = photo['square_url']
 
-            embed.add_field(
-                name=name,
-                value=common or '\u200b',
-                inline=False,
-            )
-
+            embed.title = f'{name} ({common})' if common else name
+            embed.url = url
             if thumbnail:
                 embed.set_thumbnail(url=thumbnail)
         else:
