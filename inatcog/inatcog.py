@@ -21,7 +21,18 @@ class INatCog(commands.Cog):
         color = 0x90ee90
         embed = discord.Embed(color=color)
 
-        record = records[0] if records and records[0] else None
+        matches = len(records)
+        record = records[0]
+        # Try to intelligently match up a better result instead of just using first:
+        if matches > 1:
+            treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
+            match_term = terms[0].upper() if treat_term_as_code else None
+
+            for rec in records:
+                term = rec['matched_term']
+                if match_term and term == match_term:
+                    record = rec
+                    break
 
         if record:
             common = None
