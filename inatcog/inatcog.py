@@ -21,14 +21,30 @@ class INatCog(commands.Cog):
         color = 0x90ee90
         embed = discord.Embed(color=color)
 
-        if records:
+        record = records[0] if records and records[0] else None
+
+        if record:
+            common = None
+            thumbnail = None
+            name = record['name']
+            key = 'preferred_common_name'
+            if key in record:
+                common = record[key]
+            key = 'default_photo'
+            if key in record:
+                photo = record[key]
+                key = 'square_url'
+                if key in photo:
+                    thumbnail = photo['square_url']
+
             embed.add_field(
-                name=records[0]['name'],
-                value=records[0]['preferred_common_name'],
+                name=name,
+                value=common or '\u200b',
                 inline=False,
             )
 
-            embed.set_thumbnail(url=records[0]['default_photo']['square_url'])
+            if thumbnail:
+                embed.set_thumbnail(url=thumbnail)
         else:
             embed.add_field(
                 name='Sorry',
