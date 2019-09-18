@@ -1,0 +1,11 @@
+{
+  "author" : ["SyntheticBee"],
+  "install_msg": "Bzz, bzz.",
+  "name" : "iNatCog",
+  "short" : "Commands using the iNat API v1.",
+  "description" : "Commands using the iNat API v1 (https://api.inaturalist.org/v1).",
+  "requirements" : ["requests"],
+  "tags": ["inaturalist", "naturalist", "nature"],
+  "hidden": false,
+  "min_bot_version": "3.1.5"
+}
