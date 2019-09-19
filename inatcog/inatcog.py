@@ -36,9 +36,8 @@ class INatCog(commands.Cog):
 
             term = None
             for rec in records:
-                key = 'matched_term'
-                if key in rec:
-                    term = rec[key]
+                if 'matched_term' in rec:
+                    term = rec['matched_term']
                     name = rec['name']
                     common = rec['preferred_common_name']
 
@@ -58,17 +57,14 @@ class INatCog(commands.Cog):
             common = None
             thumbnail = None
             name = record['name']
-            key = 'preferred_common_name'
             inat_id = record['id']
             url = f'https://www.inaturalist.org/taxa/{inat_id}'
-            if key in record:
-                common = record[key]
-            key = 'default_photo'
-            if key in record:
-                photo = record[key]
-                key = 'square_url'
-                if photo and (key in photo):
-                    thumbnail = photo[key]
+            if 'preferred_common_name' in record:
+                common = record['preferred_common_name']
+            if 'default_photo' in record:
+                photo = record['default_photo']
+                if photo and ('square_url' in photo):
+                    thumbnail = photo['square_url']
 
             embed.title = f'{name} ({common})' if common else name
             embed.url = url
