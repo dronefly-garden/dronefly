@@ -53,8 +53,8 @@ class INatCog(commands.Cog):
             if key in record:
                 photo = record[key]
                 key = 'square_url'
-                if key in photo:
-                    thumbnail = photo['square_url']
+                if photo and (key in photo):
+                    thumbnail = photo[key]
 
             embed.title = f'{name} ({common})' if common else name
             embed.url = url
