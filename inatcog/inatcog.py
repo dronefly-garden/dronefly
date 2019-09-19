@@ -16,6 +16,10 @@ class INatCog(commands.Cog):
     @inat.command()
     async def taxon(self, ctx, *terms):
         """Show taxon by id or unique code or name."""
+        if not terms:
+            await ctx.send_help()
+            return
+
         records = await self.taxa_query(*terms) or []
         record = None
 
