@@ -27,18 +27,32 @@ class INatCog(commands.Cog):
         record = None
 
         if records:
-            matches = len(records)
             record = records[0]
-            # Try to intelligently match up a better result instead of just using first:
-            if matches > 1:
-                treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
-                match_term = terms[0].upper() if treat_term_as_code else None
+            matched_term_is_a_name = False
 
-                for rec in records:
-                    term = rec['matched_term']
-                    if match_term and term == match_term:
+            # Try to intelligently match code, name, or common name:
+            treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
+            code = terms[0].upper() if treat_term_as_code else None
+
+            term = None
+            for rec in records:
+                key = 'matched_term'
+                if key in rec:
+                    term = rec[key]
+                    name = rec['name']
+                    common = rec['preferred_common_name']
+
+                    matched_term_is_a_name = term in (name, common)
+                    if matched_term_is_a_name or (code and term == code):
                         record = rec
                         break
+
+            if term and not matched_term_is_a_name:
+                embed.add_field(
+                    name='Matched:',
+                    value=term,
+                    inline=False,
+                )
 
         if record:
             common = None
