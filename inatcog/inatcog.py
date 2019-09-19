@@ -20,11 +20,11 @@ class INatCog(commands.Cog):
             await ctx.send_help()
             return
 
-        records = await self.taxa_query(*terms) or []
-        record = None
-
         color = 0x90ee90
         embed = discord.Embed(color=color)
+
+        records = await self.taxa_query(*terms) or []
+        record = None
 
         if records:
             matches = len(records)
@@ -72,9 +72,18 @@ class INatCog(commands.Cog):
     async def taxa_query(self, *terms):
         """Query /taxa for taxa matching terms."""
         inaturalist_api = 'https://api.inaturalist.org/v1/'
-        results = requests.get(
-            inaturalist_api + 'taxa/',
-            headers={'Accept': 'application/json'},
-            params={'q':' '.join(terms)},
-        ).json()['results']
+        treat_as_id = len(terms) == 1 and terms[0].isdigit()
+
+        if treat_as_id:
+            results = requests.get(
+                f'{inaturalist_api}taxa/{terms[0]}',
+                headers={'Accept': 'application/json'},
+            ).json()['results']
+        else:
+            results = requests.get(
+                f'{inaturalist_api}taxa/',
+                headers={'Accept': 'application/json'},
+                params={'q': ' '.join(terms)},
+            ).json()['results']
+
         return results
