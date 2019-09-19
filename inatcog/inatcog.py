@@ -43,7 +43,7 @@ class INatCog(commands.Cog):
                     key = 'preferred_common_name'
                     if key in rec:
                         common = rec[key]
-                    else
+                    else:
                         common = ''
 
                     matched_term_is_a_name = term in (name, common)
