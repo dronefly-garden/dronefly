@@ -1,24 +1,23 @@
 """Module to access eBird API."""
 import functools
 import logging
+from collections import namedtuple
 from redbot.core import commands
 import discord
 import requests
 
+Taxon = namedtuple('Taxon', 'name, inat_id, common, term, thumbnail')
+
 def get_fields(record):
     """Deserialize just the fields we need from JSON record."""
-    name = record['name']
-    inat_id = record['id']
-    common = record.get('preferred_common_name')
-    term = record.get('matched_term')
-    thumbnail = record.get('default_photo', {}).get('square_url')
-    return {
-        'name': name,
-        'inat_id': inat_id,
-        'common': common,
-        'term': term,
-        'thumbnail': thumbnail,
-    }
+    rec = Taxon(
+        record['name'],
+        record['id'],
+        record.get('preferred_common_name'),
+        record.get('matched_term'),
+        record.get('default_photo', {}).get('square_url'),
+    )
+    return rec
 
 def get_taxa_from_user_args(function):
     """Decorator to map user arguments into get_taxa iNat api wrapper arguments."""
@@ -82,8 +81,8 @@ class INatCog(commands.Cog):
         rec = None
         for record in records:
             rec = get_fields(record)
-            matched_term_is_a_name = rec['term'] in (rec['name'], rec['common'])
-            if matched_term_is_a_name or (code and rec['term'] == code):
+            matched_term_is_a_name = rec.term in (rec.name, rec.common)
+            if matched_term_is_a_name or (code and rec.term == code):
                 break
             else:
                 rec = None
@@ -91,15 +90,15 @@ class INatCog(commands.Cog):
         if not rec:
             rec = get_fields(records[0])
 
-        embed.title = ('{name} ({common})').format_map(rec) if rec['common'] else rec['name']
-        embed.url = f'https://www.inaturalist.org/taxa/{rec["inat_id"]}'
-        if rec['thumbnail']:
-            embed.set_thumbnail(url=rec['thumbnail'])
+        embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
+        embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
+        if rec.thumbnail:
+            embed.set_thumbnail(url=rec.thumbnail)
 
-        if rec['term'] and not matched_term_is_a_name:
+        if rec.term and not matched_term_is_a_name:
             embed.add_field(
                 name='Matched:',
-                value=rec['term'],
+                value=rec.term,
                 inline=False,
             )
 
