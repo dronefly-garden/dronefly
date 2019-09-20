@@ -1,23 +1,17 @@
 """Module to access eBird API."""
 import functools
+import logging
 from redbot.core import commands
 import discord
 import requests
 
 def get_fields(record):
     """Deserialize just the fields we need from JSON record."""
-    term = common = thumbnail = None
-
     name = record['name']
     inat_id = record['id']
-    if 'preferred_common_name' in record:
-        common = record['preferred_common_name']
-    if 'matched_term' in record:
-        term = record['matched_term']
-    if 'default_photo' in record:
-        photo = record['default_photo']
-        if photo and ('square_url' in photo):
-            thumbnail = photo['square_url']
+    common = record.get('preferred_common_name')
+    term = record.get('matched_term')
+    thumbnail = record.get('default_photo', {}).get('square_url')
     return {
         'name': name,
         'inat_id': inat_id,
@@ -54,6 +48,7 @@ class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
         self.bot = bot
+        self.log = logging.getLogger('red.quaggagriff.inatcog')
 
     @commands.group()
     async def inat(self, ctx):
