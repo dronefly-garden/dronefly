@@ -1,4 +1,5 @@
 """Module to access eBird API."""
+import functools
 from redbot.core import commands
 import discord
 import requests
@@ -25,6 +26,30 @@ def get_fields(record):
         'thumbnail': thumbnail,
     }
 
+def get_taxa_from_user_args(function):
+    """Decorator to map user arguments into get_taxa iNat api wrapper arguments."""
+    @functools.wraps(function)
+    def terms_wrapper(*args, **kwargs):
+        treat_as_id = len(args) == 1 and args[0].isdigit()
+        if not treat_as_id:
+            kwargs['q'] = " ".join(args)
+            args = []
+        return function(*args, **kwargs)
+    return terms_wrapper
+
+@get_taxa_from_user_args
+def get_taxa(*args, **kwargs):
+    """Query /taxa for taxa matching terms."""
+    inaturalist_api = 'https://api.inaturalist.org/v1/'
+
+    results = requests.get(
+        f'{inaturalist_api}taxa/{args[0] if args else ""}',
+        headers={'Accept': 'application/json'},
+        params=kwargs,
+    ).json()['results']
+
+    return results
+
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
@@ -43,7 +68,7 @@ class INatCog(commands.Cog):
             return
 
         embed = discord.Embed(color=0x90ee90)
-        records = await self.taxa_query(*terms)
+        records = get_taxa(*terms)
 
         if not records:
             embed.add_field(
@@ -84,22 +109,3 @@ class INatCog(commands.Cog):
             )
 
         await ctx.send(embed=embed)
-
-    async def taxa_query(self, *terms):
-        """Query /taxa for taxa matching terms."""
-        inaturalist_api = 'https://api.inaturalist.org/v1/'
-        treat_as_id = len(terms) == 1 and terms[0].isdigit()
-
-        if treat_as_id:
-            results = requests.get(
-                f'{inaturalist_api}taxa/{terms[0]}',
-                headers={'Accept': 'application/json'},
-            ).json()['results']
-        else:
-            results = requests.get(
-                f'{inaturalist_api}taxa/',
-                headers={'Accept': 'application/json'},
-                params={'q': ' '.join(terms)},
-            ).json()['results']
-
-        return results
