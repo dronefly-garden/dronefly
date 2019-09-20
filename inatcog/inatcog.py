@@ -3,6 +3,28 @@ from redbot.core import commands
 import discord
 import requests
 
+def get_fields(record):
+    """Deserialize just the fields we need from JSON record."""
+    term = common = thumbnail = None
+
+    name = record['name']
+    inat_id = record['id']
+    if 'preferred_common_name' in record:
+        common = record['preferred_common_name']
+    if 'matched_term' in record:
+        term = record['matched_term']
+    if 'default_photo' in record:
+        photo = record['default_photo']
+        if photo and ('square_url' in photo):
+            thumbnail = photo['square_url']
+    return {
+        'name': name,
+        'inat_id': inat_id,
+        'common': common,
+        'term': term,
+        'thumbnail': thumbnail,
+    }
+
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
@@ -20,64 +42,44 @@ class INatCog(commands.Cog):
             await ctx.send_help()
             return
 
-        color = 0x90ee90
-        embed = discord.Embed(color=color)
+        embed = discord.Embed(color=0x90ee90)
+        records = await self.taxa_query(*terms)
 
-        records = await self.taxa_query(*terms) or []
-        record = None
-
-        if records:
-            record = records[0]
-            matched_term_is_a_name = False
-
-            # Try to intelligently match code, name, or common name:
-            treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
-            code = terms[0].upper() if treat_term_as_code else None
-
-            term = None
-            for rec in records:
-                if 'matched_term' in rec:
-                    term = rec['matched_term']
-                    name = rec['name']
-                    key = 'preferred_common_name'
-                    if key in rec:
-                        common = rec[key]
-                    else:
-                        common = ''
-
-                    matched_term_is_a_name = term in (name, common)
-                    if matched_term_is_a_name or (code and term == code):
-                        record = rec
-                        break
-
-            if term and not matched_term_is_a_name:
-                embed.add_field(
-                    name='Matched:',
-                    value=term,
-                    inline=False,
-                )
-
-        if record:
-            common = None
-            thumbnail = None
-            name = record['name']
-            inat_id = record['id']
-            url = f'https://www.inaturalist.org/taxa/{inat_id}'
-            if 'preferred_common_name' in record:
-                common = record['preferred_common_name']
-            if 'default_photo' in record:
-                photo = record['default_photo']
-                if photo and ('square_url' in photo):
-                    thumbnail = photo['square_url']
-
-            embed.title = f'{name} ({common})' if common else name
-            embed.url = url
-            if thumbnail:
-                embed.set_thumbnail(url=thumbnail)
-        else:
+        if not records:
             embed.add_field(
                 name='Sorry',
                 value='Nothing found',
+                inline=False,
+            )
+            await ctx.send(embed=embed)
+            return
+
+        matched_term_is_a_name = False
+        treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
+        code = terms[0].upper() if treat_term_as_code else None
+
+        # Find first record matching name, common name, or code
+        rec = None
+        for record in records:
+            rec = get_fields(record)
+            matched_term_is_a_name = rec['term'] in (rec['name'], rec['common'])
+            if matched_term_is_a_name or (code and rec['term'] == code):
+                break
+            else:
+                rec = None
+
+        if not rec:
+            rec = get_fields(records[0])
+
+        embed.title = ('{name} ({common})').format_map(rec) if rec['common'] else rec['name']
+        embed.url = f'https://www.inaturalist.org/taxa/{rec["inat_id"]}'
+        if rec['thumbnail']:
+            embed.set_thumbnail(url=rec['thumbnail'])
+
+        if rec['term'] and not matched_term_is_a_name:
+            embed.add_field(
+                name='Matched:',
+                value=rec['term'],
                 inline=False,
             )
 
