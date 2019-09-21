@@ -82,9 +82,11 @@ class INatCog(commands.Cog):
         rec = None
         # Initial candidate record if no more suitable record is found is just the
         # first record returned (i.e. topmost taxon that matches).
-        candidate_record = records[0]
+        first_record = first_phrase_record = None
         for record in records:
             rec = get_fields(record)
+            if not first_record:
+                first_record = rec
             matched_term_is_a_name = rec.term in (rec.name, rec.common)
             if matched_term_is_a_name or (code and rec.term == code):
                 if treat_terms_as_phrase and matched_term_is_a_name:
@@ -97,12 +99,15 @@ class INatCog(commands.Cog):
                     # If non-code, non-name, non-common-name, phrase match will pick
                     # the first matching term as a candidate_record in case no later
                     # records match on the code or name.
-                    if not candidate_record and (terms[0].lower() in rec.term.lower()):
-                        candidate_record = record
+                    if not first_phrase_record and (terms[0].lower() in rec.term.lower()):
+                        first_phrase_record = rec
                 rec = None
 
         if not rec:
-            rec = get_fields(candidate_record)
+            if first_phrase_record:
+                rec = first_phrase_record
+            else:
+                rec = first_record
 
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
