@@ -10,12 +10,13 @@ Taxon = namedtuple('Taxon', 'name, inat_id, common, term, thumbnail')
 
 def get_fields(record):
     """Deserialize just the fields we need from JSON record."""
+    photo = record.get('default_photo')
     rec = Taxon(
         record['name'],
         record['id'],
         record.get('preferred_common_name'),
         record.get('matched_term'),
-        record.get('default_photo', {}).get('square_url'),
+        photo.get('square_url') if photo else None,
     )
     return rec
 
