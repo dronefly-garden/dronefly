@@ -1,6 +1,7 @@
 """Module to access eBird API."""
 import functools
 import logging
+import re
 from collections import namedtuple
 from redbot.core import commands
 import discord
@@ -91,7 +92,8 @@ class INatCog(commands.Cog):
             matched_term_is_a_name = rec.term in (rec.name, rec.common)
             if matched_term_is_a_name or (code and rec.term == code):
                 if treat_terms_as_phrase and matched_term_is_a_name:
-                    if terms[0].lower() in rec.term.lower():
+                    pat = re.compile(r'\b%s\b' % terms[0].strip(), re.I)
+                    if re.search(pat, rec.term):
                         break
                 else:
                     break
