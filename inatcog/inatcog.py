@@ -81,7 +81,7 @@ def match_taxon(terms, records):
         else:
             LOG.info('matched first record (no better match)')
             rec = first_record
-    return (rec, matched_term_is_a_name)
+    return rec
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
@@ -126,14 +126,14 @@ class INatCog(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        (rec, matched_term_is_a_name) = match_taxon(terms, records)
+        rec = match_taxon(terms, records)
 
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
 
-        if rec.term and not matched_term_is_a_name:
+        if rec.term and rec.term not in (rec.name, rec.common):
             embed.add_field(
                 name='Matched:',
                 value=rec.term,
