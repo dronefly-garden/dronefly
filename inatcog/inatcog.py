@@ -1,4 +1,4 @@
-"""Module to access eBird API."""
+"""Module to access iNaturalist API."""
 import functools
 import logging
 import re
@@ -31,6 +31,46 @@ def get_taxa_from_user_args(function):
             args = []
         return function(*args, **kwargs)
     return terms_wrapper
+
+def match_taxon(terms, records):
+    """Match a single taxon for the given terms among recorgs returned by API."""
+    matched_term_is_a_name = False
+    treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
+    treat_terms_as_phrase = len(terms) == 1 and ' ' in terms[0]
+    code = terms[0].upper() if treat_term_as_code else None
+
+    # Find first record matching name, common name, or code
+    rec = None
+    # Initial candidate record if no more suitable record is found is just the
+    # first record returned (i.e. topmost taxon that matches).
+    first_record = first_phrase_record = None
+    for record in records:
+        rec = get_fields(record)
+        if not first_record:
+            first_record = rec
+        matched_term_is_a_name = rec.term in (rec.name, rec.common)
+        if matched_term_is_a_name or (code and rec.term == code):
+            if treat_terms_as_phrase and matched_term_is_a_name:
+                pat = re.compile(r'\b%s\b' % terms[0].strip(), re.I)
+                if re.search(pat, rec.term):
+                    break
+            else:
+                break
+        else:
+            if treat_terms_as_phrase:
+                # If non-code, non-name, non-common-name, phrase match will pick
+                # the first matching term as a candidate_record in case no later
+                # records match on the code or name.
+                if not first_phrase_record and (terms[0].lower() in rec.term.lower()):
+                    first_phrase_record = rec
+            rec = None
+
+    if not rec:
+        if first_phrase_record:
+            rec = first_phrase_record
+        else:
+            rec = first_record
+    return (rec, matched_term_is_a_name)
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
@@ -75,42 +115,7 @@ class INatCog(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        matched_term_is_a_name = False
-        treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
-        treat_terms_as_phrase = len(terms) == 1 and ' ' in terms[0]
-        code = terms[0].upper() if treat_term_as_code else None
-
-        # Find first record matching name, common name, or code
-        rec = None
-        # Initial candidate record if no more suitable record is found is just the
-        # first record returned (i.e. topmost taxon that matches).
-        first_record = first_phrase_record = None
-        for record in records:
-            rec = get_fields(record)
-            if not first_record:
-                first_record = rec
-            matched_term_is_a_name = rec.term in (rec.name, rec.common)
-            if matched_term_is_a_name or (code and rec.term == code):
-                if treat_terms_as_phrase and matched_term_is_a_name:
-                    pat = re.compile(r'\b%s\b' % terms[0].strip(), re.I)
-                    if re.search(pat, rec.term):
-                        break
-                else:
-                    break
-            else:
-                if treat_terms_as_phrase:
-                    # If non-code, non-name, non-common-name, phrase match will pick
-                    # the first matching term as a candidate_record in case no later
-                    # records match on the code or name.
-                    if not first_phrase_record and (terms[0].lower() in rec.term.lower()):
-                        first_phrase_record = rec
-                rec = None
-
-        if not rec:
-            if first_phrase_record:
-                rec = first_phrase_record
-            else:
-                rec = first_record
+        (rec, matched_term_is_a_name) = match_taxon(terms, records)
 
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
