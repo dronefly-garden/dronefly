@@ -8,6 +8,7 @@ import discord
 import requests
 
 Taxon = namedtuple('Taxon', 'name, inat_id, common, term, thumbnail')
+LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 def get_fields(record):
     """Deserialize just the fields we need from JSON record."""
@@ -24,20 +25,23 @@ def get_fields(record):
 def get_taxa_from_user_args(function):
     """Decorator to map user arguments into get_taxa iNat api wrapper arguments."""
     @functools.wraps(function)
-    def terms_wrapper(*args, **kwargs):
-        treat_as_id = len(args) == 1 and args[0].isdigit()
+    def terms_wrapper(terms, **kwargs):
+        treat_as_id = terms.isdigit()
         if not treat_as_id:
-            kwargs['q'] = " ".join(args)
-            args = []
-        return function(*args, **kwargs)
+            kwargs['q'] = terms
+            terms = ''
+        return function(terms, **kwargs)
     return terms_wrapper
 
 def match_taxon(terms, records):
     """Match a single taxon for the given terms among recorgs returned by API."""
     matched_term_is_a_name = False
-    treat_term_as_code = len(terms) == 1 and len(terms[0]) == 4
-    treat_terms_as_phrase = len(terms) == 1 and ' ' in terms[0]
-    code = terms[0].upper() if treat_term_as_code else None
+    treat_term_as_code = len(terms) == 4
+
+    treat_terms_as_phrase = bool(re.match(r'".*"$', terms))
+    if treat_terms_as_phrase:
+        phrase = re.compile(r'\b%s\b' % terms.replace('"', ''), re.I)
+    code = terms.upper() if treat_term_as_code else None
 
     # Find first record matching name, common name, or code
     rec = None
@@ -49,10 +53,15 @@ def match_taxon(terms, records):
         if not first_record:
             first_record = rec
         matched_term_is_a_name = rec.term in (rec.name, rec.common)
+        LOG.info('terms: %s', terms)
+        LOG.info('treat_terms_as_phrase: %s', treat_terms_as_phrase)
+        LOG.info('matched_term_is_a_name: %s', matched_term_is_a_name)
         if matched_term_is_a_name or (code and rec.term == code):
+            if not matched_term_is_a_name:
+                LOG.info('matched term is a code')
             if treat_terms_as_phrase and matched_term_is_a_name:
-                pat = re.compile(r'\b%s\b' % terms[0].strip(), re.I)
-                if re.search(pat, rec.term):
+                if re.search(phrase, rec.term):
+                    LOG.info('matched phrase in name')
                     break
             else:
                 break
@@ -61,14 +70,16 @@ def match_taxon(terms, records):
                 # If non-code, non-name, non-common-name, phrase match will pick
                 # the first matching term as a candidate_record in case no later
                 # records match on the code or name.
-                if not first_phrase_record and (terms[0].lower() in rec.term.lower()):
+                if not first_phrase_record and re.search(phrase, rec.term):
                     first_phrase_record = rec
             rec = None
 
     if not rec:
         if first_phrase_record:
+            LOG.info('matched phrase in another term')
             rec = first_phrase_record
         else:
+            LOG.info('matched first record (no better match)')
             rec = first_record
     return (rec, matched_term_is_a_name)
 
@@ -97,14 +108,14 @@ class INatCog(commands.Cog):
         pass # pylint: disable=unnecessary-pass
 
     @inat.command()
-    async def taxon(self, ctx, *terms):
+    async def taxon(self, ctx, *, terms):
         """Show taxon by id or unique code or name."""
         if not terms:
             await ctx.send_help()
             return
 
         embed = discord.Embed(color=0x90ee90)
-        records = get_taxa(*terms)
+        records = get_taxa(terms)
 
         if not records:
             embed.add_field(
