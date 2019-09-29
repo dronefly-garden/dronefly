@@ -24,14 +24,52 @@ def get_fields_from_results(results):
         return rec
     return list(map(get_fields, results))
 
+RANKS = [
+    'kingdom',
+    'phylum',
+    'subphylum',
+    'superclass',
+    'class',
+    'subclass',
+    'superorder',
+    'order',
+    'suborder',
+    'infraorder',
+    'superfamily',
+    'epifamily',
+    'family',
+    'subfamily',
+    'supertribe',
+    'genus',
+    'genushybrid',
+    'species',
+    'hybrid',
+    'subspecies',
+    'variety',
+    'form',
+]
+
 def get_taxa_from_user_args(function):
     """Map taxon subcommand arguments to /taxa API call arguments."""
     @functools.wraps(function)
-    def terms_wrapper(terms, **kwargs):
-        treat_as_id = terms.isdigit()
-        if not treat_as_id:
-            kwargs['q'] = terms
+    def terms_wrapper(query, **kwargs):
+        if query.isdigit():
+            terms = query
+        else:
+            words = query.split()
+            query_words = []
+            ranks = []
+            for word in words:
+                rank = word.lower()
+                if rank in RANKS:
+                    ranks.append(rank)
+                else:
+                    query_words.append(word)
+
             terms = ''
+            kwargs['q'] = ' '.join(query_words)
+            if ranks:
+                kwargs['rank'] = ','.join(ranks)
         return function(terms, **kwargs)
     return terms_wrapper
 
