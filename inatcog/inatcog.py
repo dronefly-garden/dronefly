@@ -6,6 +6,8 @@ from collections import namedtuple
 from redbot.core import commands
 import discord
 import requests
+from pyparsing import Word, alphanums, Keyword, Group, Combine, Forward, Suppress
+
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
@@ -137,6 +139,81 @@ def get_taxa(*args, **kwargs):
     ).json()['results']
 
     return results
+
+class TaxonQueryParser:
+    # pylint: disable=no-self-use
+    """A parser for taxon queries."""
+    def __init__(self):
+        self._methods = {
+            # TODO: 'in': self.evaluate_in,
+            'and': self.evaluate_and,
+            'quotes': self.evaluate_quotes,
+            'word': self.evaluate_word,
+            # TODO: 'id': self.evaluate_id,
+        }
+        self._parser = self.parser()
+
+    def parser(self):
+        # pylint: disable=pointless-statement
+        # pylint: disable=expression-not-assigned
+        """Return a parser."""
+        op_word = Group(Word(alphanums)).setResultsName('word')
+
+        op_quotes_content = Forward()
+        op_quotes_content << ((op_word + op_quotes_content) | op_word)
+
+        op_quotes = Group(
+            Suppress('"') + op_quotes_content + Suppress('"')
+        ).setResultsName("quotes") | op_word
+
+        op_and = Forward()
+        op_and << (op_quotes + op_and).setResultsName("and") | op_quotes
+
+        return op_and.parseString
+
+    def evaluate_and(self, argument):
+        """Evaluate intersection of arguments."""
+        return self.evaluate(argument[0]).intersection(self.evaluate(argument[1]))
+
+    def evaluate_quotes(self, argument):
+        """Evaluate quoted strings
+
+        First it does an 'and' on the individual search terms, then it asks the
+        function get_quoted to only return the subset of ID's that contain the
+        literal string.
+        """
+        result = set()
+        search_terms = []
+        for item in argument:
+            search_terms.append(item[0])
+            if result:
+                result = result.intersection(self.evaluate(item))
+            else:
+                result = self.evaluate(item)
+        return self.get_quotes(' '.join(search_terms), result)
+
+    def evaluate_word(self, argument):
+        """Evaluate word."""
+        return self.get_word(argument[0])
+
+    def evaluate(self, argument):
+        """Evaluate."""
+        return self._methods[argument.getName()](argument)
+
+    def parse(self, query):
+        """Parse."""
+        #print self._parser(query)[0]
+        return self.evaluate(self._parser(query)[0])
+
+    def get_word(self, word):
+        """Get a word."""
+        # FIXME: no implementation; make this class an ABC
+        return set()
+
+    def get_quotes(self, search_string, tmp_result):
+        """Get quoted phrase."""
+        # FIXME: no implementation; make this class an ABC
+        return set()
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
