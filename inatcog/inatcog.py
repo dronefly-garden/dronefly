@@ -7,7 +7,7 @@ from redbot.core import commands
 import discord
 import requests
 
-Taxon = namedtuple('Taxon', 'name, inat_id, common, term, thumbnail')
+Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 def get_fields_from_results(results):
@@ -16,7 +16,7 @@ def get_fields_from_results(results):
         photo = record.get('default_photo')
         rec = Taxon(
             record['name'],
-            record['id'],
+            record['id'] if 'id' in record else record['taxon_id'],
             record.get('preferred_common_name'),
             record.get('matched_term'),
             photo.get('square_url') if photo else None,
@@ -54,7 +54,7 @@ def get_taxa_from_user_args(function):
     @functools.wraps(function)
     def query_wrapper(query, **kwargs):
         if query.isdigit():
-            inat_id = query
+            taxon_id = query
         else:
             words = query.split()
             query_words = []
@@ -66,11 +66,11 @@ def get_taxa_from_user_args(function):
                 else:
                     query_words.append(word)
 
-            inat_id = ''
+            taxon_id = ''
             kwargs['q'] = ' '.join(query_words)
             if ranks:
                 kwargs['rank'] = ','.join(ranks)
-        return function(inat_id, **kwargs)
+        return function(taxon_id, **kwargs)
     return query_wrapper
 
 def score_match(query, record, phrase=None):
@@ -80,7 +80,7 @@ def score_match(query, record, phrase=None):
         phrase_matched_name = re.search(phrase, record.name)
         phrase_matched_common = re.search(phrase, record.common) if record.common else False
         if not phrase_matched_name or phrase_matched_common:
-            phrase_matched = re.search(phrase, record.term)
+            phrase_matched = re.search(phrase, str(record.term))
         else:
             phrase_matched = None
     else:
@@ -181,13 +181,13 @@ class INatCog(commands.Cog):
     async def send_taxa_embed(self, ctx, embed, rec, score):
         """Send embed describing taxa record matched."""
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
-        embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
+        embed.url = f'https://www.inaturalist.org/taxa/{rec.taxon_id}'
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
         if score <= 200:
             embed.add_field(
                 name='Matched:',
-                value=rec.term,
+                value=rec.term or 'Id: %d' % rec.taxon_id,
                 inline=False,
             )
         await ctx.send(embed=embed)
