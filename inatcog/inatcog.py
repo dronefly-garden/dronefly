@@ -82,27 +82,16 @@ def score_match(query, record, phrase=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
     if phrase:
+        phrase_matched = re.search(phrase, record.term)
         phrase_matched_name = re.search(phrase, record.name)
         phrase_matched_common = re.search(phrase, record.common) if record.common else False
-        if not phrase_matched_name or phrase_matched_common:
-            phrase_matched = re.search(phrase, str(record.term))
-        else:
-            phrase_matched = None
     else:
         phrase_matched = phrase_matched_name = phrase_matched_common = False
 
     if not phrase and len(query) == 4 and query.upper() == record.term:
         score = 300
-    elif phrase_matched_name:
-        score = 220
-    elif phrase_matched_common:
-        score = 210
-    elif phrase_matched:
+    elif phrase_matched_name or phrase_matched_common or phrase_matched:
         score = 200
-    elif record.term == record.name:
-        score = 120
-    elif record.term == record.common:
-        score = 110
     else:
         score = 100
 
@@ -117,14 +106,14 @@ def match_taxon(query, records):
     else:
         exact_query = None
 
-    phrase = re.compile(r'\b%s\b' % (exact_query or query), re.I)
+    if exact_query:
+        phrase = re.compile(r'\b%s\b' % exact_query, re.I)
+    else:
+        phrase = None
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
         scores[num] = score_match(query, record, phrase=phrase)
-
-    if scores[0] == 0:
-        scores[0] = 10
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
@@ -276,10 +265,11 @@ class INatCog(commands.Cog):
         embed.url = f'https://www.inaturalist.org/taxa/{rec.taxon_id}'
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
-        if score <= 200:
+        matched = rec.term or rec.taxon_id
+        if matched not in (rec.name, rec.common):
             embed.add_field(
                 name='Matched:',
-                value=rec.term or 'Id: %d' % rec.taxon_id,
+                value=matched,
                 inline=False,
             )
         await ctx.send(embed=embed)
