@@ -10,20 +10,22 @@ import requests
 Taxon = namedtuple('Taxon', 'name, inat_id, common, term, thumbnail')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
-def get_fields(record):
-    """Deserialize just the fields we need from JSON record."""
-    photo = record.get('default_photo')
-    rec = Taxon(
-        record['name'],
-        record['id'],
-        record.get('preferred_common_name'),
-        record.get('matched_term'),
-        photo.get('square_url') if photo else None,
-    )
-    return rec
+def get_fields_from_results(results):
+    """Map get_taxa results into namedtuples of selected fields."""
+    def get_fields(record):
+        photo = record.get('default_photo')
+        rec = Taxon(
+            record['name'],
+            record['id'],
+            record.get('preferred_common_name'),
+            record.get('matched_term'),
+            photo.get('square_url') if photo else None,
+        )
+        return rec
+    return list(map(get_fields, results))
 
 def get_taxa_from_user_args(function):
-    """Decorator to map user arguments into get_taxa iNat api wrapper arguments."""
+    """Map taxon subcommand arguments to /taxa API call arguments."""
     @functools.wraps(function)
     def terms_wrapper(terms, **kwargs):
         treat_as_id = terms.isdigit()
@@ -33,55 +35,57 @@ def get_taxa_from_user_args(function):
         return function(terms, **kwargs)
     return terms_wrapper
 
+def score_match(terms, record, phrase=None):
+    """Score a matched record. A higher score is a better match."""
+    score = 0
+    if phrase:
+        phrase_matched_name = re.search(phrase, record.name)
+        phrase_matched_common = re.search(phrase, record.common) if record.common else False
+        if not phrase_matched_name or phrase_matched_common:
+            phrase_matched = re.search(phrase, record.term)
+        else:
+            phrase_matched = None
+    else:
+        phrase_matched = phrase_matched_name = phrase_matched_common = False
+
+    if len(terms) == 4 and terms.upper() == record.term:
+        score = 300
+    elif phrase_matched_name:
+        score = 220
+    elif phrase_matched_common:
+        score = 210
+    elif phrase_matched:
+        score = 200
+    elif record.term == record.name:
+        score = 120
+    elif record.term == record.common:
+        score = 110
+    else:
+        score = 100
+
+    LOG.info('Final score: %d', score)
+    return score
+
 def match_taxon(terms, records):
-    """Match a single taxon for the given terms among recorgs returned by API."""
-    matched_term_is_a_name = False
-    treat_term_as_code = len(terms) == 4
+    """Match a single taxon for the given terms among records returned by API."""
+    if re.match(r'".*"$', terms):
+        exact_terms = terms.replace('"', '')
+        LOG.info('Matching exact terms: %s', exact_terms)
+    else:
+        exact_terms = None
 
-    treat_terms_as_phrase = bool(re.match(r'".*"$', terms))
-    if treat_terms_as_phrase:
-        phrase = re.compile(r'\b%s\b' % terms.replace('"', ''), re.I)
-    code = terms.upper() if treat_term_as_code else None
+    phrase = re.compile(r'\b%s\b' % (exact_terms or terms), re.I)
+    scores = [0] * len(records)
 
-    # Find first record matching name, common name, or code
-    rec = None
-    # Initial candidate record if no more suitable record is found is just the
-    # first record returned (i.e. topmost taxon that matches).
-    first_record = first_phrase_record = None
-    for record in records:
-        rec = get_fields(record)
-        if not first_record:
-            first_record = rec
-        matched_term_is_a_name = rec.term in (rec.name, rec.common)
-        LOG.info('terms: %s', terms)
-        LOG.info('treat_terms_as_phrase: %s', treat_terms_as_phrase)
-        LOG.info('matched_term_is_a_name: %s', matched_term_is_a_name)
-        if matched_term_is_a_name or (code and rec.term == code):
-            if not matched_term_is_a_name:
-                LOG.info('matched term is a code')
-            if treat_terms_as_phrase and matched_term_is_a_name:
-                if re.search(phrase, rec.term):
-                    LOG.info('matched phrase in name')
-                    break
-            else:
-                break
-        else:
-            if treat_terms_as_phrase:
-                # If non-code, non-name, non-common-name, phrase match will pick
-                # the first matching term as a candidate_record in case no later
-                # records match on the code or name.
-                if not first_phrase_record and re.search(phrase, rec.term):
-                    first_phrase_record = rec
-            rec = None
+    for num, record in enumerate(records, start=0):
+        scores[num] = score_match(terms, record, phrase=phrase)
 
-    if not rec:
-        if first_phrase_record:
-            LOG.info('matched phrase in another term')
-            rec = first_phrase_record
-        else:
-            LOG.info('matched first record (no better match)')
-            rec = first_record
-    return rec
+    if scores[0] == 0:
+        scores[0] = 10
+
+    best_score = max(scores)
+    best_record = records[scores.index(best_score)]
+    return best_record if (not exact_terms) or (best_score >= 200) else None
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
@@ -126,7 +130,16 @@ class INatCog(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        rec = match_taxon(terms, records)
+        rec = match_taxon(terms, get_fields_from_results(records))
+
+        if not rec:
+            embed.add_field(
+                name='Sorry',
+                value='No exact match',
+                inline=False,
+            )
+            await ctx.send(embed=embed)
+            return
 
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
