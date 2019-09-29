@@ -43,6 +43,8 @@ RANKS = [
     'family',
     'subfamily',
     'supertribe',
+    'tribe',
+    'subtribe',
     'genus',
     'genushybrid',
     'species',
