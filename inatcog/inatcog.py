@@ -50,7 +50,7 @@ RANKS = [
 ]
 
 def get_taxa_from_user_args(function):
-    """Map taxon subcommand arguments to /taxa API call arguments."""
+    """Map taxon query to /taxa API call arguments."""
     @functools.wraps(function)
     def terms_wrapper(query, **kwargs):
         if query.isdigit():
@@ -150,45 +150,44 @@ class INatCog(commands.Cog):
         pass # pylint: disable=unnecessary-pass
 
     @inat.command()
-    async def taxon(self, ctx, *, terms):
+    async def taxon(self, ctx, *, query):
         """Show taxon by id or unique code or name."""
-        if not terms:
+        if not query:
             await ctx.send_help()
             return
 
         embed = discord.Embed(color=0x90ee90)
-        records = get_taxa(terms)
-
+        records = get_taxa(query)
         if not records:
-            embed.add_field(
-                name='Sorry',
-                value='Nothing found',
-                inline=False,
-            )
-            await ctx.send(embed=embed)
+            await self.sorry(ctx, embed, 'Nothing found')
             return
 
-        (rec, score) = match_taxon(terms, get_fields_from_results(records))
-
+        (rec, score) = match_taxon(query, get_fields_from_results(records))
         if not rec:
-            embed.add_field(
-                name='Sorry',
-                value='No exact match',
-                inline=False,
-            )
-            await ctx.send(embed=embed)
+            await self.sorry(ctx, embed, 'No exact match')
             return
 
+        await self.send_taxa_embed(ctx, embed, rec, score)
+
+    async def sorry(self, ctx, embed, message="I don't understand"):
+        """Notify user their request could not be satisfied."""
+        embed.add_field(
+            name='Sorry',
+            value=message,
+            inline=False,
+        )
+        await ctx.send(embed=embed)
+
+    async def send_taxa_embed(self, ctx, embed, rec, score):
+        """Send embed describing taxa record matched."""
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.inat_id}'
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
-
         if score <= 200:
             embed.add_field(
                 name='Matched:',
                 value=rec.term,
                 inline=False,
             )
-
         await ctx.send(embed=embed)
