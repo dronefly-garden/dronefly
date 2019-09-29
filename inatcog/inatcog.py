@@ -48,7 +48,7 @@ def score_match(terms, record, phrase=None):
     else:
         phrase_matched = phrase_matched_name = phrase_matched_common = False
 
-    if len(terms) == 4 and terms.upper() == record.term:
+    if not phrase and len(terms) == 4 and terms.upper() == record.term:
         score = 300
     elif phrase_matched_name:
         score = 220
