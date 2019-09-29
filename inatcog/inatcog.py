@@ -52,9 +52,9 @@ RANKS = [
 def get_taxa_from_user_args(function):
     """Map taxon query to /taxa API call arguments."""
     @functools.wraps(function)
-    def terms_wrapper(query, **kwargs):
+    def query_wrapper(query, **kwargs):
         if query.isdigit():
-            terms = query
+            inat_id = query
         else:
             words = query.split()
             query_words = []
@@ -66,14 +66,14 @@ def get_taxa_from_user_args(function):
                 else:
                     query_words.append(word)
 
-            terms = ''
+            inat_id = ''
             kwargs['q'] = ' '.join(query_words)
             if ranks:
                 kwargs['rank'] = ','.join(ranks)
-        return function(terms, **kwargs)
-    return terms_wrapper
+        return function(inat_id, **kwargs)
+    return query_wrapper
 
-def score_match(terms, record, phrase=None):
+def score_match(query, record, phrase=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
     if phrase:
@@ -86,7 +86,7 @@ def score_match(terms, record, phrase=None):
     else:
         phrase_matched = phrase_matched_name = phrase_matched_common = False
 
-    if not phrase and len(terms) == 4 and terms.upper() == record.term:
+    if not phrase and len(query) == 4 and query.upper() == record.term:
         score = 300
     elif phrase_matched_name:
         score = 220
@@ -104,30 +104,30 @@ def score_match(terms, record, phrase=None):
     LOG.info('Final score: %d', score)
     return score
 
-def match_taxon(terms, records):
-    """Match a single taxon for the given terms among records returned by API."""
-    if re.match(r'".*"$', terms):
-        exact_terms = terms.replace('"', '')
-        LOG.info('Matching exact terms: %s', exact_terms)
+def match_taxon(query, records):
+    """Match a single taxon for the given query among records returned by API."""
+    if re.match(r'".*"$', query):
+        exact_query = query.replace('"', '')
+        LOG.info('Matching exact query: %s', exact_query)
     else:
-        exact_terms = None
+        exact_query = None
 
-    phrase = re.compile(r'\b%s\b' % (exact_terms or terms), re.I)
+    phrase = re.compile(r'\b%s\b' % (exact_query or query), re.I)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(terms, record, phrase=phrase)
+        scores[num] = score_match(query, record, phrase=phrase)
 
     if scores[0] == 0:
         scores[0] = 10
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    return (best_record, best_score) if (not exact_terms) or (best_score >= 200) else (None, None)
+    return (best_record, best_score) if (not exact_query) or (best_score >= 200) else (None, None)
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
-    """Query /taxa for taxa matching terms."""
+    """Query /taxa for taxa matching parameters."""
     inaturalist_api = 'https://api.inaturalist.org/v1/'
 
     results = requests.get(
