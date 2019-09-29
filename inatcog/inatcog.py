@@ -85,7 +85,7 @@ def match_taxon(terms, records):
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    return best_record if (not exact_terms) or (best_score >= 200) else None
+    return (best_record, best_score) if (not exact_terms) or (best_score >= 200) else (None, None)
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
@@ -130,7 +130,7 @@ class INatCog(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        rec = match_taxon(terms, get_fields_from_results(records))
+        (rec, score) = match_taxon(terms, get_fields_from_results(records))
 
         if not rec:
             embed.add_field(
@@ -146,7 +146,7 @@ class INatCog(commands.Cog):
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
 
-        if rec.term and rec.term not in (rec.name, rec.common):
+        if score <= 200:
             embed.add_field(
                 name='Matched:',
                 value=rec.term,
