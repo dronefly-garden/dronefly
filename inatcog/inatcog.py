@@ -3,10 +3,11 @@ import functools
 import logging
 import re
 from collections import namedtuple
+from abc import ABC, abstractmethod
 from redbot.core import commands
 import discord
 import requests
-from pyparsing import Word, alphanums, Keyword, Group, Combine, Forward, Suppress
+from pyparsing import Word, alphanums, Group, Forward, Suppress
 
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
@@ -140,9 +141,9 @@ def get_taxa(*args, **kwargs):
 
     return results
 
-class TaxonQueryParser:
+class BaseTaxonQueryParser(ABC):
     # pylint: disable=no-self-use
-    """A parser for taxon queries."""
+    """Abstract base parser for taxon queries."""
     def __init__(self):
         self._methods = {
             # TODO: 'in': self.evaluate_in,
@@ -205,14 +206,26 @@ class TaxonQueryParser:
         #print self._parser(query)[0]
         return self.evaluate(self._parser(query)[0])
 
+    @abstractmethod
     def get_word(self, word):
-        """Get a word."""
-        # FIXME: no implementation; make this class an ABC
+        """Abstract get word. Returns a set matching the word (empty if unmatched)."""
+        return set()
+
+    @abstractmethod
+    def get_quotes(self, search_string, tmp_result):
+        """Abstract get quoted phrase. Returns a set matching the phrase (empty if unmatched)."""
+        return set()
+
+class TaxonQueryParser(BaseTaxonQueryParser):
+    """Parser for taxon queries."""
+    def get_word(self, word):
+        """Abstract get word. Returns a set matching the word (empty if unmatched)."""
+        # FIXME: does not match any words.
         return set()
 
     def get_quotes(self, search_string, tmp_result):
-        """Get quoted phrase."""
-        # FIXME: no implementation; make this class an ABC
+        """Abstract get quoted phrase. Returns a set matching the phrase (empty if unmatched)."""
+        # FIXME: does not match any phrases.
         return set()
 
 class INatCog(commands.Cog):
