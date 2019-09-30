@@ -114,7 +114,7 @@ def match_taxon(query, records):
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    return (best_record, best_score) if (not exact_query) or (best_score >= 200) else (None, None)
+    return best_record if (not exact_query) or (best_score >= 200) else None
 
 @get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
@@ -153,12 +153,12 @@ class INatCog(commands.Cog):
             await self.sorry(ctx, embed, 'Nothing found')
             return
 
-        (rec, score) = match_taxon(query, get_fields_from_results(records))
+        rec = match_taxon(query, get_fields_from_results(records))
         if not rec:
             await self.sorry(ctx, embed, 'No exact match')
             return
 
-        await self.send_taxa_embed(ctx, embed, rec, score)
+        await self.send_taxa_embed(ctx, embed, rec)
 
     async def sorry(self, ctx, embed, message="I don't understand"):
         """Notify user their request could not be satisfied."""
@@ -169,7 +169,7 @@ class INatCog(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    async def send_taxa_embed(self, ctx, embed, rec, score):
+    async def send_taxa_embed(self, ctx, embed, rec):
         """Send embed describing taxa record matched."""
         embed.title = '{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name
         embed.url = f'https://www.inaturalist.org/taxa/{rec.taxon_id}'
