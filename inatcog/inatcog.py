@@ -87,7 +87,9 @@ def score_match(query, record, phrase=None):
 
     if not phrase and len(query) == 4 and query.upper() == record.term:
         score = 300
-    elif phrase_matched_name or phrase_matched_common or phrase_matched:
+    elif phrase_matched_name or phrase_matched_common:
+        score = 210
+    elif phrase_matched:
         score = 200
     else:
         score = 100
