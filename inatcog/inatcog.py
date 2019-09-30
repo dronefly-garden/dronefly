@@ -106,7 +106,7 @@ def match_taxon(query, records):
     if exact_query:
         phrase = re.compile(r'\b%s\b' % exact_query, re.I)
     else:
-        phrase = None
+        phrase = re.compile(r'\b%s\b' % query, re.I)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
