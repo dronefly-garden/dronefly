@@ -116,3 +116,4 @@ See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for adv
 - ~~add some iNaturalist commands~~
 - improve default permissions; document changing default permissions
 - limit API calls using cached values where appropriate
+- make a proper parser so that the command query language can be made richer (see taxon-pyparsing branch)
