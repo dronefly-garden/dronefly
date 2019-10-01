@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from redbot.core import commands
 import discord
 import requests
-from pyparsing import Word, alphanums, Group, Forward, Suppress
+from pyparsing import Word, alphanums, Group, Forward, Suppress, StringEnd
 
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
@@ -161,7 +161,7 @@ class BaseTaxonQueryParser(ABC):
         ).setResultsName("quotes") | op_word
 
         op_and = Forward()
-        op_and << (op_quotes + op_and).setResultsName("and") | op_quotes
+        op_and << (Group(op_quotes + op_and).setResultsName("and") | op_quotes)
 
         return op_and.parseString
 
@@ -196,7 +196,6 @@ class BaseTaxonQueryParser(ABC):
 
     def parse(self, query):
         """Parse."""
-        #print self._parser(query)[0]
         return self.evaluate(self._parser(query)[0])
 
     @abstractmethod
@@ -211,26 +210,46 @@ class BaseTaxonQueryParser(ABC):
 
 class TaxonQueryParser(BaseTaxonQueryParser):
     """Parser for taxon queries."""
+    def __init__(self, cog):
+        self.cog = cog
+        self.log = cog.log
+        super().__init__()
+
+    def parse(self, query):
+        return self.evaluate(self._parser(query)[0])
+
     def get_word(self, word):
-        """Abstract get word. Returns a set matching the word (empty if unmatched)."""
-        # FIXME: does not match any words.
-        return set()
+        """Returns a set matching the word (empty if unmatched)."""
+        result = set()
+        result.add(word)
+        return result
 
     def get_quotes(self, search_string, tmp_result):
-        """Abstract get quoted phrase. Returns a set matching the phrase (empty if unmatched)."""
-        # FIXME: does not match any phrases.
-        return set()
+        """Returns a set matching the phrase (empty if unmatched)."""
+        result = set()
+        for item in tmp_result:
+            result.add(item)
+        return result
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
         self.bot = bot
         self.log = logging.getLogger('red.quaggagriff.inatcog')
+        self.taxon_query_parser = TaxonQueryParser(self)
 
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform."""
         pass # pylint: disable=unnecessary-pass
+
+    @inat.command()
+    async def parse(self, ctx, *, query):
+        """Test query parser."""
+        self.log.info('Query input: %s', query)
+        parsed = self.taxon_query_parser.parse(query)
+        self.log.info('Query parsed: %s', repr(parsed))
+        await ctx.send('Parsed as: %s' % repr(parsed))
 
     @inat.command()
     async def taxon(self, ctx, *, query):
