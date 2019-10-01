@@ -150,17 +150,21 @@ class INatCog(commands.Cog):
             return
 
         embed = discord.Embed(color=0x90ee90)
+        rec = await self.maybe_match_taxon(ctx, embed, query)
+        if rec:
+            await self.send_taxa_embed(ctx, embed, rec)
+
+    async def maybe_match_taxon(self, ctx, embed, query):
+        """Get taxa and return a match, if any."""
         records = get_taxa(query)
         if not records:
             await self.sorry(ctx, embed, 'Nothing found')
             return
-
         rec = match_taxon(query, get_fields_from_results(records))
         if not rec:
             await self.sorry(ctx, embed, 'No exact match')
             return
-
-        await self.send_taxa_embed(ctx, embed, rec)
+        return rec
 
     async def sorry(self, ctx, embed, message="I don't understand"):
         """Notify user their request could not be satisfied."""
