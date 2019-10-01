@@ -136,7 +136,12 @@ def get_taxa(*args, **kwargs):
 
 class BaseTaxonQueryParser(ABC):
     # pylint: disable=no-self-use
-    """Abstract base parser for taxon queries."""
+    """
+    Abstract base parser for taxon queries.
+    
+    Based on https://raw.githubusercontent.com/pyparsing/pyparsing/master/examples/searchparser.py
+    but with simplified grammar.
+    """
     def __init__(self):
         self._methods = {
             # TODO: 'in': self.evaluate_in,
