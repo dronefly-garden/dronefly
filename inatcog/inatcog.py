@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from redbot.core import commands
 import discord
 import requests
-from pyparsing import Word, alphanums, Group, Forward, Suppress, StringEnd
+from pyparsing import Word, alphanums, Group, Forward, Suppress
 
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
