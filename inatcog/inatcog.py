@@ -220,16 +220,13 @@ class TaxonQueryParser(BaseTaxonQueryParser):
 
     def get_word(self, word):
         """Returns a set matching the word (empty if unmatched)."""
-        result = set()
-        result.add(word)
-        return result
+        # FIXME: Always matches fictitous record 1; match actual records
+        return set({1})
 
     def get_quotes(self, search_string, tmp_result):
         """Returns a set matching the phrase (empty if unmatched)."""
-        result = set()
-        for item in tmp_result:
-            result.add(item)
-        return result
+        # FIXME: Always matches fictitious record 1; match actual records
+        return set({1})
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
