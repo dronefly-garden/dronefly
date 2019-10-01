@@ -90,7 +90,9 @@ def score_match(query, record, phrase=None):
 
     if not phrase and len(query) == 4 and query.upper() == record.term:
         score = 300
-    elif phrase_matched_name or phrase_matched_common or phrase_matched:
+    elif phrase_matched_name or phrase_matched_common:
+        score = 210
+    elif phrase_matched:
         score = 200
     else:
         score = 100
@@ -109,7 +111,7 @@ def match_taxon(query, records):
     if exact_query:
         phrase = re.compile(r'\b%s\b' % exact_query, re.I)
     else:
-        phrase = None
+        phrase = re.compile(r'\b%s\b' % query, re.I)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
@@ -238,17 +240,21 @@ class INatCog(commands.Cog):
             return
 
         embed = discord.Embed(color=0x90ee90)
+        rec = await self.maybe_match_taxon(ctx, embed, query)
+        if rec:
+            await self.send_taxa_embed(ctx, embed, rec)
+
+    async def maybe_match_taxon(self, ctx, embed, query):
+        """Get taxa and return a match, if any."""
         records = get_taxa(query)
         if not records:
             await self.sorry(ctx, embed, 'Nothing found')
             return
-
         rec = match_taxon(query, get_fields_from_results(records))
         if not rec:
             await self.sorry(ctx, embed, 'No exact match')
             return
-
-        await self.send_taxa_embed(ctx, embed, rec)
+        return rec
 
     async def sorry(self, ctx, embed, message="I don't understand"):
         """Notify user their request could not be satisfied."""
