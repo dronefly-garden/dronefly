@@ -106,7 +106,30 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def taxon(self, ctx, *, query):
-        """Show taxon by id or unique code or name."""
+        """Look up the taxon best matching the query as follows:
+        
+        - Match the taxon with the given iNat id#.
+        - Match words that start with the terms typed.
+        - Exactly match words enclosed in double-quotes.
+        - Match a taxon 'in' an ancestor taxon.
+        - Filter matches by rank keywords before or after other terms.
+        - Match the AOU 4-letter code (if it's in iNat's Taxonomy).
+        **Examples:**
+        ```
+        [p]inat taxon bear family
+           -> Ursidae (Bears)
+        [p]inat taxon prunella
+           -> Prunella (self-heals)
+        [p]inat taxon prunella in animals
+           -> Prunella
+        [p]inat taxon wtsp
+           -> Zonotrichia albicollis (White-throated Sparrow)
+        ```
+        Also, `[p]sp`, `[p]ssp`, `[p]family`, `[p]subfamily`, etc. are shortcuts
+        for the corresponding `[p]inat taxon` *rank* commands (provided the
+        bot owner has created those aliases).
+        """
+
         if not query:
             await ctx.send_help()
             return
