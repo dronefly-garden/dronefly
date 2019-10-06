@@ -55,12 +55,12 @@ class TaxonQueryParser():
         num = Word(nums)
 
         dqt = '"'
-        stop = oneOf(OPS + RANKS, CaselessKeyword)
+        stop = oneOf(OPS + RANKS, caseless=True, asKeyword=True)
 
         phraseword = Word(printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
-        ranks = OneOrMore(oneOf(RANKS, CaselessKeyword))
+        ranks = OneOrMore(oneOf(RANKS, caseless=True, asKeyword=True))
         words = OneOrMore(Word(printables, excludeChars=dqt), stopOn=stop)
 
         ranks_terms = Group(ranks)("ranks") + Group(OneOrMore(words | phrase, stopOn=stop))("terms")
@@ -70,7 +70,7 @@ class TaxonQueryParser():
         taxon = Group(Group(num)("taxon_id") | ranks_terms | terms_ranks | terms)
 
         within = (
-            Group(taxon)("main") + Suppress("in") + Group(taxon)("ancestor")
+            Group(taxon)("main") + Suppress(CaselessKeyword('in')) + Group(taxon)("ancestor")
         ) | Group(taxon)("main")
 
         return within
