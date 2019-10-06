@@ -1,11 +1,12 @@
 """Module to access iNaturalist API."""
-import functools
 import logging
 import re
 from collections import namedtuple
 from redbot.core import commands
 import discord
 import requests
+from pyparsing import ParseException
+from .parsers import TaxonQueryParser
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
@@ -24,72 +25,36 @@ def get_fields_from_results(results):
         return rec
     return list(map(get_fields, results))
 
-RANKS = [
-    'kingdom',
-    'phylum',
-    'subphylum',
-    'superclass',
-    'class',
-    'subclass',
-    'superorder',
-    'order',
-    'suborder',
-    'infraorder',
-    'superfamily',
-    'epifamily',
-    'family',
-    'subfamily',
-    'supertribe',
-    'tribe',
-    'subtribe',
-    'genus',
-    'genushybrid',
-    'species',
-    'hybrid',
-    'subspecies',
-    'variety',
-    'form',
-]
-
-def get_taxa_from_user_args(function):
-    """Map taxon query to /taxa API call arguments."""
-    @functools.wraps(function)
-    def query_wrapper(query, **kwargs):
-        if query.isdigit():
-            taxon_id = query
-        else:
-            words = query.split()
-            query_words = []
-            ranks = []
-            for word in words:
-                rank = word.lower()
-                if rank in RANKS:
-                    ranks.append(rank)
-                else:
-                    query_words.append(word)
-
-            taxon_id = ''
-            kwargs['q'] = ' '.join(query_words)
-            if ranks:
-                kwargs['rank'] = ','.join(ranks)
-        return function(taxon_id, **kwargs)
-    return query_wrapper
-
-def score_match(query, record, phrase=None):
+def score_match(query, record, exact=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
-    if phrase:
-        phrase_matched = re.search(phrase, record.term)
-        phrase_matched_name = re.search(phrase, record.name)
-        phrase_matched_common = re.search(phrase, record.common) if record.common else False
-    else:
-        phrase_matched = phrase_matched_name = phrase_matched_common = False
+    matched = (None, None, None)
+    if exact:
+        try:
+            # Every pattern must match at least one field:
+            for pat in exact:
+                this_match = (
+                    re.search(pat, record.term),
+                    re.search(pat, record.name),
+                    re.search(pat, record.common) if record.common else None,
+                )
+                if this_match == (None, None, None):
+                    matched = this_match
+                    raise ValueError('At least one field must match.')
+                matched = (
+                    matched[0] or this_match[0],
+                    matched[1] or this_match[1],
+                    matched[2] or this_match[2],
+                )
+        except ValueError:
+            pass
 
-    if not phrase and len(query) == 4 and query.upper() == record.term:
+    # TODO: parser should comprehend a code as a separate entity
+    if not exact and len(query.terms) == 4 and query.terms.upper() == record.term:
         score = 300
-    elif phrase_matched_name or phrase_matched_common:
+    elif matched[1] or matched[2]:
         score = 210
-    elif phrase_matched:
+    elif matched[0]:
         score = 200
     else:
         score = 100
@@ -99,26 +64,21 @@ def score_match(query, record, phrase=None):
 
 def match_taxon(query, records):
     """Match a single taxon for the given query among records returned by API."""
-    if re.match(r'".*"$', query):
-        exact_query = query.replace('"', '')
-        LOG.info('Matching exact query: %s', exact_query)
-    else:
-        exact_query = None
-
-    if exact_query:
-        phrase = re.compile(r'\b%s\b' % exact_query, re.I)
-    else:
-        phrase = re.compile(r'\b%s\b' % query, re.I)
+    exact = []
+    if query.phrases:
+        for phrase in query.phrases:
+            pat = re.compile(r'\b%s\b' % re.escape(' '.join(phrase)), re.I)
+            LOG.info('Pat: %s', repr(pat))
+            exact.append(pat)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, phrase=phrase)
+        scores[num] = score_match(query, record, exact=exact)
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    return best_record if (not exact_query) or (best_score >= 200) else None
+    return best_record if (not exact) or (best_score >= 200) else None
 
-@get_taxa_from_user_args
 def get_taxa(*args, **kwargs):
     """Query /taxa for taxa matching parameters."""
     inaturalist_api = 'https://api.inaturalist.org/v1/'
@@ -136,11 +96,23 @@ class INatCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.log = logging.getLogger('red.quaggagriff.inatcog')
+        self.taxon_query_parser = TaxonQueryParser()
 
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform."""
         pass # pylint: disable=unnecessary-pass
+
+    @inat.command()
+    async def parse(self, ctx, *, query):
+        """Test query parser."""
+        self.log.info('Query input: %s', query)
+        try:
+            parsed = self.taxon_query_parser.parse(query)
+            self.log.info('Query parsed: %s', repr(parsed))
+            await ctx.send('```Parsed as:\n%s```' % repr(parsed))
+        except ParseException:
+            await self.sorry(ctx, discord.Embed(color=0x90ee90))
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -150,13 +122,34 @@ class INatCog(commands.Cog):
             return
 
         embed = discord.Embed(color=0x90ee90)
-        rec = await self.maybe_match_taxon(ctx, embed, query)
+        try:
+            queries = self.taxon_query_parser.parse(query)
+        except ParseException:
+            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            return
+
+        rec = None
+        if queries.ancestor:
+            rec = await self.maybe_match_taxon(ctx, embed, queries.ancestor)
+            if rec:
+                rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor=rec.taxon_id)
+        else:
+            rec = await self.maybe_match_taxon(ctx, embed, queries.main)
         if rec:
             await self.send_taxa_embed(ctx, embed, rec)
 
-    async def maybe_match_taxon(self, ctx, embed, query):
+    async def maybe_match_taxon(self, ctx, embed, query, ancestor=None):
         """Get taxa and return a match, if any."""
-        records = get_taxa(query)
+        if query.taxon_id:
+            records = get_taxa(query.taxon_id)
+        else:
+            kwargs = {}
+            kwargs["q"] = ' '.join(query.terms)
+            if query.ranks:
+                kwargs["rank"] = ','.join(query.ranks)
+            if ancestor:
+                kwargs["taxon_id"] = ancestor
+            records = get_taxa(**kwargs)
         if not records:
             await self.sorry(ctx, embed, 'Nothing found')
             return
