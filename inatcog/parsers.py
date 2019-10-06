@@ -1,7 +1,8 @@
 """Module to access iNaturalist API."""
 import logging
 from collections import namedtuple
-from pyparsing import Word, printables, nums, Group, Suppress, OneOrMore, CaselessKeyword, oneOf
+from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
+     CaselessKeyword, oneOf
 
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 RANKS = (
@@ -57,11 +58,11 @@ class TaxonQueryParser():
         dqt = '"'
         stop = oneOf(OPS + RANKS, caseless=True, asKeyword=True)
 
-        phraseword = Word(printables, excludeChars=dqt)
+        phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
         ranks = OneOrMore(oneOf(RANKS, caseless=True, asKeyword=True))
-        words = OneOrMore(Word(printables, excludeChars=dqt), stopOn=stop)
+        words = OneOrMore(Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop)
 
         ranks_terms = Group(ranks)("ranks") + Group(OneOrMore(words | phrase, stopOn=stop))("terms")
         terms_ranks = Group(OneOrMore(words | phrase, stopOn=stop))("terms") + Group(ranks)("ranks")
