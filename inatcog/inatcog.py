@@ -6,9 +6,9 @@ from redbot.core import commands
 import discord
 import requests
 from pyparsing import ParseException
-from .parsers import TaxonQueryParser
+from .parsers import TaxonQueryParser, RANKS
 
-Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
+Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 def get_fields_from_results(results):
@@ -21,6 +21,7 @@ def get_fields_from_results(results):
             record.get('preferred_common_name'),
             record.get('matched_term'),
             photo.get('square_url') if photo else None,
+            record['rank'],
         )
         return rec
     return list(map(get_fields, results))
@@ -132,6 +133,16 @@ class INatCog(commands.Cog):
         if queries.ancestor:
             rec = await self.maybe_match_taxon(ctx, embed, queries.ancestor)
             if rec:
+                index = RANKS.index(rec.rank)
+                ancestor_ranks = set(RANKS[index:len(RANKS)])
+                child_ranks = set(queries.main.ranks)
+                if not child_ranks.intersection(ancestor_ranks):
+                    await self.sorry(
+                        ctx,
+                        discord.Embed(color=0x90ee90),
+                        'Child ranks must be below ancestor rank: %s' % rec.rank
+                    )
+                    return
                 rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor=rec.taxon_id)
         else:
             rec = await self.maybe_match_taxon(ctx, embed, queries.main)
