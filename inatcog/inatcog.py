@@ -105,17 +105,6 @@ class INatCog(commands.Cog):
         pass # pylint: disable=unnecessary-pass
 
     @inat.command()
-    async def parse(self, ctx, *, query):
-        """Test query parser."""
-        self.log.info('Query input: %s', query)
-        try:
-            parsed = self.taxon_query_parser.parse(query)
-            self.log.info('Query parsed: %s', repr(parsed))
-            await ctx.send('```Parsed as:\n%s```' % repr(parsed))
-        except ParseException:
-            await self.sorry(ctx, discord.Embed(color=0x90ee90))
-
-    @inat.command()
     async def taxon(self, ctx, *, query):
         """Show taxon by id or unique code or name."""
         if not query:
