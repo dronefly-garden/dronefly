@@ -6,6 +6,7 @@ from collections import namedtuple
 from redbot.core import commands
 import discord
 import requests
+from pyparsing import ParseException
 from .parsers import TaxonQueryParser
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail')
@@ -148,9 +149,12 @@ class INatCog(commands.Cog):
     async def parse(self, ctx, *, query):
         """Test query parser."""
         self.log.info('Query input: %s', query)
-        parsed = self.taxon_query_parser.parse(query)
-        self.log.info('Query parsed: %s', repr(parsed))
-        await ctx.send('Parsed as: %s' % repr(parsed))
+        try:
+            parsed = self.taxon_query_parser.parse(query)
+            self.log.info('Query parsed: %s', parsed.dump())
+            await ctx.send('```Parsed as:\n%s```' % parsed.dump())
+        except ParseException:
+            await self.sorry(ctx, discord.Embed(color=0x90ee90))
 
     @inat.command()
     async def taxon(self, ctx, *, query):
