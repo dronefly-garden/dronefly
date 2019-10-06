@@ -106,8 +106,8 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def taxon(self, ctx, *, query):
-        """Look up the taxon best matching the query as follows:
-        
+        """Looks up the taxon best matching the query. It will:
+
         - Match the taxon with the given iNat id#.
         - Match words that start with the terms typed.
         - Exactly match words enclosed in double-quotes.
@@ -125,9 +125,9 @@ class INatCog(commands.Cog):
         [p]inat taxon wtsp
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
-        Also, `[p]sp`, `[p]ssp`, `[p]family`, `[p]subfamily`, etc. are shortcuts
-        for the corresponding `[p]inat taxon` *rank* commands (provided the
-        bot owner has created those aliases).
+        Also, `[p]sp`, `[p]ssp`, `[p]family`, `[p]subfamily`, etc. are
+        shortcuts for the corresponding `[p]inat taxon` *rank* commands
+        (provided the bot owner has created those aliases).
         """
 
         if not query:
