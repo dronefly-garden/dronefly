@@ -148,13 +148,14 @@ class INatCog(commands.Cog):
                 index = RANKS.index(rec.rank)
                 ancestor_ranks = set(RANKS[index:len(RANKS)])
                 child_ranks = set(queries.main.ranks)
-                if not child_ranks.intersection(ancestor_ranks):
-                    await self.sorry(
-                        ctx,
-                        discord.Embed(color=0x90ee90),
-                        'Child ranks must be below ancestor rank: %s' % rec.rank
-                    )
-                    return
+                if child_ranks != set():
+                    if ancestor_ranks.intersection(child_ranks) == set():
+                        await self.sorry(
+                            ctx,
+                            discord.Embed(color=0x90ee90),
+                            'Child ranks must be below ancestor rank: %s' % rec.rank
+                        )
+                        return
                 rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor=rec.taxon_id)
         else:
             rec = await self.maybe_match_taxon(ctx, embed, queries.main)
