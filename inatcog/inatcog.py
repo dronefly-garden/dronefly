@@ -82,13 +82,15 @@ def match_taxon(query, records):
 
 def get_taxa(*args, **kwargs):
     """Query /taxa for taxa matching parameters."""
-    inaturalist_api = 'https://api.inaturalist.org/v1/'
+    inaturalist_api = "https://api.inaturalist.org"
+    endpoint = "/v1/taxa/autocomplete" if set(kwargs.keys()) == set("q") else "/v1/taxa"
+    id_arg = f"/{args[0]}" if args else ""
 
     results = requests.get(
-        f'{inaturalist_api}taxa/{args[0] if args else ""}',
-        headers={'Accept': 'application/json'},
+        f"{inaturalist_api}{endpoint}{id_arg}",
+        headers={"Accept": "application/json"},
         params=kwargs,
-    ).json()['results']
+    ).json()["results"]
 
     return results
 
