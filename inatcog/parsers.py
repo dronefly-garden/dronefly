@@ -32,6 +32,12 @@ RANKS = (
     'form',
 )
 
+ABBR = {
+    'sp': 'species',
+    'ssp': 'subspecies',
+    'var': 'variety',
+}
+
 OPS = (
     'in',
     'by',
@@ -56,12 +62,19 @@ class TaxonQueryParser():
         num = Word(nums)
 
         dqt = '"'
-        stop = oneOf(OPS + RANKS, caseless=True, asKeyword=True)
+        stop = oneOf(OPS + RANKS + tuple(ABBR.keys()), caseless=True, asKeyword=True)
 
         phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
-        ranks = OneOrMore(oneOf(RANKS, caseless=True, asKeyword=True))
+        def get_abbr(_s, _l, term):
+            return ABBR[term[0]]
+
+        ranks = OneOrMore(
+            oneOf(RANKS, caseless=True, asKeyword=True) | \
+            oneOf(ABBR.keys(), caseless=True, asKeyword=True).setParseAction(get_abbr)
+        )
+
         words = OneOrMore(Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop)
 
         ranks_terms = Group(ranks)("ranks") + Group(OneOrMore(words | phrase, stopOn=stop))("terms")
