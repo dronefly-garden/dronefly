@@ -51,7 +51,7 @@ def score_match(query, record, exact=None):
             pass
 
     # TODO: parser should comprehend a code as a separate entity
-    if not exact and len(query.terms) == 4 and query.terms.upper() == record.term:
+    if not exact and len(query.terms) == 1 and query.terms[0].upper() == record.term:
         score = 300
     elif matched[1] or matched[2]:
         score = 210
