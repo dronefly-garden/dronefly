@@ -26,7 +26,7 @@ def get_fields_from_results(results):
         return rec
     return list(map(get_fields, results))
 
-def score_match(query, record, exact=None):
+def score_match(query, record, all_terms, exact=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
     matched = (None, None, None)
@@ -50,6 +50,12 @@ def score_match(query, record, exact=None):
         except ValueError:
             pass
 
+    all_terms_matched = (
+        re.search(all_terms, record.term),
+        re.search(all_terms, record.name),
+        re.search(all_terms, record.common) if record.common else None,
+    )
+
     # TODO: parser should comprehend a code as a separate entity
     if not exact and len(query.terms) == 1 and query.terms[0].upper() == record.term:
         score = 300
@@ -57,28 +63,34 @@ def score_match(query, record, exact=None):
         score = 210
     elif matched[0]:
         score = 200
+    elif all_terms_matched[1] or all_terms_matched[2]:
+        score = 120
+    elif all_terms_matched[0]:
+        score = 110
     else:
         score = 100
 
-    LOG.info('Final score: %d', score)
     return score
 
 def match_taxon(query, records):
     """Match a single taxon for the given query among records returned by API."""
     exact = []
+    all_terms = re.compile(r'^%s$' % re.escape(' '.join(query.terms)), re.I)
     if query.phrases:
         for phrase in query.phrases:
             pat = re.compile(r'\b%s\b' % re.escape(' '.join(phrase)), re.I)
-            LOG.info('Pat: %s', repr(pat))
             exact.append(pat)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, exact=exact)
+        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
 
     best_score = max(scores)
+    LOG.info('Best score: %d', best_score)
     best_record = records[scores.index(best_score)]
-    return best_record if (not exact) or (best_score >= 200) else None
+    min_score_met = (not exact) or (best_score >= 200)
+    LOG.info('Best match: %s%s', repr(best_record), '' if min_score_met else ' (score too low)')
+    return best_record if min_score_met else None
 
 def get_taxa(*args, **kwargs):
     """Query /taxa for taxa matching parameters."""
@@ -180,12 +192,15 @@ class INatCog(commands.Cog):
                 kwargs["taxon_id"] = ancestor
             records = get_taxa(**kwargs)
         if not records:
+            LOG.info('Nothing found')
             await self.sorry(ctx, embed, 'Nothing found')
             return
         rec = match_taxon(query, get_fields_from_results(records))
         if not rec:
+            LOG.info('No exact match')
             await self.sorry(ctx, embed, 'No exact match')
             return
+        LOG.info('Matched')
         return rec
 
     async def sorry(self, ctx, embed, message="I don't understand"):
