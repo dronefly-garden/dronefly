@@ -83,8 +83,17 @@ def match_taxon(query, records):
 def get_taxa(*args, **kwargs):
     """Query /taxa for taxa matching parameters."""
     inaturalist_api = "https://api.inaturalist.org"
-    endpoint = "/v1/taxa/autocomplete" if set(kwargs.keys()) == set("q") else "/v1/taxa"
+
+    # Select endpoint based on call signature:
+    # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
+    # - taxon_id is impractical to support as a postfilter on /v1/taxa/autocomplete
+    endpoint = "/v1/taxa/autocomplete" if ("q" in kwargs) and ("taxon_id" not in kwargs) else "/v1/taxa"
     id_arg = f"/{args[0]}" if args else ""
+
+    # Workaround autocomplete endpoint doesn't support filters:
+    postfilter = {}
+    if (endpoint == "/v1/taxa/autocomplete") and ("rank" in kwargs):
+        postfilter["ranks"] = kwargs.pop("rank")
 
     results = requests.get(
         f"{inaturalist_api}{endpoint}{id_arg}",
@@ -92,6 +101,11 @@ def get_taxa(*args, **kwargs):
         params=kwargs,
     ).json()["results"]
 
+    LOG.info("Results from %s: %d", endpoint, len(results))
+    if postfilter:
+        filtered_results = list(filter(lambda d: d["rank"] in postfilter["ranks"], results))
+        results = filtered_results
+        LOG.info("Results after filtering: %d", len(results))
     return results
 
 class INatCog(commands.Cog):
