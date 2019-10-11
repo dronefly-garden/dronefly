@@ -2,6 +2,8 @@
 import logging
 import re
 from collections import namedtuple
+from datetime import datetime
+import timeago
 from redbot.core import commands
 import discord
 import requests
@@ -109,6 +111,8 @@ def get_taxa(*args, **kwargs):
 
     return results
 
+PAT_OBS = re.compile(r'\b(https?://(www\.)?inaturalist\.(org|ca)/observations/\d+)\b', re.I)
+
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
@@ -121,9 +125,42 @@ class INatCog(commands.Cog):
         """Access the iNat platform."""
         pass # pylint: disable=unnecessary-pass
 
+
+    @inat.command()
+    async def last(self, ctx, *, query):
+        """Recognize and act on recent messages in the channel history.
+
+        - Refer to a recent observation link & show info about it.
+        **Examples:**
+        ```
+        [p]inat last obs
+           -> matches the last observation link & reports info known about it
+        ```
+        Also, `[p]last` is an alias for `[p]inat last`, (provided the bot
+        owner has added it).
+        """
+
+        found = None
+        if query.lower() in ('obs', 'observation'):
+            msgs = await ctx.history(limit=1000).flatten()
+            try:
+                found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS, m.content))
+            except StopIteration:
+                await ctx.send('Nothing found')
+                return
+
+        LOG.info(repr(found))
+        await ctx.send(
+            '<%s> was shared %s by %s' % (
+                re.search(PAT_OBS, found.content)[1],
+                timeago.format(found.created_at, datetime.utcnow()),
+                found.author.nick or found.author.name,
+            )
+        )
+
     @inat.command()
     async def taxon(self, ctx, *, query):
-        """Looks up the taxon best matching the query. It will:
+        """Look up the taxon best matching the query.
 
         - Match the taxon with the given iNat id#.
         - Match words that start with the terms typed.
