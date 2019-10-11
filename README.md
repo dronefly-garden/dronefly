@@ -164,6 +164,40 @@ An example command to verify the alias works:
 
 *Tip: See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.*
 
+## Design goals
+
+### Support requests in natural language using terms familiar within the community
+
+Names & syntax of commands and keywords should be intuitive & natural, so that once a user has familiarized themselves with basic operation of the commands, more advanced use of the commands will come easily.
+
+To this end:
+
+- The `[p]inat taxon` command supports a query language implemented with the Python pyparsing package.
+- With the recommended aliases in place, queries can be phrased with English-like structure, like `[p]genus prunella in animals` to match the genus *Prunella* in the taxon *Animalia*. This complex query actually performs two queries: first, with the query after `in` and second, provided that succeeded, the query before `in`, passing the taxon_id matched by the first query as a filter.
+
+### Don't clutter up conversations with unnecessary output
+
+Chat sessions can get very busy, so output from most bot commands, especially those which are used more frequently, should provide the least distraction from what is said by humans, just showing the essential information required at the moment, and linking to www.inaturalist.org for the rest.
+
+- https://github.com/synrg/quaggagriff/issues/27 is an example issue to help with this goal
+
+### Make use of context from the conversation to avoid needless repetition
+
+It is tedious to have to tell the bot again what has already been established as context for the current discussion. It should recognize from patterns in the conversation key elements that can help provide default context for queries.
+
+- https://github.com/synrg/quaggagriff/issues/25 is an example issue to help with this goal
+
+### Provide additional context from who the user is or where the conversation is taking place
+
+Some context should be configurable for a user or channel to avoid having to provide that information over and over again, e.g.
+
+- Remember who the user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
+- Similarly, on channels devoted to discussion of certain taxa, support queries specific to those taxa.
+
+### Provide support for making social connections
+
+*TODO: Explain.*
+
 ## TODO
 
 - add more useful / interesting commands
