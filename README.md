@@ -189,16 +189,16 @@ It is tedious to have to tell the bot again what has already been established as
 
 Some context should be configurable for a user or channel to avoid having to provide that information over and over again, e.g.
 
-- Remember who the user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
-- Similarly, on channels devoted to discussion of certain taxa, support queries specific to those taxa.
+- Remember who the Discord user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
+- Similarly, on channels devoted to discussion of certain taxa, some queries might default to be specific to those taxa.
 
 ### Support making & improving social connections
 
-Make it possible for users to browse & identify each other's observations by remembering & sharing links to their profiles & observations if they have volunteered that information.
+The bot should facilitate making & improving social connections within naturalist communities. For example, it could facilitate users browsing & identifying each other's observations using their `user_id` on iNaturalist if they have volunteered that information.
 
 ### Support collaborative efforts to improve data
 
-Provide commands to give visible indicators of progress to work parties, such as the ongoing work to resolve *Unknown* observations, state by state and province by province in the US and Canada currently underway on channel #work-party on the unofficial iNat Discord.
+An example of an enhancement that would support this goal might be to provide visible indicators of progress to work parties, such as the ongoing work to resolve *Unknown* observations, state by state and province by province in the US and Canada currently underway on channel `#work-party` on the unofficial iNat Discord.
 
 ## TODO
 
