@@ -191,6 +191,7 @@ Some context should be configurable for a user or channel to avoid having to pro
 
 - Remember who the Discord user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
 - Similarly, on channels devoted to discussion of certain taxa, some queries might default to be specific to those taxa.
+- https://github.com/synrg/quaggagriff/issues/14 and https://github.com/synrg/quaggagriff/issues/15 are example issues to help with this goal, and the following goal "Support making & improving social connections"
 
 ### Support making & improving social connections
 
@@ -199,6 +200,10 @@ The bot should facilitate making & improving social connections within naturalis
 ### Support collaborative efforts to improve data
 
 An example of an enhancement that would support this goal might be to provide visible indicators of progress to work parties, such as the ongoing work to resolve *Unknown* observations, state by state and province by province in the US and Canada currently underway on channel `#work-party` on the unofficial iNat Discord.
+
+### Improve comprehension of the subject matter being discussed with visuals
+
+Example issues supporting this goal are https://github.com/synrg/quaggagriff/issues/19 and https://github.com/synrg/quaggagriff/issues/18 to provide at-a-glance overviews of where taxa are found with maps, without a time-consuming & more bandwidth-heavy trip out to the web.
 
 ## TODO
 
