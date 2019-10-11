@@ -37,13 +37,11 @@ For each successful response, the scientific name, followed by the preferred com
 ```
 <span align="top">
     <blockquote>
-        <a href="https://www.inaturalist.org/taxa/9458">Myioborus pictus (Painted Redstart)</a><br>
-        <b>Matched:</b><br>
+        <span style="float: left"><a href="https://www.inaturalist.org/taxa/9458">Myioborus pictus (Painted Redstart)</a></span>
+        <img align="top" style="float: right" width="30" height="30" alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/20389/square.jpg?1545366901"></br>
+        <b style="clear: both">Matched:</b><br>
         PARE
     </blockquote>
-</span>
-<span align="top">
-    <img alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/20389/square.jpg?1545366901">
 </span>
 
 If the matched term was neither in the scientific name, nor the preferred common name, the term that matched is shown as well.
