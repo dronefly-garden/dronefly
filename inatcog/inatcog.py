@@ -114,16 +114,10 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def last(self, ctx, *, query):
-        """Recognize and act on recent messages in the channel history.
+        """Lookup iNat links contained in recent messages.
 
-        - Refer to a recent observation link & show info about it.
-        **Examples:**
-        ```
-        [p]inat last obs
-           -> matches the last observation link & reports info known about it
-        ```
-        Also, `[p]last` is an alias for `[p]inat last`, (provided the bot
-        owner has added it).
+        `[p]inat last obs` -> A brief summary of the last mentioned observation.
+        Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
 
         found = None
@@ -166,7 +160,7 @@ class INatCog(commands.Cog):
             user = obs[0]["user"]
             by_name = user.get("name")
             by_login = user.get("login")
-            observed_by =  by_name or by_login or "Somebody"
+            observed_by = by_name or by_login or "Somebody"
             if observed_on:
                 summary = 'Observed by %s on %s' % (observed_by, observed_on)
         else:
