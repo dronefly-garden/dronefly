@@ -176,7 +176,7 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def map(self, ctx, *, query):
-        """Generate an observation range map of two or more species.
+        """Generate an observation range map of one or more species.
 
         **Examples:**
         ```
