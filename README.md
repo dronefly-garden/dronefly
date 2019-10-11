@@ -194,9 +194,13 @@ Some context should be configurable for a user or channel to avoid having to pro
 - Remember who the user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
 - Similarly, on channels devoted to discussion of certain taxa, support queries specific to those taxa.
 
-### Provide support for making social connections
+### Support making & improving social connections
 
-*TODO: Explain.*
+Make it possible for users to browse & identify each other's observations by remembering & sharing links to their profiles & observations if they have volunteered that information.
+
+### Support collaborative efforts to improve data
+
+Provide commands to give visible indicators of progress to work parties, such as the ongoing work to resolve *Unknown* observations, state by state and province by province in the US and Canada currently underway on channel #work-party on the unofficial iNat Discord.
 
 ## TODO
 
