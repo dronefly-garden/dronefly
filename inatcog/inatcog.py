@@ -187,24 +187,24 @@ class INatCog(commands.Cog):
         """
 
         def calc_distance(lat1, lon1, lat2, lon2):
-
-            R = 6371
-
+            r = 6371
             p1 = lat1 * math.pi / 180
             p2 = lat2 * math.pi / 180
             d1 = (lat2 - lat1) * math.pi / 180
             d2 = (lon2 - lon1) * math.pi / 180
-
             a = math.sin(d1 / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(d2 / 2) ** 2
             c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-            return R * c
+            return r * c
 
         def get_zoom_level(swlat, swlng, nelat, nelng):
             d1 = calc_distance(swlat, swlng, nelat, swlng)
             d2 = calc_distance(swlat, nelng, nelat, nelng)
 
             arc_size = max(d1, d2)
+
+            if arc_size == 0:
+                return 10
 
             result = int(math.log2(20000 / arc_size) + 2)
             if result > 10:
@@ -234,23 +234,26 @@ class INatCog(commands.Cog):
 
         bounds = get_observation_bounds(taxon_ids)
         if not bounds:
-            await self.sorry(ctx, embed)
-            return
+            center_lat = 0
+            center_lon = 0
+            zoom_level = 2
+        else:
+            swlat = bounds["swlat"]
+            swlng = bounds["swlng"]
+            nelat = bounds["nelat"]
+            nelng = bounds["nelng"]
+            center_lat = (swlat + nelat) / 2
+            center_lon = (swlng + nelng) / 2
 
-        swlat = bounds["swlat"]
-        swlng = bounds["swlng"]
-        nelat = bounds["nelat"]
-        nelng = bounds["nelng"]
-
-        zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
+            zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
 
         await self.send_map_embed(ctx,
                                   embed,
                                   taxa,
                                   taxon_ids,
                                   zoom_level,
-                                  (swlat + nelat) / 2,
-                                  (swlng + nelng) / 2)
+                                  center_lat,
+                                  center_lon)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
