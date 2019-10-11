@@ -6,9 +6,9 @@ from datetime import datetime
 import timeago
 from redbot.core import commands
 import discord
-import requests
 from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
+from .api import get_taxa, get_observations
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
@@ -94,24 +94,10 @@ def match_taxon(query, records):
     LOG.info('Best match: %s%s', repr(best_record), '' if min_score_met else ' (score too low)')
     return best_record if min_score_met else None
 
-def get_taxa(*args, **kwargs):
-    """Query /taxa for taxa matching parameters."""
-    inaturalist_api = "https://api.inaturalist.org"
-
-    # Select endpoint based on call signature:
-    # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-    endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
-    id_arg = f"/{args[0]}" if args else ""
-
-    results = requests.get(
-        f"{inaturalist_api}{endpoint}{id_arg}",
-        headers={"Accept": "application/json"},
-        params=kwargs,
-    ).json()["results"]
-
-    return results
-
-PAT_OBS = re.compile(r'\b(https?://(www\.)?inaturalist\.(org|ca)/observations/\d+)\b', re.I)
+PAT_OBS = re.compile(
+    r'\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b',
+    re.I,
+)
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
@@ -150,13 +136,42 @@ class INatCog(commands.Cog):
                 return
 
         LOG.info(repr(found))
-        await ctx.send(
-            '<%s> was shared %s by %s' % (
-                re.search(PAT_OBS, found.content)[1],
-                timeago.format(found.created_at, datetime.utcnow()),
-                found.author.nick or found.author.name,
-            )
-        )
+        mat = re.search(PAT_OBS, found.content)
+        obs_id = int(mat["obs_id"])
+        url = mat["url"]
+        obs = get_observations(obs_id)
+
+        ago = timeago.format(found.created_at, datetime.utcnow())
+        name = found.author.nick or found.author.name
+        embed = discord.Embed(color=0x90ee90)
+        embed.url = url
+        summary = None
+        if obs:
+            community_taxon = obs[0].get("community_taxon")
+            taxon = community_taxon or obs[0].get("taxon")
+            if taxon:
+                sci_name = taxon["name"]
+                common = taxon.get("preferred_common_name")
+                embed.title = '%s (%s)' % (sci_name, common) if common else sci_name
+            else:
+                embed.title = str(obs_id)
+            photos = obs[0].get("photos")
+            if photos:
+                thumbnail = photos[0].get("url")
+            else:
+                thumbnail = None
+            if thumbnail:
+                embed.set_thumbnail(url=thumbnail)
+            observed_on = obs[0].get("observed_on_string")
+            observed_by = obs[0]["user"]["name"]
+            if observed_on:
+                summary = 'Observed by %s on %s' % (observed_by, observed_on)
+        else:
+            LOG.info('Deleted observation: %d', obs_id)
+            embed.title = 'Deleted'
+
+        embed.add_field(name=summary or '\u200B', value='shared %s by @%s' % (ago, name))
+        await ctx.send(embed=embed)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
