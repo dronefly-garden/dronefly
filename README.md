@@ -5,11 +5,11 @@ Quaggagriff is a Discord Cog collection for naturalists.
 
 ### inatcog
 
-Provides commands to access the iNat platform:
+Provides commands to access the iNat platform.
 
 #### Commands:
 
-`[p]inat taxon <query>` looks up the taxon best matching the query. It will:
+`[p]inat taxon <query>` looks up the taxon best matching the query (where `[p]` is the bot prefix). It will:
 
 - Match the taxon with the given iNat id#.
 - Match words that start with the terms typed.
@@ -35,6 +35,8 @@ Example `[p]inat taxon` queries using aliases:
 Provides commands to access the eBird platform. *Note: you must apply for an eBird API key to use this cog.*
 
 #### Commands:
+
+The following commands are supported (where `[p]` is the bot prefix).
 
 ```
 [p]ebird checkdays            Checks days setting.
@@ -62,8 +64,6 @@ Then add the Quaggagriff repo and install the desired cog(s) as per:
 [p]repo add Quaggagriff https://github.com/synrg/quaggagriff
 [p]cog install Quaggagriff <cog-name>
 ```
-
-Where [p] is your prefix.
 
 ### inatcog
 
