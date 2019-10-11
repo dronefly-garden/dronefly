@@ -53,11 +53,14 @@ def score_match(query, record, all_terms, exact=None):
         except ValueError:
             pass
 
-    all_terms_matched = (
-        re.search(all_terms, record.term),
-        re.search(all_terms, record.name),
-        re.search(all_terms, record.common) if record.common else None,
-    )
+    if query.taxon_id:
+        all_terms_matched = (None, None, None)
+    else:
+        all_terms_matched = (
+            re.search(all_terms, record.term),
+            re.search(all_terms, record.name),
+            re.search(all_terms, record.common) if record.common else None,
+        )
 
     # TODO: parser should comprehend a code as a separate entity
     if not exact and len(query.terms) == 1 and query.terms[0].upper() == record.term:
