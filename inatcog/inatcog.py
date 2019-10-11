@@ -360,7 +360,7 @@ class INatCog(commands.Cog):
 
     async def send_map_embed(self, ctx, embed, taxa, taxon_ids, zoom_level, centerlat, centerlon):
         names = ', '.join([rec.name for rec in taxa.values()])
-        embed.title = f"Observation range map for species {names}"
+        embed.title = f"Range map for {names}"
         taxa = ','.join(taxon_ids)
         embed.url = f'https://www.inaturalist.org/taxa/map?taxa={taxa}#{zoom_level}/{centerlat}/{centerlon}'
         await ctx.send(embed=embed)
