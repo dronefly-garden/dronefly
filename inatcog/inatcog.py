@@ -176,13 +176,14 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def map(self, ctx, *, query):
-        """Generate an observation range map of two or more species.
+        """Generate an observation range map of one or more species.
 
         **Examples:**
         ```
         [p]inat map polar bear
         [p]inat map 24255,24267
         [p]inat map boreal chorus frog,western chorus frog
+        ```
         """
 
         def calc_distance(lat1, lon1, lat2, lon2):
@@ -223,11 +224,13 @@ class INatCog(commands.Cog):
             await self.sorry(ctx, embed)
             return
 
-        taxon_ids = []
+        taxa = {}
         for query in queries:
             rec = await self.maybe_match_taxon(ctx, embed, query.main)
             if rec:
-                taxon_ids.append(str(rec.taxon_id))
+                taxa[str(rec.taxon_id)] = rec
+
+        taxon_ids = list(taxa.keys())
 
         bounds = get_observation_bounds(taxon_ids)
         if not bounds:
@@ -243,7 +246,8 @@ class INatCog(commands.Cog):
 
         await self.send_map_embed(ctx,
                                   embed,
-                                  ','.join(taxon_ids),
+                                  taxa,
+                                  taxon_ids,
                                   zoom_level,
                                   (swlat + nelat) / 2,
                                   (swlng + nelng) / 2)
@@ -354,7 +358,8 @@ class INatCog(commands.Cog):
             )
         await ctx.send(embed=embed)
 
-    async def send_map_embed(self, ctx, embed, taxon_ids, zoom_level, centerlat, centerlon):
-        embed.title = "Observation range map"
+    async def send_map_embed(self, ctx, embed, taxa, taxon_ids, zoom_level, centerlat, centerlon):
+        names = ', '.join([rec.name for rec in taxa.values()])
+        embed.title = f"Observation range map for species {names}"
         embed.url = f'https://www.inaturalist.org/taxa/map?taxa={taxon_ids}#{zoom_level}/{centerlat}/{centerlon}'
         await ctx.send(embed=embed)
