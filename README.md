@@ -43,7 +43,7 @@ For each successful response, the scientific name, followed by the preferred com
     </blockquote>
 </span>
 <span align="top">
-    <img alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/68547/square.jpg">
+    <img alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/20389/square.jpg?1545366901">
 </span>
 
 If the matched term was neither in the scientific name, nor the preferred common name, the term that matched is shown as well.
