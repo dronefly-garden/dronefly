@@ -212,7 +212,7 @@ class INatCog(commands.Cog):
         try:
             queries = list(map(self.taxon_query_parser.parse, query.split(',')))
         except ParseException:
-            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            await self.sorry(ctx, embed)
             return
 
         taxon_ids = []
@@ -223,7 +223,7 @@ class INatCog(commands.Cog):
 
         bounds = get_observation_bounds(taxon_ids)
         if not bounds:
-            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            await self.sorry(ctx, embed)
             return
 
         swlat = bounds["swlat"]
