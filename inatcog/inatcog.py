@@ -173,6 +173,14 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def map(self, ctx, *, query):
+        """Generate an observation range map of two or more species.
+
+        **Examples:**
+        ```
+        [p]inat map polar bear
+        [p]inat map 24255,24267
+        [p]inat map boreal chorus frog,western chorus frog
+        """
 
         def calc_distance(lat1, lon1, lat2, lon2):
 
@@ -344,5 +352,6 @@ class INatCog(commands.Cog):
         await ctx.send(embed=embed)
 
     async def send_map_embed(self, ctx, embed, taxon_ids, zoom_level, centerlat, centerlon):
+        embed.title = "Observation range map"
         embed.url = f'https://www.inaturalist.org/taxa/map?taxa={taxon_ids}#{zoom_level}/{centerlat}/{centerlon}'
         await ctx.send(embed=embed)
