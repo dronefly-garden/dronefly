@@ -35,10 +35,16 @@ For each successful response, the scientific name, followed by the preferred com
 ```
 [p]taxon pare
 ```
-
-> [Myioborus pictus (Painted Redstart)](https://www.inaturalist.org/taxa/9458) \
-> **Matched:** \
-> PARE ![Image of Myioborus pictus](https://static.inaturalist.org/photos/68547/square.jpg) 
+<div display="inline-block" align="top">
+    <blockquote>
+        <a href="https://www.inaturalist.org/taxa/9458">Myioborus pictus (Painted Redstart)</a><br>
+        <b>Matched:</b><br>
+        PARE
+    </blockquote>
+</div>
+<div display="inline-block align="top">
+    <img alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/68547/square.jpg">
+</div>
 
 
 ### ebirdcog
