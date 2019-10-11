@@ -16,7 +16,7 @@ Provides commands to access the iNat platform.
 - Exactly match words enclosed in double-quotes.
 - Match a taxon 'in' an ancestor taxon.
 - Filter matches by rank keywords before or after other terms.
-- Match the AOU 4-letter code (if it's in iNat's Taxonomy).
+- Match the AOU 4-letter bird code (if it's in iNat's Taxonomy).
 
 *Note: It is recommended that `[p]taxon` itself and individual ranks be set up as shortcuts for the corresponding commands the bot owner has created those aliases with the `alias` cog.*
 
