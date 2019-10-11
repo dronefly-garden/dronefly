@@ -204,7 +204,7 @@ Provide commands to give visible indicators of progress to work parties, such as
 
 ## TODO
 
-The following is a quick and not very thorough list of some ideas for improvements, some of which are too broad to make just one Issue, and others of which are specific, but are waiting to have Issues filed for them. Check the See [Issues](https://github.com/synrg/quaggagriff/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
+The following is a quick and not very thorough list of some ideas for improvements, some of which are too broad to make just one Issue, and others of which are specific, but are waiting to have Issues filed for them. Check the [Issues](https://github.com/synrg/quaggagriff/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
 
 - add more useful / interesting commands
 - provide helper commands to:
