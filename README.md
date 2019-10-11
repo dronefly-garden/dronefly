@@ -46,6 +46,8 @@ For each successful response, the scientific name, followed by the preferred com
     <img alt="Image of Myioborus pictus" src="https://static.inaturalist.org/photos/68547/square.jpg">
 </span>
 
+If the matched term was neither in the scientific name, nor the preferred common name, the term that matched is shown as well.
+
 ### ebirdcog
 
 Provides commands to access the eBird platform. *Note: you must apply for an eBird API key to use this cog.*
