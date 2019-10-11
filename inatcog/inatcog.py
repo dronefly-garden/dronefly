@@ -163,7 +163,10 @@ class INatCog(commands.Cog):
             if thumbnail:
                 embed.set_thumbnail(url=thumbnail)
             observed_on = obs[0].get("observed_on_string")
-            observed_by = obs[0]["user"]["name"]
+            user = obs[0]["user"]
+            by_name = user.get("name")
+            by_login = user.get("login")
+            observed_by =  by_name or by_login or "Somebody"
             if observed_on:
                 summary = 'Observed by %s on %s' % (observed_by, observed_on)
         else:
