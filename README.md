@@ -3,26 +3,46 @@ Quaggagriff is a Discord Cog collection for naturalists.
 
 ## Cogs:
 
-- ebirdcog
-    - Provides commands to access the eBird platform.
-    - Note: you must apply for an eBird API key to use this cog.
-    - Commands:
-        - **ebird checkdays**
-            - Checks days setting.
-        - **ebird checkregion**
-            - Checks region setting.
-        - **ebird hybrids**
-            - Reports recent hybrid observations.
-        - **ebird setdays**
-            - Sets days considered recent (1 through 30; default: 30).
-        - **ebird setregion**
-            - Sets region (default: CA-NS; e.g. US-MA, etc.).
-- inatcog
-    - Provides commands to access the iNat platform.
-    - Read-only iNat commands (the only kind provided to date) do not require an API key.
-    - Commands:
-        - **inat taxon [terms...]**
-            - Looks up the taxon by unique ID, code, or name.
+### inatcog
+
+Provides commands to access the iNat platform:
+
+#### Commands:
+
+`[p]inat taxon <query>` looks up the taxon best matching the query. It will:
+
+- Match the taxon with the given iNat id#.
+- Match words that start with the terms typed.
+- Exactly match words enclosed in double-quotes.
+- Match a taxon 'in' an ancestor taxon.
+- Filter matches by rank keywords before or after other terms.
+- Match the AOU 4-letter code (if it's in iNat's Taxonomy).
+
+*Note: It is recommended that `[p]taxon` itself and individual ranks be set up as shortcuts for the corresponding commands the bot owner has created those aliases with the `alias` cog.*
+
+Example `[p]inat taxon` queries using aliases:
+
+```
+[p]taxon bear family          -> Ursidae (Bears)
+[p]family bear                -> Ursidae (Bears)
+[p]taxon prunella             -> Prunella (self-heals)
+[p]taxon prunella in animals  -> Prunella
+[p]taxon wtsp                 -> Zonotrichia albicollis (White-throated Sparrow)
+```
+
+### ebirdcog
+
+Provides commands to access the eBird platform. *Note: you must apply for an eBird API key to use this cog.*
+
+#### Commands:
+
+```
+[p]ebird checkdays            Checks days setting.
+[p]ebird checkregion          Checks region setting.
+[p]ebird hybrids              Reports recent hybrid observations.
+[p]ebird setdays              Sets days considered recent (1 through 30; default: 30).
+[p]ebird setregion            Sets region (default: CA-NS; e.g. US-MA, etc.).
+```
 
 ## Prerequisites
 
@@ -45,7 +65,16 @@ Then add the Quaggagriff repo and install the desired cog(s) as per:
 
 Where [p] is your prefix.
 
-## ebirdcog
+### inatcog
+
+After adding the repo as per Installation, install & load inatcog:
+
+```
+[p]cog install Quaggagriff inatcog
+[p]load inatcog
+```
+
+### ebirdcog
 
 After adding the repo as per Installation, install & load ebirdcog:
 
@@ -54,14 +83,31 @@ After adding the repo as per Installation, install & load ebirdcog:
 [p]load ebirdcog
 ```
 
-The same goes for inatcog:
+## Configuration
+
+### inatcog
+
+Set aliases for the server (as bot owner):
 
 ```
-[p]cog install Quaggagriff inatcog
-[p]load inatcog
+[p]load alias
+[p]set global alias taxon inat taxon
+[p]set global alias kingdom inat taxon kingdom
+... etc. for all ranks, including common abbreviations (see Note below)
 ```
 
-### Configuration
+*Note: The keywords sp, ssp, & var are accepted as abbreviations for species, subspecies, and variety, respectively. Set aliases for those keywords as well as spelled out.*
+
+Verify the `[p]taxon` alias works:
+
+```
+[p]taxon pare
+```
+
+> [Myioborus pictus (Painted Redstart)](https://www.inaturalist.org/taxa/9458) \
+![Image of Myioborus pictus](https://static.inaturalist.org/photos/68547/square.jpg)
+
+### ebirdcog
 
 Before you can access the eBird API, you must [generate an eBird API key](https://ebird.org/api/keygen) and set it in the [API key storage](https://docs.discord.red/en/stable/framework_apikeys.html) as follows (making sure to do this in DM so as to not expose the key to others!)
 
@@ -76,44 +122,30 @@ Change default settings to values suitable for your bot, e.g.
 [p]ebird setdays 7
 ```
 
-### Examples
-
-Set aliases for the server (as bot owner):
+Set a `[p]hybrids` global alias (as bot owner):
 
 ```
-,load aliases
-,set alias hybrids ebird hybrids
-,set alias taxon inat taxon
+[p]load alias
+[p]set global alias hybrids ebird hybrids
 ```
 
-Report hybrids observed recently on eBird:
+Verify the alias works:
 
 ```
-,hybrids
+[p]hybrids
 ```
 
 > **Hybrids in US-MA from past 7 days** \
 > **Mallard x American Black Duck** \
 > · 12:25, 18 Sep: 2 at 210 Herring Creek Rd, Edgartown US-MA (41.3515,-70.5317)
 
-Look up a taxon on iNat:
-
-```
-,taxon pare
-```
-
-> [Myioborus pictus (Painted Redstart)](https://www.inaturalist.org/taxa/9458) \
-![Image of Myioborus pictus](https://static.inaturalist.org/photos/68547/square.jpg)
-
-
-### Scheduled reports
-
-See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.
+*Tip: See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.*
 
 ## TODO
 
 - add more useful / interesting commands
-- ~~add some iNaturalist commands~~
+- provide helper commands to:
+    - add / remove all of the recommended `inat taxon` aliases automatically
+    - schedule an `ebird hybrids` report for a channel more conveniently
 - improve default permissions; document changing default permissions
-- limit API calls using cached values where appropriate
-- make a proper parser so that the command query language can be made richer (see taxon-pyparsing branch)
+- ~~make a proper parser so that the command query language can be made richer (see taxon-pyparsing branch)~~
