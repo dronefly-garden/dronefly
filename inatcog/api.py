@@ -30,6 +30,14 @@ def get_observations(*args, **kwargs):
         f"{BASE_URL}{endpoint}{id_arg}",
         headers={"Accept": "application/json"},
         params=kwargs,
-    ).json()["results"]
+    ).json()
 
     return results
+
+def get_observation_bounds(taxon_ids):
+    kwargs = {"return_bounds": 'true', "verifiable": 'true', "taxon_id": ','.join(taxon_ids),
+              "per_page": 0}
+
+    result = get_observations(**kwargs)
+    if "total_bounds" in result:
+        return result["total_bounds"]
