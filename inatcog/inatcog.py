@@ -8,7 +8,8 @@ from redbot.core import commands
 import discord
 from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
-from .api import get_taxa, get_observations
+from .api import get_taxa, get_observations, get_observation_bounds
+import math
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
@@ -139,7 +140,7 @@ class INatCog(commands.Cog):
         mat = re.search(PAT_OBS, found.content)
         obs_id = int(mat["obs_id"])
         url = mat["url"]
-        obs = get_observations(obs_id)
+        obs = get_observations(obs_id)["results"]
 
         ago = timeago.format(found.created_at, datetime.utcnow())
         name = found.author.nick or found.author.name
@@ -172,6 +173,72 @@ class INatCog(commands.Cog):
 
         embed.add_field(name=summary or '\u200B', value='shared %s by @%s' % (ago, name))
         await ctx.send(embed=embed)
+
+    @inat.command()
+    async def map(self, ctx, *, query):
+
+        def calc_distance(lat1, lon1, lat2, lon2):
+
+            R = 6371
+
+            p1 = lat1 * math.pi / 180
+            p2 = lat2 * math.pi / 180
+            d1 = (lat2 - lat1) * math.pi / 180
+            d2 = (lon2 - lon1) * math.pi / 180
+
+            a = math.sin(d1 / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(d2 / 2) ** 2
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+            return R * c
+
+        def get_zoom_level(swlat, swlng, nelat, nelng):
+            d1 = calc_distance(swlat, swlng, nelat, swlng)
+            d2 = calc_distance(swlat, nelng, nelat, nelng)
+
+            arc_size = max(d1, d2)
+
+            result = int(math.log2(20000 / arc_size) + 2)
+            if result > 10:
+                result = 10
+            if result < 2:
+                result = 2
+            return result
+
+        if not query:
+            await ctx.send_help()
+            return
+
+        embed = discord.Embed(color=0x90ee90)
+        try:
+            queries = list(map(self.taxon_query_parser.parse, query.split(',')))
+        except ParseException:
+            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            return
+
+        taxon_ids = []
+        for query in queries:
+            rec = await self.maybe_match_taxon(ctx, embed, query.main)
+            if rec:
+                taxon_ids.append(str(rec.taxon_id))
+
+        bounds = get_observation_bounds(taxon_ids)
+        if not bounds:
+            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            return
+
+        swlat = bounds["swlat"]
+        swlng = bounds["swlng"]
+        nelat = bounds["nelat"]
+        nelng = bounds["nelng"]
+
+        zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
+
+        await self.send_map_embed(ctx,
+                                  embed,
+                                  ','.join(taxon_ids),
+                                  zoom_level,
+                                  (swlat + nelat) / 2,
+                                  (swlng + nelng) / 2)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -277,4 +344,8 @@ class INatCog(commands.Cog):
                 value=matched,
                 inline=False,
             )
+        await ctx.send(embed=embed)
+
+    async def send_map_embed(self, ctx, embed, taxon_ids, zoom_level, centerlat, centerlon):
+        embed.url = f'https://www.inaturalist.org/taxa/map?taxa={taxon_ids}#{zoom_level}/{centerlat}/{centerlon}'
         await ctx.send(embed=embed)
