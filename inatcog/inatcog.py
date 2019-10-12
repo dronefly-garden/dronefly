@@ -65,7 +65,7 @@ def score_match(query, record, all_terms, exact=None, ancestor_id=None):
 
     if ancestor_id and (ancestor_id not in record.ancestor_ids):
         # Reject; workaround to bug in /v1/taxa/autocomplete
-        # - https://forum.inaturalist.org/t/v1-taxa-autocomplete-taxon-id-returning-a-result-without-that-id-in-ancestor-ids/7163
+        # - https://forum.inaturalist.org/t/v1-taxa-autocomplete/7163
         score = -1
     elif query.code and (query.code == record.term):
         score = 300
@@ -93,7 +93,13 @@ def match_taxon(query, records, ancestor_id=None):
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact, ancestor_id=ancestor_id)
+        scores[num] = score_match(
+            query,
+            record,
+            all_terms=all_terms,
+            exact=exact,
+            ancestor_id=ancestor_id
+        )
 
     best_score = max(scores)
     LOG.info('Best score: %d', best_score)
@@ -307,7 +313,7 @@ class INatCog(commands.Cog):
 
     async def maybe_match_taxa(self, ctx, embed, queries):
         """Get one or more taxon and return a match, if any.
-        
+
         Currently the grammar supports only one ancestor taxon
         and one child taxon.
         """
@@ -324,7 +330,12 @@ class INatCog(commands.Cog):
                         'Child ranks must be below ancestor rank: %s' % rec.rank
                     )
                     return
-                rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor_id=rec.taxon_id)
+                rec = await self.maybe_match_taxon(
+                    ctx,
+                    embed,
+                    queries.main,
+                    ancestor_id=rec.taxon_id
+                )
         else:
             rec = await self.maybe_match_taxon(ctx, embed, queries.main)
         return rec
