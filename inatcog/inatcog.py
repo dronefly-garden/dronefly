@@ -11,6 +11,7 @@ from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
 from .api import get_taxa, get_observations, get_observation_bounds, WWW_BASE_URL
 
+MapCoords = namedtuple('MapCoords', 'zoom_level, center_lat, center_lon')
 Taxon = namedtuple(
     'Taxon',
     'name, taxon_id, common, term, thumbnail, rank, ancestor_ids, observations',
@@ -267,14 +268,8 @@ class INatCog(commands.Cog):
 
             zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
 
-        await self.send_map_embed(
-            ctx,
-            embed,
-            taxa,
-            zoom_level,
-            center_lat,
-            center_lon,
-        )
+        map_coords = MapCoords(zoom_level, center_lat, center_lon)
+        await self.send_map_embed(ctx, embed, taxa, map_coords)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -396,10 +391,11 @@ class INatCog(commands.Cog):
             embed.description = matched
         await ctx.send(embed=embed)
 
-    async def send_map_embed(self, ctx, embed, taxa, zoom_level, centerlat, centerlon):
+    async def send_map_embed(self, ctx, embed, taxa, map_coords):
         """Send embed linking to range map."""
         names = ', '.join([rec.name for rec in taxa.values()])
         embed.title = f"Range map for {names}"
         taxa = ','.join(list(taxa.keys()))
-        embed.url = f'{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_level}/{centerlat}/{centerlon}'
+        zoom_lat_lon = '/'.join(map(str, map_coords))
+        embed.url = f'{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_lat_lon}'
         await ctx.send(embed=embed)
