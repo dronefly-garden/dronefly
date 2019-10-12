@@ -1,6 +1,7 @@
 """Module to access iNaturalist API."""
 import logging
 import re
+import math
 from collections import namedtuple
 from datetime import datetime
 import timeago
@@ -8,8 +9,7 @@ from redbot.core import commands
 import discord
 from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
-from .api import get_taxa, get_observations, get_observation_bounds
-import math
+from .api import get_taxa, get_observations, get_observation_bounds, WWW_BASE_URL
 
 Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
@@ -186,6 +186,7 @@ class INatCog(commands.Cog):
         """
 
         def calc_distance(lat1, lon1, lat2, lon2):
+            # pylint: disable=invalid-name
             r = 6371
             p1 = lat1 * math.pi / 180
             p2 = lat2 * math.pi / 180
@@ -197,6 +198,7 @@ class INatCog(commands.Cog):
             return r * c
 
         def get_zoom_level(swlat, swlng, nelat, nelng):
+            # pylint: disable=invalid-name
             d1 = calc_distance(swlat, swlng, nelat, swlng)
             d2 = calc_distance(swlat, nelng, nelat, nelng)
 
@@ -224,8 +226,8 @@ class INatCog(commands.Cog):
             return
 
         taxa = {}
-        for query in queries:
-            rec = await self.maybe_match_taxon(ctx, embed, query.main)
+        for qry in queries:
+            rec = await self.maybe_match_taxon(ctx, embed, qry.main)
             if rec:
                 taxa[str(rec.taxon_id)] = rec
 
@@ -246,13 +248,14 @@ class INatCog(commands.Cog):
 
             zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
 
-        await self.send_map_embed(ctx,
-                                  embed,
-                                  taxa,
-                                  taxon_ids,
-                                  zoom_level,
-                                  center_lat,
-                                  center_lon)
+        await self.send_map_embed(
+            ctx,
+            embed,
+            taxa,
+            zoom_level,
+            center_lat,
+            center_lon,
+        )
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -360,9 +363,10 @@ class INatCog(commands.Cog):
             )
         await ctx.send(embed=embed)
 
-    async def send_map_embed(self, ctx, embed, taxa, taxon_ids, zoom_level, centerlat, centerlon):
+    async def send_map_embed(self, ctx, embed, taxa, zoom_level, centerlat, centerlon):
+        """Send embed linking to range map."""
         names = ', '.join([rec.name for rec in taxa.values()])
         embed.title = f"Range map for {names}"
-        taxa = ','.join(taxon_ids)
-        embed.url = f'https://www.inaturalist.org/taxa/map?taxa={taxa}#{zoom_level}/{centerlat}/{centerlon}'
+        taxa = ','.join(list(taxa.keys()))
+        embed.url = f'{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_level}/{centerlat}/{centerlon}'
         await ctx.send(embed=embed)

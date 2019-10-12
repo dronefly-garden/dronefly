@@ -1,7 +1,8 @@
 """Module to access iNaturalist API."""
 import requests
 
-BASE_URL = "https://api.inaturalist.org"
+API_BASE_URL = "https://api.inaturalist.org"
+WWW_BASE_URL = "https://www.inaturalist.org"
 
 def get_taxa(*args, **kwargs):
     """Query API for taxa matching parameters."""
@@ -12,7 +13,7 @@ def get_taxa(*args, **kwargs):
     id_arg = f"/{args[0]}" if args else ""
 
     results = requests.get(
-        f"{BASE_URL}{endpoint}{id_arg}",
+        f"{API_BASE_URL}{endpoint}{id_arg}",
         headers={"Accept": "application/json"},
         params=kwargs,
     ).json()["results"]
@@ -27,7 +28,7 @@ def get_observations(*args, **kwargs):
     id_arg = f"/{args[0]}" if args else ""
 
     results = requests.get(
-        f"{BASE_URL}{endpoint}{id_arg}",
+        f"{API_BASE_URL}{endpoint}{id_arg}",
         headers={"Accept": "application/json"},
         params=kwargs,
     ).json()
@@ -35,9 +36,16 @@ def get_observations(*args, **kwargs):
     return results
 
 def get_observation_bounds(taxon_ids):
-    kwargs = {"return_bounds": 'true', "verifiable": 'true', "taxon_id": ','.join(taxon_ids),
-              "per_page": 0}
+    """Get the bounds for the specified observations."""
+    kwargs = {
+        "return_bounds": 'true',
+        "verifiable": 'true',
+        "taxon_id": ','.join(taxon_ids),
+        "per_page": 0,
+    }
 
     result = get_observations(**kwargs)
     if "total_bounds" in result:
         return result["total_bounds"]
+
+    return None
