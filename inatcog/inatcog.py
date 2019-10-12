@@ -11,7 +11,10 @@ from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
 from .api import get_taxa, get_observations, get_observation_bounds, WWW_BASE_URL
 
-Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank, ancestor_ids')
+Taxon = namedtuple(
+    'Taxon',
+    'name, taxon_id, common, term, thumbnail, rank, ancestor_ids, observations',
+)
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 def get_fields_from_results(results):
@@ -26,6 +29,7 @@ def get_fields_from_results(results):
             photo.get('square_url') if photo else None,
             record['rank'],
             record['ancestor_ids'],
+            record['observations_count'],
         )
         return rec
     return list(map(get_fields, results))
@@ -380,12 +384,14 @@ class INatCog(commands.Cog):
         if rec.thumbnail:
             embed.set_thumbnail(url=rec.thumbnail)
         matched = rec.term or rec.taxon_id
+        observations = rec.observations
+        embed.add_field(
+            name='Observations:',
+            value=observations,
+            inline=True,
+        )
         if matched not in (rec.name, rec.common):
-            embed.add_field(
-                name='Matched:',
-                value=matched,
-                inline=False,
-            )
+            embed.description = matched
         await ctx.send(embed=embed)
 
     async def send_map_embed(self, ctx, embed, taxa, zoom_level, centerlat, centerlon):
