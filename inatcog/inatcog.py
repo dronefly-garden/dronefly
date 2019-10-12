@@ -230,6 +230,8 @@ class INatCog(commands.Cog):
             rec = await self.maybe_match_taxon(ctx, embed, qry.main)
             if rec:
                 taxa[str(rec.taxon_id)] = rec
+            else:
+                return
 
         taxon_ids = list(taxa.keys())
 
