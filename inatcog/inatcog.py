@@ -11,7 +11,7 @@ from pyparsing import ParseException
 from .parsers import TaxonQueryParser, RANKS
 from .api import get_taxa, get_observations, get_observation_bounds, WWW_BASE_URL
 
-Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank')
+Taxon = namedtuple('Taxon', 'name, taxon_id, common, term, thumbnail, rank, ancestor_ids')
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 def get_fields_from_results(results):
@@ -25,11 +25,12 @@ def get_fields_from_results(results):
             record.get('matched_term'),
             photo.get('square_url') if photo else None,
             record['rank'],
+            record['ancestor_ids'],
         )
         return rec
     return list(map(get_fields, results))
 
-def score_match(query, record, all_terms, exact=None):
+def score_match(query, record, all_terms, exact=None, ancestor_id=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
     matched = (None, None, None)
@@ -62,7 +63,11 @@ def score_match(query, record, all_terms, exact=None):
             re.search(all_terms, record.common) if record.common else None,
         )
 
-    if query.code and (query.code == record.term):
+    if ancestor_id and (ancestor_id not in record.ancestor_ids):
+        # Reject; workaround to bug in /v1/taxa/autocomplete
+        # - https://forum.inaturalist.org/t/v1-taxa-autocomplete-taxon-id-returning-a-result-without-that-id-in-ancestor-ids/7163
+        score = -1
+    elif query.code and (query.code == record.term):
         score = 300
     elif matched[1] or matched[2]:
         score = 210
@@ -77,7 +82,7 @@ def score_match(query, record, all_terms, exact=None):
 
     return score
 
-def match_taxon(query, records):
+def match_taxon(query, records, ancestor_id=None):
     """Match a single taxon for the given query among records returned by API."""
     exact = []
     all_terms = re.compile(r'^%s$' % re.escape(' '.join(query.terms)), re.I)
@@ -88,12 +93,12 @@ def match_taxon(query, records):
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
+        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact, ancestor_id=ancestor_id)
 
     best_score = max(scores)
     LOG.info('Best score: %d', best_score)
     best_record = records[scores.index(best_score)]
-    min_score_met = (not exact) or (best_score >= 200)
+    min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
     LOG.info('Best match: %s%s', repr(best_record), '' if min_score_met else ' (score too low)')
     return best_record if min_score_met else None
 
@@ -322,6 +327,7 @@ class INatCog(commands.Cog):
                 rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor_id=rec.taxon_id)
         else:
             rec = await self.maybe_match_taxon(ctx, embed, queries.main)
+        return rec
 
     async def maybe_match_taxon(self, ctx, embed, query, ancestor_id=None):
         """Get taxon and return a match, if any."""
@@ -339,7 +345,7 @@ class INatCog(commands.Cog):
             LOG.info('Nothing found')
             await self.sorry(ctx, embed, 'Nothing found')
             return
-        rec = match_taxon(query, get_fields_from_results(records))
+        rec = match_taxon(query, get_fields_from_results(records), ancestor_id=ancestor_id)
         if not rec:
             LOG.info('No exact match')
             await self.sorry(ctx, embed, 'No exact match')
