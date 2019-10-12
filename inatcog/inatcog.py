@@ -34,38 +34,40 @@ def get_fields_from_results(results):
         return rec
     return list(map(get_fields, results))
 
+NameMatch = namedtuple('NameMatch', 'term, name, common')
+NO_NAME_MATCH = NameMatch(None, None, None)
+def match_name(record, pat):
+    """Match all terms specified."""
+    return NameMatch(
+        re.search(pat, record.term),
+        re.search(pat, record.name),
+        re.search(pat, record.common) if record.common else None,
+    )
+
+def match_exact(record, exact):
+    """Match any exact phrases specified."""
+    matched = NO_NAME_MATCH
+    try:
+        for pat in exact:
+            this_match = match_name(pat, record)
+            if this_match == NO_NAME_MATCH:
+                matched = this_match
+                raise ValueError('At least one field must match.')
+            matched = (
+                matched.term or this_match.term,
+                matched.name or this_match.name,
+                matched.common or this_match.common,
+            )
+    except ValueError:
+        pass
+    return matched
+
 def score_match(query, record, all_terms, exact=None, ancestor_id=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
-    matched = (None, None, None)
-    if exact:
-        try:
-            # Every pattern must match at least one field:
-            for pat in exact:
-                this_match = (
-                    re.search(pat, record.term),
-                    re.search(pat, record.name),
-                    re.search(pat, record.common) if record.common else None,
-                )
-                if this_match == (None, None, None):
-                    matched = this_match
-                    raise ValueError('At least one field must match.')
-                matched = (
-                    matched[0] or this_match[0],
-                    matched[1] or this_match[1],
-                    matched[2] or this_match[2],
-                )
-        except ValueError:
-            pass
 
-    if query.taxon_id:
-        all_terms_matched = (None, None, None)
-    else:
-        all_terms_matched = (
-            re.search(all_terms, record.term),
-            re.search(all_terms, record.name),
-            re.search(all_terms, record.common) if record.common else None,
-        )
+    matched = match_exact(record, exact) if exact else NO_NAME_MATCH
+    all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH
 
     if ancestor_id and (ancestor_id not in record.ancestor_ids):
         # Reject; workaround to bug in /v1/taxa/autocomplete
@@ -73,13 +75,13 @@ def score_match(query, record, all_terms, exact=None, ancestor_id=None):
         score = -1
     elif query.code and (query.code == record.term):
         score = 300
-    elif matched[1] or matched[2]:
+    elif matched.name or matched.common:
         score = 210
-    elif matched[0]:
+    elif matched.term:
         score = 200
-    elif all_terms_matched[1] or all_terms_matched[2]:
+    elif all_matched.name or all_matched.common:
         score = 120
-    elif all_terms_matched[0]:
+    elif all_matched.term:
         score = 110
     else:
         score = 100
