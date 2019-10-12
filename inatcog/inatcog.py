@@ -296,29 +296,35 @@ class INatCog(commands.Cog):
             await self.sorry(ctx, discord.Embed(color=0x90ee90))
             return
 
-        rec = None
+        rec = await self.maybe_match_taxa(ctx, embed, queries)
+        if rec:
+            await self.send_taxa_embed(ctx, embed, rec)
+
+    async def maybe_match_taxa(self, ctx, embed, queries):
+        """Get one or more taxon and return a match, if any.
+        
+        Currently the grammar supports only one ancestor taxon
+        and one child taxon.
+        """
         if queries.ancestor:
             rec = await self.maybe_match_taxon(ctx, embed, queries.ancestor)
             if rec:
                 index = RANKS.index(rec.rank)
                 ancestor_ranks = set(RANKS[index:len(RANKS)])
                 child_ranks = set(queries.main.ranks)
-                if child_ranks != set():
-                    if ancestor_ranks.intersection(child_ranks) == set():
-                        await self.sorry(
-                            ctx,
-                            discord.Embed(color=0x90ee90),
-                            'Child ranks must be below ancestor rank: %s' % rec.rank
-                        )
-                        return
-                rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor=rec.taxon_id)
+                if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
+                    await self.sorry(
+                        ctx,
+                        discord.Embed(color=0x90ee90),
+                        'Child ranks must be below ancestor rank: %s' % rec.rank
+                    )
+                    return
+                rec = await self.maybe_match_taxon(ctx, embed, queries.main, ancestor_id=rec.taxon_id)
         else:
             rec = await self.maybe_match_taxon(ctx, embed, queries.main)
-        if rec:
-            await self.send_taxa_embed(ctx, embed, rec)
 
-    async def maybe_match_taxon(self, ctx, embed, query, ancestor=None):
-        """Get taxa and return a match, if any."""
+    async def maybe_match_taxon(self, ctx, embed, query, ancestor_id=None):
+        """Get taxon and return a match, if any."""
         if query.taxon_id:
             records = get_taxa(query.taxon_id)
         else:
@@ -326,8 +332,8 @@ class INatCog(commands.Cog):
             kwargs["q"] = ' '.join(query.terms)
             if query.ranks:
                 kwargs["rank"] = ','.join(query.ranks)
-            if ancestor:
-                kwargs["taxon_id"] = ancestor
+            if ancestor_id:
+                kwargs["taxon_id"] = ancestor_id
             records = get_taxa(**kwargs)
         if not records:
             LOG.info('Nothing found')
