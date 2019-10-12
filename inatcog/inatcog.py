@@ -141,55 +141,73 @@ class INatCog(commands.Cog):
         Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
 
-        found = None
-        if query.lower() in ('obs', 'observation'):
+        ObsLinkMsg = namedtuple('ObsLinkMsg', 'url, obs, ago, name')
+        async def last_observation_msg(ctx):
+            found = None
             msgs = await ctx.history(limit=1000).flatten()
+
+            found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS, m.content))
+            LOG.info(repr(found))
+
+            mat = re.search(PAT_OBS, found.content)
+            obs_id = int(mat["obs_id"])
+            url = mat["url"]
+            ago = timeago.format(found.created_at, datetime.utcnow())
+            name = found.author.nick or found.author.name
+            results = get_observations(obs_id)["results"]
+            obs = results[0] if results else None
+
+            return ObsLinkMsg(url, obs, ago, name)
+
+        def last_observation_embed(last):
+            embed = discord.Embed(color=0x90ee90)
+            embed.url = last.url
+            summary = None
+
+            if last:
+                obs = last.obs
+                community_taxon = obs.get("community_taxon")
+                taxon = community_taxon or obs.get("taxon")
+                if taxon:
+                    sci_name = taxon["name"]
+                    common = taxon.get("preferred_common_name")
+                    embed.title = '%s (%s)' % (sci_name, common) if common else sci_name
+                else:
+                    embed.title = str(obs["obs_id"])
+                photos = obs.get("photos")
+                if photos:
+                    thumbnail = photos[0].get("url")
+                else:
+                    thumbnail = None
+                if thumbnail:
+                    embed.set_thumbnail(url=thumbnail)
+                observed_on = obs.get("observed_on_string")
+                user = obs["user"]
+                by_name = user.get("name")
+                by_login = user.get("login")
+                observed_by = by_name or by_login or "Somebody"
+                if observed_on:
+                    summary = 'Observed by %s on %s' % (observed_by, observed_on)
+            else:
+                LOG.info('Deleted observation: %d', obs["obs_id"])
+                embed.title = 'Deleted'
+
+            embed.add_field(
+                name=summary or '\u200B', value='shared %s by @%s' % (last.ago, last.name)
+            )
+            return embed
+
+        if query.lower() in ('obs', 'observation'):
             try:
-                found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS, m.content))
+                last = await last_observation_msg(ctx)
             except StopIteration:
                 await ctx.send('Nothing found')
-                return
-
-        LOG.info(repr(found))
-        mat = re.search(PAT_OBS, found.content)
-        obs_id = int(mat["obs_id"])
-        url = mat["url"]
-        obs = get_observations(obs_id)["results"]
-
-        ago = timeago.format(found.created_at, datetime.utcnow())
-        name = found.author.nick or found.author.name
-        embed = discord.Embed(color=0x90ee90)
-        embed.url = url
-        summary = None
-        if obs:
-            community_taxon = obs[0].get("community_taxon")
-            taxon = community_taxon or obs[0].get("taxon")
-            if taxon:
-                sci_name = taxon["name"]
-                common = taxon.get("preferred_common_name")
-                embed.title = '%s (%s)' % (sci_name, common) if common else sci_name
-            else:
-                embed.title = str(obs_id)
-            photos = obs[0].get("photos")
-            if photos:
-                thumbnail = photos[0].get("url")
-            else:
-                thumbnail = None
-            if thumbnail:
-                embed.set_thumbnail(url=thumbnail)
-            observed_on = obs[0].get("observed_on_string")
-            user = obs[0]["user"]
-            by_name = user.get("name")
-            by_login = user.get("login")
-            observed_by = by_name or by_login or "Somebody"
-            if observed_on:
-                summary = 'Observed by %s on %s' % (observed_by, observed_on)
+                return None
         else:
-            LOG.info('Deleted observation: %d', obs_id)
-            embed.title = 'Deleted'
+            await ctx.send_help()
+            return
 
-        embed.add_field(name=summary or '\u200B', value='shared %s by @%s' % (ago, name))
-        await ctx.send(embed=embed)
+        await ctx.send(embed=last_observation_embed(last))
 
     @inat.command()
     async def map(self, ctx, *, query):
