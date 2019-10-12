@@ -62,8 +62,7 @@ def score_match(query, record, all_terms, exact=None):
             re.search(all_terms, record.common) if record.common else None,
         )
 
-    # TODO: parser should comprehend a code as a separate entity
-    if not exact and len(query.terms) == 1 and query.terms[0].upper() == record.term:
+    if query.code and (query.code == record.term):
         score = 300
     elif matched[1] or matched[2]:
         score = 210

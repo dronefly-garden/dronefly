@@ -44,7 +44,7 @@ OPS = (
     'at',
 )
 
-Query = namedtuple('Query', 'taxon_id, terms, phrases, ranks')
+Query = namedtuple('Query', 'taxon_id, terms, phrases, ranks, code')
 Queries = namedtuple('Queries', 'main, ancestor')
 
 class TaxonQueryParser():
@@ -106,7 +106,11 @@ class TaxonQueryParser():
                     terms.append(term)
             if "ranks" in parsed:
                 ranks = parsed["ranks"].asList()
-        return Query(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks)
+            if not phrases and (len(terms) == 1) and (len(terms[0]) == 4):
+                code = terms[0].upper()
+            else:
+                code = None
+        return Query(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
