@@ -250,6 +250,24 @@ class INatCog(commands.Cog):
                 result = 2
             return result
 
+        def get_map_coords_for_taxa(taxon_ids):
+            bounds = get_observation_bounds(taxon_ids)
+            if not bounds:
+                center_lat = 0
+                center_lon = 0
+                zoom_level = 2
+            else:
+                swlat = bounds["swlat"]
+                swlng = bounds["swlng"]
+                nelat = bounds["nelat"]
+                nelng = bounds["nelng"]
+                center_lat = (swlat + nelat) / 2
+                center_lon = (swlng + nelng) / 2
+
+                zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
+
+            return MapCoords(zoom_level, center_lat, center_lon)
+
         if not query:
             await ctx.send_help()
             return
@@ -270,23 +288,7 @@ class INatCog(commands.Cog):
                 return
 
         taxon_ids = list(taxa.keys())
-
-        bounds = get_observation_bounds(taxon_ids)
-        if not bounds:
-            center_lat = 0
-            center_lon = 0
-            zoom_level = 2
-        else:
-            swlat = bounds["swlat"]
-            swlng = bounds["swlng"]
-            nelat = bounds["nelat"]
-            nelng = bounds["nelng"]
-            center_lat = (swlat + nelat) / 2
-            center_lon = (swlng + nelng) / 2
-
-            zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
-
-        map_coords = MapCoords(zoom_level, center_lat, center_lon)
+        map_coords = get_map_coords_for_taxa(taxon_ids)
         await self.send_map_embed(ctx, embed, taxa, map_coords)
 
     @inat.command()
