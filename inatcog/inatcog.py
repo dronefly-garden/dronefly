@@ -231,8 +231,8 @@ class INatCog(commands.Cog):
             return
 
         taxa = {}
-        for qry in queries:
-            rec = await self.maybe_match_taxon(ctx, embed, qry.main)
+        for compound_query in queries:
+            rec = await self.maybe_match_taxa(ctx, embed, compound_query)
             if rec:
                 taxa[str(rec.taxon_id)] = rec
             else:
