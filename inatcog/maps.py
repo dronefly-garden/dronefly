@@ -1,7 +1,8 @@
 """Module to make maps for iNat."""
 from collections import namedtuple
 import math
-from .api import get_observation_bounds
+from .api import get_observation_bounds, WWW_BASE_URL
+from .embeds import make_embed
 
 MapCoords = namedtuple('MapCoords', 'zoom_level, center_lat, center_lon')
 
@@ -54,3 +55,14 @@ def get_map_coords_for_taxa(taxon_ids):
         zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
 
     return MapCoords(zoom_level, center_lat, center_lon)
+
+def make_map_embed(taxa, map_coords):
+    """Make embed linking to range map."""
+    names = ', '.join([rec.name for rec in taxa.values()])
+    title = f"Range map for {names}"
+
+    taxa = ','.join(list(taxa.keys()))
+    zoom_lat_lon = '/'.join(map(str, map_coords))
+    url = f'{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_lat_lon}'
+
+    return make_embed(title=title, url=url)

@@ -1,11 +1,11 @@
 """Module to work with iNat taxa."""
-import logging
 import re
 from collections import namedtuple
 from .api import get_taxa
+from .common import LOG
+from .embeds import make_embed
 from .parsers import TaxonQueryParser, RANKS
 
-LOG = logging.getLogger('red.quaggagriff.inatcog')
 TAXON_QUERY_PARSER = TaxonQueryParser()
 Taxon = namedtuple(
     'Taxon',
@@ -16,7 +16,7 @@ def get_fields_from_results(results):
     """Map get_taxa results into namedtuples of selected fields."""
     def get_fields(record):
         photo = record.get('default_photo')
-        rec = Taxon(
+        return Taxon(
             record['name'],
             record['id'] if 'id' in record else record['taxon_id'],
             record.get('preferred_common_name'),
@@ -26,7 +26,7 @@ def get_fields_from_results(results):
             record['ancestor_ids'],
             record['observations_count'],
         )
-        return rec
+
     return list(map(get_fields, results))
 
 NameMatch = namedtuple('NameMatch', 'term, name, common')
@@ -55,6 +55,7 @@ def match_exact(record, exact):
             )
     except ValueError:
         pass
+
     return matched
 
 def score_match(query, record, all_terms, exact=None, ancestor_id=None):
@@ -107,6 +108,7 @@ def match_taxon(query, records, ancestor_id=None):
     best_record = records[scores.index(best_score)]
     min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
     LOG.info('Best match: %s%s', repr(best_record), '' if min_score_met else ' (score too low)')
+
     return best_record if min_score_met else None
 
 def maybe_match_taxon(query, ancestor_id=None):
@@ -122,28 +124,51 @@ def maybe_match_taxon(query, ancestor_id=None):
         if ancestor_id:
             kwargs["taxon_id"] = ancestor_id
         records = get_taxa(**kwargs)
+
     if not records:
         raise LookupError('Nothing found')
+
     rec = match_taxon(query, get_fields_from_results(records), ancestor_id=ancestor_id)
     if not rec:
         raise LookupError('No exact match')
+
     return rec
 
-def maybe_match_taxa(queries):
+def maybe_match_taxa(complex_query):
     """Get one or more taxon and return a match, if any.
 
     Currently the grammar supports only one ancestor taxon
     and one child taxon.
     """
-    if queries.ancestor:
-        rec = maybe_match_taxon(queries.ancestor)
+    if complex_query.ancestor:
+        rec = maybe_match_taxon(complex_query.ancestor)
         if rec:
             index = RANKS.index(rec.rank)
             ancestor_ranks = set(RANKS[index:len(RANKS)])
-            child_ranks = set(queries.main.ranks)
+            child_ranks = set(complex_query.main.ranks)
             if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
                 raise LookupError('Child ranks must be below ancestor rank: %s' % rec.rank)
-            rec = maybe_match_taxon(queries.main, ancestor_id=rec.taxon_id)
+            rec = maybe_match_taxon(complex_query.main, ancestor_id=rec.taxon_id)
     else:
-        rec = maybe_match_taxon(queries.main)
+        rec = maybe_match_taxon(complex_query.main)
+
     return rec
+
+def make_taxa_embed(rec):
+    """Make embed describing taxa record."""
+    embed = make_embed(
+        title='{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name,
+        url=f'https://www.inaturalist.org/taxa/{rec.taxon_id}',
+    )
+
+    if rec.thumbnail:
+        embed.set_thumbnail(url=rec.thumbnail)
+
+    matched = rec.term or rec.taxon_id
+    if matched not in (rec.name, rec.common):
+        embed.description = matched
+
+    observations = rec.observations
+    embed.add_field(name='Observations:', value=observations, inline=True)
+
+    return embed

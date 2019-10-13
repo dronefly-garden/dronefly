@@ -3,10 +3,10 @@ from collections import namedtuple
 from datetime import datetime
 import re
 
-import discord
 import timeago
 
-from .common import EM_COLOR, LOG
+from .common import LOG
+from .embeds import make_embed
 from .api import get_observations
 
 PAT_OBS = re.compile(
@@ -32,10 +32,9 @@ def get_last_obs_msg(msgs):
 
     return ObsLinkMsg(url, obs, ago, name)
 
-def last_obs_embed(last):
+def make_last_obs_embed(last):
     """Return embed for recent observation link."""
-    embed = discord.Embed(color=EM_COLOR)
-    embed.url = last.url
+    embed = make_embed(url=last.url)
     summary = None
 
     if last:
