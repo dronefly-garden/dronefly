@@ -2,7 +2,6 @@
 from collections import namedtuple
 from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
      CaselessKeyword, oneOf
-from .common import LOG
 
 RANKS = (
     'kingdom',
@@ -123,13 +122,10 @@ class TaxonQueryParser():
             )
 
         parsed = self._grammar.parseString(query_str)
-        LOG.info(parsed.dump())
         ancestor = None
         if parsed:
-            LOG.info(parsed["main"][0])
             main = get_simple_query(parsed["main"][0])
             try:
-                LOG.info(parsed["ancestor"][0])
                 ancestor = get_simple_query(parsed["ancestor"][0])
             except KeyError:
                 pass
