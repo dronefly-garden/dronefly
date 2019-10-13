@@ -67,7 +67,7 @@ def match_exact(record, exact):
             if this_match == NO_NAME_MATCH:
                 matched = this_match
                 raise ValueError('At least one field must match.')
-            matched = (
+            matched = NameMatch(
                 matched.term or this_match.term,
                 matched.name or this_match.name,
                 matched.common or this_match.common,
