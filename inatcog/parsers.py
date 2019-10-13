@@ -1,4 +1,4 @@
-"""Module to access iNaturalist API."""
+"""Module providing parsers for natural language query DSLs."""
 from collections import namedtuple
 from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
      CaselessKeyword, oneOf
