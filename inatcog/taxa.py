@@ -1,7 +1,7 @@
 """Module to work with iNat taxa."""
 import re
 from collections import namedtuple
-from .api import get_taxa
+from .api import get_taxa, WWW_BASE_URL
 from .common import LOG
 from .embeds import make_embed
 from .parsers import TaxonQueryParser, RANKS
@@ -177,7 +177,7 @@ def make_taxa_embed(rec):
     """Make embed describing taxa record."""
     embed = make_embed(
         title='{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name,
-        url=f'https://www.inaturalist.org/taxa/{rec.taxon_id}',
+        url=f'{WWW_BASE_URL}/taxa/{rec.taxon_id}',
     )
 
     if rec.thumbnail:
