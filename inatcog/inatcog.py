@@ -1,23 +1,12 @@
 """Module to access iNaturalist API."""
-import logging
-import re
-from collections import namedtuple
-from datetime import datetime
-import timeago
 from redbot.core import commands
 import discord
 from pyparsing import ParseException
-from .api import get_observations, WWW_BASE_URL
+from .common import EM_COLOR
+from .api import WWW_BASE_URL
+from .last import get_last_obs_msg, last_obs_embed
 from .maps import get_map_coords_for_taxa
 from .taxa import maybe_match_taxa, TAXON_QUERY_PARSER
-
-EM_COLOR = 0x90ee90
-LOG = logging.getLogger('red.quaggagriff.inatcog')
-
-PAT_OBS = re.compile(
-    r'\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b',
-    re.I,
-)
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
@@ -38,65 +27,10 @@ class INatCog(commands.Cog):
         Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
 
-        ObsLinkMsg = namedtuple('ObsLinkMsg', 'url, obs, ago, name')
-        async def last_observation_msg(ctx):
-            found = None
-            msgs = await ctx.history(limit=1000).flatten()
-
-            found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS, m.content))
-            LOG.info(repr(found))
-
-            mat = re.search(PAT_OBS, found.content)
-            obs_id = int(mat["obs_id"])
-            url = mat["url"]
-            ago = timeago.format(found.created_at, datetime.utcnow())
-            name = found.author.nick or found.author.name
-            results = get_observations(obs_id)["results"]
-            obs = results[0] if results else None
-
-            return ObsLinkMsg(url, obs, ago, name)
-
-        def last_observation_embed(last):
-            embed = discord.Embed(color=EM_COLOR)
-            embed.url = last.url
-            summary = None
-
-            if last:
-                obs = last.obs
-                community_taxon = obs.get("community_taxon")
-                taxon = community_taxon or obs.get("taxon")
-                if taxon:
-                    sci_name = taxon["name"]
-                    common = taxon.get("preferred_common_name")
-                    embed.title = '%s (%s)' % (sci_name, common) if common else sci_name
-                else:
-                    embed.title = str(obs["obs_id"])
-                photos = obs.get("photos")
-                if photos:
-                    thumbnail = photos[0].get("url")
-                else:
-                    thumbnail = None
-                if thumbnail:
-                    embed.set_thumbnail(url=thumbnail)
-                observed_on = obs.get("observed_on_string")
-                user = obs["user"]
-                by_name = user.get("name")
-                by_login = user.get("login")
-                observed_by = by_name or by_login or "Somebody"
-                if observed_on:
-                    summary = 'Observed by %s on %s' % (observed_by, observed_on)
-            else:
-                LOG.info('Deleted observation: %d', obs["obs_id"])
-                embed.title = 'Deleted'
-
-            embed.add_field(
-                name=summary or '\u200B', value='shared %s by @%s' % (last.ago, last.name)
-            )
-            return embed
-
         if query.lower() in ('obs', 'observation'):
             try:
-                last = await last_observation_msg(ctx)
+                msgs = await ctx.history(limit=1000).flatten()
+                last = get_last_obs_msg(msgs)
             except StopIteration:
                 await ctx.send('Nothing found')
                 return None
@@ -104,7 +38,7 @@ class INatCog(commands.Cog):
             await ctx.send_help()
             return
 
-        await ctx.send(embed=last_observation_embed(last))
+        await ctx.send(embed=last_obs_embed(last))
 
     @inat.command()
     async def map(self, ctx, *, query):

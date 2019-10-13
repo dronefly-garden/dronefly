@@ -1,10 +1,9 @@
 """Module to access iNaturalist API."""
-import logging
 from collections import namedtuple
 from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
      CaselessKeyword, oneOf
+from .common import LOG
 
-LOG = logging.getLogger('red.quaggagriff.inatcog')
 RANKS = (
     'kingdom',
     'phylum',
