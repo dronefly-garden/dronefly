@@ -219,7 +219,8 @@ class INatCog(commands.Cog):
             records = get_taxa(query.taxon_id)
         else:
             kwargs = {}
-            kwargs["q"] = ' '.join(query.terms)
+            # Initial space (+) stabilises order of results when upper/lowercase differs
+            kwargs["q"] = '+' + ' '.join(query.terms)
             if query.ranks:
                 kwargs["rank"] = ','.join(query.ranks)
             if ancestor_id:
