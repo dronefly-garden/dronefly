@@ -16,7 +16,7 @@ def get_taxa(*args, **kwargs):
         f"{API_BASE_URL}{endpoint}{id_arg}",
         headers={"Accept": "application/json"},
         params=kwargs,
-    ).json()["results"]
+    ).json()
 
     return results
 

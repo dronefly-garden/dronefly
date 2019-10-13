@@ -117,7 +117,7 @@ def match_taxon(query, records, ancestor_id=None):
 def maybe_match_taxon(query, ancestor_id=None):
     """Get taxon and return a match, if any."""
     if query.taxon_id:
-        records = get_taxa(query.taxon_id)
+        records = get_taxa(query.taxon_id)["results"]
     else:
         kwargs = {}
         # Initial space (+) stabilises order of results when upper/lowercase differs
@@ -126,7 +126,7 @@ def maybe_match_taxon(query, ancestor_id=None):
             kwargs["rank"] = ','.join(query.ranks)
         if ancestor_id:
             kwargs["taxon_id"] = ancestor_id
-        records = get_taxa(**kwargs)
+        records = get_taxa(**kwargs)["results"]
 
     if not records:
         raise LookupError('Nothing found')
