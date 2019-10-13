@@ -34,6 +34,7 @@ RANKS = (
 )
 
 ABBR = {
+    'sect': 'section',
     'sp': 'species',
     'ssp': 'subspecies',
     'var': 'variety',
