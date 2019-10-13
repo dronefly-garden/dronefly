@@ -62,7 +62,7 @@ def match_exact(record, exact):
     matched = NO_NAME_MATCH
     try:
         for pat in exact:
-            this_match = match_name(pat, record)
+            this_match = match_name(record, pat)
             if this_match == NO_NAME_MATCH:
                 matched = this_match
                 raise ValueError('At least one field must match.')
