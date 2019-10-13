@@ -4,7 +4,7 @@ from pyparsing import ParseException
 from .embeds import sorry
 from .last import get_last_obs_msg, make_last_obs_embed
 from .maps import get_map_coords_for_taxa, make_map_embed
-from .taxa import make_taxa_embed, maybe_match_taxa, TAXON_QUERY_PARSER
+from .taxa import query_taxa, query_taxon, make_taxa_embed
 
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
@@ -54,11 +54,7 @@ class INatCog(commands.Cog):
             return
 
         try:
-            queries = list(map(TAXON_QUERY_PARSER.parse, query.split(',')))
-            taxa = {}
-            for compound_query in queries:
-                rec = maybe_match_taxa(compound_query)
-                taxa[str(rec.taxon_id)] = rec
+            taxa = query_taxa(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -103,15 +99,13 @@ class INatCog(commands.Cog):
             return
 
         try:
-            compound_query = TAXON_QUERY_PARSER.parse(query)
+            rec = query_taxon(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
-
-        try:
-            rec = maybe_match_taxa(compound_query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
-        if rec:
-            await ctx.send(embed=make_taxa_embed(rec))
+            return
+
+        await ctx.send(embed=make_taxa_embed(rec))

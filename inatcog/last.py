@@ -69,4 +69,3 @@ def make_last_obs_embed(last):
         name=summary or '\u200B', value='shared %s by @%s' % (last.ago, last.name)
     )
     return embed
-

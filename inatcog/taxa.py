@@ -154,6 +154,20 @@ def maybe_match_taxa(complex_query):
 
     return rec
 
+def query_taxon(query):
+    """Query for one or more taxa and return list of matching taxa."""
+    compound_query = TAXON_QUERY_PARSER.parse(query)
+    return maybe_match_taxa(compound_query)
+
+def query_taxa(query):
+    """Query for one or more taxa and return list of matching taxa."""
+    queries = list(map(TAXON_QUERY_PARSER.parse, query.split(',')))
+    taxa = {}
+    for compound_query in queries:
+        rec = maybe_match_taxa(compound_query)
+        taxa[str(rec.taxon_id)] = rec
+    return taxa
+
 def make_taxa_embed(rec):
     """Make embed describing taxa record."""
     embed = make_embed(
