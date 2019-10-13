@@ -88,40 +88,40 @@ class TaxonQueryParser():
 
         return within
 
-    def get_taxon_query_args(self, parsed):
-        """Return namedtuple representing query for a taxon."""
-        terms = phrases = ranks = []
-        taxon_id = None
-        if "taxon_id" in parsed:
-            taxon_id = int(parsed["taxon_id"][0])
-        else:
-            terms = []
-            phrases = []
-            for term in parsed["terms"].asList():
-                if isinstance(term, list):
-                    terms += term
-                    phrases.append(term)
-                else:
-                    terms.append(term)
-            if "ranks" in parsed:
-                ranks = parsed["ranks"].asList()
-            if not phrases and (len(terms) == 1) and (len(terms[0]) == 4):
-                code = terms[0].upper()
-            else:
-                code = None
-        return SimpleQuery(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
-
     def parse(self, query_str):
         """Parse using taxon query grammar."""
+        def get_simple_query(parsed):
+            """Return namedtuple representing query for a taxon."""
+            terms = phrases = ranks = []
+            taxon_id = code = None
+            if "taxon_id" in parsed:
+                taxon_id = int(parsed["taxon_id"][0])
+            else:
+                terms = []
+                phrases = []
+                for term in parsed["terms"].asList():
+                    if isinstance(term, list):
+                        terms += term
+                        phrases.append(term)
+                    else:
+                        terms.append(term)
+                if "ranks" in parsed:
+                    ranks = parsed["ranks"].asList()
+                if not phrases and (len(terms) == 1) and (len(terms[0]) == 4):
+                    code = terms[0].upper()
+                else:
+                    code = None
+            return SimpleQuery(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
+
         parsed = self._grammar.parseString(query_str)
         LOG.info(parsed.dump())
         ancestor = None
         if parsed:
             LOG.info(parsed["main"][0])
-            main = self.get_taxon_query_args(parsed["main"][0])
+            main = get_simple_query(parsed["main"][0])
             try:
                 LOG.info(parsed["ancestor"][0])
-                ancestor = self.get_taxon_query_args(parsed["ancestor"][0])
+                ancestor = get_simple_query(parsed["ancestor"][0])
             except KeyError:
                 pass
         return CompoundQuery(main=main, ancestor=ancestor)

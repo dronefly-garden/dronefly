@@ -137,37 +137,39 @@ def maybe_match_taxon(query, ancestor_id=None):
 
     return rec
 
-def maybe_match_taxa(complex_query):
+def maybe_match_taxon_compound(compound_query):
     """Get one or more taxon and return a match, if any.
 
     Currently the grammar supports only one ancestor taxon
     and one child taxon.
     """
-    if complex_query.ancestor:
-        rec = maybe_match_taxon(complex_query.ancestor)
+    query_main = compound_query.main
+    query_ancestor = compound_query.ancestor
+    if query_ancestor:
+        rec = maybe_match_taxon(query_ancestor)
         if rec:
             index = RANKS.index(rec.rank)
             ancestor_ranks = set(RANKS[index:len(RANKS)])
-            child_ranks = set(complex_query.main.ranks)
+            child_ranks = set(query_main.ranks)
             if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
                 raise LookupError('Child ranks must be below ancestor rank: %s' % rec.rank)
-            rec = maybe_match_taxon(complex_query.main, ancestor_id=rec.taxon_id)
+            rec = maybe_match_taxon(query_main, ancestor_id=rec.taxon_id)
     else:
-        rec = maybe_match_taxon(complex_query.main)
+        rec = maybe_match_taxon(query_main)
 
     return rec
 
 def query_taxon(query):
     """Query for one or more taxa and return list of matching taxa."""
     compound_query = TAXON_QUERY_PARSER.parse(query)
-    return maybe_match_taxa(compound_query)
+    return maybe_match_taxon_compound(compound_query)
 
 def query_taxa(query):
     """Query for one or more taxa and return list of matching taxa."""
     queries = list(map(TAXON_QUERY_PARSER.parse, query.split(',')))
     taxa = {}
     for compound_query in queries:
-        rec = maybe_match_taxa(compound_query)
+        rec = maybe_match_taxon_compound(compound_query)
         taxa[str(rec.taxon_id)] = rec
     return taxa
 
