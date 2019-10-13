@@ -2,13 +2,16 @@
 import logging
 import re
 from collections import namedtuple
+from .api import get_taxa
+from .parsers import TaxonQueryParser, RANKS
 
 LOG = logging.getLogger('red.quaggagriff.inatcog')
-
+TAXON_QUERY_PARSER = TaxonQueryParser()
 Taxon = namedtuple(
     'Taxon',
     'name, taxon_id, common, term, thumbnail, rank, ancestor_ids, observations',
 )
+
 def get_fields_from_results(results):
     """Map get_taxa results into namedtuples of selected fields."""
     def get_fields(record):
@@ -105,3 +108,42 @@ def match_taxon(query, records, ancestor_id=None):
     min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
     LOG.info('Best match: %s%s', repr(best_record), '' if min_score_met else ' (score too low)')
     return best_record if min_score_met else None
+
+def maybe_match_taxon(query, ancestor_id=None):
+    """Get taxon and return a match, if any."""
+    if query.taxon_id:
+        records = get_taxa(query.taxon_id)
+    else:
+        kwargs = {}
+        # Initial space (+) stabilises order of results when upper/lowercase differs
+        kwargs["q"] = '+' + ' '.join(query.terms)
+        if query.ranks:
+            kwargs["rank"] = ','.join(query.ranks)
+        if ancestor_id:
+            kwargs["taxon_id"] = ancestor_id
+        records = get_taxa(**kwargs)
+    if not records:
+        raise LookupError('Nothing found')
+    rec = match_taxon(query, get_fields_from_results(records), ancestor_id=ancestor_id)
+    if not rec:
+        raise LookupError('No exact match')
+    return rec
+
+def maybe_match_taxa(queries):
+    """Get one or more taxon and return a match, if any.
+
+    Currently the grammar supports only one ancestor taxon
+    and one child taxon.
+    """
+    if queries.ancestor:
+        rec = maybe_match_taxon(queries.ancestor)
+        if rec:
+            index = RANKS.index(rec.rank)
+            ancestor_ranks = set(RANKS[index:len(RANKS)])
+            child_ranks = set(queries.main.ranks)
+            if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
+                raise LookupError('Child ranks must be below ancestor rank: %s' % rec.rank)
+            rec = maybe_match_taxon(queries.main, ancestor_id=rec.taxon_id)
+    else:
+        rec = maybe_match_taxon(queries.main)
+    return rec

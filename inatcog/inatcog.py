@@ -7,11 +7,11 @@ import timeago
 from redbot.core import commands
 import discord
 from pyparsing import ParseException
-from .parsers import TaxonQueryParser, RANKS
-from .api import get_taxa, get_observations, WWW_BASE_URL
+from .api import get_observations, WWW_BASE_URL
 from .maps import get_map_coords_for_taxa
-from .taxa import get_fields_from_results, match_taxon
+from .taxa import maybe_match_taxa, TAXON_QUERY_PARSER
 
+EM_COLOR = 0x90ee90
 LOG = logging.getLogger('red.quaggagriff.inatcog')
 
 PAT_OBS = re.compile(
@@ -23,8 +23,6 @@ class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
     def __init__(self, bot):
         self.bot = bot
-        self.log = logging.getLogger('red.quaggagriff.inatcog')
-        self.taxon_query_parser = TaxonQueryParser()
 
     @commands.group()
     async def inat(self, ctx):
@@ -59,7 +57,7 @@ class INatCog(commands.Cog):
             return ObsLinkMsg(url, obs, ago, name)
 
         def last_observation_embed(last):
-            embed = discord.Embed(color=0x90ee90)
+            embed = discord.Embed(color=EM_COLOR)
             embed.url = last.url
             summary = None
 
@@ -124,16 +122,16 @@ class INatCog(commands.Cog):
             await ctx.send_help()
             return
 
-        embed = discord.Embed(color=0x90ee90)
+        embed = discord.Embed(color=EM_COLOR)
         try:
-            queries = list(map(self.taxon_query_parser.parse, query.split(',')))
+            queries = list(map(TAXON_QUERY_PARSER.parse, query.split(',')))
         except ParseException:
             await self.sorry(ctx, embed)
             return
 
         taxa = {}
         for compound_query in queries:
-            rec = await self.maybe_match_taxa(ctx, embed, compound_query)
+            rec = maybe_match_taxa(compound_query)
             if rec:
                 taxa[str(rec.taxon_id)] = rec
             else:
@@ -173,72 +171,21 @@ class INatCog(commands.Cog):
             await ctx.send_help()
             return
 
-        embed = discord.Embed(color=0x90ee90)
+        embed = discord.Embed(color=EM_COLOR)
         try:
-            queries = self.taxon_query_parser.parse(query)
+            compound_query = TAXON_QUERY_PARSER.parse(query)
         except ParseException:
-            await self.sorry(ctx, discord.Embed(color=0x90ee90))
+            await self.sorry(ctx)
             return
 
-        rec = await self.maybe_match_taxa(ctx, embed, queries)
+        try:
+            rec = maybe_match_taxa(compound_query)
+        except LookupError as err:
+            await self.sorry(err.args)
         if rec:
             await self.send_taxa_embed(ctx, embed, rec)
 
-    async def maybe_match_taxa(self, ctx, embed, queries):
-        """Get one or more taxon and return a match, if any.
-
-        Currently the grammar supports only one ancestor taxon
-        and one child taxon.
-        """
-        if queries.ancestor:
-            rec = await self.maybe_match_taxon(ctx, embed, queries.ancestor)
-            if rec:
-                index = RANKS.index(rec.rank)
-                ancestor_ranks = set(RANKS[index:len(RANKS)])
-                child_ranks = set(queries.main.ranks)
-                if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
-                    await self.sorry(
-                        ctx,
-                        discord.Embed(color=0x90ee90),
-                        'Child ranks must be below ancestor rank: %s' % rec.rank
-                    )
-                    return
-                rec = await self.maybe_match_taxon(
-                    ctx,
-                    embed,
-                    queries.main,
-                    ancestor_id=rec.taxon_id
-                )
-        else:
-            rec = await self.maybe_match_taxon(ctx, embed, queries.main)
-        return rec
-
-    async def maybe_match_taxon(self, ctx, embed, query, ancestor_id=None):
-        """Get taxon and return a match, if any."""
-        if query.taxon_id:
-            records = get_taxa(query.taxon_id)
-        else:
-            kwargs = {}
-            # Initial space (+) stabilises order of results when upper/lowercase differs
-            kwargs["q"] = '+' + ' '.join(query.terms)
-            if query.ranks:
-                kwargs["rank"] = ','.join(query.ranks)
-            if ancestor_id:
-                kwargs["taxon_id"] = ancestor_id
-            records = get_taxa(**kwargs)
-        if not records:
-            LOG.info('Nothing found')
-            await self.sorry(ctx, embed, 'Nothing found')
-            return
-        rec = match_taxon(query, get_fields_from_results(records), ancestor_id=ancestor_id)
-        if not rec:
-            LOG.info('No exact match')
-            await self.sorry(ctx, embed, 'No exact match')
-            return
-        LOG.info('Matched')
-        return rec
-
-    async def sorry(self, ctx, embed, message="I don't understand"):
+    async def sorry(self, ctx, embed=discord.Embed(color=EM_COLOR), message="I don't understand"):
         """Notify user their request could not be satisfied."""
         embed.add_field(
             name='Sorry',

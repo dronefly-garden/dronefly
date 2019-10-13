@@ -44,8 +44,8 @@ OPS = (
     'at',
 )
 
-Query = namedtuple('Query', 'taxon_id, terms, phrases, ranks, code')
-Queries = namedtuple('Queries', 'main, ancestor')
+SimpleQuery = namedtuple('SimpleQuery', 'taxon_id, terms, phrases, ranks, code')
+CompoundQuery = namedtuple('CompoundQuery', 'main, ancestor')
 
 class TaxonQueryParser():
     # pylint: disable=no-self-use
@@ -110,7 +110,7 @@ class TaxonQueryParser():
                 code = terms[0].upper()
             else:
                 code = None
-        return Query(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
+        return SimpleQuery(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
@@ -125,4 +125,4 @@ class TaxonQueryParser():
                 ancestor = self.get_taxon_query_args(parsed["ancestor"][0])
             except KeyError:
                 pass
-        return Queries(main=main, ancestor=ancestor)
+        return CompoundQuery(main=main, ancestor=ancestor)
