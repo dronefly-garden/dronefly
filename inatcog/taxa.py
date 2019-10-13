@@ -62,6 +62,9 @@ def score_match(query, record, all_terms, exact=None, ancestor_id=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
 
+    if query.taxon_id:
+        return 1000 # An id is always the best match
+
     matched = match_exact(record, exact) if exact else NO_NAME_MATCH
     all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH
 
