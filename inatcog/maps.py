@@ -3,6 +3,7 @@ from collections import namedtuple
 import math
 from .api import get_observation_bounds, WWW_BASE_URL
 from .embeds import make_embed
+from .taxa import format_taxon_name
 
 MapCoords = namedtuple('MapCoords', 'zoom_level, center_lat, center_lon')
 
@@ -58,11 +59,7 @@ def get_map_coords_for_taxa(taxon_ids):
 
 def make_map_embed(taxa, map_coords):
     """Make embed linking to range map."""
-    def format_name(rec):
-        common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
-        return f'{rec.name} ({common})' if common else rec.name
-
-    names = ', '.join([format_name(rec) for rec in taxa.values()])
+    names = ', '.join([format_taxon_name(rec, with_term=True) for rec in taxa.values()])
     title = f"Range map for {names}"
 
     taxa = ','.join(list(taxa.keys()))

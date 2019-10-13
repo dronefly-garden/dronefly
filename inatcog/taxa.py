@@ -18,6 +18,19 @@ class Taxon(NamedTuple):
     ancestor_ids: list
     observations: int
 
+def format_taxon_name(rec, with_term=False):
+    """Format taxon name from matched record.
+
+    Args:
+        rec (Taxon): A matched taxon record.
+        with_term (bool): With non-(common|name) term in parentheses in place of common.
+    """
+    if with_term:
+        common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
+    else:
+        common = rec.common
+    return f'{rec.name} ({common})' if common else rec.name
+
 def get_fields_from_results(results):
     """Map get_taxa results into namedtuples of selected fields.
 
@@ -194,7 +207,7 @@ def query_taxa(query):
 def make_taxa_embed(rec):
     """Make embed describing taxa record."""
     embed = make_embed(
-        title='{name} ({common})'.format_map(rec._asdict()) if rec.common else rec.name,
+        title=format_taxon_name(rec),
         url=f'{WWW_BASE_URL}/taxa/{rec.taxon_id}',
     )
 
