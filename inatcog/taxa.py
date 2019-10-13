@@ -100,7 +100,10 @@ def score_match(query, record, all_terms, exact=None, ancestor_id=None):
     matched = match_exact(record, exact) if exact else NO_NAME_MATCH
     all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH
 
-    if ancestor_id and (ancestor_id not in record.ancestor_ids):
+    result_not_matching_filter = \
+        (ancestor_id and (ancestor_id not in record.ancestor_ids)) or \
+        (query.ranks and (record.rank not in query.ranks))
+    if result_not_matching_filter:
         # Reject; workaround to bug in /v1/taxa/autocomplete
         # - https://forum.inaturalist.org/t/v1-taxa-autocomplete/7163
         score = -1
