@@ -139,8 +139,7 @@ def maybe_match_taxon(query, ancestor_id=None):
         records = get_taxa(query.taxon_id)["results"]
     else:
         kwargs = {}
-        # Initial space (+) stabilises order of results when upper/lowercase differs
-        kwargs["q"] = '+' + ' '.join(query.terms)
+        kwargs["q"] = ' '.join(query.terms)
         if query.ranks:
             kwargs["rank"] = ','.join(query.ranks)
         if ancestor_id:
