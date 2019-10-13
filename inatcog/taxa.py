@@ -1,19 +1,32 @@
 """Module to work with iNat taxa."""
 import re
-from collections import namedtuple
+from typing import NamedTuple
 from .api import get_taxa, WWW_BASE_URL
 from .common import LOG
 from .embeds import make_embed
 from .parsers import TaxonQueryParser, RANKS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
-Taxon = namedtuple(
-    'Taxon',
-    'name, taxon_id, common, term, thumbnail, rank, ancestor_ids, observations',
-)
+class Taxon(NamedTuple):
+    """A flattened representation of a single get_taxa JSON result."""
+    name: str
+    taxon_id: int
+    common: str
+    term: str
+    thumbnail: dict
+    rank: str
+    ancestor_ids: list
+    observations: int
 
 def get_fields_from_results(results):
-    """Map get_taxa results into namedtuples of selected fields."""
+    """Map get_taxa results into namedtuples of selected fields.
+
+    Args:
+        results (list): The JSON results from /v1/taxa or /v1/taxa/autocomplete.
+
+    Returns:
+        namedtuple: A flattened representation of the JSON result as a namedtuple.
+    """
     def get_fields(record):
         photo = record.get('default_photo')
         return Taxon(
@@ -29,7 +42,12 @@ def get_fields_from_results(results):
 
     return list(map(get_fields, results))
 
-NameMatch = namedtuple('NameMatch', 'term, name, common')
+class NameMatch(NamedTuple):
+    """Match for each name field in Taxon matching a pattern."""
+    term: re.Match
+    name: re.Match
+    common: re.Match
+
 NO_NAME_MATCH = NameMatch(None, None, None)
 def match_name(record, pat):
     """Match all terms specified."""
