@@ -181,7 +181,7 @@ def make_taxa_embed(rec):
     if rec.thumbnail:
         embed.set_thumbnail(url=rec.thumbnail)
 
-    matched = rec.term or rec.taxon_id
+    matched = rec.term or f'Id: {rec.taxon_id}'
     if matched not in (rec.name, rec.common):
         embed.description = matched
 
