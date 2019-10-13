@@ -111,7 +111,13 @@ class TaxonQueryParser():
                     code = terms[0].upper()
                 else:
                     code = None
-            return SimpleQuery(taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code)
+            return SimpleQuery(
+                taxon_id=taxon_id,
+                terms=terms,
+                phrases=phrases,
+                ranks=ranks,
+                code=code,
+            )
 
         parsed = self._grammar.parseString(query_str)
         LOG.info(parsed.dump())
