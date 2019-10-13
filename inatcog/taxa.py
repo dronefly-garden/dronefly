@@ -4,7 +4,7 @@ from typing import NamedTuple
 from .api import get_taxa, WWW_BASE_URL
 from .common import LOG
 from .embeds import make_embed
-from .parsers import TaxonQueryParser, RANKS
+from .parsers import TaxonQueryParser, RANK_LEVELS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 class Taxon(NamedTuple):
@@ -180,14 +180,23 @@ def maybe_match_taxon_compound(compound_query):
     query_main = compound_query.main
     query_ancestor = compound_query.ancestor
     if query_ancestor:
-        rec = maybe_match_taxon(query_ancestor)
-        if rec:
-            index = RANKS.index(rec.rank)
-            ancestor_ranks = set(RANKS[index:len(RANKS)])
-            child_ranks = set(query_main.ranks)
-            if child_ranks != set() and ancestor_ranks.intersection(child_ranks) == set():
-                raise LookupError('Child ranks must be below ancestor rank: %s' % rec.rank)
-            rec = maybe_match_taxon(query_main, ancestor_id=rec.taxon_id)
+        ancestor = maybe_match_taxon(query_ancestor)
+        if ancestor:
+            if query_main.ranks:
+                LOG.info('query ranks = %s', ','.join(query_main.ranks))
+                max_query_rank_level = max([RANK_LEVELS[rank] for rank in query_main.ranks])
+                LOG.info('max_query_rank_level = %3.1f', max_query_rank_level)
+                ancestor_rank_level = RANK_LEVELS[ancestor.rank]
+                LOG.info('ancestor_rank_level = %3.1f', ancestor_rank_level)
+                if max_query_rank_level >= ancestor_rank_level:
+                    raise LookupError(
+                        'Child rank%s: `%s` must be below ancestor rank: `%s`' % (
+                            's' if len(query_main.ranks) > 1 else '',
+                            ','.join(query_main.ranks),
+                            ancestor.rank,
+                        )
+                    )
+            rec = maybe_match_taxon(query_main, ancestor_id=ancestor.taxon_id)
     else:
         rec = maybe_match_taxon(query_main)
 

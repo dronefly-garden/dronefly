@@ -3,40 +3,63 @@ from collections import namedtuple
 from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
      CaselessKeyword, oneOf
 
-RANKS = (
-    'kingdom',
-    'phylum',
-    'subphylum',
-    'superclass',
-    'class',
-    'subclass',
-    'superorder',
-    'order',
-    'suborder',
-    'infraorder',
-    'superfamily',
-    'epifamily',
-    'family',
-    'subfamily',
-    'supertribe',
-    'tribe',
-    'subtribe',
-    'genus',
-    'genushybrid',
-    'section',
-    'subgenus',
-    'species',
-    'hybrid',
-    'subspecies',
-    'variety',
-    'form',
-)
+# RANK_LEVELS and RANK_EQUIVALENTS are from:
+# - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
+RANK_LEVELS = {
+#   "stateofmatter": 100,
+    "kingdom": 70,
+    "phylum": 60,
+    "subphylum": 57,
+    "superclass": 53,
+    "class": 50,
+    "subclass": 47,
+    "infraclass": 45,
+    "subterclass": 44,
+    "superorder": 43,
+    "order": 40,
+    "suborder": 37,
+    "infraorder": 35,
+    "parvorder": 34.5,
+    "zoosection": 34,
+    "zoosubsection": 33.5,
+    "superfamily": 33,
+    "epifamily": 32,
+    "family": 30,
+    "subfamily": 27,
+    "supertribe": 26,
+    "tribe": 25,
+    "subtribe": 24,
+    "genus": 20,
+    "genushybrid": 20,
+    "subgenus": 15,
+    "section": 13,
+    "subsection": 12,
+    "complex": 11,
+    "species": 10,
+    "hybrid": 10,
+    "subspecies": 5,
+    "variety": 5,
+    "form": 5,
+    "infrahybrid": 5,
+}
 
-ABBR = {
-    'sect': 'section',
+RANK_EQUIVALENTS = {
+    'division': 'phylum',
+    'sub-class': 'subclass',
+    'super-order': 'superorder',
+    'sub-order': 'suborder',
+    'super-family': 'superfamily',
+    'sub-family': 'subfamily',
+    'gen': 'genus',
     'sp': 'species',
+    'spp': 'species',
+    'infraspecies': 'subspecies',
     'ssp': 'subspecies',
+    'sub-species': 'subspecies',
+    'subsp': 'subspecies',
+    'trinomial': 'subspecies',
     'var': 'variety',
+#   'unranked': None,
 }
 
 OPS = (
@@ -63,17 +86,21 @@ class TaxonQueryParser():
         num = Word(nums)
 
         dqt = '"'
-        stop = oneOf(OPS + RANKS + tuple(ABBR.keys()), caseless=True, asKeyword=True)
+        stop = oneOf(
+            OPS + tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys()),
+            caseless=True,
+            asKeyword=True
+        )
 
         phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
         def get_abbr(_s, _l, term):
-            return ABBR[term[0]]
+            return RANK_EQUIVALENTS[term[0]]
 
         ranks = OneOrMore(
-            oneOf(RANKS, caseless=True, asKeyword=True) | \
-            oneOf(ABBR.keys(), caseless=True, asKeyword=True).setParseAction(get_abbr)
+            oneOf(RANK_LEVELS.keys(), caseless=True, asKeyword=True) | \
+            oneOf(RANK_EQUIVALENTS.keys(), caseless=True, asKeyword=True).setParseAction(get_abbr)
         )
 
         words = OneOrMore(Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop)
