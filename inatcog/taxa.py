@@ -29,11 +29,12 @@ def get_fields_from_results(results):
     """
     def get_fields(record):
         photo = record.get('default_photo')
+        taxon_id = record['id'] if 'id' in record else record['taxon_id']
         return Taxon(
             record['name'],
-            record['id'] if 'id' in record else record['taxon_id'],
+            taxon_id,
             record.get('preferred_common_name'),
-            record.get('matched_term'),
+            record.get('matched_term') or 'Id: %s' % taxon_id,
             photo.get('square_url') if photo else None,
             record['rank'],
             record['ancestor_ids'],
@@ -201,7 +202,7 @@ def make_taxa_embed(rec):
     if rec.thumbnail:
         embed.set_thumbnail(url=rec.thumbnail)
 
-    matched = rec.term or f'Id: {rec.taxon_id}'
+    matched = rec.term
     if matched not in (rec.name, rec.common):
         embed.description = matched
 
