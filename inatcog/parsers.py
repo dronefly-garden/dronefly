@@ -6,7 +6,7 @@ from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore,
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
 RANK_LEVELS = {
-#   "stateofmatter": 100,
+    # "stateofmatter": 100,
     "kingdom": 70,
     "phylum": 60,
     "subphylum": 57,
@@ -59,7 +59,7 @@ RANK_EQUIVALENTS = {
     'subsp': 'subspecies',
     'trinomial': 'subspecies',
     'var': 'variety',
-#   'unranked': None,
+    # 'unranked': None,
 }
 
 OPS = (
