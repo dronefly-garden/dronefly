@@ -58,7 +58,11 @@ def get_map_coords_for_taxa(taxon_ids):
 
 def make_map_embed(taxa, map_coords):
     """Make embed linking to range map."""
-    names = ', '.join([rec.name for rec in taxa.values()])
+    def format_name(rec):
+        common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
+        return f'{rec.name} ({common})' if common else rec.name
+
+    names = ', '.join([format_name(rec) for rec in taxa.values()])
     title = f"Range map for {names}"
 
     taxa = ','.join(list(taxa.keys()))
