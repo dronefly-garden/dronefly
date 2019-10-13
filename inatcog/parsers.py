@@ -24,6 +24,8 @@ RANKS = (
     'subtribe',
     'genus',
     'genushybrid',
+    'section',
+    'subgenus',
     'species',
     'hybrid',
     'subspecies',
