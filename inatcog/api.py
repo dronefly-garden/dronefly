@@ -4,6 +4,7 @@ import requests
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
 
+
 def get_taxa(*args, **kwargs):
     """Query API for taxa matching parameters."""
 
@@ -20,6 +21,7 @@ def get_taxa(*args, **kwargs):
 
     return results
 
+
 def get_observations(*args, **kwargs):
     """Query API for observations matching parameters."""
 
@@ -35,12 +37,13 @@ def get_observations(*args, **kwargs):
 
     return results
 
+
 def get_observation_bounds(taxon_ids):
     """Get the bounds for the specified observations."""
     kwargs = {
-        "return_bounds": 'true',
-        "verifiable": 'true',
-        "taxon_id": ','.join(taxon_ids),
+        "return_bounds": "true",
+        "verifiable": "true",
+        "taxon_id": ",".join(taxon_ids),
         "per_page": 0,
     }
 

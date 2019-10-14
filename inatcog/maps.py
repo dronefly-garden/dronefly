@@ -5,7 +5,8 @@ from .api import get_observation_bounds, WWW_BASE_URL
 from .embeds import make_embed
 from .taxa import format_taxon_name
 
-MapCoords = namedtuple('MapCoords', 'zoom_level, center_lat, center_lon')
+MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
+
 
 def calc_distance(lat1, lon1, lat2, lon2):
     """Calculate distance from coordinate pairs."""
@@ -19,6 +20,7 @@ def calc_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return r * c
+
 
 def get_zoom_level(swlat, swlng, nelat, nelng):
     """Get zoom level from coordinate pairs."""
@@ -37,6 +39,7 @@ def get_zoom_level(swlat, swlng, nelat, nelng):
     if result < 2:
         result = 2
     return result
+
 
 def get_map_coords_for_taxa(taxon_ids):
     """Get map coordinates encompassing taxa ranges/observations."""
@@ -57,13 +60,14 @@ def get_map_coords_for_taxa(taxon_ids):
 
     return MapCoords(zoom_level, center_lat, center_lon)
 
+
 def make_map_embed(taxa, map_coords):
     """Make embed linking to range map."""
-    names = ', '.join([format_taxon_name(rec, with_term=True) for rec in taxa.values()])
+    names = ", ".join([format_taxon_name(rec, with_term=True) for rec in taxa.values()])
     title = f"Range map for {names}"
 
-    taxa = ','.join(list(taxa.keys()))
-    zoom_lat_lon = '/'.join(map(str, map_coords))
-    url = f'{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_lat_lon}'
+    taxa = ",".join(list(taxa.keys()))
+    zoom_lat_lon = "/".join(map(str, map_coords))
+    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_lat_lon}"
 
     return make_embed(title=title, url=url)

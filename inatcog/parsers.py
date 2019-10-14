@@ -1,7 +1,15 @@
 """Module providing parsers for natural language query DSLs."""
 from collections import namedtuple
-from pyparsing import Word, pyparsing_unicode, nums, Group, Suppress, OneOrMore, \
-     CaselessKeyword, oneOf
+from pyparsing import (
+    Word,
+    pyparsing_unicode,
+    nums,
+    Group,
+    Suppress,
+    OneOrMore,
+    CaselessKeyword,
+    oneOf,
+)
 
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
@@ -44,38 +52,36 @@ RANK_LEVELS = {
 }
 
 RANK_EQUIVALENTS = {
-    'division': 'phylum',
-    'sub-class': 'subclass',
-    'super-order': 'superorder',
-    'sub-order': 'suborder',
-    'super-family': 'superfamily',
-    'sub-family': 'subfamily',
-    'gen': 'genus',
-    'sp': 'species',
-    'spp': 'species',
-    'infraspecies': 'subspecies',
-    'ssp': 'subspecies',
-    'sub-species': 'subspecies',
-    'subsp': 'subspecies',
-    'trinomial': 'subspecies',
-    'var': 'variety',
+    "division": "phylum",
+    "sub-class": "subclass",
+    "super-order": "superorder",
+    "sub-order": "suborder",
+    "super-family": "superfamily",
+    "sub-family": "subfamily",
+    "gen": "genus",
+    "sp": "species",
+    "spp": "species",
+    "infraspecies": "subspecies",
+    "ssp": "subspecies",
+    "sub-species": "subspecies",
+    "subsp": "subspecies",
+    "trinomial": "subspecies",
+    "var": "variety",
     # 'unranked': None,
 }
 
-OPS = (
-    'in',
-    'by',
-    'at',
-)
+OPS = ("in", "by", "at")
 
-SimpleQuery = namedtuple('SimpleQuery', 'taxon_id, terms, phrases, ranks, code')
-CompoundQuery = namedtuple('CompoundQuery', 'main, ancestor')
+SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
+CompoundQuery = namedtuple("CompoundQuery", "main, ancestor")
 
-class TaxonQueryParser():
+
+class TaxonQueryParser:
     # pylint: disable=no-self-use
     """
     Base parser for all query grammars.
     """
+
     def __init__(self):
         self._grammar = self.grammar()
 
@@ -89,7 +95,7 @@ class TaxonQueryParser():
         stop = oneOf(
             OPS + tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys()),
             caseless=True,
-            asKeyword=True
+            asKeyword=True,
         )
 
         phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
@@ -99,26 +105,37 @@ class TaxonQueryParser():
             return RANK_EQUIVALENTS[term[0]]
 
         ranks = OneOrMore(
-            oneOf(RANK_LEVELS.keys(), caseless=True, asKeyword=True) | \
-            oneOf(RANK_EQUIVALENTS.keys(), caseless=True, asKeyword=True).setParseAction(get_abbr)
+            oneOf(RANK_LEVELS.keys(), caseless=True, asKeyword=True)
+            | oneOf(
+                RANK_EQUIVALENTS.keys(), caseless=True, asKeyword=True
+            ).setParseAction(get_abbr)
         )
 
-        words = OneOrMore(Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop)
+        words = OneOrMore(
+            Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop
+        )
 
-        ranks_terms = Group(ranks)("ranks") + Group(OneOrMore(words | phrase, stopOn=stop))("terms")
-        terms_ranks = Group(OneOrMore(words | phrase, stopOn=stop))("terms") + Group(ranks)("ranks")
+        ranks_terms = Group(ranks)("ranks") + Group(
+            OneOrMore(words | phrase, stopOn=stop)
+        )("terms")
+        terms_ranks = Group(OneOrMore(words | phrase, stopOn=stop))("terms") + Group(
+            ranks
+        )("ranks")
         terms = Group(OneOrMore(words | phrase, stopOn=stop))("terms")
 
         taxon = Group(Group(num)("taxon_id") | ranks_terms | terms_ranks | terms)
 
         within = (
-            Group(taxon)("main") + Suppress(CaselessKeyword('in')) + Group(taxon)("ancestor")
+            Group(taxon)("main")
+            + Suppress(CaselessKeyword("in"))
+            + Group(taxon)("ancestor")
         ) | Group(taxon)("main")
 
         return within
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
+
         def get_simple_query(parsed):
             """Return namedtuple representing query for a taxon."""
             terms = phrases = ranks = []
@@ -141,11 +158,7 @@ class TaxonQueryParser():
                 else:
                     code = None
             return SimpleQuery(
-                taxon_id=taxon_id,
-                terms=terms,
-                phrases=phrases,
-                ranks=ranks,
-                code=code,
+                taxon_id=taxon_id, terms=terms, phrases=phrases, ranks=ranks, code=code
             )
 
         parsed = self._grammar.parseString(query_str)

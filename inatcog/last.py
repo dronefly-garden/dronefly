@@ -10,11 +10,13 @@ from .embeds import make_embed
 from .api import get_observations
 
 PAT_OBS = re.compile(
-    r'\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b',
+    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
     re.I,
 )
 
-ObsLinkMsg = namedtuple('ObsLinkMsg', 'url, obs, ago, name')
+ObsLinkMsg = namedtuple("ObsLinkMsg", "url, obs, ago, name")
+
+
 def get_last_obs_msg(msgs):
     """Find recent observation link."""
     found = None
@@ -32,6 +34,7 @@ def get_last_obs_msg(msgs):
 
     return ObsLinkMsg(url, obs, ago, name)
 
+
 def make_last_obs_embed(last):
     """Return embed for recent observation link."""
     embed = make_embed(url=last.url)
@@ -44,7 +47,7 @@ def make_last_obs_embed(last):
         if taxon:
             sci_name = taxon["name"]
             common = taxon.get("preferred_common_name")
-            embed.title = '%s (%s)' % (sci_name, common) if common else sci_name
+            embed.title = "%s (%s)" % (sci_name, common) if common else sci_name
         else:
             embed.title = str(obs["obs_id"])
         photos = obs.get("photos")
@@ -60,12 +63,12 @@ def make_last_obs_embed(last):
         by_login = user.get("login")
         observed_by = by_name or by_login or "Somebody"
         if observed_on:
-            summary = 'Observed by %s on %s' % (observed_by, observed_on)
+            summary = "Observed by %s on %s" % (observed_by, observed_on)
     else:
-        LOG.info('Deleted observation: %d', obs["obs_id"])
-        embed.title = 'Deleted'
+        LOG.info("Deleted observation: %d", obs["obs_id"])
+        embed.title = "Deleted"
 
     embed.add_field(
-        name=summary or '\u200B', value='shared %s by @%s' % (last.ago, last.name)
+        name=summary or "\u200B", value="shared %s by @%s" % (last.ago, last.name)
     )
     return embed

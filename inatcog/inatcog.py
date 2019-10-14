@@ -6,15 +6,17 @@ from .last import get_last_obs_msg, make_last_obs_embed
 from .maps import get_map_coords_for_taxa, make_map_embed
 from .taxa import query_taxa, query_taxon, make_taxa_embed
 
+
 class INatCog(commands.Cog):
     """An iNaturalist commands cog."""
+
     def __init__(self, bot):
         self.bot = bot
 
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform."""
-        pass # pylint: disable=unnecessary-pass
+        pass  # pylint: disable=unnecessary-pass
 
     @inat.command()
     async def last(self, ctx, *, query):
@@ -24,12 +26,12 @@ class INatCog(commands.Cog):
         Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
 
-        if query.lower() in ('obs', 'observation'):
+        if query.lower() in ("obs", "observation"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
                 last = get_last_obs_msg(msgs)
             except StopIteration:
-                await ctx.send(embed=sorry(apology='Nothing found'))
+                await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
         else:
             await ctx.send_help()

@@ -5,9 +5,13 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ebird.api import get_observations, get_region
 import discord
 
+
 class ObsRecord(dict):
     """A human-readable observation record."""
-    def __init__(self, date_format='%d %b, %Y', datetime_format='%H:%M, %d %b, %Y', **kwargs):
+
+    def __init__(
+        self, date_format="%d %b, %Y", datetime_format="%H:%M, %d %b, %Y", **kwargs
+    ):
         self.date_format = date_format
         self.datetime_format = datetime_format
         super().__init__(**kwargs)
@@ -15,38 +19,37 @@ class ObsRecord(dict):
     def __getitem__(self, key):
         """Reformat datetime into human-readable format."""
         val = super().__getitem__(key)
-        if key == 'obsDt':
+        if key == "obsDt":
             try:
-                parsed_time = datetime.strptime(val, '%Y-%m-%d %H:%M')
+                parsed_time = datetime.strptime(val, "%Y-%m-%d %H:%M")
                 return parsed_time.strftime(self.datetime_format)
             except ValueError:
-                parsed_time = datetime.strptime(val, '%Y-%m-%d')
+                parsed_time = datetime.strptime(val, "%Y-%m-%d")
                 return parsed_time.strftime(self.date_format)
         return val
 
+
 class EBirdCog(commands.Cog):
     """An eBird commands cog."""
+
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=8008)
         self.config.register_global(
-            region='CA-NS',
-            days=30,
-            date_format='%d %b',
-            datetime_format='%H:%M, %d %b',
+            region="CA-NS", days=30, date_format="%d %b", datetime_format="%H:%M, %d %b"
         )
 
     @commands.group()
     async def ebird(self, ctx):
         """Access the eBird platform."""
-        pass # pylint: disable=unnecessary-pass
+        pass  # pylint: disable=unnecessary-pass
 
     @ebird.command()
     @checks.is_owner()
     async def checkdays(self, ctx):
         """Checks days setting."""
         days = await self.config.days()
-        await ctx.send('eBird days is {}.'.format(days))
+        await ctx.send("eBird days is {}.".format(days))
 
     @ebird.command()
     @checks.is_owner()
@@ -66,9 +69,8 @@ class EBirdCog(commands.Cog):
             return
 
         await ctx.send(
-            'eBird region is {region} ({code}).'.format(
-                region=region['result'],
-                code=region_code,
+            "eBird region is {region} ({code}).".format(
+                region=region["result"], code=region_code
             )
         )
 
@@ -77,7 +79,9 @@ class EBirdCog(commands.Cog):
         """Reports recent hybrid observations."""
         days_back = int(days) if days else await self.config.days()
         if days_back not in range(1, 31):
-            await ctx.send('Value for days, %s, must be a number from 1 through 30.' % days_back)
+            await ctx.send(
+                "Value for days, %s, must be a number from 1 through 30." % days_back
+            )
             return
 
         if region_code:
@@ -88,7 +92,7 @@ class EBirdCog(commands.Cog):
                 return
 
             if not region:
-                await ctx.send('Region not found: {}'.format(region_code))
+                await ctx.send("Region not found: {}".format(region_code))
                 return
         else:
             region_code = await self.config.region()
@@ -103,8 +107,8 @@ class EBirdCog(commands.Cog):
         date_fmt = await self.config.date_format()
         datetime_fmt = await self.config.datetime_format()
         embeds = []
-        title = f'Hybrids in {region_code} from past {days_back} days'
-        color = 0x90ee90
+        title = f"Hybrids in {region_code} from past {days_back} days"
+        color = 0x90EE90
         embed = discord.Embed(color=color)
 
         for record in records:
@@ -115,7 +119,7 @@ class EBirdCog(commands.Cog):
             name = rec["comName"].replace(" (hybrid)", "")
             embed.add_field(
                 name=name,
-                value=('· {obsDt}: {howMany} at {locName}').format_map(rec),
+                value=("· {obsDt}: {howMany} at {locName}").format_map(rec),
                 inline=False,
             )
 
@@ -123,7 +127,7 @@ class EBirdCog(commands.Cog):
             embeds.append(embed)
             pages = len(embeds)
             for page, embed in enumerate(embeds, start=1):
-                embed.title = ('%s (Page %d of %d)' % (title, page, pages))
+                embed.title = "%s (Page %d of %d)" % (title, page, pages)
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
             embed.title = title
@@ -135,8 +139,8 @@ class EBirdCog(commands.Cog):
         """Sets region."""
         region = None
 
-        if region_code.lower() == 'world':
-            await ctx.send('eBird region cannot be world')
+        if region_code.lower() == "world":
+            await ctx.send("eBird region cannot be world")
             return
 
         try:
@@ -146,12 +150,11 @@ class EBirdCog(commands.Cog):
             return
 
         if not region:
-            await ctx.send('eBird region not found: {}'.format(region_code))
+            await ctx.send("eBird region not found: {}".format(region_code))
             return
 
-
         await self.config.region.set(region_code)
-        await ctx.send('eBird region has been changed.')
+        await ctx.send("eBird region has been changed.")
 
     @ebird.command()
     @checks.is_owner()
@@ -160,10 +163,9 @@ class EBirdCog(commands.Cog):
         days = int(value)
         if days in range(1, 31):
             await self.config.days.set(days)
-            await ctx.send('eBird days has been changed.')
+            await ctx.send("eBird days has been changed.")
         else:
-            await ctx.send('eBird days must be a number from 1 through 30.')
-
+            await ctx.send("eBird days must be a number from 1 through 30.")
 
     async def get_hybrid_observations(self, ctx, region_code, days):
         """Gets recent hybrid observations."""
@@ -186,10 +188,7 @@ class EBirdCog(commands.Cog):
         ebird_key = await self.get_api_key(ctx)
         if ebird_key is None:
             return False
-        return get_region(
-            ebird_key["api_key"],
-            region_code,
-        )
+        return get_region(ebird_key["api_key"], region_code)
 
     async def get_api_key(self, ctx):
         """Gets API key."""
