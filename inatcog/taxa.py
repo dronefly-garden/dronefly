@@ -18,6 +18,12 @@ class Taxon(NamedTuple):
     ancestor_ids: list
     observations: int
 
+TRINOMIAL_ABBR = {
+    "variety": "var.",
+    "subspecies": "ssp.",
+    "form": "f.",
+}
+
 def format_taxon_name(rec, with_term=False):
     """Format taxon name from matched record.
 
@@ -29,7 +35,15 @@ def format_taxon_name(rec, with_term=False):
         common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
     else:
         common = rec.common
-    return f'{rec.name} ({common})' if common else rec.name
+    if RANK_LEVELS[rec.rank] > RANK_LEVELS["species"]:
+        name = f'{rec.rank.capitalize()} {rec.name}'
+    else:
+        name = f'*{rec.name}*'
+        if rec.rank in TRINOMIAL_ABBR.keys():
+            tri = rec.name.split(' ')
+            if len(tri) == 3:
+                name = f'*{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rec.rank]} *{tri[2]}*'
+    return f'{name} ({common})' if common else name
 
 def get_fields_from_results(results):
     """Map get_taxa results into namedtuples of selected fields.
