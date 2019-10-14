@@ -1,5 +1,5 @@
 """Module for handling recent history."""
-from collections import namedtuple
+from typing import NamedTuple
 from datetime import datetime
 import re
 
@@ -14,7 +14,13 @@ PAT_OBS = re.compile(
     re.I,
 )
 
-ObsLinkMsg = namedtuple("ObsLinkMsg", "url, obs, ago, name")
+class ObsLinkMsg(NamedTuple):
+    """Discord & iNat fields from a recent observation link."""
+
+    url: str
+    obs: dict
+    ago: str
+    name: str
 
 
 def get_last_obs_msg(msgs):
