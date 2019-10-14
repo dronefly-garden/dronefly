@@ -18,7 +18,7 @@ class Taxon(NamedTuple):
     term: str
     thumbnail: str or None
     rank: str
-    ancestor_ids: list(int)
+    ancestor_ids: list
     observations: int
 
 
@@ -73,7 +73,7 @@ def get_fields_from_results(results):
 
     Returns
     -------
-    list[Taxon]
+    list of Taxon
         A list of Taxon entries containing a subset of fields from the full
         JSON results.
     """
