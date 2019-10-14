@@ -14,11 +14,11 @@ class Taxon(NamedTuple):
 
     name: str
     taxon_id: int
-    common: str
+    common: str or None
     term: str
-    thumbnail: dict
+    thumbnail: str or None
     rank: str
-    ancestor_ids: list
+    ancestor_ids: list(int)
     observations: int
 
 
@@ -28,9 +28,25 @@ TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 def format_taxon_name(rec, with_term=False):
     """Format taxon name from matched record.
 
-    Args:
-        rec (Taxon): A matched taxon record.
-        with_term (bool): With non-(common|name) term in parentheses in place of common.
+    Parameters
+    ----------
+    rec: Taxon
+        A matched taxon record.
+    with_term: bool, optional
+        With non-common / non-name matching term in parentheses in place of common name.
+
+    Returns
+    -------
+    str
+        A name of the form "Rank Scientific name (Common name)" following the
+        same basic format as iNaturalist taxon pages on the web, i.e.
+
+        - drop the "Rank" keyword for genus level and lower
+        - italicize the name (minus any rank abbreviations; see next point) for species
+          level and lower
+        - for trinomials (must be subspecies level & have exactly 3 names to qualify),
+          insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
+          name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
     """
     if with_term:
         common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
@@ -48,13 +64,18 @@ def format_taxon_name(rec, with_term=False):
 
 
 def get_fields_from_results(results):
-    """Map get_taxa results into namedtuples of selected fields.
+    """Map get_taxa JSON results into flattened field subsets.
 
-    Args:
-        results (list): The JSON results from /v1/taxa or /v1/taxa/autocomplete.
+    Parameters
+    ----------
+    results: list
+        The JSON results from /v1/taxa or /v1/taxa/autocomplete.
 
-    Returns:
-        namedtuple: A flattened representation of the JSON result as a namedtuple.
+    Returns
+    -------
+    list[Taxon]
+        A list of Taxon entries containing a subset of fields from the full
+        JSON results.
     """
 
     def get_fields(record):
@@ -77,16 +98,30 @@ def get_fields_from_results(results):
 class NameMatch(NamedTuple):
     """Match for each name field in Taxon matching a pattern."""
 
-    term: re.Match
-    name: re.Match
-    common: re.Match
+    term: re.Match or None
+    name: re.Match or None
+    common: re.Match or None
 
 
 NO_NAME_MATCH = NameMatch(None, None, None)
 
 
 def match_name(record, pat):
-    """Match all terms specified."""
+    """Match all terms specified.
+
+    Parameters
+    ----------
+    record: Taxon
+        A candidate taxon to match.
+
+    pat: re.Pattern or str
+        A pattern to match against each name field in the record.
+
+    Returns
+    -------
+    NameMatch
+        A tuple of search results for the pat for each name in the record.
+    """
     return NameMatch(
         re.search(pat, record.term),
         re.search(pat, record.name),
@@ -95,7 +130,23 @@ def match_name(record, pat):
 
 
 def match_exact(record, exact):
-    """Match any exact phrases specified."""
+    """Match any exact phrases specified.
+    
+    Parameters
+    ----------
+    record: Taxon
+        A candidate taxon to match.
+        
+    exact: list
+        A list of exact patterns to match.
+
+    Returns
+    -------
+    NameMatch
+        A tuple of ORed search results for every pat for each name in
+        the record, i.e. each name in the tuple is the match result from
+        the first matching pattern.
+    """
     matched = NO_NAME_MATCH
     try:
         for pat in exact:
