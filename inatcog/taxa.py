@@ -98,9 +98,9 @@ def get_fields_from_results(results):
 class NameMatch(NamedTuple):
     """Match for each name field in Taxon matching a pattern."""
 
-    term: re.Match or None
-    name: re.Match or None
-    common: re.Match or None
+    term: re.match or None
+    name: re.match or None
+    common: re.match or None
 
 
 NO_NAME_MATCH = NameMatch(None, None, None)
