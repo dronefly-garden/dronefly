@@ -55,7 +55,7 @@ def make_last_obs_embed(last):
             common = taxon.get("preferred_common_name")
             embed.title = "%s (%s)" % (sci_name, common) if common else sci_name
         else:
-            embed.title = str(obs["obs_id"])
+            embed.title = "Unknown"
         photos = obs.get("photos")
         if photos:
             thumbnail = photos[0].get("url")
