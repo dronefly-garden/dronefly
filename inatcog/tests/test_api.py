@@ -27,6 +27,7 @@ class TestAPI(unittest.TestCase):
             )
 
     def test_get_observation_bounds(self):
+        """Test get_observation_bounds."""
         expected_result_1 = {}
         expected_result_2 = {
             "total_bounds": {"swlat": 1, "swlng": 2, "nelat": 3, "nelng": 4}
