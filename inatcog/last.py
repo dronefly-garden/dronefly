@@ -14,6 +14,7 @@ PAT_OBS = re.compile(
     re.I,
 )
 
+
 class ObsLinkMsg(NamedTuple):
     """Discord & iNat fields from a recent observation link."""
 

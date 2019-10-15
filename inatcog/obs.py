@@ -28,11 +28,6 @@ def get_fields_from_results(results):
     """
 
     def get_fields(record):
-        return Obs(
-            {},
-            "",
-            "",
-            "",
-        )
+        return Obs({}, "", "", "")
 
     return list(map(get_fields, results))
