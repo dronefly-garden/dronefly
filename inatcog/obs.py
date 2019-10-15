@@ -1,7 +1,9 @@
 """Module to work with iNat observations."""
 
 from typing import NamedTuple
-from .taxa import Taxon, get_taxon_fields
+from .common import LOG
+from .embeds import make_embed
+from .taxa import Taxon, format_taxon_name, get_taxon_fields
 
 
 class Obs(NamedTuple):
@@ -51,3 +53,27 @@ def get_obs_fields(record):
         thumbnail = None
 
     return Obs(taxon, obs_id, obs_on, obs_by, thumbnail)
+
+def make_obs_embed(obs, url):
+    """Return embed for an observation link."""
+    embed = make_embed(url=url)
+    summary = None
+
+    if obs:
+        taxon = obs.taxon
+        if taxon:
+            embed.title = format_taxon_name(taxon)
+        else:
+            embed.title = "Unknown"
+        if obs.thumbnail:
+            embed.set_thumbnail(url=obs.thumbnail)
+        if obs.obs_on:
+            summary = "Observed by %s on %s" % (obs.obs_by, obs.obs_on)
+        else:
+            summary = "Observed by %s" % obs.obs_by
+        embed.description = summary
+    else:
+        LOG.info("Deleted observation: %d", obs.obs_id)
+        embed.title = "Deleted"
+
+    return embed

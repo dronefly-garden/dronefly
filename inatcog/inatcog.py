@@ -1,9 +1,12 @@
 """Module to access iNaturalist API."""
+import re
 from redbot.core import commands
 from pyparsing import ParseException
+from .api import get_observations
 from .embeds import sorry
-from .last import get_last_obs_msg, make_last_obs_embed
+from .last import get_last_obs_msg, make_last_obs_embed, PAT_OBS
 from .maps import get_map_coords_for_taxa, make_map_embed
+from .obs import get_obs_fields, make_obs_embed
 from .taxa import query_taxa, query_taxon, make_taxa_embed
 
 
@@ -38,6 +41,20 @@ class INatCog(commands.Cog):
             return
 
         await ctx.send(embed=make_last_obs_embed(last))
+
+    @inat.command()
+    async def link(self, ctx, *, query):
+        """Look up an iNat link and summarize its contents."""
+        mat = re.search(PAT_OBS, query)
+        if mat:
+            obs_id = int(mat["obs_id"])
+            url = mat["url"]
+
+            results = get_observations(obs_id)["results"]
+            obs = get_obs_fields(results[0]) if results else None
+            await ctx.send(embed=make_obs_embed(obs, url))
+        else:
+            await ctx.send(embed=sorry())
 
     @inat.command()
     async def map(self, ctx, *, query):
