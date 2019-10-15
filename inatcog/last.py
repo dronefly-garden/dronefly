@@ -5,9 +5,11 @@ import re
 
 import timeago
 
+from .api import get_observations
 from .common import LOG
 from .embeds import make_embed
-from .api import get_observations
+from .obs import get_obs_fields
+from .taxa import format_taxon_name
 
 PAT_OBS = re.compile(
     r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
@@ -36,8 +38,9 @@ def get_last_obs_msg(msgs):
     url = mat["url"]
     ago = timeago.format(found.created_at, datetime.utcnow())
     name = found.author.nick or found.author.name
+
     results = get_observations(obs_id)["results"]
-    obs = results[0] if results else None
+    obs = get_obs_fields(results[0]) if results else None
 
     return ObsLinkMsg(url, obs, ago, name)
 
@@ -49,30 +52,19 @@ def make_last_obs_embed(last):
 
     if last:
         obs = last.obs
-        community_taxon = obs.get("community_taxon")
-        taxon = community_taxon or obs.get("taxon")
+        taxon = obs.taxon
         if taxon:
-            sci_name = taxon["name"]
-            common = taxon.get("preferred_common_name")
-            embed.title = "%s (%s)" % (sci_name, common) if common else sci_name
+            embed.title = format_taxon_name(taxon)
         else:
             embed.title = "Unknown"
-        photos = obs.get("photos")
-        if photos:
-            thumbnail = photos[0].get("url")
+        if obs.thumbnail:
+            embed.set_thumbnail(url=obs.thumbnail)
+        if obs.obs_on:
+            summary = "Observed by %s on %s" % (obs.obs_by, obs.obs_on)
         else:
-            thumbnail = None
-        if thumbnail:
-            embed.set_thumbnail(url=thumbnail)
-        observed_on = obs.get("observed_on_string")
-        user = obs["user"]
-        by_name = user.get("name")
-        by_login = user.get("login")
-        observed_by = by_name or by_login or "Somebody"
-        if observed_on:
-            summary = "Observed by %s on %s" % (observed_by, observed_on)
+            summary = "Observed by %s" % obs.obs_by
     else:
-        LOG.info("Deleted observation: %d", obs["obs_id"])
+        LOG.info("Deleted observation: %d", obs.obs_id)
         embed.title = "Deleted"
 
     embed.add_field(

@@ -63,36 +63,32 @@ def format_taxon_name(rec, with_term=False):
     return f"{name} ({common})" if common else name
 
 
-def get_fields_from_results(results):
-    """Map get_taxa JSON results into flattened field subsets.
+def get_taxon_fields(record):
+    """Map a get_taxa JSON record into a tuple of selected fields.
 
     Parameters
     ----------
-    results: list
-        The JSON results from /v1/taxa or /v1/taxa/autocomplete.
+    record: dict
+        The JSON record from /v1/taxa or /v1/taxa/autocomplete.
 
     Returns
     -------
-    list of Taxon
+    Taxon
         A list of Taxon entries containing a subset of fields from the full
         JSON results.
     """
-
-    def get_fields(record):
-        photo = record.get("default_photo")
-        taxon_id = record["id"] if "id" in record else record["taxon_id"]
-        return Taxon(
-            record["name"],
-            taxon_id,
-            record.get("preferred_common_name"),
-            record.get("matched_term") or "Id: %s" % taxon_id,
-            photo.get("square_url") if photo else None,
-            record["rank"],
-            record["ancestor_ids"],
-            record["observations_count"],
-        )
-
-    return list(map(get_fields, results))
+    photo = record.get("default_photo")
+    taxon_id = record["id"] if "id" in record else record["taxon_id"]
+    return Taxon(
+        record["name"],
+        taxon_id,
+        record.get("preferred_common_name"),
+        record.get("matched_term") or "Id: %s" % taxon_id,
+        photo.get("square_url") if photo else None,
+        record["rank"],
+        record["ancestor_ids"],
+        record["observations_count"],
+    )
 
 
 class NameMatch(NamedTuple):
@@ -242,7 +238,10 @@ def maybe_match_taxon(query, ancestor_id=None):
     if not records:
         raise LookupError("Nothing found")
 
-    rec = match_taxon(query, get_fields_from_results(records), ancestor_id=ancestor_id)
+    rec = match_taxon(
+        query, list(map(get_taxon_fields, records)), ancestor_id=ancestor_id
+    )
+
     if not rec:
         raise LookupError("No exact match")
 
