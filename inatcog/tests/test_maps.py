@@ -98,7 +98,6 @@ class TestMaps(unittest.TestCase):
 
     def test_get_map_coords_for_taxa(self):
         """Test get_map_coords_for_taxa."""
-
         bounds_1 = {}
         bounds_2 = {
             "total_bounds": {"swlat": 58, "swlng": 51, "nelat": 36, "nelng": 52}
