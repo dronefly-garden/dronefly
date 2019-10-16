@@ -4,9 +4,9 @@ from redbot.core import commands
 from pyparsing import ParseException
 from .api import get_observations
 from .embeds import sorry
-from .last import get_last_obs_msg, make_last_obs_embed, PAT_OBS
+from .last import get_last_obs_msg, make_last_obs_embed
 from .maps import get_map_coords_for_taxa, make_map_embed
-from .obs import get_obs_fields, make_obs_embed
+from .obs import get_obs_fields, make_obs_embed, PAT_OBS_LINK
 from .taxa import query_taxa, query_taxon, make_taxa_embed
 
 
@@ -45,7 +45,7 @@ class INatCog(commands.Cog):
     @inat.command()
     async def link(self, ctx, *, query):
         """Look up an iNat link and summarize its contents."""
-        mat = re.search(PAT_OBS, query)
+        mat = re.search(PAT_OBS_LINK, query)
         if mat:
             obs_id = int(mat["obs_id"])
             url = mat["url"]

@@ -1,9 +1,16 @@
 """Module to work with iNat observations."""
 
+import re
 from typing import NamedTuple
+
 from .common import LOG
 from .embeds import make_embed
 from .taxa import Taxon, format_taxon_name, get_taxon_fields
+
+PAT_OBS_LINK = re.compile(
+    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
+    re.I,
+)
 
 
 class Obs(NamedTuple):
@@ -73,7 +80,9 @@ def make_obs_embed(obs, url):
             summary = "Observed by %s" % obs.obs_by
         embed.description = summary
     else:
-        LOG.info("Deleted observation: %d", obs.obs_id)
-        embed.title = "Deleted"
+        mat = re.search(PAT_OBS_LINK, url)
+        obs_id = int(mat["obs_id"])
+        LOG.info("Observation not found for link: %d", obs_id)
+        embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
     return embed

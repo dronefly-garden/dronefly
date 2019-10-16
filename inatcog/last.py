@@ -8,13 +8,8 @@ import timeago
 from .api import get_observations
 from .common import LOG
 from .embeds import make_embed
-from .obs import get_obs_fields
+from .obs import get_obs_fields, PAT_OBS_LINK
 from .taxa import format_taxon_name
-
-PAT_OBS = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
-    re.I,
-)
 
 
 class ObsLinkMsg(NamedTuple):
@@ -30,10 +25,10 @@ def get_last_obs_msg(msgs):
     """Find recent observation link."""
     found = None
 
-    found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS, m.content))
+    found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS_LINK, m.content))
     LOG.info(repr(found))
 
-    mat = re.search(PAT_OBS, found.content)
+    mat = re.search(PAT_OBS_LINK, found.content)
     obs_id = int(mat["obs_id"])
     url = mat["url"]
     ago = timeago.format(found.created_at, datetime.utcnow())
