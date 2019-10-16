@@ -1,0 +1,11 @@
+language: python
+
+matrix:
+  include:
+    - python: 3.7
+
+install:
+ - pip install -U Red-DiscordBot
+
+script:
+ - pytest
