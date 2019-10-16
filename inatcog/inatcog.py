@@ -44,7 +44,14 @@ class INatCog(commands.Cog):
 
     @inat.command()
     async def link(self, ctx, *, query):
-        """Look up an iNat link and summarize its contents."""
+        """Look up an iNat link and summarize its contents in an embed.
+
+        e.g.
+        ```
+        [p]inat link https://www.inaturalist.org/observations/#
+           -> an embed summarizing the observation link
+        ```
+        """
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
             obs_id = int(mat["obs_id"])
