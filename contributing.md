@@ -12,4 +12,4 @@ TODO: Guidelines for contributions.
 - numpy docstrings
 - pytest, unittest, unittest-mock for tests
 - sphinx, autodoc for documentation (planned)
-- travis for build / test automation (planned)
+- [travis](https://travis-ci.com/synrg/quaggagriff) for build / test automation
