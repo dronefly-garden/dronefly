@@ -48,7 +48,7 @@ class INatCog(commands.Cog):
 
         e.g.
         ```
-        [p]inat link https://www.inaturalist.org/observations/#
+        [p]inat link https://inaturalist.org/observations/#
            -> an embed summarizing the observation link
         ```
         """
