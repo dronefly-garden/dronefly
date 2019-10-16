@@ -45,7 +45,7 @@ def make_last_obs_embed(last):
     embed = make_embed(url=last.url)
     summary = None
 
-    if last:
+    if last.obs:
         obs = last.obs
         taxon = obs.taxon
         if taxon:
@@ -59,8 +59,10 @@ def make_last_obs_embed(last):
         else:
             summary = "Observed by %s" % obs.obs_by
     else:
-        LOG.info("Deleted observation: %d", obs.obs_id)
-        embed.title = "Deleted"
+        mat = re.search(PAT_OBS_LINK, last.url)
+        obs_id = int(mat["obs_id"])
+        LOG.info("Observation not found for link: %d", obs_id)
+        embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
     embed.add_field(
         name=summary or "\u200B", value="shared %s by @%s" % (last.ago, last.name)
