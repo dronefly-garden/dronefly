@@ -6,6 +6,10 @@ matrix:
 
 install:
  - pip install -U Red-DiscordBot
+ - pip install requests
+ - pip install pyparsing
+ - pip install timeago
+ - pip install ebird-api
 
 script:
  - pytest
