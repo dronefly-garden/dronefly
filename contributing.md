@@ -8,7 +8,7 @@ TODO: Guidelines for contributions.
 
 ## Some currently used / planned development tooling & standards
 
-- black for code formatting
+- black for code formatting (TODO: automate)
 - numpy docstrings
 - pytest, unittest, unittest-mock for tests
 - sphinx, autodoc for documentation (planned)
