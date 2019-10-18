@@ -49,6 +49,7 @@ def make_last_obs_embed(last):
 
     if last.obs:
         obs = last.obs
+        user = obs.user
         taxon = obs.taxon
         if taxon:
             embed.title = format_taxon_name(taxon)
@@ -57,16 +58,14 @@ def make_last_obs_embed(last):
         if obs.thumbnail:
             embed.set_thumbnail(url=obs.thumbnail)
         if obs.obs_on:
-            summary = "Observed by %s on %s" % (obs.obs_by, obs.obs_on)
+            summary = "Observed by %s on %s" % (user.profile_link(), obs.obs_on)
         else:
-            summary = "Observed by %s" % obs.obs_by
+            summary = "Observed by %s" % user.profile_link()
     else:
         mat = re.search(PAT_OBS_LINK, last.url)
         obs_id = int(mat["obs_id"])
         LOG.info("Observation not found for link: %d", obs_id)
         embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
-    embed.add_field(
-        name=summary or "\u200B", value="shared %s by @%s" % (last.ago, last.name)
-    )
+    embed.description = f"{summary}\n\n· shared {last.ago} by @{last.name}"
     return embed

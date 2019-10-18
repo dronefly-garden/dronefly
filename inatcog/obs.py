@@ -66,7 +66,7 @@ def make_obs_embed(obs, url):
 
     if obs:
         taxon = obs.taxon
-        user_link = f"[{obs.user.display_name()}]({obs.user.profile_url()})"
+        user = obs.user
         if taxon:
             embed.title = format_taxon_name(taxon)
         else:
@@ -74,9 +74,9 @@ def make_obs_embed(obs, url):
         if obs.thumbnail:
             embed.set_thumbnail(url=obs.thumbnail)
         if obs.obs_on:
-            summary = "Observed by %s on %s" % (user_link, obs.obs_on)
+            summary = "Observed by %s on %s" % (user.profile_link(), obs.obs_on)
         else:
-            summary = "Observed by %s" % user_link
+            summary = "Observed by %s" % user.profile_link()
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)

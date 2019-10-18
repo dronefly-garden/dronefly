@@ -9,6 +9,7 @@ API_REQUESTS_PATCH = patch("inatcog.api.requests.get")
 
 class TestMaps(unittest.TestCase):
     """Test maps module members."""
+
     def test_calc_distance(self):
         """Test calc_distance."""
         self.assertAlmostEqual(0.0, maps.calc_distance(0, 0, 0, 0))
