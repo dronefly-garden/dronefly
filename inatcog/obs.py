@@ -6,6 +6,7 @@ from typing import NamedTuple
 from .common import LOG
 from .embeds import make_embed
 from .taxa import Taxon, format_taxon_name, get_taxon_fields
+from .users import User, get_user_from_json
 
 PAT_OBS_LINK = re.compile(
     r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
@@ -14,28 +15,28 @@ PAT_OBS_LINK = re.compile(
 
 
 class Obs(NamedTuple):
-    """A flattened representation of a single get_observations JSON result."""
+    """An observation."""
 
     taxon: Taxon or None
-    obs_id: str
+    obs_id: int
     obs_on: str or None
-    obs_by: str
+    user: User
     thumbnail: str or None
 
 
 def get_obs_fields(record):
-    """Map a get_observations JSON record into a tuple of selected fields.
+    """Get an Obs from get_observations JSON record.
 
     Parameters
     ----------
     record: dict
-        A JSON observation record from /v1/observations.
+        A JSON observation record from /v1/observations or other endpoint
+        returning observations.
 
     Returns
     -------
     Obs
-        An Obs tuple containing a subset of fields from the full
-        JSON results.
+        An Obs object from the JSON results.
     """
 
     community_taxon = record.get("community_taxon")
@@ -47,11 +48,7 @@ def get_obs_fields(record):
 
     obs_id = record["id"]
     obs_on = record.get("observed_on_string") or None
-
-    user = record["user"]
-    by_name = user.get("name")
-    by_login = user.get("login")
-    obs_by = by_name or by_login or "Somebody"
+    user = get_user_from_json(record["user"])
 
     photos = record.get("photos")
     if photos:
@@ -59,7 +56,7 @@ def get_obs_fields(record):
     else:
         thumbnail = None
 
-    return Obs(taxon, obs_id, obs_on, obs_by, thumbnail)
+    return Obs(taxon, obs_id, obs_on, user, thumbnail)
 
 
 def make_obs_embed(obs, url):
@@ -69,6 +66,7 @@ def make_obs_embed(obs, url):
 
     if obs:
         taxon = obs.taxon
+        user_link = f"[{obs.user.display_name()}]({obs.user.profile_url()})"
         if taxon:
             embed.title = format_taxon_name(taxon)
         else:
@@ -76,9 +74,9 @@ def make_obs_embed(obs, url):
         if obs.thumbnail:
             embed.set_thumbnail(url=obs.thumbnail)
         if obs.obs_on:
-            summary = "Observed by %s on %s" % (obs.obs_by, obs.obs_on)
+            summary = "Observed by %s on %s" % (user_link, obs.obs_on)
         else:
-            summary = "Observed by %s" % obs.obs_by
+            summary = "Observed by %s" % user_link
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)
