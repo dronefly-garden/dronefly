@@ -10,7 +10,7 @@ TAXON_QUERY_PARSER = TaxonQueryParser()
 
 
 class Taxon(NamedTuple):
-    """A flattened representation of a single get_taxa JSON result."""
+    """A taxon."""
 
     name: str
     taxon_id: int
@@ -64,7 +64,7 @@ def format_taxon_name(rec, with_term=False):
 
 
 def get_taxon_fields(record):
-    """Map a get_taxa JSON record into a tuple of selected fields.
+    """Get Taxon from a JSON record.
 
     Parameters
     ----------
@@ -74,8 +74,7 @@ def get_taxon_fields(record):
     Returns
     -------
     Taxon
-        A list of Taxon entries containing a subset of fields from the full
-        JSON results.
+        A Taxon object from the JSON record.
     """
     photo = record.get("default_photo")
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
