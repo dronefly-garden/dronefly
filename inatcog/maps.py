@@ -2,10 +2,10 @@
 from collections import namedtuple
 import math
 from .api import get_observation_bounds, WWW_BASE_URL
-from .embeds import make_embed
 from .taxa import format_taxon_name
 
 MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
+MapLink = namedtuple("MapLink", "title, url")
 
 
 def calc_distance(lat1, lon1, lat2, lon2):
@@ -61,13 +61,14 @@ def get_map_coords_for_taxa(taxon_ids):
     return MapCoords(zoom_level, center_lat, center_lon)
 
 
-def make_map_embed(taxa, map_coords):
-    """Make embed linking to range map."""
+def get_map_link_for_taxa(taxa):
+    """Get a map link for taxa from the provided coords."""
     names = ", ".join([format_taxon_name(rec, with_term=True) for rec in taxa.values()])
     title = f"Range map for {names}"
 
-    taxa = ",".join(list(taxa.keys()))
+    map_coords = get_map_coords_for_taxa(taxa)
     zoom_lat_lon = "/".join(map(str, map_coords))
-    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxa}#{zoom_lat_lon}"
+    taxon_ids = ",".join(list(taxa.keys()))
+    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids}#{zoom_lat_lon}"
 
-    return make_embed(title=title, url=url)
+    return MapLink(title=title, url=url)

@@ -238,14 +238,14 @@ def maybe_match_taxon(query, ancestor_id=None):
     if not records:
         raise LookupError("Nothing found")
 
-    rec = match_taxon(
+    taxon = match_taxon(
         query, list(map(get_taxon_fields, records)), ancestor_id=ancestor_id
     )
 
-    if not rec:
+    if not taxon:
         raise LookupError("No exact match")
 
-    return rec
+    return taxon
 
 
 def maybe_match_taxon_compound(compound_query):
@@ -276,11 +276,11 @@ def maybe_match_taxon_compound(compound_query):
                             ancestor.rank,
                         )
                     )
-            rec = maybe_match_taxon(query_main, ancestor_id=ancestor.taxon_id)
+            taxon = maybe_match_taxon(query_main, ancestor_id=ancestor.taxon_id)
     else:
-        rec = maybe_match_taxon(query_main)
+        taxon = maybe_match_taxon(query_main)
 
-    return rec
+    return taxon
 
 
 def query_taxon(query):
@@ -294,12 +294,12 @@ def query_taxa(query):
     queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
     taxa = {}
     for compound_query in queries:
-        rec = maybe_match_taxon_compound(compound_query)
-        taxa[str(rec.taxon_id)] = rec
+        taxon = maybe_match_taxon_compound(compound_query)
+        taxa[str(taxon.taxon_id)] = taxon
     return taxa
 
 
-def make_taxa_embed(rec):
+def make_taxa_embed(rec, map_link=None):
     """Make embed describing taxa record."""
     embed = make_embed(
         title=format_taxon_name(rec), url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}"
@@ -313,6 +313,9 @@ def make_taxa_embed(rec):
         embed.description = matched
 
     observations = rec.observations
+
+    if map_link:
+        observations = f"[{observations}]({map_link.url})"
     embed.add_field(name="Observations:", value=observations, inline=True)
 
     return embed

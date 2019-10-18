@@ -3,9 +3,9 @@ import re
 from redbot.core import commands
 from pyparsing import ParseException
 from .api import get_observations
-from .embeds import sorry
+from .embeds import sorry, make_embed
 from .last import get_last_obs_msg, make_last_obs_embed
-from .maps import get_map_coords_for_taxa, make_map_embed
+from .maps import get_map_link_for_taxa
 from .obs import get_obs_fields, make_obs_embed, PAT_OBS_LINK
 from .taxa import query_taxa, query_taxon, make_taxa_embed
 
@@ -89,10 +89,10 @@ class INatCog(commands.Cog):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        taxon_ids = list(taxa.keys())
-        map_coords = get_map_coords_for_taxa(taxon_ids)
+        map_link = get_map_link_for_taxa(taxa)
+        map_embed = make_embed(title=map_link.title, url=map_link.url)
 
-        await ctx.send(embed=make_map_embed(taxa, map_coords))
+        await ctx.send(embed=map_embed)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -125,7 +125,7 @@ class INatCog(commands.Cog):
             return
 
         try:
-            rec = query_taxon(query)
+            taxon = query_taxon(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -134,4 +134,5 @@ class INatCog(commands.Cog):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=make_taxa_embed(rec))
+        map_link = get_map_link_for_taxa({str(taxon.taxon_id): taxon})
+        await ctx.send(embed=make_taxa_embed(taxon, map_link))
