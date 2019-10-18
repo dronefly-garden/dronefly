@@ -134,5 +134,5 @@ class INatCog(commands.Cog):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        map_link = get_map_link_for_taxa({str(taxon.taxon_id): taxon})
+        map_link = get_map_link_for_taxa([taxon])
         await ctx.send(embed=make_taxa_embed(taxon, map_link))

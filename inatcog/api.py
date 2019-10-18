@@ -43,7 +43,7 @@ def get_observation_bounds(taxon_ids):
     kwargs = {
         "return_bounds": "true",
         "verifiable": "true",
-        "taxon_id": ",".join(taxon_ids),
+        "taxon_id": ",".join(map(str, taxon_ids)),
         "per_page": 0,
     }
 

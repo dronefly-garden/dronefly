@@ -292,11 +292,12 @@ def query_taxon(query):
 def query_taxa(query):
     """Query for one or more taxa and return list of matching taxa."""
     queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
+    # De-duplicate the query via dict:
     taxa = {}
     for compound_query in queries:
         taxon = maybe_match_taxon_compound(compound_query)
         taxa[str(taxon.taxon_id)] = taxon
-    return taxa
+    return taxa.values()
 
 
 def make_taxa_embed(rec, map_link=None):

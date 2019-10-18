@@ -41,7 +41,7 @@ def get_zoom_level(swlat, swlng, nelat, nelng):
     return result
 
 
-def get_map_coords_for_taxa(taxon_ids):
+def get_map_coords_for_taxon_ids(taxon_ids):
     """Get map coordinates encompassing taxa ranges/observations."""
     bounds = get_observation_bounds(taxon_ids)
     if not bounds:
@@ -63,12 +63,13 @@ def get_map_coords_for_taxa(taxon_ids):
 
 def get_map_link_for_taxa(taxa):
     """Get a map link for taxa from the provided coords."""
-    names = ", ".join([format_taxon_name(rec, with_term=True) for rec in taxa.values()])
+    names = ", ".join([format_taxon_name(taxon, with_term=True) for taxon in taxa])
     title = f"Range map for {names}"
 
-    map_coords = get_map_coords_for_taxa(taxa)
+    taxon_ids = [taxon.taxon_id for taxon in taxa]
+    map_coords = get_map_coords_for_taxon_ids(taxon_ids)
     zoom_lat_lon = "/".join(map(str, map_coords))
-    taxon_ids = ",".join(list(taxa.keys()))
-    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids}#{zoom_lat_lon}"
+    taxon_ids_str = ','.join(map(str, taxon_ids))
+    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"
 
     return MapLink(title=title, url=url)
