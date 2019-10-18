@@ -1,3 +1,4 @@
+"""Test maps module."""
 import unittest
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ API_REQUESTS_PATCH = patch("inatcog.api.requests.get")
 
 
 class TestMaps(unittest.TestCase):
+    """Test maps module members."""
     def test_calc_distance(self):
         """Test calc_distance."""
         self.assertAlmostEqual(0.0, maps.calc_distance(0, 0, 0, 0))
@@ -96,8 +98,8 @@ class TestMaps(unittest.TestCase):
             ),
         )
 
-    def test_get_map_coords_for_taxa(self):
-        """Test get_map_coords_for_taxa."""
+    def test_get_map_coords_for_taxon_ids(self):
+        """Test get_map_coords_for_taxon_ids."""
         bounds_1 = {}
         bounds_2 = {
             "total_bounds": {"swlat": 58, "swlng": 51, "nelat": 36, "nelng": 52}
@@ -105,12 +107,12 @@ class TestMaps(unittest.TestCase):
         with API_REQUESTS_PATCH as mock_get:
             mock_get.return_value.json.return_value = bounds_1
             self.assertEqual(
-                maps.get_map_coords_for_taxa([]),
+                maps.get_map_coords_for_taxon_ids([]),
                 maps.MapCoords(zoom_level=2, center_lat=0, center_lon=0),
             )
 
             mock_get.return_value.json.return_value = bounds_2
             self.assertEqual(
-                maps.get_map_coords_for_taxa([]),
+                maps.get_map_coords_for_taxon_ids([]),
                 maps.MapCoords(zoom_level=5, center_lat=47.0, center_lon=51.5),
             )
