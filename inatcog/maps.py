@@ -69,7 +69,7 @@ def get_map_link_for_taxa(taxa):
     taxon_ids = [taxon.taxon_id for taxon in taxa]
     map_coords = get_map_coords_for_taxon_ids(taxon_ids)
     zoom_lat_lon = "/".join(map(str, map_coords))
-    taxon_ids_str = ','.join(map(str, taxon_ids))
+    taxon_ids_str = ",".join(map(str, taxon_ids))
     url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"
 
     return MapLink(title=title, url=url)

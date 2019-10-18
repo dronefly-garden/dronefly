@@ -61,6 +61,7 @@ def get_obs_fields(record):
 
     return Obs(taxon, obs_id, obs_on, obs_by, thumbnail)
 
+
 def make_obs_embed(obs, url):
     """Return embed for an observation link."""
     embed = make_embed(url=url)

@@ -25,7 +25,9 @@ def get_last_obs_msg(msgs):
     """Find recent observation link."""
     found = None
 
-    found = next(m for m in msgs if not m.author.bot and re.search(PAT_OBS_LINK, m.content))
+    found = next(
+        m for m in msgs if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
+    )
     LOG.info(repr(found))
 
     mat = re.search(PAT_OBS_LINK, found.content)
