@@ -20,6 +20,7 @@ class Obs(NamedTuple):
     taxon: Taxon or None
     obs_id: int
     obs_on: str or None
+    obs_at: str or None
     user: User
     thumbnail: str or None
 
@@ -48,6 +49,7 @@ def get_obs_fields(record):
 
     obs_id = record["id"]
     obs_on = record.get("observed_on_string") or None
+    obs_at = record.get("place_guess") or None
     user = get_user_from_json(record["user"])
 
     photos = record.get("photos")
@@ -56,7 +58,7 @@ def get_obs_fields(record):
     else:
         thumbnail = None
 
-    return Obs(taxon, obs_id, obs_on, user, thumbnail)
+    return Obs(taxon, obs_id, obs_on, obs_at, user, thumbnail)
 
 
 def make_obs_embed(obs, url):
@@ -73,10 +75,11 @@ def make_obs_embed(obs, url):
             embed.title = "Unknown"
         if obs.thumbnail:
             embed.set_thumbnail(url=obs.thumbnail)
+        summary = "Observed by %s" % user.profile_link()
         if obs.obs_on:
-            summary = "Observed by %s on %s" % (user.profile_link(), obs.obs_on)
-        else:
-            summary = "Observed by %s" % user.profile_link()
+            summary += " on %s" % obs.obs_on
+        if obs.obs_at:
+            summary += " at %s" % obs.obs_at
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)

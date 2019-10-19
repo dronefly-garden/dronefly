@@ -57,10 +57,11 @@ def make_last_obs_embed(last):
             embed.title = "Unknown"
         if obs.thumbnail:
             embed.set_thumbnail(url=obs.thumbnail)
+        summary = "Observed by %s" % user.profile_link()
         if obs.obs_on:
-            summary = "Observed by %s on %s" % (user.profile_link(), obs.obs_on)
-        else:
-            summary = "Observed by %s" % user.profile_link()
+            summary += " on %s" % obs.obs_on
+        if obs.obs_at:
+            summary += " at %s" % obs.obs_at
     else:
         mat = re.search(PAT_OBS_LINK, last.url)
         obs_id = int(mat["obs_id"])
