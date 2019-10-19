@@ -74,7 +74,7 @@ def make_obs_embed(obs, url):
         else:
             embed.title = "Unknown"
         if obs.thumbnail:
-            embed.set_thumbnail(url=obs.thumbnail)
+            embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
         summary = "Observed by %s" % user.profile_link()
         if obs.obs_on:
             summary += " on %s" % obs.obs_on
