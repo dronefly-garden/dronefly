@@ -36,54 +36,42 @@ def format_taxon_names(
     with_term: bool, optional
         With non-common / non-name matching term in parentheses in place of common name.
     names_format: str, optional
-        Format string for the name. Must contain one %s.
+        Format string for the name. Must contain exactly one %s.
+    max_len: int, optional
+        The maximum length of the return str, with ', and # more' appended if they
+        don't all fit within this length.
 
     Returns
     -------
     str
-        A list of comma-delimited formatted taxon names.
+        A list of comma-delimited formatted taxon names. If 
     """
 
     names = [format_taxon_name(taxon, with_term=with_term) for taxon in taxa]
-    formatted_names = []
 
-    def format_names(names):
+    def fit_names(names):
+        names_fit = []
         # Account for space already used by format string (minus 2 for %s)
         available_len = max_len - (len(names_format) - 2)
-        total_len = 0
+        more = lambda count: "and %d more" % count
+        formatted_len = lambda name: sum(len(item) + len(delimiter) for item in names_fit) + len(name)
+        overflow = lambda name: formatted_len(name) > available_len
         for name in names:
-            # There wouldn't be enough room to add the name + delimiter:
-            if (total_len + len(name) + len(delimiter)) > available_len:
-                and_more = "and %d more" % (len(names) - len(formatted_names))
-                # There wouldn't be enough room to add 'and # more' + delimiter:
-                if (total_len + len(and_more) + len(delimiter)) > available_len:
-                    # There still wouldn't be room, even if we replaced the last item:
-                    if (
-                        total_len - len(formatted_names[-1]) + len(and_more)
-                    ) > available_len:
-                        del formatted_names[-1]
-                    # Replace last item in list (was 2nd-last in above corner case):
-                    formatted_names[-1] = and_more
-                else:
-                    formatted_names.append(and_more)
+            if overflow(name):
+                unprocessed = len(names) - len(names_fit)
+                while overflow(more(unprocessed)):
+                    unprocessed += 1
+                    del names_fit[-1]
+                names_fit.append(more(unprocessed))
                 break
             else:
-                total_len += (
-                    (len(name) + len(delimiter)) if formatted_names else len(name)
-                )
-                formatted_names.append(name)
-        return formatted_names
+                names_fit.append(name)
+        return names_fit
 
     if max_len:
-        try:
-            formatted_names = format_names(names)
-        except StopIteration:
-            pass
-    else:
-        formatted_names = names
+        names = fit_names(names)
 
-    formatted_names_str = names_format % delimiter.join(formatted_names)
-    return formatted_names_str
+    return names_format % delimiter.join(names)
 
 
 def format_taxon_name(rec, with_term=False):
