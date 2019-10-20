@@ -4,6 +4,7 @@ import logging
 
 LOG = logging.getLogger("red.quaggagriff.inatcog")
 
+
 def make_decorator(function):
     """Make a decorator that has arguments."""
 

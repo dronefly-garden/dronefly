@@ -58,7 +58,9 @@ def format_taxon_names(
                 # There wouldn't be enough room to add 'and # more' + delimiter:
                 if (total_len + len(and_more) + len(delimiter)) > available_len:
                     # There still wouldn't be room, even if we replaced the last item:
-                    if (total_len - len(formatted_names[-1]) + len(and_more)) > available_len:
+                    if (
+                        total_len - len(formatted_names[-1]) + len(and_more)
+                    ) > available_len:
                         del formatted_names[-1]
                     # Replace last item in list (was 2nd-last in above corner case):
                     formatted_names[-1] = and_more
@@ -66,7 +68,9 @@ def format_taxon_names(
                     formatted_names.append(and_more)
                 break
             else:
-                total_len += (len(name) + len(delimiter)) if formatted_names else len(name)
+                total_len += (
+                    (len(name) + len(delimiter)) if formatted_names else len(name)
+                )
                 formatted_names.append(name)
         return formatted_names
 
