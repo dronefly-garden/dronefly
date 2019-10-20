@@ -100,7 +100,11 @@ def make_taxa_embed(rec):
 
     url = get_map_url_for_taxa([rec])
     if url:
-        observations = f"[{observations}]({url})"
+        observations = "%s[%d]({%s})" % [
+            "≥" if observations >= 10000 else "",
+            observations,
+            url,
+        ]
     embed.add_field(name="Observations:", value=observations, inline=True)
 
     return embed
