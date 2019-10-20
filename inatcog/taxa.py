@@ -54,7 +54,9 @@ def format_taxon_names(
         # Account for space already used by format string (minus 2 for %s)
         available_len = max_len - (len(names_format) - 2)
         more = lambda count: "and %d more" % count
-        formatted_len = lambda name: sum(len(item) + len(delimiter) for item in names_fit) + len(name)
+        formatted_len = lambda name: sum(
+            len(item) + len(delimiter) for item in names_fit
+        ) + len(name)
         overflow = lambda name: formatted_len(name) > available_len
         for name in names:
             if overflow(name):
