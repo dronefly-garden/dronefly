@@ -3,9 +3,7 @@
 import re
 from typing import NamedTuple
 
-from .common import LOG
-from .embeds import make_embed
-from .taxa import Taxon, format_taxon_name, get_taxon_fields
+from .taxa import Taxon, get_taxon_fields
 from .users import User, get_user_from_json
 
 PAT_OBS_LINK = re.compile(
@@ -59,32 +57,3 @@ def get_obs_fields(record):
         thumbnail = None
 
     return Obs(taxon, obs_id, obs_on, obs_at, user, thumbnail)
-
-
-def make_obs_embed(obs, url):
-    """Return embed for an observation link."""
-    embed = make_embed(url=url)
-    summary = None
-
-    if obs:
-        taxon = obs.taxon
-        user = obs.user
-        if taxon:
-            embed.title = format_taxon_name(taxon)
-        else:
-            embed.title = "Unknown"
-        if obs.thumbnail:
-            embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
-        summary = "Observed by %s" % user.profile_link()
-        if obs.obs_on:
-            summary += " on %s" % obs.obs_on
-        if obs.obs_at:
-            summary += " at %s" % obs.obs_at
-        embed.description = summary
-    else:
-        mat = re.search(PAT_OBS_LINK, url)
-        obs_id = int(mat["obs_id"])
-        LOG.info("Observation not found for link: %d", obs_id)
-        embed.title = "No observation found for id: %d (deleted?)" % obs_id
-
-    return embed

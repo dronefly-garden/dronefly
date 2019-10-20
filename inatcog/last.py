@@ -7,9 +7,7 @@ import timeago
 
 from .api import get_observations
 from .common import LOG
-from .embeds import make_embed
 from .obs import get_obs_fields, PAT_OBS_LINK
-from .taxa import format_taxon_name
 
 
 class ObsLinkMsg(NamedTuple):
@@ -40,33 +38,3 @@ def get_last_obs_msg(msgs):
     obs = get_obs_fields(results[0]) if results else None
 
     return ObsLinkMsg(url, obs, ago, name)
-
-
-def make_last_obs_embed(last):
-    """Return embed for recent observation link."""
-    embed = make_embed(url=last.url)
-    summary = None
-
-    if last.obs:
-        obs = last.obs
-        user = obs.user
-        taxon = obs.taxon
-        if taxon:
-            embed.title = format_taxon_name(taxon)
-        else:
-            embed.title = "Unknown"
-        if obs.thumbnail:
-            embed.set_thumbnail(url=obs.thumbnail)
-        summary = "Observed by %s" % user.profile_link()
-        if obs.obs_on:
-            summary += " on %s" % obs.obs_on
-        if obs.obs_at:
-            summary += " at %s" % obs.obs_at
-    else:
-        mat = re.search(PAT_OBS_LINK, last.url)
-        obs_id = int(mat["obs_id"])
-        LOG.info("Observation not found for link: %d", obs_id)
-        embed.title = "No observation found for id: %d (deleted?)" % obs_id
-
-    embed.description = f"{summary}\n\n· shared {last.ago} by @{last.name}"
-    return embed

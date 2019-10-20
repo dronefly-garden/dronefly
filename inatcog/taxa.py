@@ -1,9 +1,8 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple
-from .api import get_taxa, WWW_BASE_URL
+from .api import get_taxa
 from .common import LOG
-from .embeds import make_embed
 from .parsers import TaxonQueryParser, RANK_LEVELS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
@@ -23,6 +22,64 @@ class Taxon(NamedTuple):
 
 
 TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
+
+
+def format_taxon_names(
+    taxa, with_term=False, names_format="%s", delimiter=", ", max_len=0
+):
+    """Format names of taxa from matched records.
+
+    Parameters
+    ----------
+    rec: Taxon
+        A matched taxon record.
+    with_term: bool, optional
+        With non-common / non-name matching term in parentheses in place of common name.
+    names_format: str, optional
+        Format string for the name. Must contain one %s.
+
+    Returns
+    -------
+    str
+        A list of comma-delimited formatted taxon names.
+    """
+
+    names = [format_taxon_name(taxon, with_term=with_term) for taxon in taxa]
+    formatted_names = []
+
+    def format_names(names):
+        # Account for space already used by format string (minus 2 for %s)
+        available_len = max_len - (len(names_format) - 2)
+        total_len = 0
+        for name in names:
+            # There wouldn't be enough room to add the name + delimiter:
+            if (total_len + len(name) + len(delimiter)) > available_len:
+                and_more = "and %d more" % (len(names) - len(formatted_names))
+                # There wouldn't be enough room to add 'and # more' + delimiter:
+                if (total_len + len(and_more) + len(delimiter)) > available_len:
+                    # There still wouldn't be room, even if we replaced the last item:
+                    if (total_len - len(formatted_names[-1]) + len(and_more)) > available_len:
+                        del formatted_names[-1]
+                    # Replace last item in list (was 2nd-last in above corner case):
+                    formatted_names[-1] = and_more
+                else:
+                    formatted_names.append(and_more)
+                break
+            else:
+                total_len += (len(name) + len(delimiter)) if formatted_names else len(name)
+                formatted_names.append(name)
+        return formatted_names
+
+    if max_len:
+        try:
+            formatted_names = format_names(names)
+        except StopIteration:
+            pass
+    else:
+        formatted_names = names
+
+    formatted_names_str = names_format % delimiter.join(formatted_names)
+    return formatted_names_str
 
 
 def format_taxon_name(rec, with_term=False):
@@ -297,25 +354,3 @@ def query_taxa(query):
         taxon = maybe_match_taxon_compound(compound_query)
         taxa[str(taxon.taxon_id)] = taxon
     return taxa.values()
-
-
-def make_taxa_embed(rec, map_link=None):
-    """Make embed describing taxa record."""
-    embed = make_embed(
-        title=format_taxon_name(rec), url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}"
-    )
-
-    if rec.thumbnail:
-        embed.set_thumbnail(url=rec.thumbnail)
-
-    matched = rec.term
-    if matched not in (rec.name, rec.common):
-        embed.description = matched
-
-    observations = rec.observations
-
-    if map_link:
-        observations = f"[{observations}]({map_link.url})"
-    embed.add_field(name="Observations:", value=observations, inline=True)
-
-    return embed

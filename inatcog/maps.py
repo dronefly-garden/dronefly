@@ -2,7 +2,6 @@
 from collections import namedtuple
 import math
 from .api import get_observation_bounds, WWW_BASE_URL
-from .taxa import format_taxon_name
 
 MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
 MapLink = namedtuple("MapLink", "title, url")
@@ -61,10 +60,8 @@ def get_map_coords_for_taxon_ids(taxon_ids):
     return MapCoords(zoom_level, center_lat, center_lon)
 
 
-def get_map_link_for_taxa(taxa):
-    """Get a map link for taxa from the provided coords."""
-    names = ", ".join([format_taxon_name(taxon, with_term=True) for taxon in taxa])
-    title = f"Range map for {names}"
+def get_map_url_for_taxa(taxa):
+    """Get a map url for taxa from the provided coords."""
 
     taxon_ids = [taxon.taxon_id for taxon in taxa]
     map_coords = get_map_coords_for_taxon_ids(taxon_ids)
@@ -72,4 +69,4 @@ def get_map_link_for_taxa(taxa):
     taxon_ids_str = ",".join(map(str, taxon_ids))
     url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"
 
-    return MapLink(title=title, url=url)
+    return url
