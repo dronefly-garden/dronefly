@@ -14,7 +14,7 @@ from pyparsing import (
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
 RANK_LEVELS = {
-    # "stateofmatter": 100,
+    "stateofmatter": 100,
     "kingdom": 70,
     "phylum": 60,
     "subphylum": 57,
