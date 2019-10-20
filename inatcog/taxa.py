@@ -345,6 +345,14 @@ def query_taxa(query):
     # De-duplicate the query via dict:
     taxa = {}
     for compound_query in queries:
-        taxon = maybe_match_taxon_compound(compound_query)
-        taxa[str(taxon.taxon_id)] = taxon
-    return taxa.values()
+        try:
+            taxon = maybe_match_taxon_compound(compound_query)
+            taxa[str(taxon.taxon_id)] = taxon
+        except LookupError:
+            pass
+
+    result = taxa.values()
+    if not result:
+        raise LookupError("Nothing found")
+
+    return result
