@@ -25,7 +25,9 @@ class Obs(NamedTuple):
     quality_grade: str or None
     idents_agree: int
     idents_count: int
-    faves: int
+    faves_count: int
+    comments_count: int
+    description: str
 
 
 def get_obs_fields(obs):
@@ -84,7 +86,10 @@ def get_obs_fields(obs):
                 LOG.info("user's ID was a maverick; counted against ID")
                 # Count as maverick
                 idents_count += 1
-    faves = obs.get("faves_count")
+
+    faves_count = obs["faves_count"]
+    comments_count = obs["comments_count"]
+    description = obs["description"]
 
     photos = obs.get("photos")
     if photos:
@@ -102,5 +107,7 @@ def get_obs_fields(obs):
         quality_grade,
         idents_agree,
         idents_count,
-        faves,
+        faves_count,
+        comments_count,
+        description,
     )
