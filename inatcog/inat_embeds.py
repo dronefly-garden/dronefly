@@ -15,6 +15,14 @@ def format_taxon_names_for_embed(*args, **kwargs):
     return format_taxon_names(*args, **kwargs)
 
 
+EMOJI = {
+    "research": ":white_check_mark:",
+    "needs_id": ":large_orange_diamond:",
+    "casual": ":white_circle:",
+    "fave": ":star:",
+}
+
+
 def make_last_obs_embed(last):
     """Return embed for recent observation link."""
     embed = make_embed(url=last.url)
@@ -73,6 +81,14 @@ def make_obs_embed(obs, url):
             summary += " on %s" % obs.obs_on
         if obs.obs_at:
             summary += " at %s" % obs.obs_at
+        summary += " %s" % EMOJI[obs.quality_grade]
+        if obs.idents_count:
+            summary += " (%d/%d)" % (obs.idents_agree, obs.idents_count)
+        if obs.faves:
+            summary += " %s%s" % (
+                EMOJI["fave"],
+                ("\u00d7 %d" % obs.faves if obs.faves > 1 else ""),
+            )
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)
