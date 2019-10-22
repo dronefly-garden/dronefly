@@ -93,7 +93,7 @@ def make_obs_embed(obs, url):
         if obs.obs_at:
             summary += " at %s" % obs.obs_at
         if obs.description:
-            summary += f"\n> {obs.description}"
+            summary += "\n> " + obs.description.replace("\n","\n> ")
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)
