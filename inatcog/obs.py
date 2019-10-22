@@ -3,7 +3,6 @@
 import re
 from typing import NamedTuple
 
-from .common import LOG
 from .taxa import Taxon, get_taxon_fields
 from .users import User, get_user_from_json
 
@@ -44,13 +43,30 @@ def get_obs_fields(obs):
     Obs
         An Obs object from the JSON results.
     """
+    def count_community_id(obs, community_taxon):
+        idents_count = 0
+        idents_agree = 0
 
-    community_taxon = obs.get("community_taxon")
-    obs_taxon = community_taxon or obs.get("taxon")
-    if obs_taxon:
-        taxon = get_taxon_fields(obs_taxon)
-    else:
-        taxon = None
+        ident_taxon_ids = obs["ident_taxon_ids"]
+
+        for identification in obs["identifications"]:
+            if identification["current"]:
+                user_taxon_id = identification["taxon"]["id"]
+                user_taxon_ids = identification["taxon"]["ancestor_ids"]
+                user_taxon_ids.append(user_taxon_id)
+                if community_taxon["id"] in user_taxon_ids:
+                    if user_taxon_id in ident_taxon_ids:
+                        # Count towards total & agree:
+                        idents_count += 1
+                        idents_agree += 1
+                    else:
+                        # Neither counts for nor against
+                        pass
+                else:
+                    # Maverick counts against:
+                    idents_count += 1
+
+        return (idents_count, idents_agree)
 
     obs_id = obs["id"]
     obs_on = obs.get("observed_on_string") or None
@@ -58,34 +74,16 @@ def get_obs_fields(obs):
     quality_grade = obs.get("quality_grade")
     user = get_user_from_json(obs["user"])
 
-    idents_count = obs["identifications_count"]
-    idents_agree = obs["num_identification_agreements"]
-    if idents_count > 1:
-        LOG.info("community taxon.id = %d", obs_taxon["id"])
-        LOG.info("idents_count = %d", idents_count)
-        ident_taxon_ids = obs["ident_taxon_ids"]
-        identifications = obs["identifications"]
-        observer_taxon_id = observer_taxon_ids = None
-        for identification in identifications:
-            if identification["user"]["id"] == obs["user"]["id"]:
-                observer_taxon_id = identification["taxon"]["id"]
-                LOG.info("found an ID by user: taxon_id = %d", observer_taxon_id)
-                observer_taxon_ids = identification["taxon"]["ancestor_ids"]
-                observer_taxon_ids.append(observer_taxon_id)
-        if observer_taxon_id:
-            LOG.info("final ID by user: taxon_id = %d", observer_taxon_id)
-            LOG.info("ident_taxon_ids = %s", repr(ident_taxon_ids))
-            if observer_taxon_id in ident_taxon_ids:
-                LOG.info("user's taxon and ancestors are: %s", repr(observer_taxon_ids))
-                if obs_taxon["id"] in observer_taxon_ids:
-                    LOG.info("user's ID was counted towards ID")
-                    # Count as ident & agree:
-                    idents_count += 1
-                    idents_agree += 1
-            else:
-                LOG.info("user's ID was a maverick; counted against ID")
-                # Count as maverick
-                idents_count += 1
+    community_taxon = obs.get("community_taxon")
+    obs_taxon = community_taxon or obs.get("taxon")
+    if obs_taxon:
+        taxon = get_taxon_fields(obs_taxon)
+    else:
+        taxon = None
+    if community_taxon:
+        (idents_count, idents_agree) = count_community_id(obs, community_taxon)
+    else:
+        idents_count = idents_agree = 0
 
     faves_count = obs["faves_count"]
     comments_count = obs["comments_count"]
