@@ -76,10 +76,14 @@ def make_obs_embed(obs, url):
         else:
             title = "Unknown"
         if obs.idents_count:
-            title += f"{EMOJI[obs.quality_grade]}({obs.idents_agree}/{obs.idents_count})"
+            title += (
+                f"{EMOJI[obs.quality_grade]}({obs.idents_agree}/{obs.idents_count})"
+            )
         else:
             title += EMOJI[obs.quality_grade]
-        format_count = lambda label, count: f", {EMOJI[label]}" + (str(count) if count > 1 else "")
+        format_count = lambda label, count: f", {EMOJI[label]}" + (
+            str(count) if count > 1 else ""
+        )
         if obs.faves_count:
             title += format_count("fave", obs.faves_count)
         if obs.comments_count:
@@ -93,7 +97,7 @@ def make_obs_embed(obs, url):
         if obs.obs_at:
             summary += " at %s" % obs.obs_at
         if obs.description:
-            summary += "\n> " + obs.description.replace("\n","\n> ")
+            summary += "\n> " + obs.description.replace("\n", "\n> ")
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)

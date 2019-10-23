@@ -211,7 +211,7 @@ def match_exact(record, exact):
     return matched
 
 
-def score_match(query, record, all_terms, exact=None, ancestor_id=None):
+def score_match(query, record, all_terms, exact=None):
     """Score a matched record. A higher score is a better match."""
     score = 0
 
@@ -237,7 +237,7 @@ def score_match(query, record, all_terms, exact=None, ancestor_id=None):
     return score
 
 
-def match_taxon(query, records, ancestor_id=None):
+def match_taxon(query, records):
     """Match a single taxon for the given query among records returned by API."""
     exact = []
     all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)
@@ -248,9 +248,7 @@ def match_taxon(query, records, ancestor_id=None):
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(
-            query, record, all_terms=all_terms, exact=exact, ancestor_id=ancestor_id
-        )
+        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
 
     best_score = max(scores)
     LOG.info("Best score: %d", best_score)
@@ -281,9 +279,7 @@ def maybe_match_taxon(query, ancestor_id=None):
     if not records:
         raise LookupError("Nothing found")
 
-    taxon = match_taxon(
-        query, list(map(get_taxon_fields, records)), ancestor_id=ancestor_id
-    )
+    taxon = match_taxon(query, list(map(get_taxon_fields, records)))
 
     if not taxon:
         raise LookupError("No exact match")

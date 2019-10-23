@@ -43,6 +43,7 @@ def get_obs_fields(obs):
     Obs
         An Obs object from the JSON results.
     """
+
     def count_community_id(obs, community_taxon):
         idents_count = 0
         idents_agree = 0
