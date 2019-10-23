@@ -7,6 +7,14 @@ MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
 MapLink = namedtuple("MapLink", "title, url")
 
 
+def normalize_longitude(d):
+    while d < 0:
+        d += 360
+    while d > 360:
+        d -= 360
+    return d
+
+
 def calc_distance(lat1, lon1, lat2, lon2):
     """Calculate distance from coordinate pairs."""
     # pylint: disable=invalid-name
@@ -49,9 +57,9 @@ def get_map_coords_for_taxon_ids(taxon_ids):
         zoom_level = 2
     else:
         swlat = bounds["swlat"]
-        swlng = bounds["swlng"]
+        swlng = normalize_longitude(bounds["swlng"])
         nelat = bounds["nelat"]
-        nelng = bounds["nelng"]
+        nelng = normalize_longitude(bounds["nelng"])
         center_lat = (swlat + nelat) / 2
         center_lon = (swlng + nelng) / 2
 
