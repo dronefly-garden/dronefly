@@ -8,7 +8,8 @@ TODO: Guidelines for contributions.
 
 ## Some currently used / planned development tooling & standards
 
-- black for code formatting (TODO: automate)
+- pre-commit to run hooks (flake8, black, etc.; see .pre-commit-config.yaml)
+- black for code formatting
 - numpy docstrings
 - pytest, unittest, unittest-mock for tests
 - sphinx, autodoc for documentation (planned)
