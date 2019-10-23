@@ -1,10 +1,13 @@
 """Module to access eBird API."""
 from datetime import datetime
+import logging
+from urllib.error import URLError
 from redbot.core import commands, checks, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ebird.api import get_observations, get_region
 import discord
 
+LOG = logging.getLogger("red.quaggagriff.ebirdcog")
 
 class ObsRecord(dict):
     """A human-readable observation record."""
@@ -97,8 +100,11 @@ class EBirdCog(commands.Cog):
         else:
             region_code = await self.config.region()
 
-        records = await self.get_hybrid_observations(ctx, region_code, days_back) or []
-        if records is False:
+        try:
+            records = await self.get_hybrid_observations(ctx, region_code, days_back) or []
+        except URLError as err:
+            LOG.error("eBird request failed: %s", err)
+            await ctx.send("eBird could not be contacted. Please try again later.")
             return
         if not records:
             await ctx.send("No hybrids observed in the past %d days." % days_back)
@@ -173,15 +179,19 @@ class EBirdCog(commands.Cog):
         if ebird_key is None:
             return False
 
-        # Docs at: https://github.com/ProjectBabbler/ebird-api
-        return get_observations(
-            ebird_key["api_key"],
-            region_code,
-            back=days,
-            category="hybrid",
-            detail="simple",
-            provisional=True,
-        )
+        try:
+            # Docs at: https://github.com/ProjectBabbler/ebird-api
+            observations = get_observations(
+                ebird_key["api_key"],
+                region_code,
+                back=days,
+                category="hybrid",
+                detail="simple",
+                provisional=True,
+            )
+        except ConnectionResetError:
+            raise LookupError("Could not contact eBird")
+        return observations
 
     async def get_region(self, ctx, region_code):
         """Gets recent hybrid observations."""
