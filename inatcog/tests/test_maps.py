@@ -105,6 +105,14 @@ class TestMaps(unittest.TestCase):
         bounds_2 = {
             "total_bounds": {"swlat": 58, "swlng": 51, "nelat": 36, "nelng": 52}
         }
+        bounds_3 = {
+            "total_bounds": {
+                "swlat": -16.528484746813774,
+                "swlng": 139.63242868892848,
+                "nelat": 64.74736074451357,
+                "nelng": -63.738748440518975,
+            }
+        }
         with API_REQUESTS_PATCH as mock_get:
             mock_get.return_value.json.return_value = bounds_1
             self.assertEqual(
@@ -116,4 +124,14 @@ class TestMaps(unittest.TestCase):
             self.assertEqual(
                 maps.get_map_coords_for_taxon_ids([]),
                 maps.MapCoords(zoom_level=5, center_lat=47.0, center_lon=51.5),
+            )
+
+            mock_get.return_value.json.return_value = bounds_3
+            self.assertEqual(
+                maps.get_map_coords_for_taxon_ids([]),
+                maps.MapCoords(
+                    zoom_level=3,
+                    center_lat=24.1094379988499,
+                    center_lon=217.94684012420475,
+                ),
             )
