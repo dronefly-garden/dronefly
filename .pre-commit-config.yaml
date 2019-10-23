@@ -1,5 +1,5 @@
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    sha: v1.2.3
+    rev: v2.3.0
     hooks:
     -   id: check-merge-conflict
     -   id: debug-statements
@@ -11,7 +11,7 @@
     - id: black
       language_version: python3.7
 -   repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-    sha: v1.0.3
+    rev: v1.0.4
     hooks:
     -   id: python-bandit-vulnerability-check
         args: [-l, --recursive, -x, tests]
