@@ -17,11 +17,11 @@ class Obs(NamedTuple):
 
     taxon: Taxon or None
     obs_id: int
-    obs_on: str or None
-    obs_at: str or None
+    obs_on: str
+    obs_at: str
     user: User
-    thumbnail: str or None
-    quality_grade: str or None
+    thumbnail: str
+    quality_grade: str
     idents_agree: int
     idents_count: int
     faves_count: int
@@ -69,12 +69,6 @@ def get_obs_fields(obs):
 
         return (idents_count, idents_agree)
 
-    obs_id = obs["id"]
-    obs_on = obs.get("observed_on_string") or None
-    obs_at = obs.get("place_guess") or None
-    quality_grade = obs.get("quality_grade")
-    user = get_user_from_json(obs["user"])
-
     community_taxon = obs.get("community_taxon")
     obs_taxon = community_taxon or obs.get("taxon")
     if obs_taxon:
@@ -86,27 +80,25 @@ def get_obs_fields(obs):
     else:
         idents_count = idents_agree = 0
 
-    faves_count = obs["faves_count"]
-    comments_count = obs["comments_count"]
-    description = obs["description"]
+    user = get_user_from_json(obs["user"])
 
     photos = obs.get("photos")
     if photos:
         thumbnail = photos[0].get("url")
     else:
-        thumbnail = None
+        thumbnail = ""
 
     return Obs(
         taxon,
-        obs_id,
-        obs_on,
-        obs_at,
+        obs["id"],
+        obs["observed_on_string"],
+        obs["place_guess"],
         user,
         thumbnail,
-        quality_grade,
+        obs["quality_grade"],
         idents_agree,
         idents_count,
-        faves_count,
-        comments_count,
-        description,
+        obs["faves_count"],
+        obs["comments_count"],
+        obs["description"],
     )
