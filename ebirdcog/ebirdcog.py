@@ -9,6 +9,7 @@ import discord
 
 LOG = logging.getLogger("red.quaggagriff.ebirdcog")
 
+
 class ObsRecord(dict):
     """A human-readable observation record."""
 
@@ -101,7 +102,9 @@ class EBirdCog(commands.Cog):
             region_code = await self.config.region()
 
         try:
-            records = await self.get_hybrid_observations(ctx, region_code, days_back) or []
+            records = (
+                await self.get_hybrid_observations(ctx, region_code, days_back) or []
+            )
         except URLError as err:
             LOG.error("eBird request failed: %s", err)
             await ctx.send("eBird could not be contacted. Please try again later.")

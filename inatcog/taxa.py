@@ -44,7 +44,7 @@ def format_taxon_names(
     Returns
     -------
     str
-        A list of comma-delimited formatted taxon names. If 
+        A list of comma-delimited formatted taxon names.
     """
 
     names = [format_taxon_name(taxon, with_term=with_term) for taxon in taxa]
@@ -53,11 +53,16 @@ def format_taxon_names(
         names_fit = []
         # Account for space already used by format string (minus 2 for %s)
         available_len = max_len - (len(names_format) - 2)
-        more = lambda count: "and %d more" % count
-        formatted_len = lambda name: sum(
-            len(item) + len(delimiter) for item in names_fit
-        ) + len(name)
-        overflow = lambda name: formatted_len(name) > available_len
+
+        def more(count):
+            return "and %d more" % count
+
+        def formatted_len(name):
+            return sum(len(item) + len(delimiter) for item in names_fit) + len(name)
+
+        def overflow(name):
+            return formatted_len(name) > available_len
+
         for name in names:
             if overflow(name):
                 unprocessed = len(names) - len(names_fit)
@@ -177,12 +182,12 @@ def match_name(record, pat):
 
 def match_exact(record, exact):
     """Match any exact phrases specified.
-    
+
     Parameters
     ----------
     record: Taxon
         A candidate taxon to match.
-        
+
     exact: list
         A list of exact patterns to match.
 

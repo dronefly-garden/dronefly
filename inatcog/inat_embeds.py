@@ -69,9 +69,10 @@ def make_obs_embed(obs, url):
             )
         else:
             title += EMOJI[obs.quality_grade]
-        format_count = lambda label, count: f", {EMOJI[label]}" + (
-            str(count) if count > 1 else ""
-        )
+
+        def format_count(label, count):
+            return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
+
         if obs.faves_count:
             title += format_count("fave", obs.faves_count)
         if obs.comments_count:
