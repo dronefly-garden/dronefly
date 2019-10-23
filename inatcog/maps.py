@@ -15,32 +15,28 @@ def normalize_longitude(d):
     return d
 
 
-def calc_distance(lat1, lon1, lat2, lon2):
-    """Calculate distance from coordinate pairs."""
-    # pylint: disable=invalid-name
-    r = 6371
-    p1 = lat1 * math.pi / 180
-    p2 = lat2 * math.pi / 180
-    d1 = (lat2 - lat1) * math.pi / 180
-    d2 = (lon2 - lon1) * math.pi / 180
-    a = math.sin(d1 / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(d2 / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    return r * c
-
-
 def get_zoom_level(swlat, swlng, nelat, nelng):
     """Get zoom level from coordinate pairs."""
-    # pylint: disable=invalid-name
-    d1 = calc_distance(swlat, swlng, nelat, swlng)
-    d2 = calc_distance(swlat, nelng, nelat, nelng)
+    west = min(swlng, nelng)
+    east = max(swlng, nelng)
+    angle = east - west
 
-    arc_size = max(d1, d2)
+    north = max(swlat, nelat)
+    south = min(swlat, nelat)
+    angle2 = north - south
+    delta = 0
 
-    if arc_size == 0:
+    if angle2 > angle:
+        angle = angle2
+        delta = 3
+
+    if angle < 0:
+        angle += 360
+
+    if angle == 0:
         return 10
 
-    result = int(math.log2(20000 / arc_size) + 2)
+    result = int(math.log2(394 / angle)) + 2 - delta
     if result > 10:
         result = 10
     if result < 2:
