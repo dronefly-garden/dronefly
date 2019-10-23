@@ -26,25 +26,13 @@ EMOJI = {
 
 def make_last_obs_embed(last):
     """Return embed for recent observation link."""
-    embed = make_embed(url=last.url)
     summary = None
 
     if last.obs:
         obs = last.obs
-        user = obs.user
-        taxon = obs.taxon
-        if taxon:
-            embed.title = format_taxon_name(taxon)
-        else:
-            embed.title = "Unknown"
-        if obs.thumbnail:
-            embed.set_thumbnail(url=obs.thumbnail)
-        summary = "Observed by %s" % user.profile_link()
-        if obs.obs_on:
-            summary += " on %s" % obs.obs_on
-        if obs.obs_at:
-            summary += " at %s" % obs.obs_at
+        embed = make_obs_embed(obs, url=last.url)
     else:
+        embed = make_embed(url=last.url)
         mat = re.search(PAT_OBS_LINK, last.url)
         obs_id = int(mat["obs_id"])
         LOG.info("Observation not found for link: %d", obs_id)
