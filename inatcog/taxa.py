@@ -231,6 +231,13 @@ def score_match(query, record, all_terms, exact=None):
 
     exact: list
         A list of exact patterns to match.
+
+    Returns
+    -------
+    int
+        score < 0 indicates the match is not a valid candidate.
+        score >= 0 and score < 200 indicates a non-exact match
+        score >= 200 indicates an exact match either on a phrase or the whole query
     """
     score = 0
 
