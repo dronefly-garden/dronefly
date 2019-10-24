@@ -16,11 +16,3 @@
     -   id: python-bandit-vulnerability-check
         args: [-l, --recursive, -x, tests]
         files: .py$
--   repo: local
-    hooks:
-    -   id: tests
-        name: run tests
-        entry: pytest -vv
-        language: system
-        types: [python]
-        stages: [push]
