@@ -97,8 +97,8 @@ def format_taxon_name(rec, with_term=False):
         A name of the form "Rank Scientific name (Common name)" following the
         same basic format as iNaturalist taxon pages on the web, i.e.
 
-        - drop the "Rank" keyword for genus level and lower
-        - italicize the name (minus any rank abbreviations; see next point) for species
+        - drop the "Rank" keyword for species level and lower
+        - italicize the name (minus any rank abbreviations; see next point) for genus
           level and lower
         - for trinomials (must be subspecies level & have exactly 3 names to qualify),
           insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
@@ -108,14 +108,21 @@ def format_taxon_name(rec, with_term=False):
         common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
     else:
         common = rec.common
-    if RANK_LEVELS[rec.rank] > RANK_LEVELS["species"]:
-        name = f"{rec.rank.capitalize()} {rec.name}"
+    name = rec.name
+
+    rank = rec.rank
+    rank_level = RANK_LEVELS[rank]
+
+    if rank_level <= RANK_LEVELS["genus"]:
+        name = f"*{name}*"
+    if rank_level > RANK_LEVELS["species"]:
+        name = f"{rank.capitalize()} {name}"
     else:
-        name = f"*{rec.name}*"
-        if rec.rank in TRINOMIAL_ABBR.keys():
-            tri = rec.name.split(" ")
+        if rank in TRINOMIAL_ABBR.keys():
+            tri = name.split(" ")
             if len(tri) == 3:
-                name = f"*{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rec.rank]} *{tri[2]}*"
+                # Note: name already italicized, so close/reopen italics around insertion.
+                name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
     return f"{name} ({common})" if common else name
 
 
