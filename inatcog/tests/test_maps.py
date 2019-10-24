@@ -10,50 +10,10 @@ API_REQUESTS_PATCH = patch("inatcog.api.requests.get")
 class TestMaps(unittest.TestCase):
     """Test maps module members."""
 
-    def test_calc_distance(self):
-        """Test calc_distance."""
-        self.assertAlmostEqual(0.0, maps.calc_distance(0, 0, 0, 0))
-        self.assertAlmostEqual(
-            12532.570626423456,
-            maps.calc_distance(
-                33.29566602093493,
-                129.63798453872568,
-                -101.09427134660444,
-                -32.01768916244296,
-            ),
-        )
-        self.assertAlmostEqual(
-            7970.494690113668,
-            maps.calc_distance(
-                -19.490748293782445,
-                -95.56040202222357,
-                -107.18624423998413,
-                -6.473565083394789,
-            ),
-        )
-        self.assertAlmostEqual(
-            9484.815430971259,
-            maps.calc_distance(
-                105.90204304398429,
-                55.973955977920866,
-                11.39165723857161,
-                122.26497996946522,
-            ),
-        )
-        self.assertAlmostEqual(
-            829.6985589908866,
-            maps.calc_distance(
-                -2.8746337174662404,
-                -1.0240602997035522,
-                4.539229969169508,
-                -0.18019066925417793,
-            ),
-        )
-
     def test_get_zoom_level(self):
         """Test get_zoom_level."""
         self.assertEqual(
-            8,
+            3,
             maps.get_zoom_level(
                 -2.4533869111943716,
                 72.54455899301723,
@@ -62,7 +22,7 @@ class TestMaps(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            5,
+            3,
             maps.get_zoom_level(
                 58.17009894596952,
                 51.98077353554603,
@@ -90,12 +50,48 @@ class TestMaps(unittest.TestCase):
             ),
         )
         self.assertEqual(
-            2,
+            3,
             maps.get_zoom_level(
                 -58.75873509515603,
                 115.81086902171563,
                 121.24429734669474,
                 -75.91007582574187,
+            ),
+        )
+        self.assertEqual(
+            4,
+            maps.get_zoom_level(
+                26.80202232208103,
+                243.17086377181113,
+                36.10696497838944,
+                252.41441695019603,
+            ),
+        )
+        self.assertEqual(
+            5,
+            maps.get_zoom_level(
+                -46.791124530136585,
+                167.6235736347735,
+                -41.917609381489456,
+                171.4814715553075,
+            ),
+        )
+        self.assertEqual(
+            3,
+            maps.get_zoom_level(
+                -77.86615270189941,
+                292.3406052030623,
+                -60.611640913411975,
+                170.43886983767152,
+            ),
+        )
+        self.assertEqual(
+            3,
+            maps.get_zoom_level(
+                -16.528484746813774,
+                139.63242868892848,
+                64.74736074451357,
+                296.261251559481,
             ),
         )
 
@@ -123,7 +119,7 @@ class TestMaps(unittest.TestCase):
             mock_get.return_value.json.return_value = bounds_2
             self.assertEqual(
                 maps.get_map_coords_for_taxon_ids([]),
-                maps.MapCoords(zoom_level=5, center_lat=47.0, center_lon=51.5),
+                maps.MapCoords(zoom_level=3, center_lat=47.0, center_lon=51.5),
             )
 
             mock_get.return_value.json.return_value = bounds_3
