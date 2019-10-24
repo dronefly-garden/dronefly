@@ -20,7 +20,7 @@
     hooks:
     -   id: tests
         name: run tests
-        entry: pytest -v
+        entry: pytest -vv
         language: system
         types: [python]
         stages: [push]
