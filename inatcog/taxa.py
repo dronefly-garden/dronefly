@@ -217,7 +217,21 @@ def match_exact(record, exact):
 
 
 def score_match(query, record, all_terms, exact=None):
-    """Score a matched record. A higher score is a better match."""
+    """Score a matched record. A higher score is a better match.
+    Parameters
+    ----------
+    query: SimpleQuery
+        The query for the matched record being scored.
+
+    record: Taxon
+        A candidate taxon to match.
+
+    all_terms: re.Pattern
+        A pattern matching all terms.
+
+    exact: list
+        A list of exact patterns to match.
+    """
     score = 0
 
     if query.taxon_id:
