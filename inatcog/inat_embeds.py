@@ -104,7 +104,7 @@ def make_taxa_embed(rec):
     title = format_taxon_name(rec)
     matched = rec.term
     if matched not in (rec.name, rec.common):
-        title += f" *{matched}*"
+        title += f" ({matched})"
 
     observations = rec.observations
     url = get_map_url_for_taxa([rec])
