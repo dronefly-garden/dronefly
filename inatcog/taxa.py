@@ -136,7 +136,7 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
     if rank_level > RANK_LEVELS["species"]:
         if hierarchy:
             # FIXME: List formatting concerns don't belong here. Move them up a level.
-            bold = ("\n**", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
+            bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
             name = f"{bold[0]}{name}{bold[1]}"
         else:
             name = f"{rank.capitalize()} {name}"
