@@ -112,10 +112,10 @@ def make_taxa_embed(rec):
         observations = "[%d](%s)" % (observations, url)
     description = f"is a {rec.rank} with {observations} observations"
 
+    full_record = get_taxa(rec.taxon_id)
     ancestors = [
-        get_taxon_fields(get_taxa(taxon_id)["results"][0])
-        # Drop Life off the top & the taxon itself off the bottom.
-        for taxon_id in rec.ancestor_ids[1:-1]
+        get_taxon_fields(ancestor)
+        for ancestor in full_record["results"][0]["ancestors"]
     ]
     if ancestors:
         description += " in: " + format_taxon_names(ancestors, hierarchy=True)
