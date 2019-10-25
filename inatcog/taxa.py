@@ -19,13 +19,17 @@ class Taxon(NamedTuple):
     rank: str
     ancestor_ids: list
     observations: int
+    ancestors: list
 
+
+TAXON_LIST_DELIMITER = [", ", " > "]
+TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
 
 TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 
 
 def format_taxon_names(
-    taxa, with_term=False, names_format="%s", delimiter=", ", max_len=0
+    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False
 ):
     """Format names of taxa from matched records.
 
@@ -40,14 +44,23 @@ def format_taxon_names(
     max_len: int, optional
         The maximum length of the return str, with ', and # more' appended if they
         don't all fit within this length.
+    hierarchy: bool, optional
+        If specified, formats a hierarchy list of scientific names with
+        primary ranks bolded & starting on a new line, and delimited with
+        angle-brackets instead of commas.
 
     Returns
     -------
     str
-        A list of comma-delimited formatted taxon names.
+        A delimited list of formatted taxon names.
     """
 
-    names = [format_taxon_name(taxon, with_term=with_term) for taxon in taxa]
+    delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
+
+    names = [
+        format_taxon_name(taxon, with_term=with_term, hierarchy=hierarchy)
+        for taxon in taxa
+    ]
 
     def fit_names(names):
         names_fit = []
@@ -81,7 +94,7 @@ def format_taxon_names(
     return names_format % delimiter.join(names)
 
 
-def format_taxon_name(rec, with_term=False):
+def format_taxon_name(rec, with_term=False, hierarchy=False):
     """Format taxon name from matched record.
 
     Parameters
@@ -90,6 +103,9 @@ def format_taxon_name(rec, with_term=False):
         A matched taxon record.
     with_term: bool, optional
         With non-common / non-name matching term in parentheses in place of common name.
+    hierarchy: bool, optional
+        If specified, produces a list item suitable for inclusion in the hierarchy section
+        of a taxon embed. See format_taxon_names() for details.
 
     Returns
     -------
@@ -107,7 +123,10 @@ def format_taxon_name(rec, with_term=False):
     if with_term:
         common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
     else:
-        common = rec.common
+        if hierarchy:
+            common = None
+        else:
+            common = rec.common
     name = rec.name
 
     rank = rec.rank
@@ -116,7 +135,12 @@ def format_taxon_name(rec, with_term=False):
     if rank_level <= RANK_LEVELS["genus"]:
         name = f"*{name}*"
     if rank_level > RANK_LEVELS["species"]:
-        name = f"{rank.capitalize()} {name}"
+        if hierarchy:
+            # FIXME: List formatting concerns don't belong here. Move them up a level.
+            bold = ("\n**", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
+            name = f"{bold[0]}{name}{bold[1]}"
+        else:
+            name = f"{rank.capitalize()} {name}"
     else:
         if rank in TRINOMIAL_ABBR.keys():
             tri = name.split(" ")
@@ -126,7 +150,7 @@ def format_taxon_name(rec, with_term=False):
     return f"{name} ({common})" if common else name
 
 
-def get_taxon_fields(record):
+def get_taxon_fields(record, ancestry=True):
     """Get Taxon from a JSON record.
 
     Parameters
@@ -141,6 +165,18 @@ def get_taxon_fields(record):
     """
     photo = record.get("default_photo")
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
+    if ancestry:
+        ancestors = record.get("ancestors")
+        if not ancestors:
+            full_taxon_record = get_taxa(taxon_id)
+            if full_taxon_record:
+                ancestors = full_taxon_record["results"][0].get("ancestors")
+        ancestors = ancestors or []
+        ancestor_taxa = [
+            get_taxon_fields(ancestor, ancestry=False) for ancestor in ancestors
+        ]
+    else:
+        ancestor_taxa = None
     return Taxon(
         record["name"],
         taxon_id,
@@ -150,6 +186,7 @@ def get_taxon_fields(record):
         record["rank"],
         record["ancestor_ids"],
         record["observations_count"],
+        ancestor_taxa,
     )
 
 

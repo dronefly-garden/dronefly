@@ -99,22 +99,24 @@ def make_obs_embed(obs, url):
 
 def make_taxa_embed(rec):
     """Make embed describing taxa record."""
-    embed = make_embed(
-        title=format_taxon_name(rec), url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}"
-    )
+    embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
-    if rec.thumbnail:
-        embed.set_thumbnail(url=rec.thumbnail)
-
+    title = format_taxon_name(rec)
     matched = rec.term
     if matched not in (rec.name, rec.common):
-        embed.description = matched
+        title += f" *{matched}*"
 
     observations = rec.observations
-
     url = get_map_url_for_taxa([rec])
     if url:
         observations = "[%d](%s)" % (observations, url)
-    embed.add_field(name="Observations:", value=observations, inline=True)
+    description = f"is a {rec.rank} with {observations} observations in: "
+
+    description += format_taxon_names(rec.ancestors, hierarchy=True)
+
+    embed.title = title
+    embed.description = description
+    if rec.thumbnail:
+        embed.set_thumbnail(url=rec.thumbnail)
 
     return embed
