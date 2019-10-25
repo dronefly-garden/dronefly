@@ -1,12 +1,12 @@
 """Module to handle iNat embeds for Discord."""
 import re
 
-from .api import WWW_BASE_URL
+from .api import WWW_BASE_URL, get_taxa
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .maps import get_map_url_for_taxa
 from .obs import PAT_OBS_LINK
-from .taxa import format_taxon_name, format_taxon_names
+from .taxa import get_taxon_fields, format_taxon_name, format_taxon_names
 
 
 @format_items_for_embed
@@ -112,7 +112,11 @@ def make_taxa_embed(rec):
         observations = "[%d](%s)" % (observations, url)
     description = f"is a {rec.rank} with {observations} observations in: "
 
-    description += format_taxon_names(rec.ancestors, hierarchy=True)
+    ancestors = [
+        get_taxon_fields(get_taxa(taxon_id)["results"][0])
+        for taxon_id in rec.ancestor_ids
+    ]
+    description += format_taxon_names(ancestors, hierarchy=True)
 
     embed.title = title
     embed.description = description

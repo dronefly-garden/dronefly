@@ -19,7 +19,6 @@ class Taxon(NamedTuple):
     rank: str
     ancestor_ids: list
     observations: int
-    ancestors: list
 
 
 TAXON_LIST_DELIMITER = [", ", " > "]
@@ -150,7 +149,7 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
     return f"{name} ({common})" if common else name
 
 
-def get_taxon_fields(record, ancestry=True):
+def get_taxon_fields(record):
     """Get Taxon from a JSON record.
 
     Parameters
@@ -165,18 +164,6 @@ def get_taxon_fields(record, ancestry=True):
     """
     photo = record.get("default_photo")
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
-    if ancestry:
-        ancestors = record.get("ancestors")
-        if not ancestors:
-            full_taxon_record = get_taxa(taxon_id)
-            if full_taxon_record:
-                ancestors = full_taxon_record["results"][0].get("ancestors")
-        ancestors = ancestors or []
-        ancestor_taxa = [
-            get_taxon_fields(ancestor, ancestry=False) for ancestor in ancestors
-        ]
-    else:
-        ancestor_taxa = None
     return Taxon(
         record["name"],
         taxon_id,
@@ -186,7 +173,6 @@ def get_taxon_fields(record, ancestry=True):
         record["rank"],
         record["ancestor_ids"],
         record["observations_count"],
-        ancestor_taxa,
     )
 
 
