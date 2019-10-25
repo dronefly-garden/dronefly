@@ -114,7 +114,8 @@ def make_taxa_embed(rec):
 
     ancestors = [
         get_taxon_fields(get_taxa(taxon_id)["results"][0])
-        for taxon_id in rec.ancestor_ids[0:-1]
+        # Drop Life off the top & the taxon itself off the bottom.
+        for taxon_id in rec.ancestor_ids[1:-1]
     ]
     description += format_taxon_names(ancestors, hierarchy=True)
 
