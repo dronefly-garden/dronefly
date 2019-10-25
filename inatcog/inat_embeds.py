@@ -110,14 +110,17 @@ def make_taxa_embed(rec):
     url = get_map_url_for_taxa([rec])
     if url:
         observations = "[%d](%s)" % (observations, url)
-    description = f"is a {rec.rank} with {observations} observations in: "
+    description = f"is a {rec.rank} with {observations} observations"
 
     ancestors = [
         get_taxon_fields(get_taxa(taxon_id)["results"][0])
         # Drop Life off the top & the taxon itself off the bottom.
         for taxon_id in rec.ancestor_ids[1:-1]
     ]
-    description += format_taxon_names(ancestors, hierarchy=True)
+    if ancestors:
+        description += " in: " + format_taxon_names(ancestors, hierarchy=True)
+    else:
+        description += "."
 
     embed.title = title
     embed.description = description
