@@ -26,8 +26,6 @@ EMOJI = {
 
 def make_last_obs_embed(last):
     """Return embed for recent observation link."""
-    summary = None
-
     if last.obs:
         obs = last.obs
         embed = make_obs_embed(obs, url=last.url)
@@ -38,7 +36,7 @@ def make_last_obs_embed(last):
         LOG.info("Observation not found for link: %d", obs_id)
         embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
-    embed.description = f"{summary}\n\n· shared {last.ago} by @{last.name}"
+    embed.description = f"{embed.description}\n\n· shared {last.ago} by @{last.name}"
     return embed
 
 
@@ -54,7 +52,6 @@ def make_map_embed(taxa):
 def make_obs_embed(obs, url):
     """Return embed for an observation link."""
     embed = make_embed(url=url)
-    summary = None
 
     if obs:
         taxon = obs.taxon
