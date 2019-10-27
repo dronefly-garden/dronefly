@@ -21,6 +21,7 @@ EMOJI = {
     "casual": ":white_circle:",
     "fave": ":star:",
     "comment": ":speech_left:",
+    "community": ":busts_in_silhouette:",
 }
 
 
@@ -60,12 +61,7 @@ def make_obs_embed(obs, url):
             title = format_taxon_name(taxon)
         else:
             title = "Unknown"
-        if obs.idents_count:
-            title += (
-                f"{EMOJI[obs.quality_grade]}({obs.idents_agree}/{obs.idents_count})"
-            )
-        else:
-            title += EMOJI[obs.quality_grade]
+        title += " " + EMOJI[obs.quality_grade]
 
         def format_count(label, count):
             return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
@@ -74,16 +70,27 @@ def make_obs_embed(obs, url):
             title += format_count("fave", obs.faves_count)
         if obs.comments_count:
             title += format_count("comment", obs.comments_count)
-        embed.title = title
         if obs.thumbnail:
             embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
-        summary = "Observed by %s" % user.profile_link()
+        summary = "Observed by " + user.profile_link()
         if obs.obs_on:
-            summary += " on %s" % obs.obs_on
+            summary += " on " + obs.obs_on
         if obs.obs_at:
-            summary += " at %s" % obs.obs_at
+            summary += " at " + obs.obs_at
         if obs.description:
             summary += "\n> " + obs.description.replace("\n", "\n> ")
+        if obs.idents_count:
+            idents_count = (
+                f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
+            )
+        if obs.community_taxon and obs.community_taxon.taxon_id != obs.taxon.taxon_id:
+            summary = (
+                f"{format_taxon_name(obs.community_taxon)} {idents_count}\n\n" + summary
+            )
+        else:
+            title += " " + idents_count
+
+        embed.title = title
         embed.description = summary
     else:
         mat = re.search(PAT_OBS_LINK, url)

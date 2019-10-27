@@ -16,6 +16,7 @@ class Obs(NamedTuple):
     """An observation."""
 
     taxon: Taxon or None
+    community_taxon: Taxon or None
     obs_id: int
     obs_on: str
     obs_at: str
@@ -69,16 +70,18 @@ def get_obs_fields(obs):
 
         return (idents_count, idents_agree)
 
-    community_taxon = obs.get("community_taxon")
     obs_taxon = obs.get("taxon")
     if obs_taxon:
         taxon = get_taxon_fields(obs_taxon)
     else:
         taxon = None
-    if community_taxon:
-        (idents_count, idents_agree) = count_community_id(obs, community_taxon)
+    obs_community_taxon = obs.get("community_taxon")
+    if obs_community_taxon:
+        (idents_count, idents_agree) = count_community_id(obs, obs_community_taxon)
+        community_taxon = get_taxon_fields(obs_community_taxon)
     else:
         idents_count = idents_agree = 0
+        community_taxon = None
 
     user = get_user_from_json(obs["user"])
 
@@ -90,6 +93,7 @@ def get_obs_fields(obs):
 
     return Obs(
         taxon,
+        community_taxon,
         obs["id"],
         obs["observed_on_string"],
         obs["place_guess"],
