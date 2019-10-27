@@ -29,7 +29,7 @@ def make_last_obs_embed(last):
     """Return embed for recent observation link."""
     if last.obs:
         obs = last.obs
-        embed = make_obs_embed(obs, url=last.url)
+        embed = make_obs_embed(obs, url=last.url, preview=False)
     else:
         embed = make_embed(url=last.url)
         mat = re.search(PAT_OBS_LINK, last.url)
@@ -50,7 +50,7 @@ def make_map_embed(taxa):
     return make_embed(title=title, url=url)
 
 
-def make_obs_embed(obs, url):
+def make_obs_embed(obs, url, preview=True):
     """Return embed for an observation link."""
     embed = make_embed(url=url)
 
@@ -70,7 +70,7 @@ def make_obs_embed(obs, url):
             title += format_count("fave", obs.faves_count)
         if obs.comments_count:
             title += format_count("comment", obs.comments_count)
-        if obs.thumbnail:
+        if preview and obs.thumbnail:
             embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
         summary = "Observed by " + user.profile_link()
         if obs.obs_on:
@@ -83,6 +83,7 @@ def make_obs_embed(obs, url):
             idents_count = (
                 f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
             )
+        summary += f" [obs#: {obs.obs_id}]"
         if obs.community_taxon and obs.community_taxon.taxon_id != obs.taxon.taxon_id:
             summary = (
                 f"{format_taxon_name(obs.community_taxon)} {idents_count}\n\n" + summary

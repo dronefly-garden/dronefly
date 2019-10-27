@@ -2,7 +2,7 @@
 import re
 from redbot.core import commands
 from pyparsing import ParseException
-from .api import get_observations
+from .api import WWW_BASE_URL, get_observations
 from .embeds import sorry
 from .inat_embeds import (
     make_last_obs_embed,
@@ -95,6 +95,42 @@ class INatCog(commands.Cog):
             return
 
         await ctx.send(embed=make_map_embed(taxa))
+
+    @inat.command()
+    async def obs(self, ctx, *, query):
+        """Look up an iNat observation and summarize its contents in an embed.
+
+        e.g.
+        ```
+        [p]inat obs #
+           -> an embed summarizing the numbered observation
+        [p]inat obs https://inaturalist.org/observations/#
+           -> an embed summarizing the observation link (minus the preview,
+              which Discord provides itself)
+        ```
+        """
+        mat = re.search(PAT_OBS_LINK, query)
+        obs = url = None
+        if mat:
+            obs_id = int(mat["obs_id"])
+            url = mat["url"]
+
+        try:
+            obs_id = int(query)
+        except ValueError:
+            pass
+        if obs_id:
+            results = get_observations(obs_id)["results"]
+            obs = get_obs_fields(results[0]) if results else None
+        if not url:
+            url = WWW_BASE_URL + "/observations/" + str(obs_id)
+
+        if obs_id:
+            await ctx.send(embed=make_obs_embed(obs, url, preview=False))
+            return
+
+        await ctx.send(embed=sorry())
+        return
 
     @inat.command()
     async def taxon(self, ctx, *, query):
