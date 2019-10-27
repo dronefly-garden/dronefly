@@ -70,7 +70,7 @@ def get_obs_fields(obs):
         return (idents_count, idents_agree)
 
     community_taxon = obs.get("community_taxon")
-    obs_taxon = community_taxon or obs.get("taxon")
+    obs_taxon = obs.get("taxon")
     if obs_taxon:
         taxon = get_taxon_fields(obs_taxon)
     else:
