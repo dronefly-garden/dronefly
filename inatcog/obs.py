@@ -76,11 +76,11 @@ def get_obs_fields(obs):
     else:
         taxon = None
     obs_community_taxon = obs.get("community_taxon")
+    idents_count = idents_agree = 0
     if obs_community_taxon:
         (idents_count, idents_agree) = count_community_id(obs, obs_community_taxon)
         community_taxon = get_taxon_fields(obs_community_taxon)
     else:
-        idents_count = idents_agree = 0
         community_taxon = None
 
     user = get_user_from_json(obs["user"])

@@ -79,6 +79,7 @@ def make_obs_embed(obs, url, preview=True):
             summary += " at " + obs.obs_at
         if obs.description:
             summary += "\n> %s\n" % obs.description.replace("\n", "\n> ")
+        idents_count = ""
         if obs.idents_count:
             idents_count = (
                 f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
