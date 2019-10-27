@@ -110,7 +110,7 @@ class INatCog(commands.Cog):
         ```
         """
         mat = re.search(PAT_OBS_LINK, query)
-        obs = url = None
+        obs = url = obs_id = None
         if mat:
             obs_id = int(mat["obs_id"])
             url = mat["url"]
