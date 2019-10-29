@@ -28,6 +28,7 @@ class Obs(NamedTuple):
     faves_count: int
     comments_count: int
     description: str
+    project_ids: list
 
 
 def get_obs_fields(obs):
@@ -105,4 +106,5 @@ def get_obs_fields(obs):
         obs["faves_count"],
         obs["comments_count"],
         obs["description"],
+        obs["project_ids"],
     )
