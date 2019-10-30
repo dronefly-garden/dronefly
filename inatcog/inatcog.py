@@ -1,5 +1,8 @@
 """Module to access iNaturalist API."""
+from io import BytesIO
 import re
+import aiohttp
+from discord import File
 from redbot.core import commands, Config
 from pyparsing import ParseException
 from .api import WWW_BASE_URL, get_observations, get_taxa
@@ -51,6 +54,8 @@ class INatCog(commands.Cog):
             return
 
         await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+        if last and last.obs and last.obs.sound:
+            await self.maybe_send_sound_url(ctx, last.obs.sound)
 
     @inat.command()
     async def link(self, ctx, *, query):
@@ -70,6 +75,8 @@ class INatCog(commands.Cog):
             results = get_observations(obs_id)["results"]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx, obs, url))
+            if obs.sound:
+                await self.maybe_send_sound_url(ctx, obs.sound)
         else:
             await ctx.send(embed=sorry())
 
@@ -134,6 +141,8 @@ class INatCog(commands.Cog):
             await ctx.send(
                 embed=await self.make_obs_embed(ctx, obs, url, preview=False)
             )
+            if obs.sound:
+                await self.maybe_send_sound_url(ctx, obs.sound)
             return
 
         await ctx.send(embed=sorry())
@@ -205,6 +214,17 @@ class INatCog(commands.Cog):
         )
         url = get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
+
+    async def maybe_send_sound_url(self, ctx, url):
+        """Given a URL to a sound, send it if it can be retrieved."""
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                try:
+                    sound = BytesIO(await response.read())
+                except OSError:
+                    sound = None
+        if sound:
+            await ctx.send(file=File(sound, filename=response.url.name))
 
     async def make_obs_embed(self, ctx, obs, url, preview=True):
         """Return embed for an observation link."""

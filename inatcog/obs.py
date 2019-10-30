@@ -29,6 +29,7 @@ class Obs(NamedTuple):
     comments_count: int
     description: str
     project_ids: list
+    sound: str
 
 
 def get_obs_fields(obs):
@@ -92,6 +93,12 @@ def get_obs_fields(obs):
     else:
         thumbnail = ""
 
+    sounds = obs.get("sounds")
+    if sounds:
+        sound = sounds[0].get("file_url")
+    else:
+        sound = ""
+
     return Obs(
         taxon,
         community_taxon,
@@ -107,4 +114,5 @@ def get_obs_fields(obs):
         obs["comments_count"],
         obs["description"],
         obs["project_ids"],
+        sound,
     )
