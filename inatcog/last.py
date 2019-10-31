@@ -34,7 +34,7 @@ def get_last_obs_msg(msgs):
     ago = timeago.format(found.created_at, datetime.utcnow())
     name = found.author.nick or found.author.name
 
-    results = get_observations(obs_id)["results"]
+    results = get_observations(obs_id, include_new_projects=True)["results"]
     obs = get_obs_fields(results[0]) if results else None
 
     return ObsLinkMsg(url, obs, ago, name)

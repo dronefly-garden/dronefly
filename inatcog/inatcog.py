@@ -27,7 +27,10 @@ class INatCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1607)
-        self.config.register_guild(project_emojis={15232: ":poop:"})
+        # TODO: generalize & make configurable
+        self.config.register_guild(
+            project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"}
+        )
 
     @commands.group()
     async def inat(self, ctx):
@@ -72,7 +75,7 @@ class INatCog(commands.Cog):
             obs_id = int(mat["obs_id"])
             url = mat["url"]
 
-            results = get_observations(obs_id)["results"]
+            results = get_observations(obs_id, include_new_projects=True)["results"]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx, obs, url))
             if obs.sound:
@@ -132,7 +135,7 @@ class INatCog(commands.Cog):
         except ValueError:
             pass
         if obs_id:
-            results = get_observations(obs_id)["results"]
+            results = get_observations(obs_id, include_new_projects=True)["results"]
             obs = get_obs_fields(results[0]) if results else None
         if not url:
             url = WWW_BASE_URL + "/observations/" + str(obs_id)

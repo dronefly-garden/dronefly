@@ -98,6 +98,10 @@ def get_obs_fields(obs):
         sound = sounds[0].get("file_url")
     else:
         sound = ""
+    project_ids = obs["project_ids"]
+    non_traditional_projects = obs.get("non_traditional_projects")
+    if non_traditional_projects:
+        project_ids += [project["project_id"] for project in non_traditional_projects]
 
     return Obs(
         taxon,
