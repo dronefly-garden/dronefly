@@ -1,6 +1,7 @@
 """Module for handling recent history."""
 from typing import NamedTuple
 from datetime import datetime
+from discord import User
 import re
 
 import timeago
@@ -32,7 +33,10 @@ def get_last_obs_msg(msgs):
     obs_id = int(mat["obs_id"])
     url = mat["url"]
     ago = timeago.format(found.created_at, datetime.utcnow())
-    name = found.author.nick or found.author.name
+    if isinstance(found.author, User):
+        name = found.author.name
+    else:
+        name = found.author.nick or found.author.name
 
     results = get_observations(obs_id, include_new_projects=True)["results"]
     obs = get_obs_fields(results[0]) if results else None

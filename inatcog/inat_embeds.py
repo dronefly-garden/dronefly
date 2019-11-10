@@ -74,7 +74,11 @@ class INatEmbeds(MixinMeta):
         if obs:
             taxon = obs.taxon
             user = obs.user
-            project_emojis = await self.config.guild(ctx.guild).project_emojis()
+            project_emojis = (
+                await self.config.guild(ctx.guild).project_emojis()
+                if ctx.guild
+                else None
+            )
             if taxon:
                 title = format_taxon_name(taxon)
             else:
