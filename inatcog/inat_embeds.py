@@ -154,26 +154,36 @@ class INatEmbeds(MixinMeta):
         """Make embed describing taxa record."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
-        title = format_taxon_name(rec)
-        matched = rec.term
-        if matched not in (rec.name, rec.common):
-            title += f" ({matched})"
+        def format_title(rec):
+            title = format_taxon_name(rec)
+            matched = rec.term
+            if matched not in (rec.name, rec.common):
+                title += f" ({matched})"
+            return title
 
-        observations = rec.observations
-        url = get_map_url_for_taxa([rec])
-        if url:
-            observations = "[%d](%s)" % (observations, url)
-        description = f"is a {rec.rank} with {observations} observations"
+        def format_description(rec):
+            observations = rec.observations
+            url = get_map_url_for_taxa([rec])
+            if url:
+                observations = "[%d](%s)" % (observations, url)
+            description = f"is a {rec.rank} with {observations} observations"
+            return description
 
-        full_record = get_taxa(rec.taxon_id)
-        ancestors = [
-            get_taxon_fields(ancestor)
-            for ancestor in full_record["results"][0]["ancestors"]
-        ]
-        if ancestors:
-            description += " in: " + format_taxon_names(ancestors, hierarchy=True)
-        else:
-            description += "."
+        def format_ancestors(description, rec):
+            full_record = get_taxa(rec.taxon_id)
+            ancestors = [
+                get_taxon_fields(ancestor)
+                for ancestor in full_record["results"][0]["ancestors"]
+            ]
+            if ancestors:
+                description += " in: " + format_taxon_names(ancestors, hierarchy=True)
+            else:
+                description += "."
+            return description
+
+        title = format_title(rec)
+        description = format_description(rec)
+        description = format_ancestors(description, rec)
 
         embed.title = title
         embed.description = description
