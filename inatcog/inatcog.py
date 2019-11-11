@@ -57,6 +57,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         `[p]inat last obs taxon`
         `[p]inat last obs t`
         > Displays the taxon for last mentioned observation.
+        `[p]inat last obs` *rank*, e.g.
+        `[p]inat last obs family`
+        > Displays the taxon for an ancestor rank of the last mentioned observation.
 
         Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
