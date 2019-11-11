@@ -133,7 +133,7 @@ class INatEmbeds(MixinMeta):
             user = obs.user
 
             if preview and obs.thumbnail:
-                embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
+                embed.set_image(url=re.sub("/square", "/original", obs.thumbnail))
 
             title = format_title(taxon, obs)
             summary = format_summary(user, obs)
