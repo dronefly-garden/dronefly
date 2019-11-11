@@ -344,7 +344,7 @@ def maybe_match_taxon(query, ancestor_id=None):
 
 
 def maybe_match_taxon_compound(compound_query):
-    """Get one or more taxon and return a match, if any.
+    """Get one or more taxa and return a match, if any.
 
     Currently the grammar supports only one ancestor taxon
     and one child taxon.
@@ -379,13 +379,13 @@ def maybe_match_taxon_compound(compound_query):
 
 
 def query_taxon(query):
-    """Query for one or more taxa and return list of matching taxa."""
+    """Query for taxon and return single taxon if found."""
     compound_query = TAXON_QUERY_PARSER.parse(query)
     return maybe_match_taxon_compound(compound_query)
 
 
 def query_taxa(query):
-    """Query for one or more taxa and return list of matching taxa."""
+    """Query for one or more taxa and return list of matching taxa, if any."""
     queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
     # De-duplicate the query via dict:
     taxa = {}
