@@ -3,7 +3,7 @@ import re
 from typing import NamedTuple
 from .api import get_taxa
 from .common import LOG
-from .parsers import TaxonQueryParser, RANK_LEVELS
+from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 
@@ -19,6 +19,7 @@ class Taxon(NamedTuple):
     rank: str
     ancestor_ids: list
     observations: int
+    ancestor_ranks: list or None
 
 
 TAXON_LIST_DELIMITER = [", ", " > "]
@@ -149,6 +150,31 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
     return f"{name} ({common})" if common else name
 
 
+def get_taxon_ancestor(taxon, rank):
+    """Get Taxon ancestor for specified rank from a Taxon object.
+
+    Parameters
+    ----------
+    taxon: Taxon
+        The taxon for which the ancestor at the specified rank is requested.
+    rank: str
+        The rank of the ancestor to return.
+
+    Returns
+    -------
+    Taxon
+        A Taxon object for the matching ancestor, if any, else None.
+    """
+    rank = RANK_EQUIVALENTS.get(rank) or rank
+    if rank in taxon.ancestor_ranks:
+        rank_index = taxon.ancestor_ranks.index(rank)
+        ancestor = get_taxon_fields(
+            get_taxa(taxon.ancestor_ids[rank_index])["results"][0]
+        )
+        return ancestor
+    return None
+
+
 def get_taxon_fields(record):
     """Get Taxon from a JSON record.
 
@@ -164,6 +190,12 @@ def get_taxon_fields(record):
     """
     photo = record.get("default_photo")
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
+    ancestors = record.get("ancestors") or []
+    ancestor_ranks = (
+        ["stateofmatter"] + [ancestor["rank"] for ancestor in ancestors]
+        if ancestors
+        else None
+    )
     return Taxon(
         record["name"],
         taxon_id,
@@ -173,6 +205,7 @@ def get_taxon_fields(record):
         record["rank"],
         record["ancestor_ids"],
         record["observations_count"],
+        ancestor_ranks,
     )
 
 

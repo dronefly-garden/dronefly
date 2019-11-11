@@ -170,12 +170,10 @@ class INatEmbeds(MixinMeta):
             return description
 
         def format_ancestors(description, rec):
-            full_record = get_taxa(rec.taxon_id)
-            ancestors = [
-                get_taxon_fields(ancestor)
-                for ancestor in full_record["results"][0]["ancestors"]
-            ]
+            full_record = get_taxa(rec.taxon_id)["results"][0]
+            ancestors = full_record.get("ancestors")
             if ancestors:
+                ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]
                 description += " in: " + format_taxon_names(ancestors, hierarchy=True)
             else:
                 description += "."

@@ -70,6 +70,8 @@ RANK_EQUIVALENTS = {
     # 'unranked': None,
 }
 
+RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
+
 OPS = ("in", "by", "at")
 
 SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
@@ -92,11 +94,7 @@ class TaxonQueryParser:
         num = Word(nums)
 
         dqt = '"'
-        stop = oneOf(
-            OPS + tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys()),
-            caseless=True,
-            asKeyword=True,
-        )
+        stop = oneOf(OPS + RANK_KEYWORDS, caseless=True, asKeyword=True)
 
         phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))

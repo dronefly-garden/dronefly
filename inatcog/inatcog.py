@@ -9,7 +9,14 @@ from .embeds import sorry
 from .inat_embeds import INatEmbeds
 from .last import get_last_obs_msg
 from .obs import get_obs_fields, PAT_OBS_LINK
-from .taxa import query_taxa, query_taxon
+from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
+from .taxa import (
+    get_taxa,
+    get_taxon_ancestor,
+    get_taxon_fields,
+    query_taxa,
+    query_taxon,
+)
 
 
 class CompositeMetaClass(type(commands.Cog), type(ABC)):
@@ -72,6 +79,28 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             elif display in ("m", "map"):
                 if last and last.obs and last.obs.taxon:
                     await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
+            elif display in RANK_KEYWORDS:
+                rank = RANK_EQUIVALENTS.get(display) or display
+                if last.obs.taxon.rank == rank:
+                    await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+                    return
+                if last.obs.taxon:
+                    full_record = get_taxon_fields(
+                        get_taxa(last.obs.taxon.taxon_id)["results"][0]
+                    )
+                    ancestor = get_taxon_ancestor(full_record, display)
+                    if ancestor:
+                        await ctx.send(embed=self.make_taxa_embed(ancestor))
+                    else:
+                        await ctx.send(
+                            embed=sorry(
+                                apology=f"The last observation has no {rank} ancestor."
+                            )
+                        )
+                else:
+                    await ctx.send(
+                        embed=sorry(apology="The last observation has no taxon.")
+                    )
             else:
                 await ctx.send_help()
                 return
