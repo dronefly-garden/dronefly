@@ -38,14 +38,23 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         pass  # pylint: disable=unnecessary-pass
 
     @inat.command()
-    async def last(self, ctx, *, query):
+    async def last(self, ctx, kind, display=None):
         """Lookup iNat links contained in recent messages.
 
-        `[p]inat last obs` -> A brief summary of the last mentioned observation.
+        `[p]inat last observation`
+        `[p]inat last obs`
+        > Displays a summary of the last mentioned observation.
+        `[p]inat last obs map`
+        `[p]inat last obs m`
+        > Displays the map for the last mentioned observation.
+        `[p]inat last obs taxon`
+        `[p]inat last obs t`
+        > Displays the taxon for last mentioned observation.
+
         Also, `[p]last` is an alias for `[p]inat last`, *provided the bot owner has added it*.
         """
 
-        if query.lower() in ("obs", "observation"):
+        if kind in ("obs", "observation"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
                 last = get_last_obs_msg(msgs)
@@ -56,9 +65,21 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send_help()
             return
 
-        await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-        if last and last.obs and last.obs.sound:
-            await self.maybe_send_sound_url(ctx, last.obs.sound)
+        if display:
+            if display in ("t", "taxon"):
+                if last and last.obs and last.obs.taxon:
+                    await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+            elif display in ("m", "map"):
+                if last and last.obs and last.obs.taxon:
+                    await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
+            else:
+                await ctx.send_help()
+                return
+        else:
+            # By default, display the observation embed for the matched last obs.
+            await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+            if last and last.obs and last.obs.sound:
+                await self.maybe_send_sound_url(ctx, last.obs.sound)
 
     @inat.command()
     async def link(self, ctx, *, query):
