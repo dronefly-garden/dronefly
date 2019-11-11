@@ -6,7 +6,7 @@ from discord import User
 
 import timeago
 
-from .api import get_observations
+from .api import get_observations, WWW_BASE_URL
 from .common import LOG
 from .obs import get_obs_fields, PAT_OBS_LINK
 
@@ -30,8 +30,8 @@ def get_last_obs_msg(msgs):
     LOG.info(repr(found))
 
     mat = re.search(PAT_OBS_LINK, found.content)
-    obs_id = int(mat["obs_id"])
-    url = mat["url"]
+    obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+    url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
     ago = timeago.format(found.created_at, datetime.utcnow())
     if isinstance(found.author, User):
         name = found.author.name

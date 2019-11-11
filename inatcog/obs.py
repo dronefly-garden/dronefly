@@ -7,7 +7,8 @@ from .taxa import Taxon, get_taxon_fields
 from .users import User, get_user_from_json
 
 PAT_OBS_LINK = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))\b",
+    r"\b((?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))"
+    + r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+)))\b",
     re.I,
 )
 

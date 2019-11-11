@@ -122,7 +122,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         """
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
-            obs_id = int(mat["obs_id"])
+            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
             url = mat["url"]
 
             results = get_observations(obs_id, include_new_projects=True)["results"]
@@ -177,8 +177,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         mat = re.search(PAT_OBS_LINK, query)
         obs = url = obs_id = None
         if mat:
-            obs_id = int(mat["obs_id"])
-            url = mat["url"]
+            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+            url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
 
         try:
             obs_id = int(query)
