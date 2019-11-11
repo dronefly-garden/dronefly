@@ -69,31 +69,23 @@ class INatEmbeds(MixinMeta):
 
     async def make_obs_embed(self, ctx, obs, url, preview=True):
         """Return embed for an observation link."""
-        embed = make_embed(url=url)
+        # pylint: disable=too-many-locals
+        def format_count(label, count):
+            return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
 
-        if obs:
-            taxon = obs.taxon
-            user = obs.user
-            project_emojis = (
-                await self.config.guild(ctx.guild).project_emojis()
-                if ctx.guild
-                else None
-            )
+        def format_title(taxon, obs):
             if taxon:
                 title = format_taxon_name(taxon)
             else:
                 title = "Unknown"
             title += " " + EMOJI[obs.quality_grade]
-
-            def format_count(label, count):
-                return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
-
             if obs.faves_count:
                 title += format_count("fave", obs.faves_count)
             if obs.comments_count:
                 title += format_count("comment", obs.comments_count)
-            if preview and obs.thumbnail:
-                embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
+            return title
+
+        def format_summary(user, obs):
             summary = "Observed by " + user.profile_link()
             if obs.obs_on:
                 summary += " on " + obs.obs_on
@@ -101,6 +93,9 @@ class INatEmbeds(MixinMeta):
                 summary += " at " + obs.obs_at
             if obs.description:
                 summary += "\n> %s\n" % obs.description.replace("\n", "\n> ")
+            return summary
+
+        def format_community_id(title, summary, obs):
             idents_count = ""
             if obs.idents_count:
                 idents_count = (
@@ -117,10 +112,33 @@ class INatEmbeds(MixinMeta):
                 )
             else:
                 title += " " + idents_count
+            return (title, summary)
+
+        async def format_projects(title, obs):
+            project_emojis = (
+                await self.config.guild(ctx.guild).project_emojis()
+                if ctx.guild
+                else None
+            )
             if project_emojis:
                 for obs_id in obs.project_ids:
                     if obs_id in project_emojis:
                         title += project_emojis[obs_id]
+            return title
+
+        embed = make_embed(url=url)
+
+        if obs:
+            taxon = obs.taxon
+            user = obs.user
+
+            if preview and obs.thumbnail:
+                embed.set_image(url=re.sub("/square", "/large", obs.thumbnail))
+
+            title = format_title(taxon, obs)
+            summary = format_summary(user, obs)
+            title, summary = format_community_id(title, summary, obs)
+            title = await format_projects(title, obs)
 
             embed.title = title
             embed.description = summary
