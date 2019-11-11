@@ -131,7 +131,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             results = get_observations(obs_id, include_new_projects=True)["results"]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx, obs, url))
-            if obs.sound:
+            if obs and obs.sound:
                 await self.maybe_send_sound_url(ctx, obs.sound)
         else:
             await ctx.send(embed=sorry())
@@ -193,11 +193,13 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if not url:
             url = WWW_BASE_URL + "/observations/" + str(obs_id)
 
+        # Note: if the user specified an invalid or deleted id, a link is still
+        # produced.
         if obs_id:
             await ctx.send(
                 embed=await self.make_obs_embed(ctx, obs, url, preview=False)
             )
-            if obs.sound:
+            if obs and obs.sound:
                 await self.maybe_send_sound_url(ctx, obs.sound)
             return
 

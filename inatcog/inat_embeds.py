@@ -43,8 +43,9 @@ class INatEmbeds(MixinMeta):
             LOG.info("Observation not found for link: %d", obs_id)
             embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
+        shared_by = f"· shared {last.ago} by @{last.name}"
         embed.description = (
-            f"{embed.description}\n\n· shared {last.ago} by @{last.name}"
+            f"{embed.description}\n\n{shared_by}" if embed.description else shared_by
         )
         return embed
 
