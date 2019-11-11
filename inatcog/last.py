@@ -1,8 +1,8 @@
 """Module for handling recent history."""
 from typing import NamedTuple
 from datetime import datetime
-from discord import User
 import re
+from discord import User
 
 import timeago
 
