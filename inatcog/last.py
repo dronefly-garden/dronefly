@@ -6,9 +6,10 @@ from discord import User
 
 import timeago
 
-from .api import get_observations, WWW_BASE_URL
+from .api import get_observations, get_taxa, WWW_BASE_URL
 from .common import LOG
 from .obs import get_obs_fields, PAT_OBS_LINK
+from .taxa import get_taxon_fields, PAT_TAXON_LINK
 
 
 class ObsLinkMsg(NamedTuple):
@@ -20,10 +21,18 @@ class ObsLinkMsg(NamedTuple):
     name: str
 
 
+class TaxonLinkMsg(NamedTuple):
+    """Discord & iNat fields from a recent taxon link."""
+
+    url: str
+    taxon: dict
+
+
 def get_last_obs_msg(msgs):
     """Find recent observation link."""
     found = None
 
+    # Skip bot messages so we can extract the user info for the user who shared it
     found = next(
         m for m in msgs if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
     )
@@ -42,3 +51,29 @@ def get_last_obs_msg(msgs):
     obs = get_obs_fields(results[0]) if results else None
 
     return ObsLinkMsg(url, obs, ago, name)
+
+
+def get_last_taxon_msg(msgs):
+    """Find recent taxon link."""
+    found = None
+
+    def match_taxon_link(message):
+        return re.search(PAT_TAXON_LINK, message.content) or (
+            message.embeds and re.search(PAT_TAXON_LINK, message.embeds[0].url)
+        )
+
+    # - Include bot msgs because that's mostly how users share these links,
+    #   and we're not interested in who shared the link in this case.
+    # - If the message is from a bot, it's likely an embed, so search the
+    #   url (only 1st embed for the message is checked).
+    found = next(m for m in msgs if match_taxon_link(m))
+    LOG.info(repr(found))
+
+    mat = match_taxon_link(found)
+    taxon_id = int(mat["taxon_id"])
+    url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
+
+    results = get_taxa(taxon_id)["results"]
+    taxon = get_taxon_fields(results[0]) if results else None
+
+    return TaxonLinkMsg(url, taxon)

@@ -7,7 +7,7 @@ from pyparsing import ParseException
 from .api import WWW_BASE_URL, get_observations
 from .embeds import sorry
 from .inat_embeds import INatEmbeds
-from .last import get_last_obs_msg
+from .last import get_last_obs_msg, get_last_taxon_msg
 from .obs import get_obs_fields, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxa import (
@@ -71,47 +71,89 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
-        else:
-            await ctx.send_help()
-            return
 
-        if display:
-            if display in ("t", "taxon"):
-                if last and last.obs and last.obs.taxon:
-                    await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
-            elif display in ("m", "map"):
-                if last and last.obs and last.obs.taxon:
-                    await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
-            elif display in RANK_KEYWORDS:
-                rank = RANK_EQUIVALENTS.get(display) or display
-                if last.obs.taxon.rank == rank:
-                    await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+            if display:
+                if display in ("t", "taxon"):
+                    if last and last.obs and last.obs.taxon:
+                        await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+                elif display in ("m", "map"):
+                    if last and last.obs and last.obs.taxon:
+                        await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
+                elif display in RANK_KEYWORDS:
+                    rank = RANK_EQUIVALENTS.get(display) or display
+                    if last.obs.taxon.rank == rank:
+                        await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+                        return
+                    if last.obs.taxon:
+                        full_record = get_taxon_fields(
+                            get_taxa(last.obs.taxon.taxon_id)["results"][0]
+                        )
+                        ancestor = get_taxon_ancestor(full_record, display)
+                        if ancestor:
+                            await ctx.send(embed=self.make_taxa_embed(ancestor))
+                        else:
+                            await ctx.send(
+                                embed=sorry(
+                                    apology=f"The last observation has no {rank} ancestor."
+                                )
+                            )
+                    else:
+                        await ctx.send(
+                            embed=sorry(apology="The last observation has no taxon.")
+                        )
+                else:
+                    await ctx.send_help()
                     return
-                if last.obs.taxon:
-                    full_record = get_taxon_fields(
-                        get_taxa(last.obs.taxon.taxon_id)["results"][0]
-                    )
-                    ancestor = get_taxon_ancestor(full_record, display)
-                    if ancestor:
-                        await ctx.send(embed=self.make_taxa_embed(ancestor))
+            else:
+                # By default, display the observation embed for the matched last obs.
+                await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+                if last and last.obs and last.obs.sound:
+                    await self.maybe_send_sound_url(ctx, last.obs.sound)
+        elif kind in ("t", "taxon"):
+            try:
+                msgs = await ctx.history(limit=1000).flatten()
+                last = get_last_taxon_msg(msgs)
+            except StopIteration:
+                await ctx.send(embed=sorry(apology="Nothing found"))
+                return None
+
+            if display:
+                if display in ("m", "map"):
+                    if last and last.taxon:
+                        await ctx.send(embed=self.make_map_embed([last.taxon]))
+                elif display in RANK_KEYWORDS:
+                    rank = RANK_EQUIVALENTS.get(display) or display
+                    if last.taxon.rank == rank:
+                        await ctx.send(embed=self.make_taxa_embed(last.taxon))
+                        return
+                    if last.taxon:
+                        full_record = get_taxon_fields(
+                            get_taxa(last.taxon.taxon_id)["results"][0]
+                        )
+                        ancestor = get_taxon_ancestor(full_record, display)
+                        if ancestor:
+                            await ctx.send(embed=self.make_taxa_embed(ancestor))
+                        else:
+                            await ctx.send(
+                                embed=sorry(
+                                    apology=f"The last taxon has no {rank} ancestor."
+                                )
+                            )
                     else:
                         await ctx.send(
                             embed=sorry(
-                                apology=f"The last observation has no {rank} ancestor."
+                                apology="Lookup failed using the last taxon link."
                             )
                         )
                 else:
-                    await ctx.send(
-                        embed=sorry(apology="The last observation has no taxon.")
-                    )
+                    await ctx.send_help()
+                    return
             else:
-                await ctx.send_help()
-                return
+                # By default, display the embed for the matched last taxon.
+                await ctx.send(embed=self.make_taxa_embed(last.taxon))
         else:
-            # By default, display the observation embed for the matched last obs.
-            await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-            if last and last.obs and last.obs.sound:
-                await self.maybe_send_sound_url(ctx, last.obs.sound)
+            await ctx.send_help()
+            return
 
     @inat.command()
     async def link(self, ctx, *, query):

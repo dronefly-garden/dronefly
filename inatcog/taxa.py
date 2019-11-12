@@ -27,6 +27,10 @@ TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
 
 TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 
+PAT_TAXON_LINK = re.compile(
+    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/taxa/(?P<taxon_id>\d+))\b", re.I
+)
+
 
 def format_taxon_names(
     taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False
