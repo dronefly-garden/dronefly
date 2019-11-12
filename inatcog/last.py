@@ -59,7 +59,9 @@ def get_last_taxon_msg(msgs):
 
     def match_taxon_link(message):
         return re.search(PAT_TAXON_LINK, message.content) or (
-            message.embeds and re.search(PAT_TAXON_LINK, message.embeds[0].url)
+            message.embeds
+            and message.embeds[0].url
+            and re.search(PAT_TAXON_LINK, message.embeds[0].url)
         )
 
     # - Include bot msgs because that's mostly how users share these links,
