@@ -1,5 +1,5 @@
-# quaggagriff
-Quaggagriff is a Discord Cog collection for naturalists.
+# dronefly
+Dronefly is a Discord Cog collection for naturalists.
 
 ## Cogs:
 
@@ -74,11 +74,11 @@ If you have not already, load the Red V3 downloader cog:
 [p]load downloader
 ```
 
-Then add the Quaggagriff repo and install the desired cog(s) as per:
+Then add the Dronefly repo and install the desired cog(s) as per:
 
 ```
-[p]repo add Quaggagriff https://github.com/synrg/quaggagriff
-[p]cog install Quaggagriff <cog-name>
+[p]repo add Dronefly https://github.com/synrg/dronefly
+[p]cog install Dronefly <cog-name>
 ```
 
 ### inatcog
@@ -86,7 +86,7 @@ Then add the Quaggagriff repo and install the desired cog(s) as per:
 After adding the repo as per Installation, install & load inatcog:
 
 ```
-[p]cog install Quaggagriff inatcog
+[p]cog install Dronefly inatcog
 [p]load inatcog
 ```
 
@@ -95,7 +95,7 @@ After adding the repo as per Installation, install & load inatcog:
 After adding the repo as per Installation, install & load ebirdcog:
 
 ```
-[p]cog install Quaggagriff ebirdcog
+[p]cog install Dronefly ebirdcog
 [p]load ebirdcog
 ```
 
@@ -160,7 +160,7 @@ An example command to verify the alias works:
 > **White-barred x White-wedged Piculet** \
 > · 07:10, 15 Sep: 1 at Ipeúna--Mata do vira-folha
 
-*Tip: See https://github.com/synrg/quaggagriff/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.*
+*Tip: See https://github.com/synrg/dronefly/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.*
 
 ## Design goals
 
@@ -177,13 +177,13 @@ To this end:
 
 Chat sessions can get very busy, so output from most bot commands, especially those which are used more frequently, should provide the least distraction from what is said by humans, just showing the essential information required at the moment, and linking to www.inaturalist.org for the rest.
 
-- https://github.com/synrg/quaggagriff/issues/27 is an example issue to help with this goal
+- https://github.com/synrg/dronefly/issues/27 is an example issue to help with this goal
 
 ### Make use of context from the conversation to avoid needless repetition
 
 It is tedious to have to tell the bot again what has already been established as context for the current discussion. It should recognize from patterns in the conversation key elements that can help provide default context for queries.
 
-- https://github.com/synrg/quaggagriff/issues/25 is an example issue to help with this goal
+- https://github.com/synrg/dronefly/issues/25 is an example issue to help with this goal
 
 ### Provide additional context from who the user is or where the conversation is taking place
 
@@ -191,7 +191,7 @@ Some context should be configurable for a user or channel to avoid having to pro
 
 - Remember who the Discord user is & where they are, supporting queries that are filtered by preferred location, preferred taxa, etc.
 - Similarly, on channels devoted to discussion of certain taxa, some queries might default to be specific to those taxa.
-- https://github.com/synrg/quaggagriff/issues/14 and https://github.com/synrg/quaggagriff/issues/15 are example issues to help with this goal, and the following goal "Support making & improving social connections"
+- https://github.com/synrg/dronefly/issues/14 and https://github.com/synrg/dronefly/issues/15 are example issues to help with this goal, and the following goal "Support making & improving social connections"
 
 ### Support making & improving social connections
 
@@ -203,11 +203,11 @@ An example of an enhancement that would support this goal might be to provide vi
 
 ### Improve comprehension of the subject matter being discussed with visuals
 
-Example issues supporting this goal are https://github.com/synrg/quaggagriff/issues/19 and https://github.com/synrg/quaggagriff/issues/18 to provide at-a-glance overviews of where taxa are found with maps, without a time-consuming & more bandwidth-heavy trip out to the web.
+Example issues supporting this goal are https://github.com/synrg/dronefly/issues/19 and https://github.com/synrg/dronefly/issues/18 to provide at-a-glance overviews of where taxa are found with maps, without a time-consuming & more bandwidth-heavy trip out to the web.
 
 ## TODO
 
-The following is a quick and not very thorough list of some ideas for improvements, some of which are too broad to make just one Issue, and others of which are specific, but are waiting to have Issues filed for them. Check the [Issues](https://github.com/synrg/quaggagriff/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
+The following is a quick and not very thorough list of some ideas for improvements, some of which are too broad to make just one Issue, and others of which are specific, but are waiting to have Issues filed for them. Check the [Issues](https://github.com/synrg/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
 
 - add more useful / interesting commands
 - provide helper commands to:
