@@ -1,4 +1,4 @@
-# Quaggagriff contributors
+# Dronefly contributors
 
 - **[Ben Armstrong](https://github.com/synrg)**
     - Author and maintainer.

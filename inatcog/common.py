@@ -2,7 +2,7 @@
 from functools import wraps
 import logging
 
-LOG = logging.getLogger("red.quaggagriff.inatcog")
+LOG = logging.getLogger("red.dronefly.inatcog")
 
 
 def make_decorator(function):

@@ -7,7 +7,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ebird.api import get_observations, get_region
 import discord
 
-LOG = logging.getLogger("red.quaggagriff.ebirdcog")
+LOG = logging.getLogger("red.dronefly.ebirdcog")
 
 
 class ObsRecord(dict):
