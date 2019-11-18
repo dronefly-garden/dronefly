@@ -2,7 +2,8 @@
 
 from abc import ABC
 import re
-from redbot.core import commands, Config
+import discord
+from redbot.core import checks, commands, Config
 from pyparsing import ParseException
 from .api import WWW_BASE_URL, get_observations
 from .embeds import sorry
@@ -35,14 +36,38 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         self.config = Config.get_conf(self, identifier=1607)
         # TODO: generalize & make configurable
         self.config.register_guild(
-            project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"}
+            autoobs=False,
+            project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
+        self.config.register_channel(autoobs=False)
         super().__init__()
 
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform."""
         pass  # pylint: disable=unnecessary-pass
+
+    @inat.command()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def autoobs(self, ctx, scope="channel"):
+        """Toggle auto-observation mode for the channel."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        if scope.lower() == "server":
+            autoobs = not await self.config.guild(ctx.guild).autoobs()
+            await self.config.guild(ctx.guild).autoobs.set(autoobs)
+            await ctx.send(
+                f"Server observation auto-preview is {'on' if autoobs else 'off'}"
+            )
+        else:
+            autoobs = not await self.config.channel(ctx.channel).autoobs()
+            await self.config.channel(ctx.channel).autoobs.set(autoobs)
+            await ctx.send(
+                f"Channel observation auto-preview is {'on' if autoobs else 'off'}"
+            )
+
+        return
 
     @inat.command()
     async def last(self, ctx, kind, display=None):
@@ -108,7 +133,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 # By default, display the observation embed for the matched last obs.
                 await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
                 if last and last.obs and last.obs.sound:
-                    await self.maybe_send_sound_url(ctx, last.obs.sound)
+                    await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
         elif kind in ("t", "taxon"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
@@ -172,9 +197,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
             results = get_observations(obs_id, include_new_projects=True)["results"]
             obs = get_obs_fields(results[0]) if results else None
-            await ctx.send(embed=await self.make_obs_embed(ctx, obs, url))
+            await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sound:
-                await self.maybe_send_sound_url(ctx, obs.sound)
+                await self.maybe_send_sound_url(ctx.channel, obs.sound)
         else:
             await ctx.send(embed=sorry())
 
@@ -206,6 +231,26 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         await ctx.send(embed=self.make_map_embed(taxa))
 
+    def maybe_match_obs(self, content, id_permitted=False):
+        """Maybe retrieve an observation from content."""
+        mat = re.search(PAT_OBS_LINK, content)
+        obs = url = obs_id = None
+        if mat:
+            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+            url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
+
+        if id_permitted:
+            try:
+                obs_id = int(content)
+            except ValueError:
+                pass
+        if obs_id:
+            results = get_observations(obs_id, include_new_projects=True)["results"]
+            obs = get_obs_fields(results[0]) if results else None
+        if not url:
+            url = WWW_BASE_URL + "/observations/" + str(obs_id)
+        return (obs, url)
+
     @inat.command()
     async def obs(self, ctx, *, query):
         """Look up an iNat observation and summarize its contents in an embed.
@@ -219,33 +264,42 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
               which Discord provides itself)
         ```
         """
-        mat = re.search(PAT_OBS_LINK, query)
-        obs = url = obs_id = None
-        if mat:
-            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
-            url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
 
-        try:
-            obs_id = int(query)
-        except ValueError:
-            pass
-        if obs_id:
-            results = get_observations(obs_id, include_new_projects=True)["results"]
-            obs = get_obs_fields(results[0]) if results else None
-        if not url:
-            url = WWW_BASE_URL + "/observations/" + str(obs_id)
-
-        # Note: if the user specified an invalid or deleted id, a link is still
-        # produced.
-        if obs_id:
+        obs, url = self.maybe_match_obs(query, id_permitted=True)
+        # Note: if the user specified an invalid or deleted id, a url is still
+        # produced (i.e. should 404).
+        if url:
             await ctx.send(
-                embed=await self.make_obs_embed(ctx, obs, url, preview=False)
+                embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
             )
             if obs and obs.sound:
-                await self.maybe_send_sound_url(ctx, obs.sound)
+                await self.maybe_send_sound_url(ctx.channel, obs.sound)
             return
 
         await ctx.send(embed=sorry())
+        return
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        """Handle links to iNat."""
+        if message.author.bot or message.guild is None:
+            return
+
+        guild = message.guild
+        channel = message.channel
+        channel_autoobs = await self.config.channel(channel).autoobs()
+        guild_autoobs = await self.config.guild(guild).autoobs()
+        autoobs = guild_autoobs or channel_autoobs
+        # FIXME: should ignore all bot prefixes of the server instead of hardwired list
+        if autoobs and re.match(r"^[^;./,]", message.content):
+            obs, url = self.maybe_match_obs(message.content)
+            # Only output if an observation is found
+            if obs:
+                await message.channel.send(
+                    embed=await self.make_obs_embed(guild, obs, url, preview=False)
+                )
+                if obs and obs.sound:
+                    await self.maybe_send_sound_url(channel, obs.sound)
         return
 
     @inat.command()

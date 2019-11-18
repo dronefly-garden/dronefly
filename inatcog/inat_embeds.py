@@ -35,7 +35,9 @@ class INatEmbeds(MixinMeta):
         """Return embed for recent observation link."""
         if last.obs:
             obs = last.obs
-            embed = await self.make_obs_embed(ctx, obs, url=last.url, preview=False)
+            embed = await self.make_obs_embed(
+                ctx.guild, obs, url=last.url, preview=False
+            )
         else:
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
@@ -57,7 +59,7 @@ class INatEmbeds(MixinMeta):
         url = get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
-    async def maybe_send_sound_url(self, ctx, url):
+    async def maybe_send_sound_url(self, channel, url):
         """Given a URL to a sound, send it if it can be retrieved."""
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -66,9 +68,9 @@ class INatEmbeds(MixinMeta):
                 except OSError:
                     sound = None
         if sound:
-            await ctx.send(file=File(sound, filename=response.url.name))
+            await channel.send(file=File(sound, filename=response.url.name))
 
-    async def make_obs_embed(self, ctx, obs, url, preview=True):
+    async def make_obs_embed(self, guild, obs, url, preview=True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
         def format_count(label, count):
@@ -117,9 +119,7 @@ class INatEmbeds(MixinMeta):
 
         async def format_projects(title, obs):
             project_emojis = (
-                await self.config.guild(ctx.guild).project_emojis()
-                if ctx.guild
-                else None
+                await self.config.guild(guild).project_emojis() if guild else None
             )
             if project_emojis:
                 for obs_id in obs.project_ids:
