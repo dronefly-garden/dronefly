@@ -55,7 +55,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             autoobs=False,
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
-        self.config.register_channel(autoobs=False)
+        self.config.register_channel(autoobs=None)
         super().__init__()
 
     @commands.group()
