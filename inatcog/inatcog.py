@@ -20,6 +20,22 @@ from .taxa import (
 )
 
 
+class InheritableBoolConverter(commands.Converter):
+    """Convert truthy or 'inherit' to True, False, or None (inherit)."""
+
+    async def convert(self, ctx, argument):
+        lowered = argument.lower()
+        if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
+            return True
+        if lowered in ("no", "n", "false", "f", "0", "disable", "off"):
+            return False
+        if lowered in ("i", "inherit", "inherits", "inherited"):
+            return None
+        raise commands.BadArgument(
+            f'{argument} is not a recognized boolean option or "inherit"'
+        )
+
+
 class CompositeMetaClass(type(commands.Cog), type(ABC)):
     """
     See https://github.com/mikeshardmind/SinbadCogs/blob/v3/rolemanagement/core.py
@@ -47,26 +63,65 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         """Access the iNat platform."""
         pass  # pylint: disable=unnecessary-pass
 
-    @inat.command()
+    @inat.group(invoke_without_command=True)
     @checks.admin_or_permissions(manage_guild=True)
-    async def autoobs(self, ctx, scope="channel"):
-        """Toggle auto-observation mode for the channel."""
+    async def autoobs(self, ctx, state: InheritableBoolConverter):
+        """Set auto-observation mode for channel.
+        `autoobs on`
+        `autoobs off`
+        `autoobs inherit` (i.e. inherits from server)
+        """
         if ctx.author.bot or ctx.guild is None:
             return
 
-        if scope.lower() == "server":
-            autoobs = not await self.config.guild(ctx.guild).autoobs()
-            await self.config.guild(ctx.guild).autoobs.set(autoobs)
-            await ctx.send(
-                f"Server observation auto-preview is {'on' if autoobs else 'off'}"
-            )
-        else:
-            autoobs = not await self.config.channel(ctx.channel).autoobs()
-            await self.config.channel(ctx.channel).autoobs.set(autoobs)
-            await ctx.send(
-                f"Channel observation auto-preview is {'on' if autoobs else 'off'}"
-            )
+        config = self.config.channel(ctx.channel)
+        await config.autoobs.set(state)
 
+        if state is None:
+            server_state = await self.config.guild(ctx.guild).autoobs()
+            value = f"inherited from server ({'on' if server_state else 'off'})"
+        else:
+            value = "on" if state else "off"
+        await ctx.send(f"Channel observation auto-preview is {value}.")
+        return
+
+    @autoobs.command()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def server(self, ctx, state: bool):
+        """Set auto-observation mode for server.
+        `autoobs server on`
+        `autoobs server off`
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.autoobs.set(state)
+        await ctx.send(
+            f"Server observation auto-preview is {'on' if state else 'off'}."
+        )
+        return
+
+    @autoobs.command()
+    async def show(self, ctx):
+        """Show auto-observation mode for channel & server.
+        `autoobs show`
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        server_config = self.config.guild(ctx.guild)
+        server_state = await server_config.autoobs()
+        await ctx.send(
+            f"Server observation auto-preview is {'on' if server_state else 'off'}."
+        )
+        channel_config = self.config.channel(ctx.channel)
+        channel_state = await channel_config.autoobs()
+        if channel_state is None:
+            value = f"inherited from server ({'on' if server_state else 'off'})"
+        else:
+            value = "on" if channel_state else "off"
+        await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
     @inat.command()
@@ -288,8 +343,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         guild = message.guild
         channel = message.channel
         channel_autoobs = await self.config.channel(channel).autoobs()
-        guild_autoobs = await self.config.guild(guild).autoobs()
-        autoobs = guild_autoobs or channel_autoobs
+        if channel_autoobs is None:
+            autoobs = await self.config.guild(guild).autoobs()
+        else:
+            autoobs = channel_autoobs
         # FIXME: should ignore all bot prefixes of the server instead of hardwired list
         if autoobs and re.match(r"^[^;./,]", message.content):
             obs, url = self.maybe_match_obs(message.content)
