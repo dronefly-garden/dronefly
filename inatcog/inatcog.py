@@ -5,11 +5,11 @@ import re
 import discord
 from redbot.core import checks, commands, Config
 from pyparsing import ParseException
-from .api import WWW_BASE_URL, get_observations
+from .api import get_observations
 from .embeds import sorry
 from .inat_embeds import INatEmbeds
 from .last import get_last_obs_msg, get_last_taxon_msg
-from .obs import get_obs_fields, PAT_OBS_LINK
+from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxa import (
     get_taxa,
@@ -286,26 +286,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         await ctx.send(embed=self.make_map_embed(taxa))
 
-    def maybe_match_obs(self, content, id_permitted=False):
-        """Maybe retrieve an observation from content."""
-        mat = re.search(PAT_OBS_LINK, content)
-        obs = url = obs_id = None
-        if mat:
-            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
-            url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
-
-        if id_permitted:
-            try:
-                obs_id = int(content)
-            except ValueError:
-                pass
-        if obs_id:
-            results = get_observations(obs_id, include_new_projects=True)["results"]
-            obs = get_obs_fields(results[0]) if results else None
-        if not url:
-            url = WWW_BASE_URL + "/observations/" + str(obs_id)
-        return (obs, url)
-
     @inat.command()
     async def obs(self, ctx, *, query):
         """Look up an iNat observation and summarize its contents in an embed.
@@ -320,7 +300,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         ```
         """
 
-        obs, url = self.maybe_match_obs(query, id_permitted=True)
+        obs, url = maybe_match_obs(query, id_permitted=True)
         # Note: if the user specified an invalid or deleted id, a url is still
         # produced (i.e. should 404).
         if url:
@@ -349,7 +329,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             autoobs = channel_autoobs
         # FIXME: should ignore all bot prefixes of the server instead of hardwired list
         if autoobs and re.match(r"^[^;./,]", message.content):
-            obs, url = self.maybe_match_obs(message.content)
+            obs, url = maybe_match_obs(message.content)
             # Only output if an observation is found
             if obs:
                 await message.channel.send(
