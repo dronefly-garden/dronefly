@@ -5,7 +5,7 @@ from .api import WWW_BASE_URL
 
 PAT_USER_LINK = re.compile(
     r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/(people|users)/"
-    + r"((?P<user_id>\d+)|(?P<login>[a-z][a-z0-9]{2,39})))\b",
+    + r"((?P<user_id>\d+)|(?P<login>[a-z][-_a-z0-9]{2,39})))\b",
     re.I,
 )
 
