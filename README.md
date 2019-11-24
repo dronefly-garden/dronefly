@@ -1,5 +1,5 @@
 # dronefly
-Dronefly is a Discord Cog collection for naturalists.
+Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) Cog collection for naturalists.
 
 ## Cogs:
 
@@ -7,9 +7,11 @@ Dronefly is a Discord Cog collection for naturalists.
 
 Provides commands to access the iNat platform.
 
-#### Commands:
+#### Query Commands:
 
-`[p]inat taxon <query>` looks up the taxon best matching the query (where `[p]` is the bot prefix). It will:
+##### inat taxon
+
+`[p]inat taxon [query]` looks up the taxon best matching the query (where `[p]` is the bot prefix). It will:
 
 - Match the taxon with the given iNat id#.
 - Match words that start with the terms typed.
@@ -46,6 +48,77 @@ For each successful response, the scientific name, followed by the preferred com
 
 If the matched term was neither in the scientific name, nor the preferred common name, the term that matched is shown as well.
 
+##### inat map
+
+`[p]inat map [taxon query 1, taxon query 2, ...]` looks up one or more taxa (see [inat taxon](#inat-taxon)) and displays a link to a range map for all matching taxa. For example:
+
+```
+[p]inat map boreal chorus frog, spring peeper
+```
+
+<span align="top">
+    <blockquote>
+        <a href="https://www.inaturalist.org/taxa/map?taxa=24255,24268#4/44.15997297735885/269.0876447595656">Range map for Pseudacris maculata (Boreal Chorus Frog), Pseudacris crucifer (Spring Peeper)</a>
+    </blockquote>
+</span>
+
+##### inat obs
+
+`[p]inat obs [link|#]` looks up the observation and displays a summary. See also [Auto Commands](#auto-commands). With `autoobs` turned on (either for the channel or whole server), this command is automatically performed every time a link to the observation is mentioned by a user.
+
+If there are sounds for the observation, the first sound will be included in the summary. On the Discord webapp or desktop client, Discord embeds a player for sounds.
+
+##### inat link
+
+`[p]inat link [<link>|#]` looks up an iNat link and displays a preview & summary. See also [Auto Commands](#auto-commands).
+
+The command is subtly different from `[p]inat obs` in that it is intended to preview any link, including any image on the page, thereby providing a functional replacement for Discord's own automatic preview. Therefore, to suppress Discord's preview, enclose the link in angle-brackets.
+
+To date, only observation link previews are supported. Previews for different iNat link types may be added in future releases.
+
+```
+[p]inat link <https://inaturalist.org/observations/2>
+```
+
+##### inat last
+
+Lookup maps, taxa, or ranks for recently mentioned observations or taxa, e.g.
+
+```
+[p]inat last obs          -> The last observation
+[p]inat last obs map      -> Range map for last observation
+[p]inat last obs taxon    -> Taxon of the last observation
+[p]inat last obs family   -> Family of the last observation
+[p]inat last taxon order  -> The order of the last taxon
+```
+
+#### Auto Commands:
+
+##### inat autoobs show
+
+`[p]inat autoobs show`
+
+Shows the automatic observation summary settings for the server & channel. Example output:
+
+```
+Dronefly: Server observation auto-preview is on.
+Dronefly: Channel observation auto-preview is inherited from server (on).
+```
+
+##### inat autoobs server
+
+`[p]inat autoobs server [on|off]`
+
+Turn on or off automatic summaries of observation links mentioned in any channel on the server. **Requires admin or manage guild permission**.
+
+##### inat autoobs
+
+`[p]inat autoobs [on|off|inherit]`
+
+Turn on, off, or inherit from the `autoobs server` setting automatic summaries of observation links pasted to the current channel. **Requires admin or manage guild permission**.
+
+The default is `[p]inat autoobs inherit`. Specify `on` or `off` to override the server setting per channel.
+
 ### ebirdcog
 
 Provides commands to access the eBird platform. *Note: you must apply for an eBird API key to use this cog.*
@@ -78,7 +151,7 @@ Then add the Dronefly repo and install the desired cog(s) as per:
 
 ```
 [p]repo add Dronefly https://github.com/synrg/dronefly
-[p]cog install Dronefly <cog-name>
+[p]cog install Dronefly [cog-name]
 ```
 
 ### inatcog
