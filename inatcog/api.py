@@ -1,4 +1,5 @@
 """Module to access iNaturalist API."""
+from typing import Union
 import requests
 
 API_BASE_URL = "https://api.inaturalist.org"
@@ -52,3 +53,17 @@ def get_observation_bounds(taxon_ids):
         return result["total_bounds"]
 
     return None
+
+
+def get_users(query: Union[int, str]):
+    """Get the users for the specified login, user_id, or query."""
+    if isinstance(query, int) or query.isnumeric():
+        request = f"/v1/users/{query}"
+    else:
+        request = f"/v1/users/autocomplete?q={query}"
+
+    results = requests.get(
+        f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
+    ).json()
+
+    return results

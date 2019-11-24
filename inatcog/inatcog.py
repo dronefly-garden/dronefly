@@ -5,8 +5,9 @@ import re
 import discord
 from redbot.core import checks, commands, Config
 from pyparsing import ParseException
-from .api import get_observations
-from .embeds import sorry
+from .api import get_observations, get_users
+from .common import LOG
+from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
 from .last import get_last_obs_msg, get_last_taxon_msg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
@@ -18,6 +19,7 @@ from .taxa import (
     query_taxa,
     query_taxon,
 )
+from .users import get_user_from_json, PAT_USER_LINK
 
 
 class InheritableBoolConverter(commands.Converter):
@@ -55,6 +57,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             autoobs=False,
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
+        self.config.register_user(inat_user_id=None)
         self.config.register_channel(autoobs=None)
         super().__init__()
 
@@ -380,3 +383,72 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         await ctx.send(embed=self.make_taxa_embed(taxon))
+
+    @inat.command()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def useradd(self, ctx, discord_user: discord.User, inat_user):
+        """Add user as an iNat user."""
+        config = self.config.user(discord_user)
+
+        inat_user_id = await config.inat_user_id()
+        if inat_user_id:
+            await ctx.send("iNat user already known.")
+            return
+
+        mat_link = re.search(PAT_USER_LINK, inat_user)
+        match = mat_link["user_id"] or mat_link["login"]
+        if match:
+            user_query = match
+        else:
+            user_query = inat_user
+
+        user = None
+        response = get_users(user_query)
+        if response and response["results"] and len(response["results"]) == 1:
+            user = get_user_from_json(response["results"][0])
+            LOG.info(user)
+            mat_login = user_query.lower()
+            mat_id = int(user_query) if user_query.isnumeric() else None
+            if not ((user.login == mat_login) or (user.user_id == mat_id)):
+                user = None
+
+        if not user:
+            await ctx.send("iNat user not found.")
+            return
+
+        await config.inat_user_id.set(user.user_id)
+        await ctx.send(
+            f"{discord_user.display_name} is added as {user.display_name()}."
+        )
+
+    @inat.command()
+    @checks.admin_or_permissions(manage_guild=True)
+    async def userdel(self, ctx, discord_user: discord.User):
+        """Remove user as an iNat user."""
+        config = self.config.user(discord_user)
+        if not await config.inat_user_id():
+            ctx.send("iNat user not known.")
+            return
+        await config.inat_user_id.clear()
+        await ctx.send("iNat user removed.")
+
+    @inat.command()
+    async def usershow(self, ctx, discord_user: discord.User):
+        """Show user if their iNat id is known."""
+        config = self.config.user(discord_user)
+        inat_user_id = await config.inat_user_id()
+        if not inat_user_id:
+            await ctx.send("iNat user not known.")
+            return
+        user = None
+        response = get_users(inat_user_id)
+        if response and response["results"] and len(response["results"]) == 1:
+            user = get_user_from_json(response["results"][0])
+        if not user:
+            await ctx.send("iNat user id lookup failed.")
+            return
+        await ctx.send(
+            embed=make_embed(
+                description=f"{discord_user.display_name} is {user.profile_link()}"
+            )
+        )

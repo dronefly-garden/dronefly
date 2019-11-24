@@ -42,3 +42,35 @@ class TestAPI(unittest.TestCase):
             self.assertDictEqual(
                 api.get_observation_bounds(["1"]), expected_result_2["total_bounds"]
             )
+
+    def test_get_users_by_id(self):
+        """Test get_users by id."""
+        expected_result = {"results": [{"login": "benarmstrong"}]}
+
+        with API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value.json.return_value = expected_result
+            self.assertEqual(
+                api.get_users(545640)["results"][0]["login"], "benarmstrong"
+            )
+
+    def test_get_users_by_login(self):
+        """Test get_users by login."""
+        expected_result = {"results": [{"login": "benarmstrong"}]}
+
+        with API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value.json.return_value = expected_result
+            self.assertEqual(
+                api.get_users("benarmstrong")["results"][0]["login"], "benarmstrong"
+            )
+
+    def test_get_users_by_name(self):
+        """Test get_users by name."""
+        expected_result = {
+            "results": [{"login": "benarmstrong"}, {"login": "bensomebodyelse"}]
+        }
+
+        with API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value.json.return_value = expected_result
+            self.assertEqual(
+                api.get_users("Ben Armstrong")["results"][1]["login"], "bensomebodyelse"
+            )
