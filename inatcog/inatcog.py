@@ -67,7 +67,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         pass  # pylint: disable=unnecessary-pass
 
     @inat.group(invoke_without_command=True)
-    @checks.admin_or_permissions(manage_guild=True)
+    @checks.admin_or_permissions(manage_messages=True)
     async def autoobs(self, ctx, state: InheritableBoolConverter):
         """Set auto-observation mode for channel.
         `autoobs on`
@@ -89,7 +89,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         return
 
     @autoobs.command()
-    @checks.admin_or_permissions(manage_guild=True)
+    @checks.admin_or_permissions(manage_messages=True)
     async def server(self, ctx, state: bool):
         """Set auto-observation mode for server.
         `autoobs server on`
@@ -385,7 +385,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send(embed=self.make_taxa_embed(taxon))
 
     @inat.command()
-    @checks.admin_or_permissions(manage_guild=True)
+    @checks.admin_or_permissions(manage_roles=True)
     async def useradd(self, ctx, discord_user: discord.User, inat_user):
         """Add user as an iNat user."""
         config = self.config.user(discord_user)
@@ -396,7 +396,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         mat_link = re.search(PAT_USER_LINK, inat_user)
-        match = mat_link["user_id"] or mat_link["login"]
+        match = mat_link and (mat_link["user_id"] or mat_link["login"])
         if match:
             user_query = match
         else:
@@ -422,7 +422,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         )
 
     @inat.command()
-    @checks.admin_or_permissions(manage_guild=True)
+    @checks.admin_or_permissions(manage_roles=True)
     async def userdel(self, ctx, discord_user: discord.User):
         """Remove user as an iNat user."""
         config = self.config.user(discord_user)
