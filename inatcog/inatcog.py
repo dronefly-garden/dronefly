@@ -404,7 +404,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         user = None
         response = get_users(user_query)
-        if response and response["results"] and len(response["results"]) == 1:
+        if response and response["results"]:
             user = get_user_from_json(response["results"][0])
             LOG.info(user)
             mat_login = user_query.lower()
