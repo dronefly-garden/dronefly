@@ -109,15 +109,43 @@ Dronefly: Channel observation auto-preview is inherited from server (on).
 
 `[p]inat autoobs server [on|off]`
 
-Turn on or off automatic summaries of observation links mentioned in any channel on the server. **Requires admin or manage guild permission**.
+Turn on or off automatic summaries of observation links mentioned in any channel on the server. **Requires Admin or Manage Messages permission**.
 
 ##### inat autoobs
 
 `[p]inat autoobs [on|off|inherit]`
 
-Turn on, off, or inherit from the `autoobs server` setting automatic summaries of observation links pasted to the current channel. **Requires admin or manage guild permission**.
+Turn on, off, or inherit from the `autoobs server` setting automatic summaries of observation links pasted to the current channel. **Requires Admin or Manage Messages permission**.
 
 The default is `[p]inat autoobs inherit`. Specify `on` or `off` to override the server setting per channel.
+
+#### User commands:
+
+##### inat useradd
+
+```
+[p]inat useradd [discord-user] [inat-user]
+```
+
+Add the Discord user with the specified iNat user id#, login, or profile link to the User config store. **Requires Admin or Manage Roles permission.**
+
+*Note: discord-user is used here, not discord-member to improve comprehension of guild channel history & contributions from those users emeritus on the iNat platform.*
+
+##### inat userdel
+
+```
+[p]inat userdel [discord-user]
+```
+
+Remove the user from the User config store. **Requires Admin or Manage Roles permission.**
+
+##### inat usershow
+
+```
+[p]inat userdel [discord-user]
+```
+
+Show the user if present in the User config store.
 
 ### ebirdcog
 
