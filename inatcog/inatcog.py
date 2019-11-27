@@ -432,6 +432,14 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         await config.inat_user_id.clear()
         await ctx.send("iNat user removed.")
 
+    @checks.admin_or_permissions(manage_roles=True)
+    @inat.command()
+    async def userlist(self, ctx):
+        """List users with known iNat ids is known."""
+        all_users = await self.config.all_users()
+        LOG.info(repr(all_users))
+        await ctx.send(f"{len(all_users)} users listed to console")
+
     @inat.command()
     async def usershow(self, ctx, discord_user: discord.User):
         """Show user if their iNat id is known."""
