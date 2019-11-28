@@ -437,8 +437,21 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     async def userlist(self, ctx):
         """List users with known iNat ids is known."""
         all_users = await self.config.all_users()
-        LOG.info(repr(all_users))
-        await ctx.send(f"{len(all_users)} users listed to console")
+        # TODO: refactor get user from json & api w. error handling
+        all_user_pairs = [
+            (
+                await self.bot.fetch_user(key),
+                get_user_from_json(
+                    get_users(all_users[key]["inat_user_id"])["results"][0]
+                ),
+            )
+            for key in all_users
+        ]
+        all_user_names = [
+            f"{discord_user.display_name} is {inat_user.display_name()}"
+            for (discord_user, inat_user) in all_user_pairs
+        ]
+        await ctx.send("All users:\n" + "\n".join(all_user_names))
 
     @inat.command()
     async def usershow(self, ctx, discord_user: discord.User):
