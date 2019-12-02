@@ -2,11 +2,13 @@
 
 from abc import ABC
 import re
+from typing import AsyncIterator, Tuple
 import discord
 from redbot.core import checks, commands, Config
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import get_observations, get_users
-from .common import LOG
+from .common import grouper, LOG
 from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
 from .last import get_last_obs_msg, get_last_taxon_msg
@@ -19,7 +21,7 @@ from .taxa import (
     query_taxa,
     query_taxon,
 )
-from .users import get_user_from_json, PAT_USER_LINK
+from .users import get_user_from_json, PAT_USER_LINK, User
 
 
 class InheritableBoolConverter(commands.Converter):
@@ -436,22 +438,14 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     @inat.command()
     async def userlist(self, ctx):
         """List users with known iNat ids is known."""
-        all_users = await self.config.all_users()
-        # TODO: refactor get user from json & api w. error handling
-        all_user_pairs = [
-            (
-                await self.bot.fetch_user(key),
-                get_user_from_json(
-                    get_users(all_users[key]["inat_user_id"])["results"][0]
-                ),
-            )
-            for key in all_users
+        all_names = [
+            f"{duser.display_name} is {iuser.display_name()}"
+            async for (duser, iuser) in self.get_user_pairs()
         ]
-        all_user_names = [
-            f"{discord_user.display_name} is {inat_user.display_name()}"
-            for (discord_user, inat_user) in all_user_pairs
-        ]
-        await ctx.send("All users:\n" + "\n".join(all_user_names))
+
+        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 20)]
+        embeds = [make_embed(description=page) for page in pages]
+        await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat.command()
     async def usershow(self, ctx, discord_user: discord.User):
@@ -473,3 +467,22 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 description=f"{discord_user.display_name} is {user.profile_link()}"
             )
         )
+
+    async def get_user_pairs(self) -> AsyncIterator[Tuple[discord.User, User]]:
+        """
+        yields:
+            discord.User, User
+        """
+
+        all_users = await self.config.all_users()
+
+        for discord_id in all_users:
+            discord_user = await self.bot.fetch_user(discord_id)
+            user_json = get_users(all_users[discord_id]["inat_user_id"])
+            inat_user = None
+            if user_json:
+                results = user_json["results"]
+                if results:
+                    inat_user = get_user_from_json(results[0])
+
+            yield (discord_user, inat_user)

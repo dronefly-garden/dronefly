@@ -1,5 +1,6 @@
 """Module for common code."""
 from functools import wraps
+from itertools import zip_longest
 import logging
 
 LOG = logging.getLogger("red.dronefly.inatcog")
@@ -17,3 +18,10 @@ def make_decorator(function):
         return lambda wrapped_function: function(wrapped_function, *args, **kwargs)
 
     return wrap_make_decorator
+
+
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx"
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
