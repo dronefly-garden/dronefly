@@ -443,7 +443,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             async for (duser, iuser) in self.get_user_pairs()
         ]
 
-        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 20)]
+        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
         embeds = [make_embed(description=page) for page in pages]
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
