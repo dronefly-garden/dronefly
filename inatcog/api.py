@@ -1,7 +1,7 @@
 """Module to access iNaturalist API."""
 from typing import Union
-import json
 import requests
+import simplejson
 from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
@@ -68,7 +68,7 @@ def get_users(query: Union[int, str]):
         results = requests.get(
             f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
         ).json()
-    except json.JSONDecodeError:
+    except simplejson.errors.JSONDecodeError:
         LOG.error("JSONDecodeError: %s", repr(results))
         results = None
 
