@@ -1,8 +1,6 @@
 """Module to access iNaturalist API."""
 from typing import Union
 import requests
-import simplejson
-from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -64,12 +62,9 @@ def get_users(query: Union[int, str]):
     else:
         request = f"/v1/users/autocomplete?q={query}"
 
-    try:
-        results = requests.get(
-            f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
-        ).json()
-    except simplejson.errors.JSONDecodeError:
-        LOG.error("JSONDecodeError: %s", repr(results))
-        results = None
+    response = requests.get(
+        f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
+    )
+    results = response.json() if response else None
 
     return results
