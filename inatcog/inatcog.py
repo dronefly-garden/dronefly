@@ -483,6 +483,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             if user_json:
                 results = user_json["results"]
                 if results:
+                    LOG.info(results[0])
                     inat_user = get_user_from_json(results[0])
 
             yield (discord_user, inat_user)
