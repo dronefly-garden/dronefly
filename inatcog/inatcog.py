@@ -3,6 +3,7 @@
 from abc import ABC
 import re
 from typing import AsyncIterator, Tuple
+import asyncio
 import discord
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -485,5 +486,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 if results:
                     LOG.info(results[0])
                     inat_user = get_user_from_json(results[0])
+                    # TODO: replace quick-and-dirty rate limit with something reasonable
+                    await asyncio.sleep(0.2)
 
             yield (discord_user, inat_user)
