@@ -95,7 +95,15 @@ class INatEmbeds(MixinMeta):
             if obs.obs_at:
                 summary += " at " + obs.obs_at
             if obs.description:
-                summary += "\n> %s\n" % obs.description.replace("\n", "\n> ")
+                # Contribute up to 10 lines from the description, and no more
+                # than 500 characters:
+                lines = obs.description.split("\n", 11)
+                description = "\n> %s" % "\n> ".join(lines[:10])
+                if len(lines) > 10:
+                    description += "\n> …"
+                if len(description) > 500:
+                    description = description[:498] + "…"
+                summary += description + "\n"
             return summary
 
         def format_community_id(title, summary, obs):
