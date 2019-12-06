@@ -53,7 +53,7 @@ def get_last_obs_msg(msgs):
     return ObsLinkMsg(url, obs, ago, name)
 
 
-def get_last_taxon_msg(msgs):
+async def get_last_taxon_msg(msgs):
     """Find recent taxon link."""
     found = None
 
@@ -75,7 +75,7 @@ def get_last_taxon_msg(msgs):
     taxon_id = int(mat["taxon_id"])
     url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
 
-    results = get_taxa(taxon_id)["results"]
+    results = (await get_taxa(taxon_id))["results"]
     taxon = get_taxon_fields(results[0]) if results else None
 
     return TaxonLinkMsg(url, taxon)

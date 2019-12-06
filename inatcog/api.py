@@ -1,12 +1,13 @@
 """Module to access iNaturalist API."""
 from typing import Union
+import aiohttp
 import requests
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
 
 
-def get_taxa(*args, **kwargs):
+async def get_taxa(*args, **kwargs):
     """Query API for taxa matching parameters."""
 
     # Select endpoint based on call signature:
@@ -14,13 +15,11 @@ def get_taxa(*args, **kwargs):
     endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
     id_arg = f"/{args[0]}" if args else ""
 
-    results = requests.get(
-        f"{API_BASE_URL}{endpoint}{id_arg}",
-        headers={"Accept": "application/json"},
-        params=kwargs,
-    ).json()
-
-    return results
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
+        ) as response:
+            return await response.json()
 
 
 def get_observations(*args, **kwargs):

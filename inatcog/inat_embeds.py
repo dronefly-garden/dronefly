@@ -3,13 +3,13 @@ from io import BytesIO
 import re
 import aiohttp
 from discord import File
-from .api import WWW_BASE_URL
+from .api import get_taxa, WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import get_map_url_for_taxa
 from .obs import PAT_OBS_LINK
-from .taxa import format_taxon_name, format_taxon_names, get_taxa, get_taxon_fields
+from .taxa import format_taxon_name, format_taxon_names, get_taxon_fields
 
 
 @format_items_for_embed
@@ -159,7 +159,7 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    def make_taxa_embed(self, rec):
+    async def make_taxa_embed(self, rec):
         """Make embed describing taxa record."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
@@ -178,8 +178,8 @@ class INatEmbeds(MixinMeta):
             description = f"is a {rec.rank} with {observations} observations"
             return description
 
-        def format_ancestors(description, rec):
-            full_record = get_taxa(rec.taxon_id)["results"][0]
+        async def format_ancestors(description, rec):
+            full_record = (await get_taxa(rec.taxon_id))["results"][0]
             ancestors = full_record.get("ancestors")
             if ancestors:
                 ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]
@@ -190,7 +190,7 @@ class INatEmbeds(MixinMeta):
 
         title = format_title(rec)
         description = format_description(rec)
-        description = format_ancestors(description, rec)
+        description = await format_ancestors(description, rec)
 
         embed.title = title
         embed.description = description

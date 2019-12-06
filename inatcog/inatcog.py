@@ -161,22 +161,22 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             if display:
                 if display in ("t", "taxon"):
                     if last and last.obs and last.obs.taxon:
-                        await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+                        await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
                 elif display in ("m", "map"):
                     if last and last.obs and last.obs.taxon:
                         await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.obs.taxon.rank == rank:
-                        await ctx.send(embed=self.make_taxa_embed(last.obs.taxon))
+                        await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
                         return
                     if last.obs.taxon:
                         full_record = get_taxon_fields(
-                            get_taxa(last.obs.taxon.taxon_id)["results"][0]
+                            await get_taxa(last.obs.taxon.taxon_id)["results"][0]
                         )
-                        ancestor = get_taxon_ancestor(full_record, display)
+                        ancestor = await get_taxon_ancestor(full_record, display)
                         if ancestor:
-                            await ctx.send(embed=self.make_taxa_embed(ancestor))
+                            await ctx.send(embed=await self.make_taxa_embed(ancestor))
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -198,7 +198,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         elif kind in ("t", "taxon"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
-                last = get_last_taxon_msg(msgs)
+                last = await get_last_taxon_msg(msgs)
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
@@ -210,15 +210,15 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
-                        await ctx.send(embed=self.make_taxa_embed(last.taxon))
+                        await ctx.send(embed=await self.make_taxa_embed(last.taxon))
                         return
                     if last.taxon:
                         full_record = get_taxon_fields(
-                            get_taxa(last.taxon.taxon_id)["results"][0]
+                            await get_taxa(last.taxon.taxon_id)["results"][0]
                         )
-                        ancestor = get_taxon_ancestor(full_record, display)
+                        ancestor = await get_taxon_ancestor(full_record, display)
                         if ancestor:
-                            await ctx.send(embed=self.make_taxa_embed(ancestor))
+                            await ctx.send(embed=await self.make_taxa_embed(ancestor))
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -236,7 +236,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     return
             else:
                 # By default, display the embed for the matched last taxon.
-                await ctx.send(embed=self.make_taxa_embed(last.taxon))
+                await ctx.send(embed=await self.make_taxa_embed(last.taxon))
         else:
             await ctx.send_help()
             return
@@ -281,7 +281,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         try:
-            taxa = query_taxa(query)
+            taxa = await query_taxa(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -376,7 +376,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         try:
-            taxon = query_taxon(query)
+            taxon = await query_taxon(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -385,7 +385,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=self.make_taxa_embed(taxon))
+        await ctx.send(embed=await self.make_taxa_embed(taxon))
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
