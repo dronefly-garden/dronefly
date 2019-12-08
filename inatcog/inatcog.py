@@ -414,7 +414,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             user_query = inat_user
 
         user = None
-        response = self.api.get_users(user_query)
+        response = await self.api.get_users(user_query)
         if response and response["results"]:
             user = get_user_from_json(response["results"][0])
             LOG.info(user)
@@ -465,7 +465,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send("iNat user not known.")
             return
         user = None
-        response = self.api.get_users(inat_user_id)
+        response = await self.api.get_users(inat_user_id)
         if response and response["results"] and len(response["results"]) == 1:
             user = get_user_from_json(response["results"][0])
         if not user:
@@ -487,7 +487,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         for discord_id in all_users:
             discord_user = await self.bot.fetch_user(discord_id)
-            user_json = self.api.get_users(all_users[discord_id]["inat_user_id"])
+            user_json = await self.api.get_users(all_users[discord_id]["inat_user_id"])
             inat_user = None
             if user_json:
                 results = user_json["results"]

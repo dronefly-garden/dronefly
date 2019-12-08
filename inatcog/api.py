@@ -1,7 +1,6 @@
 """Module to access iNaturalist API."""
 from typing import Union
 import aiohttp
-import requests
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -53,16 +52,12 @@ class INatAPI:
 
         return None
 
-    def get_users(self, query: Union[int, str]):
+    async def get_users(self, query: Union[int, str]):
         """Get the users for the specified login, user_id, or query."""
         if isinstance(query, int) or query.isnumeric():
             request = f"/v1/users/{query}"
         else:
             request = f"/v1/users/autocomplete?q={query}"
 
-        response = requests.get(
-            f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
-        )
-        results = response.json() if response else None
-
-        return results
+        async with self.session.get(f"{API_BASE_URL}{request}") as response:
+            return await response.json()
