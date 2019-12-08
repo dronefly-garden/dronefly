@@ -124,7 +124,7 @@ def get_obs_fields(obs):
     )
 
 
-def maybe_match_obs(api, content, id_permitted=False):
+async def maybe_match_obs(api, content, id_permitted=False):
     """Maybe retrieve an observation from content."""
     mat = re.search(PAT_OBS_LINK, content)
     obs = url = obs_id = None
@@ -138,7 +138,9 @@ def maybe_match_obs(api, content, id_permitted=False):
         except ValueError:
             pass
     if obs_id:
-        results = api.get_observations(obs_id, include_new_projects=True)["results"]
+        results = (await api.get_observations(obs_id, include_new_projects=1))[
+            "results"
+        ]
         obs = get_obs_fields(results[0]) if results else None
     if not url:
         url = WWW_BASE_URL + "/observations/" + str(obs_id)

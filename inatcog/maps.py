@@ -51,9 +51,9 @@ class INatMapURL:
     def __init__(self, api):
         self.api = api
 
-    def get_map_coords_for_taxon_ids(self, taxon_ids):
+    async def get_map_coords_for_taxon_ids(self, taxon_ids):
         """Get map coordinates encompassing taxa ranges/observations."""
-        bounds = self.api.get_observation_bounds(taxon_ids)
+        bounds = await self.api.get_observation_bounds(taxon_ids)
         if not bounds:
             center_lat = 0
             center_lon = 0
@@ -70,11 +70,11 @@ class INatMapURL:
 
         return MapCoords(zoom_level, center_lat, center_lon)
 
-    def get_map_url_for_taxa(self, taxa):
+    async def get_map_url_for_taxa(self, taxa):
         """Get a map url for taxa from the provided coords."""
 
         taxon_ids = [taxon.taxon_id for taxon in taxa]
-        map_coords = self.get_map_coords_for_taxon_ids(taxon_ids)
+        map_coords = await self.get_map_coords_for_taxon_ids(taxon_ids)
         zoom_lat_lon = "/".join(map(str, map_coords))
         taxon_ids_str = ",".join(map(str, taxon_ids))
         url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"

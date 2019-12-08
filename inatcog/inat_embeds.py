@@ -50,12 +50,13 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def make_map_embed(self, taxa):
+    async def make_map_embed(self, taxa):
         """Return embed for an observation link."""
         title = format_taxon_names_for_embed(
             taxa, with_term=True, names_format="Range map for %s"
         )
-        url = INatMapURL(self.api).get_map_url_for_taxa(taxa)
+        inat_map_url = INatMapURL(self.api)
+        url = await inat_map_url.get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
     async def maybe_send_sound_url(self, channel, url):
@@ -168,9 +169,10 @@ class INatEmbeds(MixinMeta):
                 title += f" ({matched})"
             return title
 
-        def format_description(rec):
+        async def format_description(rec):
             observations = rec.observations
-            url = INatMapURL(self.api).get_map_url_for_taxa([rec])
+            inat_map_url = INatMapURL(self.api)
+            url = await inat_map_url.get_map_url_for_taxa([rec])
             if url:
                 observations = "[%d](%s)" % (observations, url)
             description = f"is a {rec.rank} with {observations} observations"
@@ -187,7 +189,7 @@ class INatEmbeds(MixinMeta):
             return description
 
         title = format_title(rec)
-        description = format_description(rec)
+        description = await format_description(rec)
         description = await format_ancestors(description, rec)
 
         embed.title = title

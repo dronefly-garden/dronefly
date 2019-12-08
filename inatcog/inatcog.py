@@ -149,7 +149,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if kind in ("obs", "observation"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
-                last = INatLinkMsg(self.api).get_last_obs_msg(msgs)
+                inat_link_msg = INatLinkMsg(self.api)
+                last = await inat_link_msg.get_last_obs_msg(msgs)
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
@@ -160,7 +161,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
                 elif display in ("m", "map"):
                     if last and last.obs and last.obs.taxon:
-                        await ctx.send(embed=self.make_map_embed([last.obs.taxon]))
+                        await ctx.send(
+                            embed=await self.make_map_embed([last.obs.taxon])
+                        )
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.obs.taxon.rank == rank:
@@ -198,7 +201,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         elif kind in ("t", "taxon"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
-                last = await INatLinkMsg(self.api).get_last_taxon_msg(msgs)
+                inat_link_msg = INatLinkMsg(self.api)
+                last = await inat_link_msg.get_last_taxon_msg(msgs)
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
@@ -206,7 +210,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             if display:
                 if display in ("m", "map"):
                     if last and last.taxon:
-                        await ctx.send(embed=self.make_map_embed([last.taxon]))
+                        await ctx.send(embed=await self.make_map_embed([last.taxon]))
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
@@ -258,9 +262,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
             url = mat["url"]
 
-            results = self.api.get_observations(obs_id, include_new_projects=True)[
-                "results"
-            ]
+            results = (
+                await self.api.get_observations(obs_id, include_new_projects=True)
+            )["results"]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sound:
@@ -294,7 +298,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=self.make_map_embed(taxa))
+        await ctx.send(embed=await self.make_map_embed(taxa))
 
     @inat.command()
     async def obs(self, ctx, *, query):
@@ -310,7 +314,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         ```
         """
 
-        obs, url = maybe_match_obs(self.api, query, id_permitted=True)
+        obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
         # Note: if the user specified an invalid or deleted id, a url is still
         # produced (i.e. should 404).
         if url:
@@ -339,7 +343,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             autoobs = channel_autoobs
         # FIXME: should ignore all bot prefixes of the server instead of hardwired list
         if autoobs and re.match(r"^[^;./,]", message.content):
-            obs, url = maybe_match_obs(self.api, message.content)
+            obs, url = await maybe_match_obs(self.api, message.content)
             # Only output if an observation is found
             if obs:
                 await message.channel.send(

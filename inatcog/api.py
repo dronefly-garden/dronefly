@@ -26,22 +26,19 @@ class INatAPI:
         ) as response:
             return await response.json()
 
-    def get_observations(self, *args, **kwargs):
+    async def get_observations(self, *args, **kwargs):
         """Query API for observations matching parameters."""
 
         # Select endpoint based on call signature:
         endpoint = "/v1/observations"
         id_arg = f"/{args[0]}" if args else ""
 
-        results = requests.get(
-            f"{API_BASE_URL}{endpoint}{id_arg}",
-            headers={"Accept": "application/json"},
-            params=kwargs,
-        ).json()
+        async with self.session.get(
+            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
+        ) as response:
+            return await response.json()
 
-        return results
-
-    def get_observation_bounds(self, taxon_ids):
+    async def get_observation_bounds(self, taxon_ids):
         """Get the bounds for the specified observations."""
         kwargs = {
             "return_bounds": "true",
@@ -50,7 +47,7 @@ class INatAPI:
             "per_page": 0,
         }
 
-        result = self.get_observations(**kwargs)
+        result = await self.get_observations(**kwargs)
         if "total_bounds" in result:
             return result["total_bounds"]
 

@@ -34,7 +34,7 @@ class INatLinkMsg:
     def __init__(self, api):
         self.api = api
 
-    def get_last_obs_msg(self, msgs):
+    async def get_last_obs_msg(self, msgs):
         """Find recent observation link."""
         found = None
 
@@ -53,7 +53,7 @@ class INatLinkMsg:
         else:
             name = found.author.nick or found.author.name
 
-        results = self.api.get_observations(obs_id, include_new_projects=True)[
+        results = (await self.api.get_observations(obs_id, include_new_projects=1))[
             "results"
         ]
         obs = get_obs_fields(results[0]) if results else None
