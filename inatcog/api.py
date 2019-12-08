@@ -7,63 +7,65 @@ API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
 
 
-async def get_taxa(*args, **kwargs):
-    """Query API for taxa matching parameters."""
+class INatAPI:
+    """Access the iNat API and assets via (api|static).inaturalist.org."""
 
-    # Select endpoint based on call signature:
-    # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-    endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
-    id_arg = f"/{args[0]}" if args else ""
+    def __init__(self):
+        self.session = aiohttp.ClientSession()
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
+    async def get_taxa(self, *args, **kwargs):
+        """Query API for taxa matching parameters."""
+
+        # Select endpoint based on call signature:
+        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
+        endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
+        id_arg = f"/{args[0]}" if args else ""
+
+        async with self.session.get(
             f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
         ) as response:
             return await response.json()
 
+    def get_observations(self, *args, **kwargs):
+        """Query API for observations matching parameters."""
 
-def get_observations(*args, **kwargs):
-    """Query API for observations matching parameters."""
+        # Select endpoint based on call signature:
+        endpoint = "/v1/observations"
+        id_arg = f"/{args[0]}" if args else ""
 
-    # Select endpoint based on call signature:
-    endpoint = "/v1/observations"
-    id_arg = f"/{args[0]}" if args else ""
+        results = requests.get(
+            f"{API_BASE_URL}{endpoint}{id_arg}",
+            headers={"Accept": "application/json"},
+            params=kwargs,
+        ).json()
 
-    results = requests.get(
-        f"{API_BASE_URL}{endpoint}{id_arg}",
-        headers={"Accept": "application/json"},
-        params=kwargs,
-    ).json()
+        return results
 
-    return results
+    def get_observation_bounds(self, taxon_ids):
+        """Get the bounds for the specified observations."""
+        kwargs = {
+            "return_bounds": "true",
+            "verifiable": "true",
+            "taxon_id": ",".join(map(str, taxon_ids)),
+            "per_page": 0,
+        }
 
+        result = self.get_observations(**kwargs)
+        if "total_bounds" in result:
+            return result["total_bounds"]
 
-def get_observation_bounds(taxon_ids):
-    """Get the bounds for the specified observations."""
-    kwargs = {
-        "return_bounds": "true",
-        "verifiable": "true",
-        "taxon_id": ",".join(map(str, taxon_ids)),
-        "per_page": 0,
-    }
+        return None
 
-    result = get_observations(**kwargs)
-    if "total_bounds" in result:
-        return result["total_bounds"]
+    def get_users(self, query: Union[int, str]):
+        """Get the users for the specified login, user_id, or query."""
+        if isinstance(query, int) or query.isnumeric():
+            request = f"/v1/users/{query}"
+        else:
+            request = f"/v1/users/autocomplete?q={query}"
 
-    return None
+        response = requests.get(
+            f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
+        )
+        results = response.json() if response else None
 
-
-def get_users(query: Union[int, str]):
-    """Get the users for the specified login, user_id, or query."""
-    if isinstance(query, int) or query.isnumeric():
-        request = f"/v1/users/{query}"
-    else:
-        request = f"/v1/users/autocomplete?q={query}"
-
-    response = requests.get(
-        f"{API_BASE_URL}{request}", headers={"Accept": "application/json"}
-    )
-    results = response.json() if response else None
-
-    return results
+        return results

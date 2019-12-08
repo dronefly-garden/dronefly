@@ -1,18 +1,19 @@
 """Module to make maps for iNat."""
 from collections import namedtuple
 import math
-from .api import get_observation_bounds, WWW_BASE_URL
+from .api import WWW_BASE_URL
 
 MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
 MapLink = namedtuple("MapLink", "title, url")
 
 
-def normalize_longitude(d):
-    while d < 0:
-        d += 360
-    while d > 360:
-        d -= 360
-    return d
+def normalize_longitude(deg):
+    """Account for wrap around the globe."""
+    while deg < 0:
+        deg += 360
+    while deg > 360:
+        deg -= 360
+    return deg
 
 
 def get_zoom_level(swlat, swlng, nelat, nelng):
@@ -44,33 +45,38 @@ def get_zoom_level(swlat, swlng, nelat, nelng):
     return result
 
 
-def get_map_coords_for_taxon_ids(taxon_ids):
-    """Get map coordinates encompassing taxa ranges/observations."""
-    bounds = get_observation_bounds(taxon_ids)
-    if not bounds:
-        center_lat = 0
-        center_lon = 0
-        zoom_level = 2
-    else:
-        swlat = bounds["swlat"]
-        swlng = normalize_longitude(bounds["swlng"])
-        nelat = bounds["nelat"]
-        nelng = normalize_longitude(bounds["nelng"])
-        center_lat = (swlat + nelat) / 2
-        center_lon = (swlng + nelng) / 2
+class INatMapURL:
+    """Make URL for iNat range map via /taxa/map interface on website."""
 
-        zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
+    def __init__(self, api):
+        self.api = api
 
-    return MapCoords(zoom_level, center_lat, center_lon)
+    def get_map_coords_for_taxon_ids(self, taxon_ids):
+        """Get map coordinates encompassing taxa ranges/observations."""
+        bounds = self.api.get_observation_bounds(taxon_ids)
+        if not bounds:
+            center_lat = 0
+            center_lon = 0
+            zoom_level = 2
+        else:
+            swlat = bounds["swlat"]
+            swlng = normalize_longitude(bounds["swlng"])
+            nelat = bounds["nelat"]
+            nelng = normalize_longitude(bounds["nelng"])
+            center_lat = (swlat + nelat) / 2
+            center_lon = (swlng + nelng) / 2
 
+            zoom_level = get_zoom_level(swlat, swlng, nelat, nelng)
 
-def get_map_url_for_taxa(taxa):
-    """Get a map url for taxa from the provided coords."""
+        return MapCoords(zoom_level, center_lat, center_lon)
 
-    taxon_ids = [taxon.taxon_id for taxon in taxa]
-    map_coords = get_map_coords_for_taxon_ids(taxon_ids)
-    zoom_lat_lon = "/".join(map(str, map_coords))
-    taxon_ids_str = ",".join(map(str, taxon_ids))
-    url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"
+    def get_map_url_for_taxa(self, taxa):
+        """Get a map url for taxa from the provided coords."""
 
-    return url
+        taxon_ids = [taxon.taxon_id for taxon in taxa]
+        map_coords = self.get_map_coords_for_taxon_ids(taxon_ids)
+        zoom_lat_lon = "/".join(map(str, map_coords))
+        taxon_ids_str = ",".join(map(str, taxon_ids))
+        url = f"{WWW_BASE_URL}/taxa/map?taxa={taxon_ids_str}#{zoom_lat_lon}"
+
+        return url

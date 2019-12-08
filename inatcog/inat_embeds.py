@@ -3,11 +3,11 @@ from io import BytesIO
 import re
 import aiohttp
 from discord import File
-from .api import get_taxa, WWW_BASE_URL
+from .api import WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
-from .maps import get_map_url_for_taxa
+from .maps import INatMapURL
 from .obs import PAT_OBS_LINK
 from .taxa import format_taxon_name, format_taxon_names, get_taxon_fields
 
@@ -56,7 +56,7 @@ class INatEmbeds(MixinMeta):
         title = format_taxon_names_for_embed(
             taxa, with_term=True, names_format="Range map for %s"
         )
-        url = get_map_url_for_taxa(taxa)
+        url = INatMapURL(self.api).get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
     async def maybe_send_sound_url(self, channel, url):
@@ -172,14 +172,14 @@ class INatEmbeds(MixinMeta):
 
         def format_description(rec):
             observations = rec.observations
-            url = get_map_url_for_taxa([rec])
+            url = INatMapURL(self.api).get_map_url_for_taxa([rec])
             if url:
                 observations = "[%d](%s)" % (observations, url)
             description = f"is a {rec.rank} with {observations} observations"
             return description
 
         async def format_ancestors(description, rec):
-            full_record = (await get_taxa(rec.taxon_id))["results"][0]
+            full_record = (await self.api.get_taxa(rec.taxon_id))["results"][0]
             ancestors = full_record.get("ancestors")
             if ancestors:
                 ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]

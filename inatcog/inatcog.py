@@ -8,20 +8,14 @@ import discord
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
-from .api import get_observations, get_users
+from .api import INatAPI
 from .common import grouper, LOG
 from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
-from .last import get_last_obs_msg, get_last_taxon_msg
+from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
-from .taxa import (
-    get_taxa,
-    get_taxon_ancestor,
-    get_taxon_fields,
-    query_taxa,
-    query_taxon,
-)
+from .taxa import INatTaxaQuery, get_taxon_fields
 from .users import get_user_from_json, PAT_USER_LINK, User
 
 
@@ -54,6 +48,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
     def __init__(self, bot):
         self.bot = bot
+        self.api = INatAPI()
+        self.taxa_query = INatTaxaQuery(self.api)
         self.config = Config.get_conf(self, identifier=1607)
         # TODO: generalize & make configurable
         self.config.register_guild(
@@ -153,7 +149,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if kind in ("obs", "observation"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
-                last = get_last_obs_msg(msgs)
+                last = INatLinkMsg(self.api).get_last_obs_msg(msgs)
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
@@ -172,9 +168,13 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         return
                     if last.obs.taxon:
                         full_record = get_taxon_fields(
-                            await get_taxa(last.obs.taxon.taxon_id)["results"][0]
+                            await self.api.get_taxa(last.obs.taxon.taxon_id)["results"][
+                                0
+                            ]
                         )
-                        ancestor = await get_taxon_ancestor(full_record, display)
+                        ancestor = await self.taxa_query.get_taxon_ancestor(
+                            full_record, display
+                        )
                         if ancestor:
                             await ctx.send(embed=await self.make_taxa_embed(ancestor))
                         else:
@@ -198,7 +198,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         elif kind in ("t", "taxon"):
             try:
                 msgs = await ctx.history(limit=1000).flatten()
-                last = await get_last_taxon_msg(msgs)
+                last = await INatLinkMsg(self.api).get_last_taxon_msg(msgs)
             except StopIteration:
                 await ctx.send(embed=sorry(apology="Nothing found"))
                 return None
@@ -214,9 +214,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         return
                     if last.taxon:
                         full_record = get_taxon_fields(
-                            await get_taxa(last.taxon.taxon_id)["results"][0]
+                            await self.api.get_taxa(last.taxon.taxon_id)["results"][0]
                         )
-                        ancestor = await get_taxon_ancestor(full_record, display)
+                        ancestor = await self.taxa_query.get_taxon_ancestor(
+                            full_record, display
+                        )
                         if ancestor:
                             await ctx.send(embed=await self.make_taxa_embed(ancestor))
                         else:
@@ -256,7 +258,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
             url = mat["url"]
 
-            results = get_observations(obs_id, include_new_projects=True)["results"]
+            results = self.api.get_observations(obs_id, include_new_projects=True)[
+                "results"
+            ]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sound:
@@ -281,7 +285,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         try:
-            taxa = await query_taxa(query)
+            taxa = await self.taxa_query.query_taxa(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -306,7 +310,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         ```
         """
 
-        obs, url = maybe_match_obs(query, id_permitted=True)
+        obs, url = maybe_match_obs(self.api, query, id_permitted=True)
         # Note: if the user specified an invalid or deleted id, a url is still
         # produced (i.e. should 404).
         if url:
@@ -335,7 +339,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             autoobs = channel_autoobs
         # FIXME: should ignore all bot prefixes of the server instead of hardwired list
         if autoobs and re.match(r"^[^;./,]", message.content):
-            obs, url = maybe_match_obs(message.content)
+            obs, url = maybe_match_obs(self.api, message.content)
             # Only output if an observation is found
             if obs:
                 await message.channel.send(
@@ -376,7 +380,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         try:
-            taxon = await query_taxon(query)
+            taxon = await self.taxa_query.query_taxon(query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -406,7 +410,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             user_query = inat_user
 
         user = None
-        response = get_users(user_query)
+        response = self.api.get_users(user_query)
         if response and response["results"]:
             user = get_user_from_json(response["results"][0])
             LOG.info(user)
@@ -457,7 +461,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send("iNat user not known.")
             return
         user = None
-        response = get_users(inat_user_id)
+        response = self.api.get_users(inat_user_id)
         if response and response["results"] and len(response["results"]) == 1:
             user = get_user_from_json(response["results"][0])
         if not user:
@@ -479,7 +483,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         for discord_id in all_users:
             discord_user = await self.bot.fetch_user(discord_id)
-            user_json = get_users(all_users[discord_id]["inat_user_id"])
+            user_json = self.api.get_users(all_users[discord_id]["inat_user_id"])
             inat_user = None
             if user_json:
                 results = user_json["results"]

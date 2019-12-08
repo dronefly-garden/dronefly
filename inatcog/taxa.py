@@ -1,7 +1,6 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple
-from .api import get_taxa
 from .common import LOG
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
 
@@ -152,31 +151,6 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
                 # Note: name already italicized, so close/reopen italics around insertion.
                 name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
     return f"{name} ({common})" if common else name
-
-
-async def get_taxon_ancestor(taxon, rank):
-    """Get Taxon ancestor for specified rank from a Taxon object.
-
-    Parameters
-    ----------
-    taxon: Taxon
-        The taxon for which the ancestor at the specified rank is requested.
-    rank: str
-        The rank of the ancestor to return.
-
-    Returns
-    -------
-    Taxon
-        A Taxon object for the matching ancestor, if any, else None.
-    """
-    rank = RANK_EQUIVALENTS.get(rank) or rank
-    if rank in taxon.ancestor_ranks:
-        rank_index = taxon.ancestor_ranks.index(rank)
-        ancestor = get_taxon_fields(
-            (await get_taxa(taxon.ancestor_ids[rank_index]))["results"][0]
-        )
-        return ancestor
-    return None
 
 
 def get_taxon_fields(record):
@@ -356,85 +330,114 @@ def match_taxon(query, records):
     return best_record if min_score_met else None
 
 
-async def maybe_match_taxon(query, ancestor_id=None):
-    """Get taxon and return a match, if any."""
-    if query.taxon_id:
-        records = (await get_taxa(query.taxon_id))["results"]
-    else:
-        kwargs = {}
-        kwargs["q"] = " ".join(query.terms)
-        if query.ranks:
-            kwargs["rank"] = ",".join(query.ranks)
-        if ancestor_id:
-            kwargs["taxon_id"] = ancestor_id
-        records = (await get_taxa(**kwargs))["results"]
+class INatTaxaQuery:
+    """Query iNat for taxa."""
 
-    if not records:
-        raise LookupError("Nothing found")
+    def __init__(self, api):
+        self.api = api
 
-    taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+    async def get_taxon_ancestor(self, taxon, rank):
+        """Get Taxon ancestor for specified rank from a Taxon object.
 
-    if not taxon:
-        raise LookupError("No exact match")
+        Parameters
+        ----------
+        taxon: Taxon
+            The taxon for which the ancestor at the specified rank is requested.
+        rank: str
+            The rank of the ancestor to return.
 
-    return taxon
+        Returns
+        -------
+        Taxon
+            A Taxon object for the matching ancestor, if any, else None.
+        """
+        rank = RANK_EQUIVALENTS.get(rank) or rank
+        if rank in taxon.ancestor_ranks:
+            rank_index = taxon.ancestor_ranks.index(rank)
+            ancestor = get_taxon_fields(
+                (await self.api.get_taxa(taxon.ancestor_ids[rank_index]))["results"][0]
+            )
+            return ancestor
+        return None
 
+    async def maybe_match_taxon(self, query, ancestor_id=None):
+        """Get taxon and return a match, if any."""
+        if query.taxon_id:
+            records = (await self.api.get_taxa(query.taxon_id))["results"]
+        else:
+            kwargs = {}
+            kwargs["q"] = " ".join(query.terms)
+            if query.ranks:
+                kwargs["rank"] = ",".join(query.ranks)
+            if ancestor_id:
+                kwargs["taxon_id"] = ancestor_id
+            records = (await self.api.get_taxa(**kwargs))["results"]
 
-async def maybe_match_taxon_compound(compound_query):
-    """Get one or more taxa and return a match, if any.
+        if not records:
+            raise LookupError("Nothing found")
 
-    Currently the grammar supports only one ancestor taxon
-    and one child taxon.
-    """
-    query_main = compound_query.main
-    query_ancestor = compound_query.ancestor
-    if query_ancestor:
-        ancestor = await maybe_match_taxon(query_ancestor)
-        if ancestor:
-            if query_main.ranks:
-                LOG.info("query ranks = %s", ",".join(query_main.ranks))
-                max_query_rank_level = max(
-                    [RANK_LEVELS[rank] for rank in query_main.ranks]
-                )
-                LOG.info("max_query_rank_level = %3.1f", max_query_rank_level)
-                ancestor_rank_level = RANK_LEVELS[ancestor.rank]
-                LOG.info("ancestor_rank_level = %3.1f", ancestor_rank_level)
-                if max_query_rank_level >= ancestor_rank_level:
-                    raise LookupError(
-                        "Child rank%s: `%s` must be below ancestor rank: `%s`"
-                        % (
-                            "s" if len(query_main.ranks) > 1 else "",
-                            ",".join(query_main.ranks),
-                            ancestor.rank,
-                        )
+        taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+
+        if not taxon:
+            raise LookupError("No exact match")
+
+        return taxon
+
+    async def maybe_match_taxon_compound(self, compound_query):
+        """Get one or more taxa and return a match, if any.
+
+        Currently the grammar supports only one ancestor taxon
+        and one child taxon.
+        """
+        query_main = compound_query.main
+        query_ancestor = compound_query.ancestor
+        if query_ancestor:
+            ancestor = await self.maybe_match_taxon(query_ancestor)
+            if ancestor:
+                if query_main.ranks:
+                    LOG.info("query ranks = %s", ",".join(query_main.ranks))
+                    max_query_rank_level = max(
+                        [RANK_LEVELS[rank] for rank in query_main.ranks]
                     )
-            taxon = await maybe_match_taxon(query_main, ancestor_id=ancestor.taxon_id)
-    else:
-        taxon = await maybe_match_taxon(query_main)
+                    LOG.info("max_query_rank_level = %3.1f", max_query_rank_level)
+                    ancestor_rank_level = RANK_LEVELS[ancestor.rank]
+                    LOG.info("ancestor_rank_level = %3.1f", ancestor_rank_level)
+                    if max_query_rank_level >= ancestor_rank_level:
+                        raise LookupError(
+                            "Child rank%s: `%s` must be below ancestor rank: `%s`"
+                            % (
+                                "s" if len(query_main.ranks) > 1 else "",
+                                ",".join(query_main.ranks),
+                                ancestor.rank,
+                            )
+                        )
+                taxon = await self.maybe_match_taxon(
+                    query_main, ancestor_id=ancestor.taxon_id
+                )
+        else:
+            taxon = await self.maybe_match_taxon(query_main)
 
-    return taxon
+        return taxon
 
+    async def query_taxon(self, query):
+        """Query for taxon and return single taxon if found."""
+        compound_query = TAXON_QUERY_PARSER.parse(query)
+        return await self.maybe_match_taxon_compound(compound_query)
 
-async def query_taxon(query):
-    """Query for taxon and return single taxon if found."""
-    compound_query = TAXON_QUERY_PARSER.parse(query)
-    return await maybe_match_taxon_compound(compound_query)
+    async def query_taxa(self, query):
+        """Query for one or more taxa and return list of matching taxa, if any."""
+        queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
+        # De-duplicate the query via dict:
+        taxa = {}
+        for compound_query in queries:
+            try:
+                taxon = await self.maybe_match_taxon_compound(compound_query)
+                taxa[str(taxon.taxon_id)] = taxon
+            except LookupError:
+                pass
 
+        result = taxa.values()
+        if not result:
+            raise LookupError("Nothing found")
 
-async def query_taxa(query):
-    """Query for one or more taxa and return list of matching taxa, if any."""
-    queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
-    # De-duplicate the query via dict:
-    taxa = {}
-    for compound_query in queries:
-        try:
-            taxon = await maybe_match_taxon_compound(compound_query)
-            taxa[str(taxon.taxon_id)] = taxon
-        except LookupError:
-            pass
-
-    result = taxa.values()
-    if not result:
-        raise LookupError("Nothing found")
-
-    return result
+        return result
