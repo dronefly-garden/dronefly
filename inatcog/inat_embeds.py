@@ -1,7 +1,6 @@
 """Module to handle iNat embed concerns."""
 from io import BytesIO
 import re
-import aiohttp
 from discord import File
 from .api import WWW_BASE_URL
 from .common import LOG
@@ -61,12 +60,11 @@ class INatEmbeds(MixinMeta):
 
     async def maybe_send_sound_url(self, channel, url):
         """Given a URL to a sound, send it if it can be retrieved."""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                try:
-                    sound = BytesIO(await response.read())
-                except OSError:
-                    sound = None
+        async with self.api.session.get(url) as response:
+            try:
+                sound = BytesIO(await response.read())
+            except OSError:
+                sound = None
         if sound:
             await channel.send(file=File(sound, filename=response.url.name))
 
