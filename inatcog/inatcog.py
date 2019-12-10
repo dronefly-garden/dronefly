@@ -18,6 +18,9 @@ from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxa import INatTaxaQuery, get_taxon_fields
 from .users import get_user_from_json, PAT_USER_LINK, User
 
+SPOILER_PAT = re.compile(r"\|\|")
+DOUBLE_BAR_LIT = "\\|\\|"
+
 
 class InheritableBoolConverter(commands.Converter):
     """Convert truthy or 'inherit' to True, False, or None (inherit)."""
@@ -448,7 +451,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     async def userlist(self, ctx):
         """List users with known iNat ids is known."""
         all_names = [
-            f"{duser.display_name} is {iuser.display_name()}"
+            f"{re.sub(SPOILER_PAT, DOUBLE_BAR_LIT, duser.display_name)} is {iuser.display_name()}"
             async for (duser, iuser) in self.get_user_pairs()
         ]
 
