@@ -498,6 +498,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     LOG.info(results[0])
                     inat_user = get_user_from_json(results[0])
                     # TODO: replace quick-and-dirty rate limit with something reasonable
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.3)
 
             yield (discord_user, inat_user)
