@@ -2,7 +2,7 @@
 from collections import namedtuple
 from pyparsing import (
     Word,
-    pyparsing_unicode,
+    printables,
     nums,
     Group,
     Suppress,
@@ -96,7 +96,7 @@ class TaxonQueryParser:
         dqt = '"'
         stop = oneOf(OPS + RANK_KEYWORDS, caseless=True, asKeyword=True)
 
-        phraseword = Word(pyparsing_unicode.printables, excludeChars=dqt)
+        phraseword = Word(printables, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
         def get_abbr(_s, _l, term):
@@ -109,9 +109,7 @@ class TaxonQueryParser:
             ).setParseAction(get_abbr)
         )
 
-        words = OneOrMore(
-            Word(pyparsing_unicode.printables, excludeChars=dqt), stopOn=stop
-        )
+        words = OneOrMore(Word(printables, excludeChars=dqt), stopOn=stop)
 
         ranks_terms = Group(ranks)("ranks") + Group(
             OneOrMore(words | phrase, stopOn=stop)
