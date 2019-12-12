@@ -1,5 +1,6 @@
 """Module to access iNaturalist API."""
 from typing import Union
+import asyncio
 import aiohttp
 
 API_BASE_URL = "https://api.inaturalist.org"
@@ -10,6 +11,7 @@ class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
 
     def __init__(self):
+        self.users_cache = {}
         self.session = aiohttp.ClientSession()
 
     async def get_taxa(self, *args, **kwargs):
@@ -59,5 +61,12 @@ class INatAPI:
         else:
             request = f"/v1/users/autocomplete?q={query}"
 
-        async with self.session.get(f"{API_BASE_URL}{request}") as response:
-            return await response.json()
+        if query not in self.users_cache:
+            async with self.session.get(f"{API_BASE_URL}{request}") as response:
+                # TODO: replace quick-and-dirty rate limit with something reasonable.
+                self.users_cache[query] = await response.json()
+                # - This delays each response 2/3 of a second to stay within
+                #   100 requests per minute (see iNat API v1 docs).
+                await asyncio.sleep(0.66)
+
+        return self.users_cache[query]
