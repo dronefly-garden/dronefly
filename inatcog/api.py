@@ -67,6 +67,6 @@ class INatAPI:
                 self.users_cache[query] = await response.json()
                 # - This delays each response 2/3 of a second to stay within
                 #   100 requests per minute (see iNat API v1 docs).
-                await asyncio.sleep(0.66)
+                await asyncio.sleep(1)
 
         return self.users_cache[query]
