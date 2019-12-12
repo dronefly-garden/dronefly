@@ -36,13 +36,16 @@ class INatLinkMsg:
 
     async def get_last_obs_msg(self, msgs):
         """Find recent observation link."""
-        found = None
-
         # Skip bot messages so we can extract the user info for the user who shared it
-        found = next(
-            m for m in msgs if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
-        )
-        LOG.info(repr(found))
+        try:
+            found = next(
+                m
+                for m in msgs
+                if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
+            )
+            LOG.info(repr(found))
+        except StopIteration:
+            return None
 
         mat = re.search(PAT_OBS_LINK, found.content)
         obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
@@ -62,7 +65,6 @@ class INatLinkMsg:
 
     async def get_last_taxon_msg(self, msgs):
         """Find recent taxon link."""
-        found = None
 
         def match_taxon_link(message):
             return re.search(PAT_TAXON_LINK, message.content) or (
@@ -75,8 +77,11 @@ class INatLinkMsg:
         #   and we're not interested in who shared the link in this case.
         # - If the message is from a bot, it's likely an embed, so search the
         #   url (only 1st embed for the message is checked).
-        found = next(m for m in msgs if match_taxon_link(m))
-        LOG.info(repr(found))
+        try:
+            found = next(m for m in msgs if match_taxon_link(m))
+            LOG.info(repr(found))
+        except StopIteration:
+            return None
 
         mat = match_taxon_link(found)
         taxon_id = int(mat["taxon_id"])

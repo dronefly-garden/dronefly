@@ -150,13 +150,12 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         """
 
         if kind in ("obs", "observation"):
-            try:
-                msgs = await ctx.history(limit=1000).flatten()
-                inat_link_msg = INatLinkMsg(self.api)
-                last = await inat_link_msg.get_last_obs_msg(msgs)
-            except StopIteration:
+            msgs = await ctx.history(limit=1000).flatten()
+            inat_link_msg = INatLinkMsg(self.api)
+            last = await inat_link_msg.get_last_obs_msg(msgs)
+            if not last:
                 await ctx.send(embed=sorry(apology="Nothing found"))
-                return None
+                return
 
             if display:
                 if display in ("t", "taxon"):
@@ -202,13 +201,12 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 if last and last.obs and last.obs.sound:
                     await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
         elif kind in ("t", "taxon"):
-            try:
-                msgs = await ctx.history(limit=1000).flatten()
-                inat_link_msg = INatLinkMsg(self.api)
-                last = await inat_link_msg.get_last_taxon_msg(msgs)
-            except StopIteration:
+            msgs = await ctx.history(limit=1000).flatten()
+            inat_link_msg = INatLinkMsg(self.api)
+            last = await inat_link_msg.get_last_taxon_msg(msgs)
+            if not last:
                 await ctx.send(embed=sorry(apology="Nothing found"))
-                return None
+                return
 
             if display:
                 if display in ("m", "map"):
