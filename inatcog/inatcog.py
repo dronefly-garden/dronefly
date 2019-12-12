@@ -173,7 +173,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         return
                     if last.obs.taxon:
                         full_record = get_taxon_fields(
-                            await self.api.get_taxa(last.obs.taxon.taxon_id)["results"][
+                            (await self.api.get_taxa(last.obs.taxon.taxon_id))["results"][
                                 0
                             ]
                         )
@@ -219,7 +219,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         return
                     if last.taxon:
                         full_record = get_taxon_fields(
-                            await self.api.get_taxa(last.taxon.taxon_id)["results"][0]
+                            (await self.api.get_taxa(last.taxon.taxon_id))["results"][0]
                         )
                         ancestor = await self.taxa_query.get_taxon_ancestor(
                             full_record, display
