@@ -27,7 +27,8 @@ class INatAPI:
         async with self.session.get(
             f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
         ) as response:
-            return await response.json()
+            if response.status == 200:
+                return await response.json()
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations matching parameters."""
@@ -39,7 +40,8 @@ class INatAPI:
         async with self.session.get(
             f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
         ) as response:
-            return await response.json()
+            if response.status == 200:
+                return await response.json()
 
     async def get_observation_bounds(self, taxon_ids):
         """Get the bounds for the specified observations."""
@@ -69,7 +71,8 @@ class INatAPI:
             if time_since_request < 1.0:
                 await asyncio.sleep(1.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
-                self.users_cache[query] = await response.json()
-                self.request_time = time()
+                if response.status == 200:
+                    self.users_cache[query] = await response.json()
+                    self.request_time = time()
 
         return self.users_cache[query]
