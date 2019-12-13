@@ -3,6 +3,7 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
+from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -71,8 +72,9 @@ class INatAPI:
             if time_since_request < 5.0:
                 await asyncio.sleep(5.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
+                LOG.info(response)
                 if response.status == 200:
                     self.users_cache[query] = await response.json()
                     self.request_time = time()
 
-        return self.users_cache[query]
+        return self.users_cache[query] if query in self.users_cache else None
