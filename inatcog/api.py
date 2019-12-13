@@ -67,9 +67,9 @@ class INatAPI:
 
         if query not in self.users_cache:
             time_since_request = time() - self.request_time
-            # Limit to 1 request per second.
-            if time_since_request < 1.0:
-                await asyncio.sleep(1.0 - time_since_request)
+            # Limit to 1 request every 5 seconds.
+            if time_since_request < 5.0:
+                await asyncio.sleep(5.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 if response.status == 200:
                     self.users_cache[query] = await response.json()
