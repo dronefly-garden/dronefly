@@ -68,9 +68,13 @@ class INatAPI:
 
         if query not in self.users_cache:
             time_since_request = time() - self.request_time
-            # Limit to 1 request every 5 seconds.
-            if time_since_request < 5.0:
-                await asyncio.sleep(5.0 - time_since_request)
+            # Limit to 60 requests every minute. Hard upper limit is 100 per minute
+            # after which they rate-limit, but the API doc requests that we
+            # limit it to 60.
+            # TODO: generalize & apply to all requests.
+            # TODO: provide means to expire the cache (other than reloading the cog).
+            if time_since_request < 1.0:
+                await asyncio.sleep(1.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 LOG.info(response)
                 if response.status == 200:
