@@ -449,7 +449,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     async def userlist(self, ctx):
         """List users with known iNat ids is known."""
         all_names = [
-            f"{re.sub(SPOILER_PAT, DOUBLE_BAR_LIT, duser.display_name)} is {iuser.display_name()}"
+            f"{duser.mention} is {iuser.profile_link()}"
             async for (duser, iuser) in self.get_user_pairs()
         ]
 
@@ -485,7 +485,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
         await ctx.send(
             embed=make_embed(
-                description=f"{discord_user.display_name} is {user.profile_link()}"
+                description=f"{discord_user.mention} is {user.profile_link()}"
             )
         )
 
