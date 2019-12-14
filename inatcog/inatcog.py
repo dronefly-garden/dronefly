@@ -448,9 +448,13 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     @inat.command()
     async def userlist(self, ctx):
         """List users with known iNat ids is known."""
+        if not ctx.guild:
+            return
+
         all_names = [
             f"{duser.mention} is {iuser.profile_link()}"
             async for (duser, iuser) in self.get_user_pairs()
+            if ctx.guild.get_member(duser.id)
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
@@ -471,6 +475,13 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     @inat.command()
     async def usershow(self, ctx, discord_user: discord.User):
         """Show user if their iNat id is known."""
+        if not ctx.guild:
+            return
+
+        if not ctx.guild.get_member(discord_user.id):
+            await ctx.send(f"That Discord user is not in {ctx.guild.name} guild.")
+            return
+
         config = self.config.user(discord_user)
         inat_user_id = await config.inat_user_id()
         if not inat_user_id:
