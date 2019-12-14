@@ -451,16 +451,23 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if not ctx.guild:
             return
 
+        # Avoid having to fully enumerate pages of discord/iNat user pairs
+        # which would otherwise do expensive API calls if not in the cache
+        # already just to get # of pages of member users:
+        all_users = await self.config.all_users()
+        all_member_users = {
+            key: value
+            for (key, value) in all_users.items()
+            if ctx.guild.get_member(key)
+        }
+        pages_num = ceil(len(all_member_users) / 10)
+
         all_names = [
             f"{duser.mention} is {iuser.profile_link()}"
-            async for (duser, iuser) in self.get_user_pairs(ctx.guild)
+            async for (duser, iuser) in self.get_user_pairs(all_member_users)
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
-
-        # Avoid having to fully enumerate pages just to get # of pages:
-        all_users = await self.config.all_users()
-        pages_num = ceil(len(all_users) / 10)
 
         embeds = [
             make_embed(
@@ -499,25 +506,25 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             )
         )
 
-    async def get_user_pairs(self, guild) -> AsyncIterator[Tuple[discord.User, User]]:
+    async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
         """
         yields:
             discord.User, User
+
+        Parameters
+        ----------
+        users: dict
+            discord_id -> inat_id mapping
         """
 
-        all_users = await self.config.all_users()
+        for discord_id in users:
+            discord_user = self.bot.get_user(discord_id)
+            user_json = await self.api.get_users(users[discord_id]["inat_user_id"])
+            inat_user = None
+            if user_json:
+                results = user_json["results"]
+                if results:
+                    LOG.info(results[0])
+                    inat_user = get_user_from_json(results[0])
 
-        for discord_id in all_users:
-            if guild.get_member(discord_id):
-                discord_user = self.bot.get_user(discord_id)
-                user_json = await self.api.get_users(
-                    all_users[discord_id]["inat_user_id"]
-                )
-                inat_user = None
-                if user_json:
-                    results = user_json["results"]
-                    if results:
-                        LOG.info(results[0])
-                        inat_user = get_user_from_json(results[0])
-
-                yield (discord_user, inat_user)
+            yield (discord_user, inat_user)
