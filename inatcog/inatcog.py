@@ -453,8 +453,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         all_names = [
             f"{duser.mention} is {iuser.profile_link()}"
-            async for (duser, iuser) in self.get_user_pairs()
-            if ctx.guild.get_member(duser.id)
+            async for (duser, iuser) in self.get_user_pairs(ctx.guild)
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
@@ -500,7 +499,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             )
         )
 
-    async def get_user_pairs(self) -> AsyncIterator[Tuple[discord.User, User]]:
+    async def get_user_pairs(self, guild) -> AsyncIterator[Tuple[discord.User, User]]:
         """
         yields:
             discord.User, User
@@ -509,13 +508,16 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         all_users = await self.config.all_users()
 
         for discord_id in all_users:
-            discord_user = self.bot.get_user(discord_id)
-            user_json = await self.api.get_users(all_users[discord_id]["inat_user_id"])
-            inat_user = None
-            if user_json:
-                results = user_json["results"]
-                if results:
-                    LOG.info(results[0])
-                    inat_user = get_user_from_json(results[0])
+            if guild.get_member(discord_id):
+                discord_user = self.bot.get_user(discord_id)
+                user_json = await self.api.get_users(
+                    all_users[discord_id]["inat_user_id"]
+                )
+                inat_user = None
+                if user_json:
+                    results = user_json["results"]
+                    if results:
+                        LOG.info(results[0])
+                        inat_user = get_user_from_json(results[0])
 
-            yield (discord_user, inat_user)
+                yield (discord_user, inat_user)
