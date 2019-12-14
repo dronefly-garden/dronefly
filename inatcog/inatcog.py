@@ -1,6 +1,7 @@
 """Module to access iNaturalist API."""
 
 from abc import ABC
+from math import ceil
 import re
 from typing import AsyncIterator, Tuple
 import discord
@@ -453,7 +454,18 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
-        embeds = [make_embed(description=page) for page in pages]
+
+        # Avoid having to fully enumerate pages just to get # of pages:
+        all_users = await self.config.all_users()
+        pages_num = ceil(len(all_users) / 10)
+
+        embeds = [
+            make_embed(
+                title=f"Discord iNat user list (page {index} of {pages_num})",
+                description=page,
+            )
+            for index, page in enumerate(pages, start=1)
+        ]
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat.command()
