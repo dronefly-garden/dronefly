@@ -486,7 +486,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         all_users = await self.config.all_users()
 
         for discord_id in all_users:
-            discord_user = await self.bot.fetch_user(discord_id)
+            discord_user = self.bot.get_user(discord_id)
             user_json = await self.api.get_users(all_users[discord_id]["inat_user_id"])
             inat_user = None
             if user_json:
