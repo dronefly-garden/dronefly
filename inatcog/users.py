@@ -15,7 +15,7 @@ PAT_USER_LINK = re.compile(
 class User(DataClassJsonMixin):
     """A user."""
 
-    id: int = field(metadata=config(field_name="user_id"))
+    user_id: int = field(metadata=config(field_name="id"))
     name: str
     login: str
 
