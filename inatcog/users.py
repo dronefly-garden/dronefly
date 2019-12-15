@@ -1,6 +1,7 @@
 """Module to handle users."""
 import re
-from typing import NamedTuple
+from dataclasses import dataclass, field
+from dataclasses_json import config, DataClassJsonMixin
 from .api import WWW_BASE_URL
 
 PAT_USER_LINK = re.compile(
@@ -10,10 +11,11 @@ PAT_USER_LINK = re.compile(
 )
 
 
-class User(NamedTuple):
+@dataclass
+class User(DataClassJsonMixin):
     """A user."""
 
-    user_id: int
+    id: int = field(metadata=config(field_name="user_id"))
     name: str
     login: str
 
@@ -28,24 +30,3 @@ class User(NamedTuple):
     def profile_link(self):
         """User profile link in markdown format."""
         return f"[{self.display_name()}]({self.profile_url()})"
-
-
-def get_user_from_json(record):
-    """Get User from JSON record.
-
-    Parameters
-    ----------
-    record: dict
-        A JSON record from /v1/users or other endpoints including user
-        records.
-
-    Returns
-    -------
-    User
-        A User object from the JSON record.
-    """
-    user_id = record["id"]
-    name = record["name"]
-    login = record["login"]
-
-    return User(user_id, name, login)

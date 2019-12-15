@@ -16,7 +16,7 @@ from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxa import INatTaxaQuery, get_taxon_fields
-from .users import get_user_from_json, PAT_USER_LINK, User
+from .users import PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
@@ -417,7 +417,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         user = None
         response = await self.api.get_users(user_query)
         if response and response["results"]:
-            user = get_user_from_json(response["results"][0])
+            user = User.from_dict(response["results"][0])
             LOG.info(user)
             mat_login = user_query.lower()
             mat_id = int(user_query) if user_query.isnumeric() else None
@@ -496,7 +496,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         user = None
         response = await self.api.get_users(inat_user_id)
         if response and response["results"] and len(response["results"]) == 1:
-            user = get_user_from_json(response["results"][0])
+            user = User.from_dict(response["results"][0])
         if not user:
             await ctx.send("iNat user id lookup failed.")
             return
@@ -525,6 +525,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 results = user_json["results"]
                 if results:
                     LOG.info(results[0])
-                    inat_user = get_user_from_json(results[0])
+                    inat_user = User.from_dict(results[0])
 
             yield (discord_user, inat_user)

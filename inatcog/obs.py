@@ -5,7 +5,7 @@ from typing import NamedTuple
 
 from .api import WWW_BASE_URL
 from .taxa import Taxon, get_taxon_fields
-from .users import User, get_user_from_json
+from .users import User
 
 PAT_OBS_LINK = re.compile(
     r"\b((?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))"
@@ -87,7 +87,7 @@ def get_obs_fields(obs):
     else:
         community_taxon = None
 
-    user = get_user_from_json(obs["user"])
+    user = User.from_dict(obs["user"])
 
     photos = obs.get("photos")
     if photos:

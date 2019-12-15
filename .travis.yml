@@ -9,6 +9,7 @@ install:
  - pip install pyparsing
  - pip install timeago
  - pip install ebird-api
+ - pip install dataclasses-json
 
 script:
  - pytest
