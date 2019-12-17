@@ -4,8 +4,9 @@ import logging
 from urllib.error import URLError
 from redbot.core import commands, checks, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-from ebird.api import get_observations, get_region
+from ebird.api import get_observations
 import discord
+from .api import EBirdAPI
 
 LOG = logging.getLogger("red.dronefly.ebirdcog")
 
@@ -42,6 +43,7 @@ class EBirdCog(commands.Cog):
         self.config.register_global(
             region="CA-NS", days=30, date_format="%d %b", datetime_format="%H:%M, %d %b"
         )
+        self.api = EBirdAPI(self)
 
     @commands.group()
     async def ebird(self, ctx):
@@ -62,7 +64,7 @@ class EBirdCog(commands.Cog):
         region_code = await self.config.region()
         region = {}
         try:
-            region = await self.get_region(ctx, region_code)
+            region = await self.api.get_region(ctx.channel, region_code)
         except ValueError as err:
             msg = (
                 "eBird region not valid: {code}; error: {err}.\n"
@@ -90,7 +92,7 @@ class EBirdCog(commands.Cog):
 
         if region_code:
             try:
-                region = await self.get_region(ctx, region_code)
+                region = await self.api.get_region(ctx.channel, region_code)
             except ValueError as err:
                 await ctx.send(str(err) % region_code)
                 return
@@ -153,7 +155,7 @@ class EBirdCog(commands.Cog):
             return
 
         try:
-            region = await self.get_region(ctx, region_code)
+            region = await self.api.get_region(ctx.channel, region_code)
         except ValueError as err:
             await ctx.send(str(err) % region_code)
             return
@@ -178,7 +180,7 @@ class EBirdCog(commands.Cog):
 
     async def get_hybrid_observations(self, ctx, region_code, days):
         """Gets recent hybrid observations."""
-        ebird_key = await self.get_api_key(ctx)
+        ebird_key = await self.api.get_api_key(ctx.channel)
         if ebird_key is None:
             return False
 
@@ -195,24 +197,3 @@ class EBirdCog(commands.Cog):
         except ConnectionResetError:
             raise LookupError("Could not contact eBird")
         return observations
-
-    async def get_region(self, ctx, region_code):
-        """Gets recent hybrid observations."""
-        ebird_key = await self.get_api_key(ctx)
-        if ebird_key is None:
-            return False
-        return get_region(ebird_key["api_key"], region_code)
-
-    async def get_api_key(self, ctx):
-        """Gets API key."""
-        key = await self.bot.db.api_tokens.get_raw("ebird", default={"api_key": None})
-        if key["api_key"] is None:
-            await ctx.send(
-                "The eBird API key is not set yet.\n"
-                "1. Get one here:\n"
-                "   https://ebird.org/api/keygen\n"
-                "2. Set the key:\n"
-                "   [p]set api ebird api_key,your-key-goes-here"
-            )
-            return None
-        return key
