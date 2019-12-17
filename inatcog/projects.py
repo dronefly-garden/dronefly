@@ -8,7 +8,7 @@ from dataclasses_json import config, DataClassJsonMixin
 class UserProject(DataClassJsonMixin):
     """A collection project for observations by specific users."""
 
-    id: int = field(metadata=config(field_name="project_id"))
+    project_id: int = field(metadata=config(field_name="id"))
     title: str
     user_ids: List
     project_observation_rules: List

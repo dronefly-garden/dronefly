@@ -486,19 +486,23 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         # already just to get # of pages of member users:
         all_users = await self.config.all_users()
         user_projects = await self.config.guild(ctx.guild).user_projects()
-        main_project_id = int(next(iter(user_projects))) if user_projects else None
 
-        observed_by_ids = []
-        if main_project_id:
-            response = await self.api.get_projects(main_project_id)
-            if response:
-                project = UserProject.from_dict(response["results"][0])
-                observed_by_ids = project.observed_by_ids()
+        responses = [
+            await self.api.get_projects(int(project_id)) for project_id in user_projects
+        ]
+        projects = [
+            UserProject.from_dict(response["results"][0])
+            for response in responses
+            if response
+        ]
 
         def emojis(user_id: int):
-            if user_id in observed_by_ids:
-                return user_projects[str(main_project_id)]
-            return ""
+            emojis = [
+                user_projects[str(project.project_id)]
+                for project in projects
+                if user_id in project.observed_by_ids()
+            ]
+            return " ".join(emojis)
 
         all_member_users = {
             key: value
