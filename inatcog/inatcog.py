@@ -3,7 +3,7 @@
 from abc import ABC
 from math import ceil
 import re
-from typing import AsyncIterator, Tuple
+from typing import AsyncIterator, Tuple, Union
 import discord
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -15,6 +15,7 @@ from .inat_embeds import INatEmbeds
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
+from .projects import UserProject
 from .taxa import INatTaxaQuery, get_taxon_fields
 from .users import PAT_USER_LINK, User
 
@@ -43,8 +44,6 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
     See https://github.com/mikeshardmind/SinbadCogs/blob/v3/rolemanagement/core.py
     """
 
-    pass  # pylint: disable=unnecessary-pass
-
 
 class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     """An iNaturalist commands cog."""
@@ -57,6 +56,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         # TODO: generalize & make configurable
         self.config.register_guild(
             autoobs=False,
+            user_projects={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
         self.config.register_user(inat_user_id=None)
@@ -66,7 +66,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform."""
-        pass  # pylint: disable=unnecessary-pass
 
     @inat.group(invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
@@ -398,6 +397,37 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
+    async def projectadd(self, ctx, project_id: int, emoji: Union[str, discord.Emoji]):
+        """Add user project for guild."""
+        config = self.config.guild(ctx.guild)
+        user_projects = await config.user_projects()
+        project_id_str = str(project_id)
+        if project_id_str in user_projects:
+            await ctx.send("iNat user project already known.")
+            return
+
+        user_projects[project_id_str] = str(emoji)
+        await config.user_projects.set(user_projects)
+        await ctx.send("iNat user project added.")
+
+    @inat.command()
+    @checks.admin_or_permissions(manage_roles=True)
+    async def projectdel(self, ctx, project_id: int):
+        """Remove user project for guild."""
+        config = self.config.guild(ctx.guild)
+        user_projects = await config.user_projects()
+        project_id_str = str(project_id)
+
+        if project_id_str not in user_projects:
+            await ctx.send("iNat user project not known.")
+            return
+
+        del user_projects[project_id_str]
+        await config.user_projects.set(user_projects)
+        await ctx.send("iNat user project removed.")
+
+    @inat.command()
+    @checks.admin_or_permissions(manage_roles=True)
     async def useradd(self, ctx, discord_user: discord.User, inat_user):
         """Add user as an iNat user."""
         config = self.config.user(discord_user)
@@ -447,7 +477,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     @checks.admin_or_permissions(manage_roles=True)
     @inat.command()
     async def userlist(self, ctx):
-        """List users with known iNat ids is known."""
+        """List members with known iNat ids."""
         if not ctx.guild:
             return
 
@@ -455,6 +485,21 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         # which would otherwise do expensive API calls if not in the cache
         # already just to get # of pages of member users:
         all_users = await self.config.all_users()
+        user_projects = await self.config.guild(ctx.guild).user_projects()
+        main_project_id = int(next(iter(user_projects))) if user_projects else None
+
+        observed_by_ids = []
+        if main_project_id:
+            response = await self.api.get_projects(main_project_id)
+            if response:
+                project = UserProject.from_dict(response["results"][0])
+                observed_by_ids = project.observed_by_ids()
+
+        def emojis(user_id: int):
+            if user_id in observed_by_ids:
+                return user_projects[str(main_project_id)]
+            return ""
+
         all_member_users = {
             key: value
             for (key, value) in all_users.items()
@@ -463,7 +508,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         pages_num = ceil(len(all_member_users) / 10)
 
         all_names = [
-            f"{duser.mention} is {iuser.profile_link()}"
+            f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
             async for (duser, iuser) in self.get_user_pairs(all_member_users)
         ]
 

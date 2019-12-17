@@ -14,6 +14,7 @@ class INatAPI:
 
     def __init__(self):
         self.request_time = time()
+        self.projects_cache = {}
         self.users_cache = {}
         self.session = aiohttp.ClientSession()
 
@@ -58,6 +59,23 @@ class INatAPI:
             return result["total_bounds"]
 
         return None
+
+    async def get_projects(self, project_id: int):
+        """Get the project for the specified id."""
+        request = f"/v1/projects/{project_id}"
+
+        if project_id not in self.projects_cache:
+            async with self.session.get(f"{API_BASE_URL}{request}") as response:
+                LOG.info(response)
+                if response.status == 200:
+                    self.projects_cache[project_id] = await response.json()
+                    LOG.info(self.projects_cache[project_id])
+
+        return (
+            self.projects_cache[project_id]
+            if project_id in self.projects_cache
+            else None
+        )
 
     async def get_users(self, query: Union[int, str]):
         """Get the users for the specified login, user_id, or query."""
