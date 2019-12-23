@@ -279,9 +279,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
             url = mat["url"]
 
-            results = (
-                await self.api.get_observations(obs_id, include_new_projects=True)
-            )["results"]
+            results = (await self.api.get_observations(obs_id, include_new_projects=1))[
+                "results"
+            ]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sound:
