@@ -158,6 +158,35 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
+    async def make_related_embed(self, taxa):
+        """Return embed for related taxa."""
+        names = format_taxon_names_for_embed(
+            taxa, with_term=True, names_format="**The taxa:** %s"
+        )
+        taxa_iter = iter(taxa)
+        first_taxon = next(taxa_iter)
+        if len(taxa) == 1:
+            taxon = first_taxon
+        else:
+            first_taxon_ancestor_ids = first_taxon.ancestor_ids
+            first_set = set(first_taxon_ancestor_ids)
+            remaining_sets = [set(taxon.ancestor_ids) for taxon in taxa_iter]
+            common_ancestors = first_set.intersection(*remaining_sets)
+
+            common_ancestor_indices = [
+                first_taxon_ancestor_ids.index(ancestor_id)
+                for ancestor_id in common_ancestors
+            ]
+            common_ancestor_id = first_taxon_ancestor_ids[max(common_ancestor_indices)]
+            taxon_record = (await self.api.get_taxa(common_ancestor_id))["results"][0]
+            taxon = get_taxon_fields(taxon_record)
+
+        description = (
+            f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon)}"
+        )
+
+        return make_embed(title="Closest related taxon", description=description)
+
     async def make_taxa_embed(self, rec):
         """Make embed describing taxa record."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")

@@ -354,6 +354,33 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         return
 
     @inat.command()
+    async def related(self, ctx, *, query):
+        """Determine relatedness of one or more species.
+
+        **Examples:**
+        ```
+        [p]inat related 24255,24267
+        [p]inat related boreal chorus frog,western chorus frog
+        ```
+        """
+
+        if not query:
+            await ctx.send_help()
+            return
+
+        try:
+            taxa = await self.taxa_query.query_taxa(query)
+        except ParseException:
+            await ctx.send(embed=sorry())
+            return
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
+
+        await ctx.send(embed=await self.make_related_embed(taxa))
+
+    @inat.command()
     async def taxon(self, ctx, *, query):
         """Look up the taxon best matching the query.
 
