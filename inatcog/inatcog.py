@@ -67,7 +67,7 @@ class ContextMemberConverter(NamedTuple):
 
         # Otherwise no partial match from context, & no exact match
         raise commands.BadArgument(
-            "No recently active member matches. Use exact username or nickname for best results."
+            "No recently active member found. Try exact username or nickname."
         )
 
 
