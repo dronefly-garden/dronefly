@@ -60,13 +60,14 @@ class ContextMemberConverter(NamedTuple):
                 and re.match(pat, cached_members[name].nick, re.I)
             )
         ]
+        # First match is considered the best match (i.e. more recently active)
         match = ctx.guild.get_member(matches[0].id) if matches else None
         if match:
             return cls(match)
 
-        # Otherwise no exact match
+        # Otherwise no partial match from context, & no exact match
         raise commands.BadArgument(
-            "No recently active member matches. Exact name must be given."
+            "No recently active member matches. Use exact username or nickname for best results."
         )
 
 
