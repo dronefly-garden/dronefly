@@ -41,6 +41,8 @@ class ContextMemberConverter(NamedTuple):
         except commands.BadArgument:
             match = None
 
+        pat = re.escape(arg)
+
         # Try partial match on name or nick from recent messages for this guild.
         cached_members = {
             str(msg.author.name): msg.author
@@ -52,10 +54,10 @@ class ContextMemberConverter(NamedTuple):
         matches = [
             cached_members[name]
             for name in cached_members
-            if re.match(arg, name, re.I)
+            if re.match(pat, name, re.I)
             or (
                 cached_members[name].nick
-                and re.match(arg, cached_members[name].nick, re.I)
+                and re.match(pat, cached_members[name].nick, re.I)
             )
         ]
         match = ctx.guild.get_member(matches[0].id) if matches else None
