@@ -110,6 +110,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         self.config.register_channel(autoobs=None)
         super().__init__()
 
+    def cog_unload(self):
+        """Cleanup when the cog unloads."""
+        self.api.session.detach()
+
     @commands.group()
     async def inat(self, ctx):
         """Access the iNat platform.
