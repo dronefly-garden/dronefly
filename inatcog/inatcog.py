@@ -3,7 +3,7 @@
 from abc import ABC
 from math import ceil
 import re
-from typing import AsyncIterator, Tuple, Union
+from typing import AsyncIterator, NamedTuple, Tuple, Union
 import discord
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -21,6 +21,51 @@ from .users import PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
+
+
+class ContextMemberConverter(NamedTuple):
+    """Context-aware member converter."""
+
+    member: discord.Member
+
+    @classmethod
+    async def convert(cls, ctx: commands.Context, arg: str):
+        """Find best match for member from recent messages."""
+        if not ctx.guild:
+            return
+
+        # Prefer exact match:
+        try:
+            match = await commands.MemberConverter().convert(ctx, arg)
+            return cls(match)
+        except commands.BadArgument:
+            match = None
+
+        # Try partial match on name or nick from recent messages for this guild.
+        cached_members = {
+            str(msg.author.name): msg.author
+            for msg in ctx.bot.cached_messages
+            if not msg.author.bot
+            and ctx.guild == msg.guild
+            and ctx.guild.get_member(msg.author.id)
+        }
+        matches = [
+            cached_members[name]
+            for name in cached_members
+            if re.match(arg, name, re.I)
+            or (
+                cached_members[name].nick
+                and re.match(arg, cached_members[name].nick, re.I)
+            )
+        ]
+        match = ctx.guild.get_member(matches[0].id) if matches else None
+        if match:
+            return cls(match)
+
+        # Otherwise no exact match
+        raise commands.BadArgument(
+            "No recently active member matches. Exact name must be given."
+        )
 
 
 class InheritableBoolConverter(commands.Converter):
@@ -592,16 +637,12 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat.command()
-    async def usershow(self, ctx, discord_user: discord.User):
+    async def usershow(self, ctx, who: ContextMemberConverter):
         """Show user if their iNat id is known."""
         if not ctx.guild:
             return
 
-        if not ctx.guild.get_member(discord_user.id):
-            await ctx.send(f"That Discord user is not in {ctx.guild.name} guild.")
-            return
-
-        config = self.config.user(discord_user)
+        config = self.config.user(who.member)
         inat_user_id = await config.inat_user_id()
         if not inat_user_id:
             await ctx.send("iNat user not known.")
@@ -615,7 +656,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
         await ctx.send(
             embed=make_embed(
-                description=f"{discord_user.mention} is {user.profile_link()}"
+                description=f"{who.member.mention} is {user.profile_link()}"
             )
         )
 
