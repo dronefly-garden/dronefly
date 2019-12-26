@@ -663,11 +663,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
-        embed.add_field(
-            name="Obs / Ids",
-            value=f"{user.observations_count} / {user.identifications_count}",
-            inline=True,
-        )
         user_projects = await self.config.guild(ctx.guild).user_projects() or []
         for project_id in user_projects:
             response = await self.api.get_projects(int(project_id))
@@ -680,40 +675,54 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     ObserverStats.from_dict(observer)
                     for observer in response["results"]
                 ]
-                user_id = int(inat_user_id)
-                # FIXME: DRY!
-                obs_rank = next(
-                    (index for (index, d) in enumerate(stats) if d.user_id == user_id),
-                    None,
-                )
-                if obs_rank:
-                    percent = ceil(100 * (obs_rank / len(stats)))
+                if stats:
                     emoji = user_projects[project_id]
+                    user_id = int(inat_user_id)
+                    # FIXME: DRY!
+                    obs_rank = next(
+                        (
+                            index + 1
+                            for (index, d) in enumerate(stats)
+                            if d.user_id == user_id
+                        ),
+                        None,
+                    )
+                    if obs_rank:
+                        obs_cnt = stats[obs_rank - 1].observation_count
+                        obs_pct = ceil(100 * (obs_rank / len(stats)))
+                    else:
+                        obs_rank = "unranked"
+                        obs_cnt = "unknown"
+                        obs_pct = "na"
+                    response = await self.api.get_project_observers_stats(
+                        project_id=project_id, order_by="species_count"
+                    )
+                    stats = [
+                        ObserverStats.from_dict(observer)
+                        for observer in response["results"]
+                    ]
+                    spp_rank = next(
+                        (
+                            index + 1
+                            for (index, d) in enumerate(stats)
+                            if d.user_id == user_id
+                        ),
+                        None,
+                    )
+                    if spp_rank:
+                        spp_cnt = stats[spp_rank - 1].species_count
+                        spp_pct = ceil(100 * (spp_rank / len(stats)))
+                    else:
+                        spp_rank = "unranked"
+                        spp_cnt = "unknown"
+                        spp_pct = "na"
+                    fmt = f"{obs_cnt} (#{obs_rank}, {obs_pct}%) {spp_cnt} (#{spp_rank}, {spp_pct}%)"
                     embed.add_field(
-                        name=f"{emoji} Obs (r#,r%)",
-                        value=f"{stats[obs_rank].observation_count} ({obs_rank}, {percent}%)",
+                        name=f"{emoji} Obs# (rank,%) Spp# (rank,%)",
+                        value=fmt,
                         inline=True,
                     )
-                response = await self.api.get_project_observers_stats(
-                    project_id=project_id, order_by="species_count"
-                )
-                stats = [
-                    ObserverStats.from_dict(observer)
-                    for observer in response["results"]
-                ]
-                user_id = int(inat_user_id)
-                spp_rank = next(
-                    (index for (index, d) in enumerate(stats) if d.user_id == user_id),
-                    None,
-                )
-                if spp_rank:
-                    percent = ceil(100 * (spp_rank / len(stats)))
-                    emoji = user_projects[project_id]
-                    embed.add_field(
-                        name=f"{emoji} Spp (r#,r%)",
-                        value=f"{stats[spp_rank].species_count} ({spp_rank}, {percent}%)",
-                        inline=True,
-                    )
+        embed.add_field(name="Ids", value=user.identifications_count, inline=True)
 
         await ctx.send(embed=embed)
 
