@@ -18,6 +18,8 @@ class User(DataClassJsonMixin):
     user_id: int = field(metadata=config(field_name="id"))
     name: str
     login: str
+    observations_count: int
+    identifications_count: int
 
     def display_name(self):
         """Name to include in displays."""

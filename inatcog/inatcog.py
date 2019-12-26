@@ -15,7 +15,7 @@ from .inat_embeds import INatEmbeds
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
-from .projects import UserProject
+from .projects import UserProject, ObserverStats
 from .taxa import INatTaxaQuery, get_taxon_fields
 from .users import PAT_USER_LINK, User
 
@@ -661,11 +661,61 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if not user:
             await ctx.send("iNat user id lookup failed.")
             return
-        await ctx.send(
-            embed=make_embed(
-                description=f"{who.member.mention} is {user.profile_link()}"
-            )
+
+        embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
+        embed.add_field(
+            name="Obs / Ids",
+            value=f"{user.observations_count} / {user.identifications_count}",
+            inline=True,
         )
+        user_projects = await self.config.guild(ctx.guild).user_projects() or []
+        for project_id in user_projects:
+            response = await self.api.get_projects(int(project_id))
+            user_project = UserProject.from_dict(response["results"][0])
+            if inat_user_id in user_project.observed_by_ids():
+                response = await self.api.get_project_observers_stats(
+                    project_id=project_id
+                )
+                stats = [
+                    ObserverStats.from_dict(observer)
+                    for observer in response["results"]
+                ]
+                user_id = int(inat_user_id)
+                # FIXME: DRY!
+                obs_rank = next(
+                    (index for (index, d) in enumerate(stats) if d.user_id == user_id),
+                    None,
+                )
+                if obs_rank:
+                    percent = ceil(100 * (obs_rank / len(stats)))
+                    emoji = user_projects[project_id]
+                    embed.add_field(
+                        name=f"{emoji} Obs (r#,r%)",
+                        value=f"{stats[obs_rank].observation_count} ({obs_rank}, {percent}%)",
+                        inline=True,
+                    )
+                response = await self.api.get_project_observers_stats(
+                    project_id=project_id, order_by="species_count"
+                )
+                stats = [
+                    ObserverStats.from_dict(observer)
+                    for observer in response["results"]
+                ]
+                user_id = int(inat_user_id)
+                spp_rank = next(
+                    (index for (index, d) in enumerate(stats) if d.user_id == user_id),
+                    None,
+                )
+                if spp_rank:
+                    percent = ceil(100 * (spp_rank / len(stats)))
+                    emoji = user_projects[project_id]
+                    embed.add_field(
+                        name=f"{emoji} Spp (r#,r%)",
+                        value=f"{stats[spp_rank].species_count} ({spp_rank}, {percent}%)",
+                        inline=True,
+                    )
+
+        await ctx.send(embed=embed)
 
     async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
         """

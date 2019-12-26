@@ -25,3 +25,12 @@ class UserProject(DataClassJsonMixin):
             for rule in self.project_observation_rules
             if rule["operator"] == "observed_by_user?"
         ]
+
+
+@dataclass
+class ObserverStats(DataClassJsonMixin):
+    """The stats for an observer from a set of observers (as from a project)."""
+
+    user_id: int
+    observation_count: int
+    species_count: int

@@ -74,6 +74,17 @@ class INatAPI:
             else None
         )
 
+    async def get_project_observers_stats(self, **kwargs):
+        """Query API for user counts & rankings in a project."""
+        request = "/v1/observations/observers"
+        # TODO: validate kwargs includes project_id
+        # TODO: support projects with > 500 observers (one page, default)
+        async with self.session.get(
+            f"{API_BASE_URL}{request}", params=kwargs
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+
     async def get_users(self, query: Union[int, str]):
         """Get the users for the specified login, user_id, or query."""
         if isinstance(query, int) or query.isnumeric():
