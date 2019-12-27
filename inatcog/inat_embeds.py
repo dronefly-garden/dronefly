@@ -8,7 +8,7 @@ from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
 from .obs import PAT_OBS_LINK
-from .taxa import format_taxon_name, format_taxon_names, get_taxon_fields
+from .taxa import format_taxon_name, format_taxon_names, get_taxon_fields, FilteredTaxon
 
 
 @format_items_for_embed
@@ -208,10 +208,13 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(self, filtered_taxon):
+    async def make_taxa_embed(self, arg):
         """Make embed describing taxa record."""
-        taxon = filtered_taxon.taxon
-        user = filtered_taxon.user
+        if isinstance(arg, FilteredTaxon):
+            (taxon, user) = arg
+        else:
+            taxon = arg
+            user = None
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
 
         async def format_description(rec):
