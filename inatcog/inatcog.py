@@ -150,6 +150,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         ```
         Keywords can be abbreviated:
         - `obs` for `observation`
+        - `img` for `image`
         - `m` for `map`
         - `t` for `taxon`
         When configured as recommended, `[p]last` is an alias for `[p]inat last`.
@@ -404,7 +405,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
     @inat.command()
     async def image(self, ctx, *, taxon_query):
-        """Show default image for taxon query."""
+        """Show default image for taxon query.
+
+        See `[p]help inat taxon` for `taxon_query` format."""
         try:
             taxon = await self.taxa_query.query_taxon(taxon_query)
         except ParseException:
