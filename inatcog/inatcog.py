@@ -143,6 +143,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         [p]inat last obs map
         [p]inat last obs taxon
         [p]inat last obs family
+        [p]inat last taxon
+        [p]inat last taxon image
+        [p]inat last taxon map
+        [p]inat last taxon family
         ```
         Keywords can be abbreviated:
         - `obs` for `observation`
@@ -214,6 +218,9 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 if display in ("m", "map"):
                     if last and last.taxon:
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
+                elif display in ("img", "image"):
+                    if last and last.taxon:
+                        await ctx.send(embed=await self.make_image_embed(last.taxon))
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
@@ -396,6 +403,21 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send(embed=await self.make_related_embed(taxa))
 
     @inat.command()
+    async def image(self, ctx, *, taxon_query):
+        """Show default image for taxon query."""
+        try:
+            taxon = await self.taxa_query.query_taxon(taxon_query)
+        except ParseException:
+            await ctx.send(embed=sorry())
+            return
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
+
+        await ctx.send(embed=await self.make_image_embed(taxon))
+
+    @inat.command()
     async def taxon(self, ctx, *, query):
         """Show taxon best matching the query.
 
@@ -430,10 +452,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         - `[p]t ssp var form domestic duck` to search for domestic
         duck subspecies, variety, or form
         """
-
-        if not query:
-            await ctx.send_help()
-            return
 
         try:
             taxon = await self.taxa_query.query_taxon(query)

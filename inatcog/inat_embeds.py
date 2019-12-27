@@ -17,6 +17,15 @@ def format_taxon_names_for_embed(*args, **kwargs):
     return format_taxon_names(*args, **kwargs)
 
 
+def format_taxon_title(rec):
+    """Format taxon title."""
+    title = format_taxon_name(rec)
+    matched = rec.term
+    if matched not in (rec.name, rec.common):
+        title += f" ({matched})"
+    return title
+
+
 EMOJI = {
     "research": ":white_check_mark:",
     "needs_id": ":large_orange_diamond:",
@@ -187,16 +196,21 @@ class INatEmbeds(MixinMeta):
 
         return make_embed(title="Closest related taxon", description=description)
 
+    async def make_image_embed(self, rec):
+        """Make embed showing default image for taxon."""
+        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
+
+        title = format_taxon_title(rec)
+
+        embed.title = title
+        if rec.thumbnail:
+            embed.set_image(url=re.sub("/square", "/original", rec.thumbnail))
+
+        return embed
+
     async def make_taxa_embed(self, rec):
         """Make embed describing taxa record."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
-
-        def format_title(rec):
-            title = format_taxon_name(rec)
-            matched = rec.term
-            if matched not in (rec.name, rec.common):
-                title += f" ({matched})"
-            return title
 
         async def format_description(rec):
             observations = rec.observations
@@ -217,7 +231,7 @@ class INatEmbeds(MixinMeta):
                 description += "."
             return description
 
-        title = format_title(rec)
+        title = format_taxon_title(rec)
         description = await format_description(rec)
         description = await format_ancestors(description, rec)
 
