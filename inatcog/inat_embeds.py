@@ -208,9 +208,11 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(self, rec):
+    async def make_taxa_embed(self, filtered_taxon):
         """Make embed describing taxa record."""
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
+        taxon = filtered_taxon.taxon
+        user = filtered_taxon.user
+        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
 
         async def format_description(rec):
             observations = rec.observations
@@ -231,13 +233,26 @@ class INatEmbeds(MixinMeta):
                 description += "."
             return description
 
-        title = format_taxon_title(rec)
-        description = await format_description(rec)
-        description = await format_ancestors(description, rec)
+        title = format_taxon_title(taxon)
+        description = await format_description(taxon)
+        description = await format_ancestors(description, taxon)
+        if user:
+            taxon_id = taxon.taxon_id
+            user_id = user.user_id
+            observations = await self.api.get_observations(
+                taxon_id=taxon_id, user_id=user_id
+            )
+            if observations:
+                count = observations["total_results"]
+                url = (
+                    f"{WWW_BASE_URL}/observations?taxon_id={taxon_id}&user_id={user_id}"
+                )
+                link = f"[{count}]({url})"
+                description += f"\nobserved by {user.display_name()}: {link}"
 
         embed.title = title
         embed.description = description
-        if rec.thumbnail:
-            embed.set_thumbnail(url=rec.thumbnail)
+        if taxon.thumbnail:
+            embed.set_thumbnail(url=taxon.thumbnail)
 
         return embed

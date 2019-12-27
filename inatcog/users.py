@@ -2,6 +2,7 @@
 import re
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
+import discord
 from .api import WWW_BASE_URL
 
 PAT_USER_LINK = re.compile(
@@ -32,3 +33,27 @@ class User(DataClassJsonMixin):
     def profile_link(self):
         """User profile link in markdown format."""
         return f"[{self.display_name()}]({self.profile_url()})"
+
+
+class INatUserTable:
+    """Lookup helper for registered iNat users."""
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def get_user(self, member: discord.Member):
+        """Get user for Discord member."""
+        user = None
+        user_config = self.bot.config.user(member)
+
+        inat_user_id = await user_config.inat_user_id()
+        if not inat_user_id:
+            raise LookupError("iNat user not known.")
+
+        response = await self.bot.api.get_users(inat_user_id)
+        if response and response["results"] and len(response["results"]) == 1:
+            user = User.from_dict(response["results"][0])
+        if not user:
+            raise LookupError("iNat user id lookup failed.")
+
+        return user

@@ -17,7 +17,7 @@ from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
 from .taxa import INatTaxaQuery, get_taxon_fields
-from .users import PAT_USER_LINK, User
+from .users import INatUserTable, PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
@@ -36,7 +36,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     def __init__(self, bot):
         self.bot = bot
         self.api = INatAPI()
-        self.taxa_query = INatTaxaQuery(self.api)
+        self.taxa_query = INatTaxaQuery(self)
+        self.user_table = INatUserTable(self)
         self.config = Config.get_conf(self, identifier=1607)
         self.config.register_guild(
             autoobs=False,
@@ -409,7 +410,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         See `[p]help inat taxon` for `taxon_query` format."""
         try:
-            taxon = await self.taxa_query.query_taxon(taxon_query)
+            filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -418,7 +419,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=await self.make_image_embed(taxon))
+        await ctx.send(embed=await self.make_image_embed(filtered_taxon.taxon))
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -457,7 +458,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         """
 
         try:
-            taxon = await self.taxa_query.query_taxon(query)
+            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -466,7 +467,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=await self.make_taxa_embed(taxon))
+        await ctx.send(embed=await self.make_taxa_embed(filtered_taxon))
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
@@ -606,17 +607,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if not ctx.guild:
             return
 
-        config = self.config.user(who.member)
-        inat_user_id = await config.inat_user_id()
-        if not inat_user_id:
-            await ctx.send("iNat user not known.")
-            return
-        user = None
-        response = await self.api.get_users(inat_user_id)
-        if response and response["results"] and len(response["results"]) == 1:
-            user = User.from_dict(response["results"][0])
-        if not user:
-            await ctx.send("iNat user id lookup failed.")
+        try:
+            user = await self.user_table.get_user(who.member)
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
             return
 
         embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
@@ -624,7 +619,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         for project_id in user_projects:
             response = await self.api.get_projects(int(project_id))
             user_project = UserProject.from_dict(response["results"][0])
-            if inat_user_id in user_project.observed_by_ids():
+            if user.user_id in user_project.observed_by_ids():
                 response = await self.api.get_project_observers_stats(
                     project_id=project_id
                 )
@@ -634,13 +629,12 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 ]
                 if stats:
                     emoji = user_projects[project_id]
-                    user_id = int(inat_user_id)
                     # FIXME: DRY!
                     obs_rank = next(
                         (
                             index + 1
                             for (index, d) in enumerate(stats)
-                            if d.user_id == user_id
+                            if d.user_id == user.user_id
                         ),
                         None,
                     )
@@ -662,7 +656,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         (
                             index + 1
                             for (index, d) in enumerate(stats)
-                            if d.user_id == user_id
+                            if d.user_id == user.user_id
                         ),
                         None,
                     )

@@ -75,7 +75,7 @@ RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
 OPS = ("in", "by", "at")
 
 SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
-CompoundQuery = namedtuple("CompoundQuery", "main, ancestor")
+CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user")
 
 
 class TaxonQueryParser:
@@ -127,7 +127,11 @@ class TaxonQueryParser:
             + Group(taxon)("ancestor")
         ) | Group(taxon)("main")
 
-        return within
+        by_user = (
+            within + Suppress(CaselessKeyword("by")) + Group(words)("user")
+        ) | within
+
+        return by_user
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
@@ -165,4 +169,8 @@ class TaxonQueryParser:
                 ancestor = get_simple_query(parsed["ancestor"][0])
             except KeyError:
                 pass
-        return CompoundQuery(main=main, ancestor=ancestor)
+            if "user" in parsed:
+                user = " ".join(parsed["user"].asList())
+            else:
+                user = None
+        return CompoundQuery(main=main, ancestor=ancestor, user=user)

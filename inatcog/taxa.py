@@ -2,7 +2,9 @@
 import re
 from typing import NamedTuple
 from .common import LOG
+from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
+from .users import User
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 
@@ -19,6 +21,14 @@ class Taxon(NamedTuple):
     ancestor_ids: list
     observations: int
     ancestor_ranks: list or None
+
+
+class FilteredTaxon(NamedTuple):
+    """A taxon with optional filters."""
+
+    taxon: Taxon
+    user: User
+    # location: Location
 
 
 TAXON_LIST_DELIMITER = [", ", " > "]
@@ -333,8 +343,8 @@ def match_taxon(query, records):
 class INatTaxaQuery:
     """Query iNat for taxa."""
 
-    def __init__(self, api):
-        self.api = api
+    def __init__(self, bot):
+        self.bot = bot
 
     async def get_taxon_ancestor(self, taxon, rank):
         """Get Taxon ancestor for specified rank from a Taxon object.
@@ -355,7 +365,9 @@ class INatTaxaQuery:
         if rank in taxon.ancestor_ranks:
             rank_index = taxon.ancestor_ranks.index(rank)
             ancestor = get_taxon_fields(
-                (await self.api.get_taxa(taxon.ancestor_ids[rank_index]))["results"][0]
+                (await self.bot.api.get_taxa(taxon.ancestor_ids[rank_index]))[
+                    "results"
+                ][0]
             )
             return ancestor
         return None
@@ -363,7 +375,7 @@ class INatTaxaQuery:
     async def maybe_match_taxon(self, query, ancestor_id=None):
         """Get taxon and return a match, if any."""
         if query.taxon_id:
-            records = (await self.api.get_taxa(query.taxon_id))["results"]
+            records = (await self.bot.api.get_taxa(query.taxon_id))["results"]
         else:
             kwargs = {}
             kwargs["q"] = " ".join(query.terms)
@@ -371,7 +383,7 @@ class INatTaxaQuery:
                 kwargs["rank"] = ",".join(query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
-            records = (await self.api.get_taxa(**kwargs))["results"]
+            records = (await self.bot.api.get_taxa(**kwargs))["results"]
 
         if not records:
             raise LookupError("Nothing found")
@@ -419,10 +431,16 @@ class INatTaxaQuery:
 
         return taxon
 
-    async def query_taxon(self, query):
+    async def query_taxon(self, ctx, query):
         """Query for taxon and return single taxon if found."""
         compound_query = TAXON_QUERY_PARSER.parse(query)
-        return await self.maybe_match_taxon_compound(compound_query)
+        taxon = await self.maybe_match_taxon_compound(compound_query)
+        if compound_query.user:
+            who = await ContextMemberConverter.convert(ctx, compound_query.user)
+            user = await self.bot.user_table.get_user(who.member)
+        else:
+            user = None
+        return FilteredTaxon(taxon, user)
 
     async def query_taxa(self, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
