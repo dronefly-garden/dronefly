@@ -16,6 +16,10 @@ class ContextMemberConverter(NamedTuple):
         if not ctx.guild:
             return
 
+        # Handle special 'me' user:
+        if arg.lower() == "me":
+            return cls(ctx.author)
+
         # Prefer exact match:
         try:
             match = await commands.MemberConverter().convert(ctx, arg)
