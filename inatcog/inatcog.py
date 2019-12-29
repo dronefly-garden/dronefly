@@ -16,7 +16,7 @@ from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
-from .taxa import INatTaxaQuery, get_taxon_fields
+from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon_fields
 from .users import INatUserTable, PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
@@ -136,7 +136,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         return
 
     @inat.command()
-    async def last(self, ctx, kind, display=None):
+    async def last(self, ctx, kind, display=None, user=None):
         """Show info for recently mentioned iNat page:
 
         ```
@@ -217,7 +217,13 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 return
 
             if display:
-                if display in ("m", "map"):
+                if display == "by":
+                    if last and last.taxon:
+                        who = await ContextMemberConverter.convert(ctx, user)
+                        user = await self.user_table.get_user(who.member)
+                        filtered_taxon = FilteredTaxon(last.taxon, user)
+                        await ctx.send(embed=await self.make_taxa_embed(filtered_taxon))
+                elif display in ("m", "map"):
                     if last and last.taxon:
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
                 elif display in ("img", "image"):
