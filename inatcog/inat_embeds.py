@@ -204,7 +204,20 @@ class INatEmbeds(MixinMeta):
 
         embed.title = title
         if rec.thumbnail:
-            embed.set_image(url=re.sub("/square", "/original", rec.thumbnail))
+            if rec.image:
+                image = rec.image
+            else:
+                # A taxon record may have a thumbnail but no image if the image
+                # is externally hosted (e.g. Flickr) and the record was created
+                # from /v1/taxa/autocomplete (i.e. only has a subset of the
+                # fields that /v1/taxa/# returns). In that case, we retrieve
+                # the full record via taxon_id so the image will be set from
+                # the full-quality original in taxon_photos.
+                taxon_record = (await self.api.get_taxa(rec.taxon_id))["results"][0]
+                full_taxon = get_taxon_fields(taxon_record)
+                image = full_taxon.image
+        if image:
+            embed.set_image(url=image)
 
         return embed
 

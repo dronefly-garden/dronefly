@@ -17,6 +17,7 @@ class Taxon(NamedTuple):
     common: str or None
     term: str
     thumbnail: str or None
+    image: str or None
     rank: str
     ancestor_ids: list
     observations: int
@@ -176,7 +177,24 @@ def get_taxon_fields(record):
     Taxon
         A Taxon object from the JSON record.
     """
+    thumbnail = None
     photo = record.get("default_photo")
+    thumbnail = photo.get("square_url")
+    # Though default_photo only contains small versions of the image,
+    # the original can be obtained for self-hosted images via this
+    # transform on the thumbnail image:
+    if re.search(r"https?://static\.inaturalist\.org", thumbnail):
+        image = re.sub("/square", "/original", thumbnail)
+    else:
+        # For externally hosted default images (e.g. Flickr), only full records
+        # retrieved via id# contain taxon_photos.
+        # - See make_image_embed (inat_embeds.py) which does the extra API call
+        #   to fetch the full-quality photo.
+        taxon_photos = record.get("taxon_photos")
+        if taxon_photos:
+            image = taxon_photos[0]["photo"]["original_url"]
+        else:
+            image = None
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
     ancestors = record.get("ancestors") or []
     ancestor_ranks = (
@@ -189,7 +207,8 @@ def get_taxon_fields(record):
         taxon_id,
         record.get("preferred_common_name"),
         record.get("matched_term") or "Id: %s" % taxon_id,
-        photo.get("square_url") if photo else None,
+        thumbnail,
+        image,
         record["rank"],
         record["ancestor_ids"],
         record["observations_count"],
