@@ -136,15 +136,17 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         return
 
     @inat.command()
-    async def last(self, ctx, kind, display=None, user=None):
+    async def last(self, ctx, kind, display=None, arg=None):
         """Show info for recently mentioned iNat page:
 
         ```
         [p]inat last observation
+        [p]inat last obs image 2
         [p]inat last obs map
         [p]inat last obs taxon
         [p]inat last obs family
         [p]inat last taxon
+        [p]inat last taxon by user
         [p]inat last taxon image
         [p]inat last taxon map
         [p]inat last taxon family
@@ -166,6 +168,18 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 return
 
             if display:
+                if display in ("img", "image"):
+                    if last and last.obs and last.obs.taxon:
+                        try:
+                            num = int(arg)
+                        except ValueError:
+                            num = 0
+                        await ctx.send(
+                            embed=await self.make_obs_embed(
+                                ctx.guild, last.obs, last.url, preview=num
+                            )
+                        )
+                        return
                 if display in ("t", "taxon"):
                     if last and last.obs and last.obs.taxon:
                         await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
@@ -219,7 +233,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             if display:
                 if display == "by":
                     if last and last.taxon:
-                        who = await ContextMemberConverter.convert(ctx, user)
+                        who = await ContextMemberConverter.convert(ctx, arg)
                         user = await self.user_table.get_user(who.member)
                         filtered_taxon = FilteredTaxon(last.taxon, user)
                         await ctx.send(embed=await self.make_taxa_embed(filtered_taxon))

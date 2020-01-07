@@ -1,7 +1,7 @@
 """Module to work with iNat observations."""
 
 import re
-from typing import NamedTuple
+from typing import List, NamedTuple
 
 from .api import WWW_BASE_URL
 from .taxa import Taxon, get_taxon_fields
@@ -24,6 +24,7 @@ class Obs(NamedTuple):
     obs_at: str
     user: User
     thumbnail: str
+    images: List[str]
     quality_grade: str
     idents_agree: int
     idents_count: int
@@ -89,7 +90,8 @@ def get_obs_fields(obs):
 
     user = User.from_dict(obs["user"])
 
-    photos = obs.get("photos")
+    photos = obs.get("photos") or []
+    images = [re.sub("/square", "/original", photo.get("url")) for photo in photos]
     if photos:
         thumbnail = photos[0].get("url")
     else:
@@ -113,6 +115,7 @@ def get_obs_fields(obs):
         obs["place_guess"],
         user,
         thumbnail,
+        images,
         obs["quality_grade"],
         idents_agree,
         idents_count,

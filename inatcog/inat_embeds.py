@@ -1,6 +1,7 @@
 """Module to handle iNat embed concerns."""
 from io import BytesIO
 import re
+from typing import Union
 from discord import File
 from .api import WWW_BASE_URL
 from .common import LOG
@@ -78,11 +79,22 @@ class INatEmbeds(MixinMeta):
         if sound:
             await channel.send(file=File(sound, filename=response.url.name))
 
-    async def make_obs_embed(self, guild, obs, url, preview=True):
+    async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
         def format_count(label, count):
             return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
+
+        def format_image_title_url(taxon, obs, num):
+            if taxon:
+                title = format_taxon_name(taxon)
+            else:
+                title = "Unknown"
+            title += f" (Image {num} of {len(obs.images)})"
+            photo_id = re.search(r"/photos/(\d+)", obs.images[num])[1]
+            url = f"{WWW_BASE_URL}/photos/{photo_id}"
+
+            return (title, url)
 
         def format_title(taxon, obs):
             if taxon:
@@ -149,16 +161,40 @@ class INatEmbeds(MixinMeta):
             taxon = obs.taxon
             user = obs.user
 
-            if preview and obs.thumbnail:
-                embed.set_image(url=re.sub("/square", "/original", obs.thumbnail))
+            image_only = False
+            error = None
+            if preview:
+                if isinstance(preview, bool):
+                    image_number = 1
+                else:
+                    image_number = preview
+                    image_only = True
+                if obs.images and image_number >= 1 and image_number <= len(obs.images):
+                    embed.set_image(url=obs.images[image_number - 1])
+                else:
+                    image_only = False
+                    if obs.images:
+                        num = len(obs.images)
+                        error = (
+                            f"*Image number out of range; must be between 1 and {num}.*"
+                        )
+                    else:
+                        error = f"*This observation has no images.*"
 
-            title = format_title(taxon, obs)
-            summary = format_summary(user, obs)
-            title, summary = format_community_id(title, summary, obs)
-            title = await format_projects(title, obs)
+            if image_only:
+                (title, url) = format_image_title_url(taxon, obs, image_number)
+                embed.title = title
+                embed.url = url
+            else:
+                title = format_title(taxon, obs)
+                summary = format_summary(user, obs)
+                title, summary = format_community_id(title, summary, obs)
+                title = await format_projects(title, obs)
 
-            embed.title = title
-            embed.description = summary
+                embed.title = title
+                if error:
+                    summary += "\n" + error
+                embed.description = summary
         else:
             mat = re.search(PAT_OBS_LINK, url)
             obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
