@@ -91,8 +91,12 @@ class INatEmbeds(MixinMeta):
             else:
                 title = "Unknown"
             title += f" (Image {num} of {len(obs.images)})"
-            photo_id = re.search(r"/photos/(\d+)", obs.images[num])[1]
-            url = f"{WWW_BASE_URL}/photos/{photo_id}"
+            mat = re.search(r"/photos/(\d+)", obs.images[num - 1])
+            if mat:
+                photo_id = mat[1]
+                url = f"{WWW_BASE_URL}/photos/{photo_id}"
+            else:
+                url = None
 
             return (title, url)
 
