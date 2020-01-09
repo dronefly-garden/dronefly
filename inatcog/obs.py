@@ -33,6 +33,7 @@ class Obs(NamedTuple):
     description: str
     project_ids: list
     sound: str
+    sounds: List[str]
 
 
 def get_obs_fields(obs):
@@ -100,8 +101,10 @@ def get_obs_fields(obs):
     sounds = obs.get("sounds")
     if sounds:
         sound = sounds[0].get("file_url")
+        sound_urls = [sound.get("file_url") for sound in sounds]
     else:
         sound = ""
+        sound_urls = []
     project_ids = obs["project_ids"]
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
@@ -124,6 +127,7 @@ def get_obs_fields(obs):
         obs["description"],
         obs["project_ids"],
         sound,
+        sound_urls,
     )
 
 

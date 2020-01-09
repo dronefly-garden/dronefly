@@ -34,6 +34,8 @@ EMOJI = {
     "fave": ":star:",
     "comment": ":speech_left:",
     "community": ":busts_in_silhouette:",
+    "image": ":camera:",
+    "sound": ":sound:",
 }
 
 
@@ -149,6 +151,13 @@ class INatEmbeds(MixinMeta):
                 title += " " + idents_count
             return (title, summary)
 
+        def format_media_counts(title, obs):
+            if obs.images:
+                title += format_count("image", len(obs.images))
+            if obs.sounds:
+                title += format_count("sound", len(obs.sounds))
+            return title
+
         async def format_projects(title, obs):
             project_emojis = (
                 await self.config.guild(guild).project_emojis() if guild else None
@@ -193,6 +202,7 @@ class INatEmbeds(MixinMeta):
                 title = format_title(taxon, obs)
                 summary = format_summary(user, obs)
                 title, summary = format_community_id(title, summary, obs)
+                title = format_media_counts(title, obs)
                 title = await format_projects(title, obs)
 
                 embed.title = title
