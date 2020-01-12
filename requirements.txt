@@ -1,2 +1,2 @@
 pyparsing
-timeago
+timeago==1.0.10

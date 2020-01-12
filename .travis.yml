@@ -2,12 +2,12 @@ language: python
 
 matrix:
   include:
-    - python: 3.7
+    - python: 3.8
 
 install:
  - pip install -U Red-DiscordBot
  - pip install pyparsing
- - pip install timeago
+ - pip install timeago==1.0.10 # 1.0.12 install fails on Windows; see timeago issue #29
  - pip install ebird-api
  - pip install dataclasses-json
 
