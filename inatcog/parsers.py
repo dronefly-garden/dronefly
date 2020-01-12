@@ -2,7 +2,7 @@
 from collections import namedtuple
 from pyparsing import (
     Word,
-    printables,
+    pyparsing_unicode,
     nums,
     Group,
     Suppress,
@@ -71,6 +71,19 @@ RANK_EQUIVALENTS = {
 }
 
 RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
+# These are Unicode characters that are either symbols, or else are letters
+# & diacritics from foreign names that may be known to English speakers
+# (e.g. Hawaiian common names).
+# - See: https://github.com/synrg/dronefly/issues/57
+# - Hybrids:
+#   - Anas × Mareca (from Latin1.printables)
+# - Hawaiian common names:
+#   - ʻAlae ʻula
+#   - Note: Hawaiian ʻokina is not the same as curly apostrophe even though similar!
+#   - Hawaiian has some characters in LatinA
+TAXON_NAME_CHARS = (
+    "ʻ" + pyparsing_unicode.Latin1.printables + pyparsing_unicode.LatinA.printables
+)
 
 OPS = ("in", "by", "at")
 
@@ -96,7 +109,7 @@ class TaxonQueryParser:
         dqt = '"'
         stop = oneOf(OPS + RANK_KEYWORDS, caseless=True, asKeyword=True)
 
-        phraseword = Word(printables, excludeChars=dqt)
+        phraseword = Word(TAXON_NAME_CHARS, excludeChars=dqt)
         phrase = Group(Suppress(dqt) + OneOrMore(phraseword) + Suppress(dqt))
 
         def get_abbr(_s, _l, term):
@@ -109,7 +122,7 @@ class TaxonQueryParser:
             ).setParseAction(get_abbr)
         )
 
-        words = OneOrMore(Word(printables, excludeChars=dqt), stopOn=stop)
+        words = OneOrMore(Word(TAXON_NAME_CHARS, excludeChars=dqt), stopOn=stop)
 
         ranks_terms = Group(ranks)("ranks") + Group(
             OneOrMore(words | phrase, stopOn=stop)
