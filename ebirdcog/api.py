@@ -17,9 +17,7 @@ class EBirdAPI:
 
     async def get_api_key(self, channel):
         """Gets API key."""
-        key = await self.cog.bot.db.api_tokens.get_raw(
-            "ebird", default={"api_key": None}
-        )
+        key = await self.cog.bot.get_shared_api_tokens("ebird")
         if key["api_key"] is None:
             await channel.send(
                 "The eBird API key is not set yet.\n"
