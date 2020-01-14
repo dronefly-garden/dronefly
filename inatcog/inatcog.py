@@ -9,7 +9,11 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .common import grouper, LOG
-from .converters import ContextMemberConverter, InheritableBoolConverter
+from .converters import (
+    QuotedContextMemberConverter,
+    ContextMemberConverter,
+    InheritableBoolConverter,
+)
 from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
 from .last import INatLinkMsg
@@ -622,7 +626,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat.command()
-    async def usershow(self, ctx, who: ContextMemberConverter):
+    async def usershow(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known."""
         if not ctx.guild:
             return

@@ -57,6 +57,17 @@ class ContextMemberConverter(NamedTuple):
         )
 
 
+DEQUOTE = re.compile(r'^"?(.*?)"?$')
+
+
+class QuotedContextMemberConverter(commands.Converter):
+    """Convert possibly quoted arg by dropping double-quotes."""
+
+    async def convert(self, ctx, argument):
+        dequoted = re.sub(DEQUOTE, r"\1", argument)
+        return await ContextMemberConverter.convert(ctx, dequoted)
+
+
 class InheritableBoolConverter(commands.Converter):
     """Convert truthy or 'inherit' to True, False, or None (inherit)."""
 
