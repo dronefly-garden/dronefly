@@ -41,7 +41,7 @@ class INatUserTable:
     def __init__(self, bot):
         self.bot = bot
 
-    async def get_user(self, member: discord.Member):
+    async def get_user(self, member: discord.Member, refresh_cache=False):
         """Get user for Discord member."""
         user = None
         user_config = self.bot.config.user(member)
@@ -50,7 +50,7 @@ class INatUserTable:
         if not inat_user_id:
             raise LookupError("iNat user not known.")
 
-        response = await self.bot.api.get_users(inat_user_id)
+        response = await self.bot.api.get_users(inat_user_id, refresh_cache)
         if response and response["results"] and len(response["results"]) == 1:
             user = User.from_dict(response["results"][0])
         if not user:

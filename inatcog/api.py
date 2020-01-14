@@ -85,14 +85,14 @@ class INatAPI:
             if response.status == 200:
                 return await response.json()
 
-    async def get_users(self, query: Union[int, str]):
+    async def get_users(self, query: Union[int, str], refresh_cache=False):
         """Get the users for the specified login, user_id, or query."""
         if isinstance(query, int) or query.isnumeric():
             request = f"/v1/users/{query}"
         else:
             request = f"/v1/users/autocomplete?q={query}"
 
-        if query not in self.users_cache:
+        if refresh_cache or query not in self.users_cache:
             time_since_request = time() - self.request_time
             # Limit to 60 requests every minute. Hard upper limit is 100 per minute
             # after which they rate-limit, but the API doc requests that we

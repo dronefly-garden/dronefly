@@ -543,7 +543,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             user_query = inat_user
 
         user = None
-        response = await self.api.get_users(user_query)
+        response = await self.api.get_users(user_query, refresh_cache=True)
         if response and response["results"]:
             user = User.from_dict(response["results"][0])
             LOG.info(user)
@@ -632,7 +632,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         try:
-            user = await self.user_table.get_user(who.member)
+            user = await self.user_table.get_user(who.member, refresh_cache=True)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
