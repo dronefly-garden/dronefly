@@ -306,14 +306,19 @@ class INatEmbeds(MixinMeta):
             taxon_id = taxon.taxon_id
             user_id = user.user_id
             observations = await self.api.get_observations(
-                taxon_id=taxon_id, user_id=user_id
+                taxon_id=taxon_id, user_id=user_id, per_page=0
+            )
+            species = await self.api.get_observations(
+                "species_counts", taxon_id=taxon_id, user_id=user_id, per_page=0
             )
             if observations:
-                count = observations["total_results"]
+                observations_count = observations["total_results"]
+                species_count = species["total_results"]
                 url = (
-                    f"{WWW_BASE_URL}/observations?taxon_id={taxon_id}&user_id={user_id}"
+                    WWW_BASE_URL
+                    + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
                 )
-                link = f"[{count}]({url})"
+                link = f"[obs: {observations_count} spp: {species_count}]({url})"
                 description += f"\nobserved by {user.display_name()}: {link}"
 
         embed.title = title
