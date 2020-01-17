@@ -20,7 +20,12 @@ from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
-from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon_fields
+from .taxa import (
+    FilteredTaxon,
+    INatTaxaQuery,
+    get_taxon_fields,
+    format_user_taxon_counts,
+)
 from .users import INatUserTable, PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
@@ -481,6 +486,26 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         duck subspecies, variety, or form
         """
 
+        async def handle_taxon_reaction(
+            ctx, pages, controls, message, page, timeout, reaction: str
+        ):
+            """Handle taxon reaction."""
+            embed = pages[0]
+            user = await self.user_table.get_user(ctx.author)
+            if user and reaction == "#️⃣":
+                name = re.escape(user.display_name())
+                if not re.search(f"observed by {name}:", embed.description):
+                    url = embed.url
+                    mat = re.search(r"(\d+)$", url)
+                    if mat:
+                        taxon_record = (await self.api.get_taxa(mat[0]))["results"][0]
+                        taxon = get_taxon_fields(taxon_record)
+                        formatted_counts = await format_user_taxon_counts(
+                            ctx.cog, user, taxon
+                        )
+                        embed.description += formatted_counts + "\n"
+                        await message.edit(embed=embed)
+
         try:
             filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
         except ParseException:
@@ -491,7 +516,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=await self.make_taxa_embed(filtered_taxon))
+        embed = await self.make_taxa_embed(filtered_taxon)
+        await menu(
+            ctx, [embed], controls={"#️⃣": handle_taxon_reaction}, timeout=60 * 60 * 10
+        )
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)

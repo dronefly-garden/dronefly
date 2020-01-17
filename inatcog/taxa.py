@@ -1,6 +1,7 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple
+from .api import WWW_BASE_URL
 from .common import LOG
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
@@ -482,3 +483,26 @@ class INatTaxaQuery:
             raise LookupError("Nothing found")
 
         return result
+
+
+async def format_user_taxon_counts(cog, user, taxon):
+    """Format user observation & species counts for taxon."""
+    taxon_id = taxon.taxon_id
+    user_id = user.user_id
+    observations = await cog.api.get_observations(
+        taxon_id=taxon_id, user_id=user_id, per_page=0
+    )
+    species = await cog.api.get_observations(
+        "species_counts", taxon_id=taxon_id, user_id=user_id, per_page=0
+    )
+    if observations:
+        observations_count = observations["total_results"]
+        species_count = species["total_results"]
+        url = (
+            WWW_BASE_URL
+            + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
+        )
+        link = f"[obs: {observations_count} spp: {species_count}]({url})"
+        return f"\nobserved by {user.display_name()}: {link}"
+
+    return ""

@@ -9,7 +9,13 @@ from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
 from .obs import PAT_OBS_LINK
-from .taxa import format_taxon_name, format_taxon_names, get_taxon_fields, FilteredTaxon
+from .taxa import (
+    format_taxon_name,
+    format_taxon_names,
+    get_taxon_fields,
+    FilteredTaxon,
+    format_user_taxon_counts,
+)
 
 
 @format_items_for_embed
@@ -303,23 +309,9 @@ class INatEmbeds(MixinMeta):
         description = await format_description(taxon)
         description = await format_ancestors(description, taxon)
         if user:
-            taxon_id = taxon.taxon_id
-            user_id = user.user_id
-            observations = await self.api.get_observations(
-                taxon_id=taxon_id, user_id=user_id, per_page=0
-            )
-            species = await self.api.get_observations(
-                "species_counts", taxon_id=taxon_id, user_id=user_id, per_page=0
-            )
-            if observations:
-                observations_count = observations["total_results"]
-                species_count = species["total_results"]
-                url = (
-                    WWW_BASE_URL
-                    + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
-                )
-                link = f"[obs: {observations_count} spp: {species_count}]({url})"
-                description += f"\nobserved by {user.display_name()}: {link}"
+            formatted_counts = await format_user_taxon_counts(self, user, taxon)
+            if formatted_counts:
+                description += f"\n{formatted_counts}"
 
         embed.title = title
         embed.description = description
