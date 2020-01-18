@@ -5,7 +5,6 @@ import re
 from typing import AsyncIterator, Tuple, Union
 import discord
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .common import grouper, LOG
@@ -17,6 +16,7 @@ from .converters import (
 from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
 from .last import INatLinkMsg
+from .menus import menu, DEFAULT_CONTROLS
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
@@ -487,11 +487,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         """
 
         async def handle_taxon_reaction(
-            ctx, pages, controls, message, page, timeout, reaction: str
+            ctx, pages, controls, message, page, timeout, reaction: str, reactor
         ):
             """Handle taxon reaction."""
             embed = pages[0]
-            user = await self.user_table.get_user(ctx.author)
+            user = await self.user_table.get_user(reactor)
             if user and reaction == "#️⃣":
                 name = re.escape(user.display_name())
                 if not re.search(f"observed by {name}:", embed.description):
@@ -503,8 +503,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         formatted_counts = await format_user_taxon_counts(
                             ctx.cog, user, taxon
                         )
-                        embed.description += formatted_counts + "\n"
+                        embed.description += formatted_counts
                         await message.edit(embed=embed)
+            return await menu(
+                ctx, pages, controls, message=message, page=page, timeout=timeout
+            )
 
         try:
             filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
@@ -518,7 +521,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
         embed = await self.make_taxa_embed(filtered_taxon)
         await menu(
-            ctx, [embed], controls={"#️⃣": handle_taxon_reaction}, timeout=60 * 60 * 10
+            ctx, [embed], controls={"#️⃣": handle_taxon_reaction}, timeout=60 * 30
         )
 
     @inat.command()
