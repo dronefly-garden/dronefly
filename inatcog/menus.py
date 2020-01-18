@@ -8,7 +8,7 @@ import functools
 from typing import Union, Iterable, Optional
 import discord
 
-from .. import commands
+from redbot.core import commands
 from .predicates import ReactionPredicate
 
 _ReactableEmoji = Union[str, discord.Emoji]
@@ -88,9 +88,7 @@ async def menu(
     try:
         react, user = await ctx.bot.wait_for(
             "reaction_add",
-            check=ReactionPredicate.with_emojis(
-                tuple(controls.keys()), message, ctx.author
-            ),
+            check=ReactionPredicate.with_emojis(tuple(controls.keys()), message),
             timeout=timeout,
         )
     except asyncio.TimeoutError:
@@ -103,7 +101,7 @@ async def menu(
             return
     else:
         return await controls[react.emoji](
-            ctx, pages, controls, message, page, timeout, react.emoji
+            ctx, pages, controls, message, page, timeout, react.emoji, user
         )
 
 
@@ -115,6 +113,7 @@ async def next_page(
     page: int,
     timeout: float,
     emoji: str,
+    user: discord.User,
 ):
     perms = message.channel.permissions_for(ctx.me)
     if perms.manage_messages:  # Can manage messages, so remove react
@@ -135,6 +134,7 @@ async def prev_page(
     page: int,
     timeout: float,
     emoji: str,
+    user: discord.User,
 ):
     perms = message.channel.permissions_for(ctx.me)
     if perms.manage_messages:  # Can manage messages, so remove react
@@ -155,6 +155,7 @@ async def close_menu(
     page: int,
     timeout: float,
     emoji: str,
+    user: discord.User,
 ):
     with contextlib.suppress(discord.NotFound):
         await message.delete()
