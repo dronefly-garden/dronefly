@@ -451,7 +451,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
             if action == "remove" and mat:
                 embed.description = re.sub(
-                    f"(?:\n)observed by {name_pat}.*?(\n|$)", "", embed.description
+                    f"\nobserved by {name_pat}.*?((?=\n)|$)", "", embed.description
                 )
                 await msg.edit(embed=embed)
             elif action == "add" and not mat:
