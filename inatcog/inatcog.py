@@ -5,6 +5,7 @@ import re
 from typing import AsyncIterator, Tuple, Union
 import discord
 from redbot.core import checks, commands, Config
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .common import grouper, LOG
@@ -16,7 +17,6 @@ from .converters import (
 from .embeds import make_embed, sorry
 from .inat_embeds import INatEmbeds
 from .last import INatLinkMsg
-from .menus import menu, DEFAULT_CONTROLS
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
