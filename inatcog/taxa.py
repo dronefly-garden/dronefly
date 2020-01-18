@@ -503,6 +503,6 @@ async def format_user_taxon_counts(cog, user, taxon):
             + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
         )
         link = f"[obs: {observations_count} spp: {species_count}]({url})"
-        return f"\nobserved by {user.display_name()}: {link}"
+        return f"observed by {user.display_name()}: {link}"
 
     return ""

@@ -25,6 +25,7 @@ from .taxa import (
     INatTaxaQuery,
     get_taxon_fields,
     format_user_taxon_counts,
+    PAT_TAXON_LINK,
 )
 from .users import INatUserTable, PAT_USER_LINK, User
 
@@ -191,7 +192,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         return
                 if display in ("t", "taxon"):
                     if last and last.obs and last.obs.taxon:
-                        await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
+                        msg = await ctx.send(
+                            embed=await self.make_taxa_embed(last.obs.taxon)
+                        )
+                        await msg.add_reaction("#️⃣")
                 elif display in ("m", "map"):
                     if last and last.obs and last.obs.taxon:
                         await ctx.send(
@@ -200,7 +204,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.obs.taxon.rank == rank:
-                        await ctx.send(embed=await self.make_taxa_embed(last.obs.taxon))
+                        msg = await ctx.send(
+                            embed=await self.make_taxa_embed(last.obs.taxon)
+                        )
+                        await msg.add_reaction("#️⃣")
                         return
                     if last.obs.taxon:
                         full_record = get_taxon_fields(
@@ -212,7 +219,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                             full_record, display
                         )
                         if ancestor:
-                            await ctx.send(embed=await self.make_taxa_embed(ancestor))
+                            msg = await ctx.send(
+                                embed=await self.make_taxa_embed(ancestor)
+                            )
+                            await msg.add_reaction("#️⃣")
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -245,7 +255,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         who = await ContextMemberConverter.convert(ctx, arg)
                         user = await self.user_table.get_user(who.member)
                         filtered_taxon = FilteredTaxon(last.taxon, user)
-                        await ctx.send(embed=await self.make_taxa_embed(filtered_taxon))
+                        msg = await ctx.send(
+                            embed=await self.make_taxa_embed(filtered_taxon)
+                        )
+                        await msg.add_reaction("#️⃣")
                 elif display in ("m", "map"):
                     if last and last.taxon:
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
@@ -256,6 +269,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
                         await ctx.send(embed=await self.make_taxa_embed(last.taxon))
+                        msg = await msg.add_reaction("#️⃣")
                         return
                     if last.taxon:
                         full_record = get_taxon_fields(
@@ -265,7 +279,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                             full_record, display
                         )
                         if ancestor:
-                            await ctx.send(embed=await self.make_taxa_embed(ancestor))
+                            msg = await ctx.send(
+                                embed=await self.make_taxa_embed(ancestor)
+                            )
+                            await msg.add_reaction("#️⃣")
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -283,7 +300,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     return
             else:
                 # By default, display the embed for the matched last taxon.
-                await ctx.send(embed=await self.make_taxa_embed(last.taxon))
+                msg = await ctx.send(embed=await self.make_taxa_embed(last.taxon))
+                await msg.add_reaction("#️⃣")
         else:
             await ctx.send_help()
             return
@@ -402,6 +420,67 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                     await self.maybe_send_sound_url(channel, obs.sound)
         return
 
+    async def handle_member_reaction(
+        self, reaction: discord.Reaction, member: discord.Member, action: str
+    ):
+        """Central handler for member reactions."""
+        msg = reaction.message
+        embeds = msg.embeds
+        if not embeds:
+            return
+
+        if reaction.emoji == "#️⃣":  # Add/remove counts
+            try:
+                inat_user = await self.user_table.get_user(member)
+            except LookupError:
+                return
+            embed = embeds[0]
+            url = embed.url
+            if not url:
+                return
+            mat = re.match(PAT_TAXON_LINK, url)
+            if not mat:
+                return
+            taxon_id = mat["taxon_id"]
+            if not taxon_id:
+                return
+
+            # Observed by count add/remove for taxon:
+            name_pat = re.escape(inat_user.display_name())
+            mat = re.search(f"observed by {name_pat}:", embed.description)
+
+            if action == "remove" and mat:
+                embed.description = re.sub(
+                    f"(?:\n)observed by {name_pat}.*?(\n|$)", "", embed.description
+                )
+                await msg.edit(embed=embed)
+            elif action == "add" and not mat:
+                taxon_record = (await self.api.get_taxa(taxon_id))["results"][0]
+                taxon = get_taxon_fields(taxon_record)
+                formatted_counts = await format_user_taxon_counts(
+                    self, inat_user, taxon
+                )
+                embed.description += f"\n{formatted_counts}"
+                await msg.edit(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_reaction_add(
+        self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
+    ) -> None:
+        """Central handler for reactions added to embeds."""
+        if user.bot or isinstance(user, discord.User):
+            return
+        await self.handle_member_reaction(reaction, user, "add")
+
+    @commands.Cog.listener()
+    async def on_reaction_remove(
+        self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
+    ) -> None:
+        """Central handler for reactions removed from embeds."""
+        if user.bot or isinstance(user, discord.User):
+            return
+        await self.handle_member_reaction(reaction, user, "remove")
+
     @inat.command()
     async def related(self, ctx, *, taxa_list):
         """Relatedness of a list of taxa.
@@ -486,29 +565,6 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         duck subspecies, variety, or form
         """
 
-        async def handle_taxon_reaction(
-            ctx, pages, controls, message, page, timeout, reaction: str, reactor
-        ):
-            """Handle taxon reaction."""
-            embed = pages[0]
-            user = await self.user_table.get_user(reactor)
-            if user and reaction == "#️⃣":
-                name = re.escape(user.display_name())
-                if not re.search(f"observed by {name}:", embed.description):
-                    url = embed.url
-                    mat = re.search(r"(\d+)$", url)
-                    if mat:
-                        taxon_record = (await self.api.get_taxa(mat[0]))["results"][0]
-                        taxon = get_taxon_fields(taxon_record)
-                        formatted_counts = await format_user_taxon_counts(
-                            ctx.cog, user, taxon
-                        )
-                        embed.description += formatted_counts
-                        await message.edit(embed=embed)
-            return await menu(
-                ctx, pages, controls, message=message, page=page, timeout=timeout
-            )
-
         try:
             filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
         except ParseException:
@@ -520,9 +576,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         embed = await self.make_taxa_embed(filtered_taxon)
-        await menu(
-            ctx, [embed], controls={"#️⃣": handle_taxon_reaction}, timeout=60 * 30
-        )
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction("#️⃣")
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
