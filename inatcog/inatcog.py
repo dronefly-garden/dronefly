@@ -468,7 +468,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
     ) -> None:
         """Central handler for reactions added to embeds."""
-        if user.bot or isinstance(user, discord.User):
+        if (
+            user.bot
+            or isinstance(user, discord.User)
+            or reaction.message.author != self.bot.user
+        ):
             return
         await self.handle_member_reaction(reaction, user, "add")
 
@@ -477,7 +481,11 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
     ) -> None:
         """Central handler for reactions removed from embeds."""
-        if user.bot or isinstance(user, discord.User):
+        if (
+            user.bot
+            or isinstance(user, discord.User)
+            or reaction.message.author != self.bot.user
+        ):
             return
         await self.handle_member_reaction(reaction, user, "remove")
 
