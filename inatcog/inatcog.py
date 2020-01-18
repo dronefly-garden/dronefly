@@ -672,7 +672,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
         user_projects = await self.config.guild(ctx.guild).user_projects() or []
         for project_id in user_projects:
-            response = await self.api.get_projects(int(project_id))
+            response = await self.api.get_projects(int(project_id), refresh_cache=True)
             user_project = UserProject.from_dict(response["results"][0])
             if user.user_id in user_project.observed_by_ids():
                 response = await self.api.get_project_observers_stats(

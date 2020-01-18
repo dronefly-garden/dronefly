@@ -59,11 +59,11 @@ class INatAPI:
 
         return None
 
-    async def get_projects(self, project_id: int):
+    async def get_projects(self, project_id: int, refresh_cache=False):
         """Get the project for the specified id."""
         request = f"/v1/projects/{project_id}"
 
-        if project_id not in self.projects_cache:
+        if refresh_cache or project_id not in self.projects_cache:
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 if response.status == 200:
                     self.projects_cache[project_id] = await response.json()
