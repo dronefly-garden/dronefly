@@ -181,7 +181,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 if display in ("img", "image"):
                     if last and last.obs and last.obs.taxon:
                         try:
-                            num = int(arg)
+                            num = 1 if arg is None else int(arg)
                         except ValueError:
                             num = 0
                         await ctx.send(
