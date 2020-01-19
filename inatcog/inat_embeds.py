@@ -288,10 +288,8 @@ class INatEmbeds(MixinMeta):
 
         async def format_description(rec):
             observations = rec.observations
-            inat_map_url = INatMapURL(self.api)
-            url = await inat_map_url.get_map_url_for_taxa([rec])
-            if url:
-                observations = "[%d](%s)" % (observations, url)
+            url = f"{WWW_BASE_URL}/observations?taxon_id={rec.taxon_id}&verifiable=any"
+            observations = "[%d](%s)" % (observations, url)
             description = f"is a {rec.rank} with {observations} observations"
             return description
 
