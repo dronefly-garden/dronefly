@@ -19,6 +19,7 @@ class Taxon(NamedTuple):
     term: str
     thumbnail: str or None
     image: str or None
+    image_attribution: str or None
     rank: str
     ancestor_ids: list
     observations: int
@@ -187,6 +188,7 @@ def get_taxon_fields(record):
         # transform on the thumbnail image:
         if re.search(r"https?://static\.inaturalist\.org", thumbnail):
             image = re.sub("/square", "/original", thumbnail)
+            attribution = photo.get("attribution")
         else:
             # For externally hosted default images (e.g. Flickr), only full records
             # retrieved via id# contain taxon_photos.
@@ -195,11 +197,14 @@ def get_taxon_fields(record):
             taxon_photos = record.get("taxon_photos")
             if taxon_photos:
                 image = taxon_photos[0]["photo"]["original_url"]
+                attribution = taxon_photos[0]["photo"]["attribution"]
             else:
                 image = None
+                attribution = None
     else:
         thumbnail = None
         image = None
+        attribution = None
     taxon_id = record["id"] if "id" in record else record["taxon_id"]
     ancestors = record.get("ancestors") or []
     ancestor_ranks = (
@@ -214,6 +219,7 @@ def get_taxon_fields(record):
         record.get("matched_term") or "Id: %s" % taxon_id,
         thumbnail,
         image,
+        attribution,
         record["rank"],
         record["ancestor_ids"],
         record["observations_count"],

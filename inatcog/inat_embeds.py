@@ -262,6 +262,7 @@ class INatEmbeds(MixinMeta):
         if rec.thumbnail:
             if rec.image:
                 image = rec.image
+                attribution = rec.image_attribution
             else:
                 # A taxon record may have a thumbnail but no image if the image
                 # is externally hosted (e.g. Flickr) and the record was created
@@ -272,8 +273,10 @@ class INatEmbeds(MixinMeta):
                 taxon_record = (await self.api.get_taxa(rec.taxon_id))["results"][0]
                 full_taxon = get_taxon_fields(taxon_record)
                 image = full_taxon.image
+                attribution = full_taxon.image_attribution
         if image:
             embed.set_image(url=image)
+            embed.set_footer(text=attribution)
 
         return embed
 
