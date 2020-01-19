@@ -27,6 +27,8 @@ from .taxa import (
     get_taxon_fields,
     format_user_taxon_counts,
     PAT_TAXON_LINK,
+    TAXON_COUNTS_HEADER,
+    TAXON_COUNTS_HEADER_PAT,
 )
 from .users import INatUserTable, PAT_USER_LINK, User
 
@@ -434,13 +436,32 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             taxon_record = (await self.api.get_taxa(taxon_id))["results"][0]
             return get_taxon_fields(taxon_record)
 
-        async def update_totals(cog, description, taxon):
+        async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
+            LOG.info("action: %s", action)
+            # Add/remove always results in a change to totals, so remove:
             description = re.sub(
-                r"(^|\n)observed by \*total\*.*?((?=\n)|$)", "", description
+                r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
             )
+
             matches = re.findall(
-                r"observed by[^:\(]*?\(?(?P<user_id>[-_a-z0-9]+)\)?:", description
+                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
             )
+            if action == "remove":
+                # Remove the header if last one and the user's count:
+                if len(matches) == 1:
+                    description = re.sub(TAXON_COUNTS_HEADER_PAT, "", description)
+                description = re.sub(counts_pat + r".*?((?=\n)|$)", "", description)
+            else:
+                # Add the header if first one and the user's count:
+                if not matches:
+                    description += "\n" + TAXON_COUNTS_HEADER
+                formatted_counts = await format_user_taxon_counts(cog, inat_user, taxon)
+                description += "\n" + formatted_counts
+
+            matches = re.findall(
+                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
+            )
+            # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
                     cog, ",".join(matches), taxon
@@ -457,6 +478,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         if reaction.emoji == "#️⃣":  # Add/remove counts
             try:
                 inat_user = await self.user_table.get_user(member)
+                counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
             except LookupError:
                 return
             embed = embeds[0]
@@ -471,24 +493,17 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 return
 
             # Observed by count add/remove for taxon:
-            name_pat = re.escape(inat_user.display_name())
             description = embed.description or ""
-            mat = re.search(f"observed by {name_pat}:", description)
+            LOG.info(description)
+            mat = re.search(counts_pat, description)
+            LOG.info(counts_pat)
+            LOG.info(mat)
 
-            if action == "remove" and mat:
+            if (mat and (action == "remove")) or (not mat and (action == "add")):
                 taxon = await get_taxon(taxon_id)
-                description = re.sub(
-                    f"(^|\n)observed by {name_pat}.*?((?=\n)|$)", "", description
+                embed.description = await update_totals(
+                    self, description, taxon, inat_user, action, counts_pat
                 )
-                embed.description = await update_totals(self, description, taxon)
-                await msg.edit(embed=embed)
-            elif action == "add" and not mat:
-                taxon = await get_taxon(taxon_id)
-                formatted_counts = await format_user_taxon_counts(
-                    self, inat_user, taxon
-                )
-                description = f"{description}\n{formatted_counts}"
-                embed.description = await update_totals(self, description, taxon)
                 await msg.edit(embed=embed)
 
     @commands.Cog.listener()

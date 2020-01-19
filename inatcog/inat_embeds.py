@@ -15,6 +15,7 @@ from .taxa import (
     get_taxon_fields,
     FilteredTaxon,
     format_user_taxon_counts,
+    TAXON_COUNTS_HEADER,
 )
 
 
@@ -315,7 +316,7 @@ class INatEmbeds(MixinMeta):
         if user:
             formatted_counts = await format_user_taxon_counts(self, user, taxon)
             if formatted_counts:
-                description += f"\n{formatted_counts}"
+                description += f"\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
 
         embed.title = title
         embed.description = description

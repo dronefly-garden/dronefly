@@ -34,6 +34,8 @@ class FilteredTaxon(NamedTuple):
     # location: Location
 
 
+TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
+TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
 TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
 
@@ -496,10 +498,10 @@ async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
     taxon_id = taxon.taxon_id
     if isinstance(user, str):
         user_id = user
-        user_name = "*total*"
+        login = "*total*"
     else:
         user_id = user.user_id
-        user_name = user.display_name()
+        login = user.login
     observations = await cog.api.get_observations(
         taxon_id=taxon_id, user_id=user_id, per_page=0
     )
@@ -514,9 +516,9 @@ async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
             + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
         )
         if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-            link = f"[obs: {observations_count}]({url})"
+            link = f"[{observations_count}]({url}) {login}"
         else:
-            link = f"[obs: {observations_count} spp: {species_count}]({url})"
-        return f"observed by {user_name}: {link}"
+            link = f"[{observations_count} ({species_count})]({url}) {login}"
+        return f"{link} "
 
     return ""
