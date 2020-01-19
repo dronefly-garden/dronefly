@@ -508,7 +508,10 @@ async def format_user_taxon_counts(cog, user, taxon):
             WWW_BASE_URL
             + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
         )
-        link = f"[obs: {observations_count} spp: {species_count}]({url})"
+        if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+            link = f"[obs: {observations_count}]({url})"
+        else:
+            link = f"[obs: {observations_count} spp: {species_count}]({url})"
         return f"observed by {user.display_name()}: {link}"
 
     return ""

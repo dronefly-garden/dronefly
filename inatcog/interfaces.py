@@ -1,10 +1,10 @@
 """Module for abc interfaces."""
 
 from abc import ABC
+from inflect import engine
 from redbot.core import Config
 from redbot.core.bot import Red
 from .api import INatAPI
-from inflect import engine
 
 
 class MixinMeta(ABC):
