@@ -266,7 +266,10 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
                 elif display in ("img", "image"):
                     if last and last.taxon:
-                        await ctx.send(embed=await self.make_image_embed(last.taxon))
+                        msg = await ctx.send(
+                            embed=await self.make_image_embed(last.taxon)
+                        )
+                        await msg.add_reaction("#️⃣")
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
@@ -449,11 +452,12 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
 
             # Observed by count add/remove for taxon:
             name_pat = re.escape(inat_user.display_name())
-            mat = re.search(f"observed by {name_pat}:", embed.description)
+            description = embed.description or ""
+            mat = re.search(f"observed by {name_pat}:", description)
 
             if action == "remove" and mat:
                 embed.description = re.sub(
-                    f"\nobserved by {name_pat}.*?((?=\n)|$)", "", embed.description
+                    f"(^|\n)observed by {name_pat}.*?((?=\n)|$)", "", description
                 )
                 await msg.edit(embed=embed)
             elif action == "add" and not mat:
@@ -462,7 +466,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
                 formatted_counts = await format_user_taxon_counts(
                     self, inat_user, taxon
                 )
-                embed.description += f"\n{formatted_counts}"
+                embed.description = f"{description}\n{formatted_counts}"
                 await msg.edit(embed=embed)
 
     @commands.Cog.listener()
@@ -537,7 +541,8 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=await self.make_image_embed(filtered_taxon.taxon))
+        msg = await ctx.send(embed=await self.make_image_embed(filtered_taxon.taxon))
+        await msg.add_reaction("#️⃣")
 
     @inat.command()
     async def taxon(self, ctx, *, query):
