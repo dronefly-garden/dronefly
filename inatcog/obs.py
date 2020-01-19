@@ -149,6 +149,6 @@ async def maybe_match_obs(api, content, id_permitted=False):
             "results"
         ]
         obs = get_obs_fields(results[0]) if results else None
-    if not url:
+    if obs_id and not url:
         url = WWW_BASE_URL + "/observations/" + str(obs_id)
     return (obs, url)

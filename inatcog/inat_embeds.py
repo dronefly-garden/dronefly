@@ -218,9 +218,15 @@ class INatEmbeds(MixinMeta):
                 embed.description = summary
         else:
             mat = re.search(PAT_OBS_LINK, url)
-            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
-            LOG.info("Observation not found for link: %d", obs_id)
-            embed.title = "No observation found for id: %d (deleted?)" % obs_id
+            if mat:
+                obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+                LOG.info("Observation not found for: %s", obs_id)
+                embed.title = "No observation found for id: %s (deleted?)" % obs_id
+            else:
+                # If this happens, it's a bug (i.e. PAT_OBS_LINK should already match)
+                LOG.info("Not an observation: %s", url)
+                embed.title = "Not an observation:"
+                embed.description = url
 
         return embed
 
