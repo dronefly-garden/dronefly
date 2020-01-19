@@ -429,6 +429,26 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
         self, reaction: discord.Reaction, member: discord.Member, action: str
     ):
         """Central handler for member reactions."""
+        # TODO: should be in taxa.py
+        async def get_taxon(taxon_id):
+            taxon_record = (await self.api.get_taxa(taxon_id))["results"][0]
+            return get_taxon_fields(taxon_record)
+
+        async def update_totals(cog, description, taxon):
+            description = re.sub(
+                r"(^|\n)observed by \*total\*.*?((?=\n)|$)", "", description
+            )
+            matches = re.findall(
+                r"observed by[^:\(]*?\(?(?P<user_id>[-_a-z0-9]+)\)?:", description
+            )
+            if len(matches) > 1:
+                formatted_counts = await format_user_taxon_counts(
+                    cog, ",".join(matches), taxon
+                )
+                description += f"\n{formatted_counts}"
+                return description
+            return description
+
         msg = reaction.message
         embeds = msg.embeds
         if not embeds:
@@ -456,17 +476,19 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
             mat = re.search(f"observed by {name_pat}:", description)
 
             if action == "remove" and mat:
-                embed.description = re.sub(
+                taxon = await get_taxon(taxon_id)
+                description = re.sub(
                     f"(^|\n)observed by {name_pat}.*?((?=\n)|$)", "", description
                 )
+                embed.description = await update_totals(self, description, taxon)
                 await msg.edit(embed=embed)
             elif action == "add" and not mat:
-                taxon_record = (await self.api.get_taxa(taxon_id))["results"][0]
-                taxon = get_taxon_fields(taxon_record)
+                taxon = await get_taxon(taxon_id)
                 formatted_counts = await format_user_taxon_counts(
                     self, inat_user, taxon
                 )
-                embed.description = f"{description}\n{formatted_counts}"
+                description = f"{description}\n{formatted_counts}"
+                embed.description = await update_totals(self, description, taxon)
                 await msg.edit(embed=embed)
 
     @commands.Cog.listener()
