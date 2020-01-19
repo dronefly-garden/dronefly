@@ -285,12 +285,15 @@ class INatEmbeds(MixinMeta):
             taxon = arg
             user = None
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
+        p = self.p  # pylint: disable=invalid-name
 
         async def format_description(rec):
-            observations = rec.observations
+            obs_cnt = rec.observations
             url = f"{WWW_BASE_URL}/observations?taxon_id={rec.taxon_id}&verifiable=any"
-            observations = "[%d](%s)" % (observations, url)
-            description = f"is a {rec.rank} with {observations} observations"
+            obs_fmt = "[%d](%s)" % (obs_cnt, url)
+            description = (
+                f"is {p.a(rec.rank)} with {obs_fmt} {p.plural('observation', obs_cnt)}"
+            )
             return description
 
         async def format_ancestors(description, rec):

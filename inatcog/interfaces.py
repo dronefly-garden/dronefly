@@ -4,6 +4,7 @@ from abc import ABC
 from redbot.core import Config
 from redbot.core.bot import Red
 from .api import INatAPI
+from inflect import engine
 
 
 class MixinMeta(ABC):
@@ -17,3 +18,4 @@ class MixinMeta(ABC):
         self.config: Config
         self.api: INatAPI
         self.bot: Red
+        self.p: engine  # pylint: disable=invalid-name

@@ -4,6 +4,7 @@ from math import ceil
 import re
 from typing import AsyncIterator, Tuple, Union
 import discord
+import inflect
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
@@ -46,6 +47,7 @@ class INatCog(INatEmbeds, commands.Cog, metaclass=CompositeMetaClass):
     def __init__(self, bot):
         self.bot = bot
         self.api = INatAPI()
+        self.p = inflect.engine()  # pylint: disable=invalid-name
         self.taxa_query = INatTaxaQuery(self)
         self.user_table = INatUserTable(self)
         self.config = Config.get_conf(self, identifier=1607)

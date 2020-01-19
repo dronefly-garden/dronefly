@@ -1,2 +1,6 @@
+red-discordbot
+dataclasses-json
+ebird-api
+inflect
 pyparsing
 timeago==1.0.10
