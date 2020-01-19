@@ -12,6 +12,7 @@ from .obs import PAT_OBS_LINK
 from .taxa import (
     format_taxon_name,
     format_taxon_names,
+    get_taxon,
     get_taxon_fields,
     FilteredTaxon,
     format_user_taxon_counts,
@@ -250,8 +251,7 @@ class INatEmbeds(MixinMeta):
                 for ancestor_id in common_ancestors
             ]
             common_ancestor_id = first_taxon_ancestor_ids[max(common_ancestor_indices)]
-            taxon_record = (await self.api.get_taxa(common_ancestor_id))["results"][0]
-            taxon = get_taxon_fields(taxon_record)
+            taxon = await get_taxon(self, common_ancestor_id)
 
         description = (
             f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon)}"
@@ -277,8 +277,7 @@ class INatEmbeds(MixinMeta):
                 # fields that /v1/taxa/# returns). In that case, we retrieve
                 # the full record via taxon_id so the image will be set from
                 # the full-quality original in taxon_photos.
-                taxon_record = (await self.api.get_taxa(rec.taxon_id))["results"][0]
-                full_taxon = get_taxon_fields(taxon_record)
+                full_taxon = await get_taxon(self, rec.taxon_id)
                 image = full_taxon.image
                 attribution = full_taxon.image_attribution
         if image:

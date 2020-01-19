@@ -7,7 +7,7 @@ from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
 from .taxa import (
-    get_taxon_fields,
+    get_taxon,
     format_user_taxon_counts,
     PAT_TAXON_LINK,
     TAXON_COUNTS_HEADER,
@@ -47,10 +47,6 @@ class Listeners(INatEmbeds, MixinMeta):
         self, reaction: discord.Reaction, member: discord.Member, action: str
     ):
         """Central handler for member reactions."""
-        # TODO: should be in taxa.py
-        async def get_taxon(taxon_id):
-            taxon_record = (await self.api.get_taxa(taxon_id))["results"][0]
-            return get_taxon_fields(taxon_record)
 
         async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
             # Add/remove always results in a change to totals, so remove:
@@ -112,7 +108,7 @@ class Listeners(INatEmbeds, MixinMeta):
             mat = re.search(counts_pat, description)
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
-                taxon = await get_taxon(taxon_id)
+                taxon = await get_taxon(self, taxon_id)
                 embed.description = await update_totals(
                     self, description, taxon, inat_user, action, counts_pat
                 )

@@ -9,7 +9,7 @@ import timeago
 from .api import WWW_BASE_URL
 from .common import LOG
 from .obs import get_obs_fields, PAT_OBS_LINK
-from .taxa import get_taxon_fields, PAT_TAXON_LINK
+from .taxa import get_taxon, PAT_TAXON_LINK
 
 
 class ObsLinkMsg(NamedTuple):
@@ -87,7 +87,6 @@ class INatLinkMsg:
         taxon_id = int(mat["taxon_id"])
         url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
 
-        results = (await self.api.get_taxa(taxon_id))["results"]
-        taxon = get_taxon_fields(results[0]) if results else None
+        taxon = await get_taxon(self, taxon_id)
 
         return TaxonLinkMsg(url, taxon)

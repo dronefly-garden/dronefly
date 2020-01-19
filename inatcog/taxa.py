@@ -375,8 +375,8 @@ def match_taxon(query, records):
 class INatTaxaQuery:
     """Query iNat for taxa."""
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, cog):
+        self.cog = cog
 
     async def get_taxon_ancestor(self, taxon, rank):
         """Get Taxon ancestor for specified rank from a Taxon object.
@@ -396,18 +396,14 @@ class INatTaxaQuery:
         rank = RANK_EQUIVALENTS.get(rank) or rank
         if rank in taxon.ancestor_ranks:
             rank_index = taxon.ancestor_ranks.index(rank)
-            ancestor = get_taxon_fields(
-                (await self.bot.api.get_taxa(taxon.ancestor_ids[rank_index]))[
-                    "results"
-                ][0]
-            )
+            ancestor = await get_taxon(self.cog, taxon.ancestor_ids[rank_index])
             return ancestor
         return None
 
     async def maybe_match_taxon(self, query, ancestor_id=None):
         """Get taxon and return a match, if any."""
         if query.taxon_id:
-            records = (await self.bot.api.get_taxa(query.taxon_id))["results"]
+            records = (await self.cog.api.get_taxa(query.taxon_id))["results"]
         else:
             kwargs = {}
             kwargs["q"] = " ".join(query.terms)
@@ -415,7 +411,7 @@ class INatTaxaQuery:
                 kwargs["rank"] = ",".join(query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
-            records = (await self.bot.api.get_taxa(**kwargs))["results"]
+            records = (await self.cog.api.get_taxa(**kwargs))["results"]
 
         if not records:
             raise LookupError("Nothing found")
@@ -469,7 +465,7 @@ class INatTaxaQuery:
         taxon = await self.maybe_match_taxon_compound(compound_query)
         if compound_query.user:
             who = await ContextMemberConverter.convert(ctx, compound_query.user)
-            user = await self.bot.user_table.get_user(who.member)
+            user = await self.cog.user_table.get_user(who.member)
         else:
             user = None
         return FilteredTaxon(taxon, user)
@@ -522,3 +518,9 @@ async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
         return f"{link} "
 
     return ""
+
+
+async def get_taxon(cog, taxon_id):
+    """Get taxon by id."""
+    taxon_record = (await cog.api.get_taxa(taxon_id))["results"][0]
+    return get_taxon_fields(taxon_record)

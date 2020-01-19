@@ -21,7 +21,7 @@ from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .projects import UserProject, ObserverStats
 from .listeners import Listeners
-from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon_fields
+from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
 from .users import INatUserTable, PAT_USER_LINK, User
 
 SPOILER_PAT = re.compile(r"\|\|")
@@ -206,11 +206,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         await msg.add_reaction("#️⃣")
                         return
                     if last.obs.taxon:
-                        full_record = get_taxon_fields(
-                            (await self.api.get_taxa(last.obs.taxon.taxon_id))[
-                                "results"
-                            ][0]
-                        )
+                        full_record = await get_taxon(self, last.obs.taxon.taxon_id)
                         ancestor = await self.taxa_query.get_taxon_ancestor(
                             full_record, display
                         )
@@ -267,13 +263,13 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
-                        await ctx.send(embed=await self.make_taxa_embed(last.taxon))
-                        msg = await msg.add_reaction("#️⃣")
+                        msg = await ctx.send(
+                            embed=await self.make_taxa_embed(last.taxon)
+                        )
+                        await msg.add_reaction("#️⃣")
                         return
                     if last.taxon:
-                        full_record = get_taxon_fields(
-                            (await self.api.get_taxa(last.taxon.taxon_id))["results"][0]
-                        )
+                        full_record = await get_taxon(self, last.taxon.taxon_id)
                         ancestor = await self.taxa_query.get_taxon_ancestor(
                             full_record, display
                         )

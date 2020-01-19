@@ -38,19 +38,19 @@ class User(DataClassJsonMixin):
 class INatUserTable:
     """Lookup helper for registered iNat users."""
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self, cog):
+        self.cog = cog
 
     async def get_user(self, member: discord.Member, refresh_cache=False):
         """Get user for Discord member."""
         user = None
-        user_config = self.bot.config.user(member)
+        user_config = self.cog.config.user(member)
 
         inat_user_id = await user_config.inat_user_id()
         if not inat_user_id:
             raise LookupError("iNat user not known.")
 
-        response = await self.bot.api.get_users(inat_user_id, refresh_cache)
+        response = await self.cog.api.get_users(inat_user_id, refresh_cache)
         if response and response["results"] and len(response["results"]) == 1:
             user = User.from_dict(response["results"][0])
         if not user:
