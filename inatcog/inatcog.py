@@ -47,6 +47,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         self.config = Config.get_conf(self, identifier=1607)
         self.config.register_guild(
             autoobs=False,
+            user_cache_init=False,
             user_projects={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
@@ -579,7 +580,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         # which would otherwise do expensive API calls if not in the cache
         # already just to get # of pages of member users:
         all_users = await self.config.all_users()
-        user_projects = await self.config.guild(ctx.guild).user_projects()
+        config = self.config.guild(ctx.guild)
+        user_projects = await config.user_projects()
 
         responses = [
             await self.api.get_projects(int(project_id)) for project_id in user_projects
@@ -589,6 +591,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             for response in responses
             if response
         ]
+
+        user_cache_init = await config.user_cache_init()
+        if not user_cache_init:
+            await self.api.get_observers_from_projects(user_projects.keys())
+            await config.user_cache_init.set(True)
 
         def emojis(user_id: int):
             emojis = [

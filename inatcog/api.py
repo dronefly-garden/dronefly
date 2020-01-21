@@ -107,3 +107,22 @@ class INatAPI:
                     self.request_time = time()
 
         return self.users_cache[query] if query in self.users_cache else None
+
+    async def get_observers_from_projects(self, projects: list):
+        """Get observers for a list of project ids.
+
+        Since the cache is filled as a side effect, this method can be
+        used to prime the cache prior to fetching multiple users at once
+        by id.
+        """
+        if not projects:
+            return
+
+        response = await self.get_observations(
+            "observers", project_id=",".join(projects)
+        )
+        users = response.get("users") or []
+        for user in users:
+            self.users_cache[user["id"]] = user
+
+        return users
