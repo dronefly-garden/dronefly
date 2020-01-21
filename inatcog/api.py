@@ -3,6 +3,7 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
+from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -108,21 +109,31 @@ class INatAPI:
 
         return self.users_cache[query] if query in self.users_cache else None
 
-    async def get_observers_from_projects(self, projects: list):
+    async def get_observers_from_projects(self, project_ids: list):
         """Get observers for a list of project ids.
 
         Since the cache is filled as a side effect, this method can be
         used to prime the cache prior to fetching multiple users at once
         by id.
         """
-        if not projects:
+        if not project_ids:
             return
 
         response = await self.get_observations(
-            "observers", project_id=",".join(projects)
+            "observers", project_id=",".join(project_ids)
         )
-        users = response.get("users") or []
-        for user in users:
-            self.users_cache[user["id"]] = user
+        users = []
+        results = response.get("results") or []
+        for observer in results:
+            user = observer.get("user")
+            LOG.info(user)
+            if user:
+                user_id = user.get("id")
+                if user_id:
+                    # Synthesize a single result as if returned by a get_users
+                    # lookup of a single user_id, and cache it:
+                    user_json = {}
+                    user_json["results"] = [user]
+                    self.users_cache[user_id] = user_json
 
         return users

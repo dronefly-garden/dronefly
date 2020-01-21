@@ -47,12 +47,12 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         self.config = Config.get_conf(self, identifier=1607)
         self.config.register_guild(
             autoobs=False,
-            user_cache_init=False,
             user_projects={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
         self.config.register_user(inat_user_id=None)
         self.config.register_channel(autoobs=None)
+        self.user_cache_init = {}
         super().__init__()
 
     def cog_unload(self):
@@ -592,10 +592,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             if response
         ]
 
-        user_cache_init = await config.user_cache_init()
-        if not user_cache_init:
+        if not self.user_cache_init.get(ctx.guild.id):
             await self.api.get_observers_from_projects(user_projects.keys())
-            await config.user_cache_init.set(True)
+            self.user_cache_init[ctx.guild.id] = True
 
         def emojis(user_id: int):
             emojis = [
