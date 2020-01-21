@@ -167,6 +167,8 @@ The following commands are supported (where `[p]` is the bot prefix).
 
 These Cogs provide commands for Red Bot V3. If you don't have that already, go get it, following the installation guide for your platform here: https://red-discordbot.readthedocs.io/en/latest/index.html
 
+Any other python package dependencies of the cogs you install are automatically satisfied by the installation. See the next section.
+
 ## Installation
 
 If you have not already, load the Red V3 downloader cog:
