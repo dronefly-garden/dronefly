@@ -11,6 +11,7 @@ from .api import EBirdAPI
 LOG = logging.getLogger("red.dronefly.ebirdcog")
 
 
+# TODO: switch to dataclasses-json as per inatcog
 class ObsRecord(dict):
     """A human-readable observation record."""
 
@@ -31,6 +32,8 @@ class ObsRecord(dict):
             except ValueError:
                 parsed_time = datetime.strptime(val, "%Y-%m-%d")
                 return parsed_time.strftime(self.date_format)
+        if key == "howMany" and not val:
+            return "uncounted"
         return val
 
 
