@@ -6,7 +6,7 @@ from typing import AsyncIterator, Tuple, Union
 import discord
 import inflect
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .common import grouper, LOG
@@ -192,7 +192,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         msg = await ctx.send(
                             embed=await self.make_taxa_embed(last.obs.taxon)
                         )
-                        await msg.add_reaction("#️⃣")
+                        start_adding_reactions(msg, ["#️⃣", "➕"])
                 elif display in ("m", "map"):
                     if last and last.obs and last.obs.taxon:
                         await ctx.send(
@@ -204,7 +204,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         msg = await ctx.send(
                             embed=await self.make_taxa_embed(last.obs.taxon)
                         )
-                        await msg.add_reaction("#️⃣")
+                        start_adding_reactions(msg, ["#️⃣", "➕"])
                         return
                     if last.obs.taxon:
                         full_record = await get_taxon(self, last.obs.taxon.taxon_id)
@@ -215,7 +215,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                             msg = await ctx.send(
                                 embed=await self.make_taxa_embed(ancestor)
                             )
-                            await msg.add_reaction("#️⃣")
+                            start_adding_reactions(msg, ["#️⃣", "➕"])
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -251,7 +251,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         msg = await ctx.send(
                             embed=await self.make_taxa_embed(filtered_taxon)
                         )
-                        await msg.add_reaction("#️⃣")
+                        start_adding_reactions(msg, ["#️⃣", "➕"])
                 elif display in ("m", "map"):
                     if last and last.taxon:
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
@@ -260,14 +260,14 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         msg = await ctx.send(
                             embed=await self.make_image_embed(last.taxon)
                         )
-                        await msg.add_reaction("#️⃣")
+                        start_adding_reactions(msg, ["#️⃣", "➕"])
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
                         msg = await ctx.send(
                             embed=await self.make_taxa_embed(last.taxon)
                         )
-                        await msg.add_reaction("#️⃣")
+                        start_adding_reactions(msg, ["#️⃣", "➕"])
                         return
                     if last.taxon:
                         full_record = await get_taxon(self, last.taxon.taxon_id)
@@ -278,7 +278,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                             msg = await ctx.send(
                                 embed=await self.make_taxa_embed(ancestor)
                             )
-                            await msg.add_reaction("#️⃣")
+                            start_adding_reactions(msg, ["#️⃣", "➕"])
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -297,7 +297,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             else:
                 # By default, display the embed for the matched last taxon.
                 msg = await ctx.send(embed=await self.make_taxa_embed(last.taxon))
-                await msg.add_reaction("#️⃣")
+                start_adding_reactions(msg, ["#️⃣", "➕"])
         else:
             await ctx.send_help()
             return
@@ -439,6 +439,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         msg = await ctx.send(embed=await self.make_image_embed(filtered_taxon.taxon))
         await msg.add_reaction("#️⃣")
+        await msg.add_reaction("➕")
 
     @inat.command()
     async def taxon(self, ctx, *, query):
@@ -488,7 +489,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         embed = await self.make_taxa_embed(filtered_taxon)
         msg = await ctx.send(embed=embed)
-        await msg.add_reaction("#️⃣")
+        start_adding_reactions(msg, ["#️⃣", "➕"])
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)

@@ -1,8 +1,11 @@
 """Listeners module for inatcog."""
+from collections import namedtuple
 import re
 from typing import Union
 import discord
 from redbot.core import commands
+from redbot.core.utils.predicates import MessagePredicate
+from .converters import ContextMemberConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
@@ -13,6 +16,8 @@ from .taxa import (
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
 )
+
+MockContext = namedtuple("MockContext", "guild, author, channel, bot")
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -47,6 +52,36 @@ class Listeners(INatEmbeds, MixinMeta):
         self, reaction: discord.Reaction, member: discord.Member, action: str
     ):
         """Central handler for member reactions."""
+
+        async def maybe_update_member(
+            msg: discord.Message, embeds: list, member: discord.Member, action: str
+        ):
+            try:
+                inat_user = await self.user_table.get_user(member)
+                counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
+            except LookupError:
+                return
+            embed = embeds[0]
+            url = embed.url
+            if not url:
+                return
+            mat = re.match(PAT_TAXON_LINK, url)
+            if not mat:
+                return
+            taxon_id = mat["taxon_id"]
+            if not taxon_id:
+                return
+
+            # Observed by count add/remove for taxon:
+            description = embed.description or ""
+            mat = re.search(counts_pat, description)
+
+            if (mat and (action == "remove")) or (not mat and (action == "add")):
+                taxon = await get_taxon(self, taxon_id)
+                embed.description = await update_totals(
+                    self, description, taxon, inat_user, action, counts_pat
+                )
+                await msg.edit(embed=embed)
 
         async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
             # Add/remove always results in a change to totals, so remove:
@@ -87,32 +122,17 @@ class Listeners(INatEmbeds, MixinMeta):
             return
 
         if reaction.emoji == "#️⃣":  # Add/remove counts
-            try:
-                inat_user = await self.user_table.get_user(member)
-                counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
-            except LookupError:
-                return
-            embed = embeds[0]
-            url = embed.url
-            if not url:
-                return
-            mat = re.match(PAT_TAXON_LINK, url)
-            if not mat:
-                return
-            taxon_id = mat["taxon_id"]
-            if not taxon_id:
-                return
-
-            # Observed by count add/remove for taxon:
-            description = embed.description or ""
-            mat = re.search(counts_pat, description)
-
-            if (mat and (action == "remove")) or (not mat and (action == "add")):
-                taxon = await get_taxon(self, taxon_id)
-                embed.description = await update_totals(
-                    self, description, taxon, inat_user, action, counts_pat
-                )
-                await msg.edit(embed=embed)
+            await maybe_update_member(msg, embeds, member, action)
+        elif reaction.emoji == "➕":
+            await msg.channel.send("Add which member (you have 30 seconds to answer)?")
+            response = await self.bot.wait_for(
+                "message",
+                check=MessagePredicate.same_context(channel=msg.channel, user=member),
+            )
+            ctx = MockContext(msg.guild, member, msg.channel, self.bot)
+            who = await ContextMemberConverter.convert(ctx, response.content)
+            if who:
+                await maybe_update_member(msg, embeds, who.member, "add")
 
     @commands.Cog.listener()
     async def on_reaction_add(
