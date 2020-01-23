@@ -9,7 +9,7 @@ class EBirdAPI:
         self.cog = cog
 
     async def get_region(self, channel, region_code):
-        """Gets region observations."""
+        """Gets region."""
         ebird_key = await self.get_api_key(channel)
         if ebird_key is None:
             return False
