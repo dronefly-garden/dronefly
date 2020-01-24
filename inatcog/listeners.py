@@ -1,5 +1,7 @@
 """Listeners module for inatcog."""
 from collections import namedtuple
+import asyncio
+import contextlib
 import re
 from typing import Union
 import discord
@@ -124,11 +126,27 @@ class Listeners(INatEmbeds, MixinMeta):
         if reaction.emoji == "#️⃣":  # Add/remove counts
             await maybe_update_member(msg, embeds, member, action)
         elif reaction.emoji == "➕":
-            await msg.channel.send("Add which member (you have 30 seconds to answer)?")
-            response = await self.bot.wait_for(
-                "message",
-                check=MessagePredicate.same_context(channel=msg.channel, user=member),
+            query = await msg.channel.send(
+                "Add which member (you have 30 seconds to answer)?"
             )
+            try:
+                response = await self.bot.wait_for(
+                    "message",
+                    check=MessagePredicate.same_context(
+                        channel=msg.channel, user=member
+                    ),
+                    timeout=30,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+            else:
+                try:
+                    await msg.channel.delete_messages((query, response))
+                except (discord.HTTPException, AttributeError):
+                    # In case the bot can't delete other users' messages:
+                    with contextlib.suppress(discord.HTTPException):
+                        await query.delete()
             ctx = MockContext(msg.guild, member, msg.channel, self.bot)
             who = await ContextMemberConverter.convert(ctx, response.content)
             if who:
