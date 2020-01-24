@@ -154,6 +154,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 error_msg = await msg.channel.send(error)
                 await asyncio.sleep(10)
                 await error_msg.delete()
+                who = None
             if who:
                 await maybe_update_member(msg, embeds, who.member, "add")
 
