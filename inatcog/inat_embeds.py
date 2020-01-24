@@ -3,6 +3,7 @@ from io import BytesIO
 import re
 from typing import Union
 from discord import File
+from redbot.core.utils.menus import start_adding_reactions
 from .api import WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
@@ -329,3 +330,8 @@ class INatEmbeds(MixinMeta):
             embed.set_thumbnail(url=taxon.thumbnail)
 
         return embed
+
+    async def send_embed_for_taxon(self, ctx, taxon):
+        """Make embed for taxon & send."""
+        msg = await ctx.send(embed=await self.make_taxa_embed(taxon))
+        start_adding_reactions(msg, ["#️⃣", "📝"])

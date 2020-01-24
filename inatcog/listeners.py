@@ -77,6 +77,8 @@ class Listeners(INatEmbeds, MixinMeta):
             # Observed by count add/remove for taxon:
             description = embed.description or ""
             mat = re.search(counts_pat, description)
+            if action == "toggle":
+                action = "remove" if mat else "add"
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
                 taxon = await get_taxon(self, taxon_id)
@@ -123,12 +125,12 @@ class Listeners(INatEmbeds, MixinMeta):
         if not embeds:
             return
 
-        if reaction.emoji == "#️⃣":  # Add/remove counts
+        if reaction.emoji == "#️⃣":  # Add/remove counts for self
             await maybe_update_member(msg, embeds, member, action)
-        elif reaction.emoji == "➕":
+        elif reaction.emoji == "📝":  # Add/remove counts by name
             response = None
             query = await msg.channel.send(
-                "Add which member (you have 30 seconds to answer)?"
+                "Add or remove which member (you have 30 seconds to answer)?"
             )
             try:
                 response = await self.bot.wait_for(
@@ -158,7 +160,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await error_msg.delete()
                     who = None
                 if who:
-                    await maybe_update_member(msg, embeds, who.member, "add")
+                    await maybe_update_member(msg, embeds, who.member, "toggle")
 
     @commands.Cog.listener()
     async def on_reaction_add(

@@ -6,7 +6,7 @@ from typing import AsyncIterator, Tuple, Union
 import discord
 import inflect
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .common import grouper, LOG
@@ -172,9 +172,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             last = await inat_link_msg.get_last_obs_msg(msgs)
             if not last:
                 await ctx.send(embed=sorry(apology="Nothing found"))
-                return
-
-            if display:
+            elif display:
                 if display in ("img", "image"):
                     if last and last.obs and last.obs.taxon:
                         try:
@@ -186,13 +184,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                                 ctx.guild, last.obs, last.url, preview=num
                             )
                         )
-                        return
-                if display in ("t", "taxon"):
+                elif display in ("t", "taxon"):
                     if last and last.obs and last.obs.taxon:
-                        msg = await ctx.send(
-                            embed=await self.make_taxa_embed(last.obs.taxon)
-                        )
-                        start_adding_reactions(msg, ["#️⃣", "➕"])
+                        await self.send_embed_for_taxon(ctx, last.obs.taxon)
                 elif display in ("m", "map"):
                     if last and last.obs and last.obs.taxon:
                         await ctx.send(
@@ -201,21 +195,14 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.obs.taxon.rank == rank:
-                        msg = await ctx.send(
-                            embed=await self.make_taxa_embed(last.obs.taxon)
-                        )
-                        start_adding_reactions(msg, ["#️⃣", "➕"])
-                        return
-                    if last.obs.taxon:
+                        await self.send_embed_for_taxon(ctx, last.obs.taxon)
+                    elif last.obs.taxon:
                         full_record = await get_taxon(self, last.obs.taxon.taxon_id)
                         ancestor = await self.taxa_query.get_taxon_ancestor(
                             full_record, display
                         )
                         if ancestor:
-                            msg = await ctx.send(
-                                embed=await self.make_taxa_embed(ancestor)
-                            )
-                            start_adding_reactions(msg, ["#️⃣", "➕"])
+                            await self.send_embed_for_taxon(ctx, ancestor)
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -228,7 +215,6 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         )
                 else:
                     await ctx.send_help()
-                    return
             else:
                 # By default, display the observation embed for the matched last obs.
                 await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
@@ -240,45 +226,30 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             last = await inat_link_msg.get_last_taxon_msg(msgs)
             if not last:
                 await ctx.send(embed=sorry(apology="Nothing found"))
-                return
-
-            if display:
+            elif display:
                 if display == "by":
                     if last and last.taxon:
                         who = await ContextMemberConverter.convert(ctx, arg)
                         user = await self.user_table.get_user(who.member)
                         filtered_taxon = FilteredTaxon(last.taxon, user)
-                        msg = await ctx.send(
-                            embed=await self.make_taxa_embed(filtered_taxon)
-                        )
-                        start_adding_reactions(msg, ["#️⃣", "➕"])
+                        await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display in ("m", "map"):
                     if last and last.taxon:
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
                 elif display in ("img", "image"):
                     if last and last.taxon:
-                        msg = await ctx.send(
-                            embed=await self.make_image_embed(last.taxon)
-                        )
-                        start_adding_reactions(msg, ["#️⃣", "➕"])
+                        await self.send_embed_for_taxon(ctx, last.taxon)
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
-                        msg = await ctx.send(
-                            embed=await self.make_taxa_embed(last.taxon)
-                        )
-                        start_adding_reactions(msg, ["#️⃣", "➕"])
-                        return
-                    if last.taxon:
+                        await self.send_embed_for_taxon(ctx, last.taxon)
+                    elif last.taxon:
                         full_record = await get_taxon(self, last.taxon.taxon_id)
                         ancestor = await self.taxa_query.get_taxon_ancestor(
                             full_record, display
                         )
                         if ancestor:
-                            msg = await ctx.send(
-                                embed=await self.make_taxa_embed(ancestor)
-                            )
-                            start_adding_reactions(msg, ["#️⃣", "➕"])
+                            await self.send_embed_for_taxon(ctx, ancestor)
                         else:
                             await ctx.send(
                                 embed=sorry(
@@ -293,14 +264,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         )
                 else:
                     await ctx.send_help()
-                    return
             else:
                 # By default, display the embed for the matched last taxon.
-                msg = await ctx.send(embed=await self.make_taxa_embed(last.taxon))
-                start_adding_reactions(msg, ["#️⃣", "➕"])
+                await self.send_embed_for_taxon(ctx, last.taxon)
         else:
             await ctx.send_help()
-            return
 
     @inat.command()
     async def link(self, ctx, *, query):
@@ -487,9 +455,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        embed = await self.make_taxa_embed(filtered_taxon)
-        msg = await ctx.send(embed=embed)
-        start_adding_reactions(msg, ["#️⃣", "➕"])
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
