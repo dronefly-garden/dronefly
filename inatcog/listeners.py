@@ -148,7 +148,12 @@ class Listeners(INatEmbeds, MixinMeta):
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
             ctx = MockContext(msg.guild, member, msg.channel, self.bot)
-            who = await ContextMemberConverter.convert(ctx, response.content)
+            try:
+                who = await ContextMemberConverter.convert(ctx, response.content)
+            except discord.ext.commands.errors.BadArgument as error:
+                error_msg = await msg.channel.send(error)
+                await asyncio.sleep(10)
+                await error_msg.delete()
             if who:
                 await maybe_update_member(msg, embeds, who.member, "add")
 
