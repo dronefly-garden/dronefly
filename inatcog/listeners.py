@@ -126,6 +126,7 @@ class Listeners(INatEmbeds, MixinMeta):
         if reaction.emoji == "#️⃣":  # Add/remove counts
             await maybe_update_member(msg, embeds, member, action)
         elif reaction.emoji == "➕":
+            response = None
             query = await msg.channel.send(
                 "Add which member (you have 30 seconds to answer)?"
             )
@@ -147,16 +148,17 @@ class Listeners(INatEmbeds, MixinMeta):
                     # In case the bot can't delete other users' messages:
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
-            ctx = MockContext(msg.guild, member, msg.channel, self.bot)
-            try:
-                who = await ContextMemberConverter.convert(ctx, response.content)
-            except discord.ext.commands.errors.BadArgument as error:
-                error_msg = await msg.channel.send(error)
-                await asyncio.sleep(10)
-                await error_msg.delete()
-                who = None
-            if who:
-                await maybe_update_member(msg, embeds, who.member, "add")
+            if response:
+                ctx = MockContext(msg.guild, member, msg.channel, self.bot)
+                try:
+                    who = await ContextMemberConverter.convert(ctx, response.content)
+                except discord.ext.commands.errors.BadArgument as error:
+                    error_msg = await msg.channel.send(error)
+                    await asyncio.sleep(10)
+                    await error_msg.delete()
+                    who = None
+                if who:
+                    await maybe_update_member(msg, embeds, who.member, "add")
 
     @commands.Cog.listener()
     async def on_reaction_add(
