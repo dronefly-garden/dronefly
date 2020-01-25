@@ -405,9 +405,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        msg = await ctx.send(embed=await self.make_image_embed(filtered_taxon.taxon))
-        await msg.add_reaction("#️⃣")
-        await msg.add_reaction("➕")
+        await self.send_embed_for_taxon(ctx, filtered_taxon.taxon)
 
     @inat.command()
     async def taxon(self, ctx, *, query):
