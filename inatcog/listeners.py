@@ -130,7 +130,7 @@ class Listeners(INatEmbeds, MixinMeta):
         elif reaction.emoji == "📝":  # Add/remove counts by name
             response = None
             query = await msg.channel.send(
-                "Add or remove which member (you have 30 seconds to answer)?"
+                "Add or remove which member (you have 15 seconds to answer)?"
             )
             try:
                 response = await self.bot.wait_for(
@@ -138,7 +138,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     check=MessagePredicate.same_context(
                         channel=msg.channel, user=member
                     ),
-                    timeout=30,
+                    timeout=15,
                 )
             except asyncio.TimeoutError:
                 with contextlib.suppress(discord.HTTPException):
@@ -156,7 +156,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     who = await ContextMemberConverter.convert(ctx, response.content)
                 except discord.ext.commands.errors.BadArgument as error:
                     error_msg = await msg.channel.send(error)
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(15)
                     await error_msg.delete()
                     who = None
                 if who:
