@@ -238,7 +238,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         await ctx.send(embed=await self.make_map_embed([last.taxon]))
                 elif display in ("img", "image"):
                     if last and last.taxon:
-                        await self.send_embed_for_taxon(ctx, last.taxon)
+                        await self.send_embed_for_taxon_image(ctx, last.taxon)
                 elif display in RANK_KEYWORDS:
                     rank = RANK_EQUIVALENTS.get(display) or display
                     if last.taxon.rank == rank:
