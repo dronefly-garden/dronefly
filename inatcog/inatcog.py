@@ -8,7 +8,7 @@ import inflect
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
-from .api import INatAPI
+from .api import INatAPI, WWW_BASE_URL
 from .common import grouper, LOG
 from .converters import (
     QuotedContextMemberConverter,
@@ -48,6 +48,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         self.config.register_guild(
             autoobs=False,
             user_projects={},
+            places={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
         self.config.register_user(inat_user_id=None)
@@ -328,6 +329,67 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         await ctx.send(embed=await self.make_map_embed(taxa))
+
+    @inat.group(invoke_without_command=True)
+    async def place(self, ctx, *, query):
+        """Test command to lookup a place."""
+        results = None
+
+        if query.isnumeric():
+            results = (await self.api.get_places(query))["results"]
+        elif ctx.guild:
+            abbrev = query.lower()
+            config = self.config.guild(ctx.guild)
+            places = await config.places()
+            if abbrev in places:
+                results = (await self.api.get_places(places[abbrev]))["results"]
+
+        if not results:
+            results = (
+                await self.api.get_places("autocomplete", q=query, order_by="area")
+            )["results"]
+
+        if results:
+            place = results[0]
+            url = f'{WWW_BASE_URL}/places/{place["id"]}'
+            await ctx.send(url)
+        else:
+            await ctx.send("Place not found.")
+
+    @place.command(name="add")
+    async def placeadd(self, ctx, name: str, place_id: int):
+        """Add place for guild."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        places = await config.places()
+        abbrev = name.lower()
+        if abbrev in places:
+            url = f"{WWW_BASE_URL}/places/{places[abbrev]}"
+            await ctx.send(f"Place '{abbrev}' is already defined as: {url}")
+            return
+
+        places[name] = place_id
+        await config.places.set(places)
+        await ctx.send(f"Place added.")
+
+    @place.command(name="del")
+    async def placedel(self, ctx, name: str):
+        """Remove place name for guild."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        places = await config.places()
+
+        if name not in places:
+            await ctx.send("Place name not defined.")
+            return
+
+        del places[name]
+        await config.places.set(places)
+        await ctx.send("Place name removed.")
 
     @inat.command()
     async def obs(self, ctx, *, query):

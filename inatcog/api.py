@@ -60,6 +60,19 @@ class INatAPI:
 
         return None
 
+    async def get_places(self, *args, **kwargs):
+        """Query API for places matching parameters."""
+
+        # Select endpoint based on call signature:
+        endpoint = "/v1/places"
+        id_arg = f"/{args[0]}" if args else ""
+
+        async with self.session.get(
+            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+
     async def get_projects(self, project_id: int, refresh_cache=False):
         """Get the project for the specified id."""
         request = f"/v1/projects/{project_id}"
