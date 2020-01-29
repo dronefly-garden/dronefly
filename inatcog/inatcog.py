@@ -376,7 +376,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await config.places.set(places)
         await ctx.send(f"Place abbreviation added.")
 
-    @place.command(name="del")
+    @place.command(name="remove")
     async def placedel(self, ctx, abbrev: str):
         """Remove place abbreviation for guild."""
         if not ctx.guild:
