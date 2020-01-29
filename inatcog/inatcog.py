@@ -357,39 +357,42 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send("Place not found.")
 
     @place.command(name="add")
-    async def placeadd(self, ctx, name: str, place_id: int):
-        """Add place for guild."""
+    async def placeadd(self, ctx, abbrev: str, place_number: int):
+        """Add place abbreviation for guild."""
         if not ctx.guild:
             return
 
         config = self.config.guild(ctx.guild)
         places = await config.places()
-        abbrev = name.lower()
-        if abbrev in places:
-            url = f"{WWW_BASE_URL}/places/{places[abbrev]}"
-            await ctx.send(f"Place '{abbrev}' is already defined as: {url}")
+        abbrev_lowered = abbrev.lower()
+        if abbrev_lowered in places:
+            url = f"{WWW_BASE_URL}/places/{places[abbrev_lowered]}"
+            await ctx.send(
+                f"Place abbreviation '{abbrev_lowered}' is already defined as: {url}"
+            )
             return
 
-        places[name] = place_id
+        places[abbrev_lowered] = place_number
         await config.places.set(places)
-        await ctx.send(f"Place added.")
+        await ctx.send(f"Place abbreviation added.")
 
     @place.command(name="del")
-    async def placedel(self, ctx, name: str):
-        """Remove place name for guild."""
+    async def placedel(self, ctx, abbrev: str):
+        """Remove place abbreviation for guild."""
         if not ctx.guild:
             return
 
         config = self.config.guild(ctx.guild)
         places = await config.places()
+        abbrev_lowered = abbrev.lower()
 
-        if name not in places:
-            await ctx.send("Place name not defined.")
+        if abbrev_lowered not in places:
+            await ctx.send("Place abbreviation not defined.")
             return
 
-        del places[name]
+        del places[abbrev_lowered]
         await config.places.set(places)
-        await ctx.send("Place name removed.")
+        await ctx.send("Place abbreviation removed.")
 
     @inat.command()
     async def obs(self, ctx, *, query):
