@@ -3,6 +3,7 @@ from io import BytesIO
 import re
 from typing import Union
 from discord import File
+import html2markdown
 from redbot.core.utils.menus import start_adding_reactions
 from .api import WWW_BASE_URL
 from .common import LOG
@@ -132,7 +133,8 @@ class INatEmbeds(MixinMeta):
             if obs.description:
                 # Contribute up to 10 lines from the description, and no more
                 # than 500 characters:
-                lines = obs.description.split("\n", 11)
+                text_description = html2markdown.convert(obs.description)
+                lines = text_description.split("\n", 11)
                 description = "\n> %s" % "\n> ".join(lines[:10])
                 if len(lines) > 10:
                     description += "\n> …"
