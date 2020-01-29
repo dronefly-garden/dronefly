@@ -332,7 +332,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
     @inat.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
-        """Test command to lookup a place."""
+        """Show a place by number, name, or abbreviation defined with `[p]place add`."""
         results = None
 
         if query.isnumeric():
