@@ -357,7 +357,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send("Place not found.")
 
     @place.command(name="add")
-    async def placeadd(self, ctx, abbrev: str, place_number: int):
+    async def place_add(self, ctx, abbrev: str, place_number: int):
         """Add place abbreviation for guild."""
         if not ctx.guild:
             return
@@ -377,7 +377,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send(f"Place abbreviation added.")
 
     @place.command(name="remove")
-    async def placedel(self, ctx, abbrev: str):
+    async def place_remove(self, ctx, abbrev: str):
         """Remove place abbreviation for guild."""
         if not ctx.guild:
             return
