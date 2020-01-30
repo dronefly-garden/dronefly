@@ -14,6 +14,7 @@ class INatAPI:
 
     def __init__(self):
         self.request_time = time()
+        self.places_cache = {}
         self.projects_cache = {}
         self.users_cache = {}
         self.session = aiohttp.ClientSession()
@@ -60,15 +61,32 @@ class INatAPI:
 
         return None
 
-    async def get_places(self, *args, **kwargs):
-        """Query API for places matching parameters."""
+    async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):
+        """Query API for places matching place ID or params."""
 
         # Select endpoint based on call signature:
-        endpoint = "/v1/places"
-        id_arg = f"/{args[0]}" if args else ""
+        request = f"/v1/places/{query}"
 
+        # Cache lookup by id#, as those should be stable.
+        if isinstance(query, int) or query.isnumeric():
+            place_id = int(query)
+            if refresh_cache or place_id not in self.places_cache:
+                # Rate-limit these so they can be retrieved in a loop without tripping
+                # iNat API's rate-limiting.
+                time_since_request = time() - self.request_time
+                if time_since_request < 1.0:
+                    await asyncio.sleep(1.0 - time_since_request)
+                async with self.session.get(f"{API_BASE_URL}{request}") as response:
+                    if response.status == 200:
+                        self.places_cache[place_id] = await response.json()
+                        self.request_time = time()
+            return (
+                self.places_cache[place_id] if place_id in self.places_cache else None
+            )
+
+        # Skip the cache for text queries which are not stable.
         async with self.session.get(
-            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
+            f"{API_BASE_URL}{request}", params=kwargs
         ) as response:
             if response.status == 200:
                 return await response.json()

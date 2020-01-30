@@ -333,24 +333,28 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     @inat.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
-        results = None
+        response = None
+        place = None
 
         if query.isnumeric():
-            results = (await self.api.get_places(query))["results"]
+            response = await self.api.get_places(query)
         elif ctx.guild:
             abbrev = query.lower()
             config = self.config.guild(ctx.guild)
             places = await config.places()
             if abbrev in places:
-                results = (await self.api.get_places(places[abbrev]))["results"]
+                response = await self.api.get_places(places[abbrev])
 
-        if not results:
-            results = (
-                await self.api.get_places("autocomplete", q=query, order_by="area")
-            )["results"]
+        if not response:
+            response = await self.api.get_places(
+                "autocomplete", q=query, order_by="area"
+            )
 
-        if results:
-            place = results[0]
+        if response:
+            results = response.get("results")
+            place = results[0] if results else None
+
+        if place:
             url = f'{WWW_BASE_URL}/places/{place["id"]}'
             await ctx.send(url)
         else:
