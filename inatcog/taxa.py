@@ -5,6 +5,7 @@ from .api import WWW_BASE_URL
 from .common import LOG
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
+from .places import get_place
 from .users import User
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
@@ -31,9 +32,12 @@ class FilteredTaxon(NamedTuple):
 
     taxon: Taxon
     user: User
+    place: dict
     # location: Location
 
 
+TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
+TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
 TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
 TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
@@ -468,7 +472,9 @@ class INatTaxaQuery:
             user = await self.cog.user_table.get_user(who.member)
         else:
             user = None
-        return FilteredTaxon(taxon, user)
+        if compound_query.place:
+            place = await get_place(self.cog, ctx.guild, compound_query.place)
+        return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
@@ -487,6 +493,37 @@ class INatTaxaQuery:
             raise LookupError("Nothing found")
 
         return result
+
+
+async def format_place_taxon_counts(cog, place: Union[dict, str], taxon):
+    """Format user observation & species counts for taxon."""
+    taxon_id = taxon.taxon_id
+    if isinstance(place, str):
+        place_id = place
+        name = "*total*"
+    else:
+        place_id = place["id"]
+        name = place["name"]
+    observations = await cog.api.get_observations(
+        taxon_id=taxon_id, place_id=place_id, per_page=0
+    )
+    species = await cog.api.get_observations(
+        "species_counts", taxon_id=taxon_id, place_id=place_id, per_page=0
+    )
+    if observations:
+        observations_count = observations["total_results"]
+        species_count = species["total_results"]
+        url = (
+            WWW_BASE_URL
+            + f"/observations?taxon_id={taxon_id}&place_id={place_id}&verifiable=any"
+        )
+        if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+            link = f"[{observations_count}]({url}) {name}"
+        else:
+            link = f"[{observations_count} ({species_count})]({url}) {name}"
+        return f"{link} "
+
+    return ""
 
 
 async def format_user_taxon_counts(cog, user: Union[User, str], taxon):

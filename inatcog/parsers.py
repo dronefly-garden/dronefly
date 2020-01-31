@@ -85,10 +85,10 @@ TAXON_NAME_CHARS = (
     "ʻ" + pyparsing_unicode.Latin1.printables + pyparsing_unicode.LatinA.printables
 )
 
-OPS = ("in", "by", "at")
+OPS = ("in", "by", "at", "from")
 
 SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
-CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user")
+CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user, place")
 
 
 class TaxonQueryParser:
@@ -144,7 +144,19 @@ class TaxonQueryParser:
             within + Suppress(CaselessKeyword("by")) + Group(words)("user")
         ) | within
 
-        return by_user
+        from_place = (
+            by_user + Suppress(CaselessKeyword("from")) + Group(words)("place")
+        ) | within
+
+        from_by = (
+            within
+            + Suppress(CaselessKeyword("from"))
+            + Group(words)("place")
+            + Suppress(CaselessKeyword("by"))
+            + Group(words)("user")
+        ) | from_place
+
+        return from_by
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
@@ -186,4 +198,8 @@ class TaxonQueryParser:
                 user = " ".join(parsed["user"].asList())
             else:
                 user = None
-        return CompoundQuery(main=main, ancestor=ancestor, user=user)
+            if "place" in parsed:
+                place = " ".join(parsed["place"].asList())
+            else:
+                place = None
+        return CompoundQuery(main=main, ancestor=ancestor, user=user, place=place)

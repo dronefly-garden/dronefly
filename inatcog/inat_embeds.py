@@ -17,8 +17,10 @@ from .taxa import (
     get_taxon,
     get_taxon_fields,
     FilteredTaxon,
+    format_place_taxon_counts,
     format_user_taxon_counts,
     TAXON_COUNTS_HEADER,
+    TAXON_PLACES_HEADER,
 )
 
 
@@ -292,10 +294,11 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, arg):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user) = arg
+            (taxon, user, place) = arg
         else:
             taxon = arg
             user = None
+            place = None
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
@@ -321,6 +324,10 @@ class INatEmbeds(MixinMeta):
         title = format_taxon_title(taxon)
         description = await format_description(taxon)
         description = await format_ancestors(description, taxon)
+        if place:
+            formatted_counts = await format_place_taxon_counts(self, place, taxon)
+            if formatted_counts:
+                description += f"\n{TAXON_PLACES_HEADER}\n{formatted_counts}"
         if user:
             formatted_counts = await format_user_taxon_counts(self, user, taxon)
             if formatted_counts:
@@ -336,9 +343,9 @@ class INatEmbeds(MixinMeta):
     async def send_embed_for_taxon_image(self, ctx, taxon):
         """Make embed for taxon image & send."""
         msg = await ctx.send(embed=await self.make_image_embed(taxon))
-        start_adding_reactions(msg, ["#️⃣", "📝", "🗺️"])
+        start_adding_reactions(msg, ["#️⃣", "📝"])  # , "📌"])
 
     async def send_embed_for_taxon(self, ctx, taxon):
         """Make embed for taxon & send."""
         msg = await ctx.send(embed=await self.make_taxa_embed(taxon))
-        start_adding_reactions(msg, ["#️⃣", "📝", "🗺️"])
+        start_adding_reactions(msg, ["#️⃣", "📝"])  # , "📌"])

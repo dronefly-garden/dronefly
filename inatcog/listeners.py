@@ -163,7 +163,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     who = None
                 if who:
                     await maybe_update_member(msg, embeds, who.member, "toggle")
-        elif reaction.emoji == "🗺️":
+        elif reaction.emoji == "📌":
             response = None
             query = await msg.channel.send(
                 "Filter by which place (you have 15 seconds to answer)?"
