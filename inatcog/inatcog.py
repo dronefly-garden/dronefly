@@ -19,6 +19,7 @@ from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
+from .places import get_place
 from .projects import UserProject, ObserverStats
 from .listeners import Listeners
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
@@ -333,27 +334,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     @inat.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
-        response = None
-        place = None
-
-        if query.isnumeric():
-            response = await self.api.get_places(query)
-        elif ctx.guild:
-            abbrev = query.lower()
-            config = self.config.guild(ctx.guild)
-            places = await config.places()
-            if abbrev in places:
-                response = await self.api.get_places(places[abbrev])
-
-        if not response:
-            response = await self.api.get_places(
-                "autocomplete", q=query, order_by="area"
-            )
-
-        if response:
-            results = response.get("results")
-            place = results[0] if results else None
-
+        place = await get_place(self, ctx.guild, query)
         if place:
             url = f'{WWW_BASE_URL}/places/{place["id"]}'
             await ctx.send(url)

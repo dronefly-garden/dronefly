@@ -7,10 +7,12 @@ from typing import Union
 import discord
 from redbot.core import commands
 from redbot.core.utils.predicates import MessagePredicate
+from .api import WWW_BASE_URL
 from .converters import ContextMemberConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
+from .places import get_place
 from .taxa import (
     get_taxon,
     format_user_taxon_counts,
@@ -161,6 +163,40 @@ class Listeners(INatEmbeds, MixinMeta):
                     who = None
                 if who:
                     await maybe_update_member(msg, embeds, who.member, "toggle")
+        elif reaction.emoji == "🗺️":
+            response = None
+            query = await msg.channel.send(
+                "Filter by which place (you have 15 seconds to answer)?"
+            )
+            try:
+                response = await self.bot.wait_for(
+                    "message",
+                    check=MessagePredicate.same_context(
+                        channel=msg.channel, user=member
+                    ),
+                    timeout=15,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+            else:
+                try:
+                    await msg.channel.delete_messages((query, response))
+                except (discord.HTTPException, AttributeError):
+                    # In case the bot can't delete other users' messages:
+                    with contextlib.suppress(discord.HTTPException):
+                        await query.delete()
+            if response:
+                place = await get_place(self, msg.guild, response.content)
+                await msg.channel.send(
+                    f"Sorry, place filter not yet fully implemented."
+                )
+                if place:
+                    await msg.channel.send(
+                        f"Place: {WWW_BASE_URL}/places/{place['id']}"
+                    )
+                else:
+                    await msg.channel.send("Place not found.")
 
     @commands.Cog.listener()
     async def on_reaction_add(
