@@ -233,7 +233,12 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                     if last and last.taxon:
                         who = await ContextMemberConverter.convert(ctx, arg)
                         user = await self.user_table.get_user(who.member)
-                        filtered_taxon = FilteredTaxon(last.taxon, user)
+                        filtered_taxon = FilteredTaxon(last.taxon, user, None)
+                        await self.send_embed_for_taxon(ctx, filtered_taxon)
+                if display == "from":
+                    if last and last.taxon:
+                        place = await get_place(self, ctx.guild, arg)
+                        filtered_taxon = FilteredTaxon(last.taxon, None, place)
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display in ("m", "map"):
                     if last and last.taxon:
