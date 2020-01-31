@@ -7,14 +7,15 @@ from typing import Union
 import discord
 from redbot.core import commands
 from redbot.core.utils.predicates import MessagePredicate
-from .api import WWW_BASE_URL
 from .converters import ContextMemberConverter
+from .embeds import make_embed
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
 from .places import get_place
 from .taxa import (
     get_taxon,
+    format_place_taxon_counts,
     format_user_taxon_counts,
     PAT_TAXON_LINK,
     TAXON_COUNTS_HEADER,
@@ -57,23 +58,25 @@ class Listeners(INatEmbeds, MixinMeta):
     ):
         """Central handler for member reactions."""
 
-        async def maybe_update_member(
-            msg: discord.Message, embeds: list, member: discord.Member, action: str
-        ):
-            try:
-                inat_user = await self.user_table.get_user(member)
-                counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
-            except LookupError:
-                return
-            embed = embeds[0]
+        def get_taxon_id(embed):
             url = embed.url
             if not url:
                 return
             mat = re.match(PAT_TAXON_LINK, url)
             if not mat:
                 return
-            taxon_id = mat["taxon_id"]
-            if not taxon_id:
+            return mat["taxon_id"]
+
+        async def maybe_update_member(
+            msg: discord.Message,
+            embed: discord.Embed,
+            member: discord.Member,
+            action: str,
+        ):
+            try:
+                inat_user = await self.user_table.get_user(member)
+                counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
+            except LookupError:
                 return
 
             # Observed by count add/remove for taxon:
@@ -126,9 +129,13 @@ class Listeners(INatEmbeds, MixinMeta):
         embeds = msg.embeds
         if not embeds:
             return
+        embed = embeds[0]
+        taxon_id = get_taxon_id(embed)
+        if not taxon_id:
+            return
 
         if reaction.emoji == "#️⃣":  # Add/remove counts for self
-            await maybe_update_member(msg, embeds, member, action)
+            await maybe_update_member(msg, embed, member, action)
         elif reaction.emoji == "📝":  # Add/remove counts by name
             response = None
             query = await msg.channel.send(
@@ -166,7 +173,7 @@ class Listeners(INatEmbeds, MixinMeta):
         elif reaction.emoji == "📌":
             response = None
             query = await msg.channel.send(
-                "Filter by which place (you have 15 seconds to answer)?"
+                "Observation & species counts for which place (you have 15 seconds to answer)?"
             )
             try:
                 response = await self.bot.wait_for(
@@ -188,15 +195,12 @@ class Listeners(INatEmbeds, MixinMeta):
                         await query.delete()
             if response:
                 place = await get_place(self, msg.guild, response.content)
-                await msg.channel.send(
-                    f"Sorry, place filter not yet fully implemented."
+                taxon = await get_taxon(self, taxon_id)
+                formatted_counts = await format_place_taxon_counts(self, place, taxon)
+                place_embed = make_embed(
+                    description=f"{taxon.name}: {formatted_counts}"
                 )
-                if place:
-                    await msg.channel.send(
-                        f"Place: {WWW_BASE_URL}/places/{place['id']}"
-                    )
-                else:
-                    await msg.channel.send("Place not found.")
+                await msg.channel.send(embed=place_embed)
 
     @commands.Cog.listener()
     async def on_reaction_add(
