@@ -235,7 +235,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         user = await self.user_table.get_user(who.member)
                         filtered_taxon = FilteredTaxon(last.taxon, user, None)
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
-                if display == "from":
+                elif display == "from":
                     if last and last.taxon:
                         place = await get_place(self, ctx.guild, arg)
                         filtered_taxon = FilteredTaxon(last.taxon, None, place)
