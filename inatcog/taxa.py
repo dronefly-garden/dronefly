@@ -474,6 +474,8 @@ class INatTaxaQuery:
             user = None
         if compound_query.place:
             place = await get_place(self.cog, ctx.guild, compound_query.place)
+        else:
+            place = None
         return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, query):
