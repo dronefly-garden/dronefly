@@ -2,7 +2,7 @@
 from abc import ABC
 from math import ceil
 import re
-from typing import AsyncIterator, Tuple, Union
+from typing import Union
 import discord
 import inflect
 from redbot.core import checks, commands, Config
@@ -712,7 +712,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         all_names = [
             f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
-            async for (duser, iuser) in self.get_user_pairs(all_member_users)
+            async for (duser, iuser) in self.user_table.get_user_pairs(all_member_users)
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
@@ -725,26 +725,3 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             for index, page in enumerate(pages, start=1)
         ]
         await menu(ctx, embeds, DEFAULT_CONTROLS)
-
-    async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
-        """
-        yields:
-            discord.User, User
-
-        Parameters
-        ----------
-        users: dict
-            discord_id -> inat_id mapping
-        """
-
-        for discord_id in users:
-            discord_user = self.bot.get_user(discord_id)
-            user_json = await self.api.get_users(users[discord_id]["inat_user_id"])
-            inat_user = None
-            if user_json:
-                results = user_json["results"]
-                if results:
-                    LOG.info(results[0])
-                    inat_user = User.from_dict(results[0])
-
-            yield (discord_user, inat_user)

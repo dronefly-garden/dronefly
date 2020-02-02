@@ -1,9 +1,11 @@
 """Module to handle users."""
 import re
+from typing import AsyncIterator, Tuple
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 import discord
 from .api import WWW_BASE_URL
+from .common import LOG
 
 PAT_USER_LINK = re.compile(
     r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/(people|users)/"
@@ -57,3 +59,26 @@ class INatUserTable:
             raise LookupError("iNat user id lookup failed.")
 
         return user
+
+    async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
+        """
+        yields:
+            discord.User, User
+
+        Parameters
+        ----------
+        users: dict
+            discord_id -> inat_id mapping
+        """
+
+        for discord_id in users:
+            discord_user = self.cog.bot.get_user(discord_id)
+            user_json = await self.cog.api.get_users(users[discord_id]["inat_user_id"])
+            inat_user = None
+            if user_json:
+                results = user_json["results"]
+                if results:
+                    LOG.info(results[0])
+                    inat_user = User.from_dict(results[0])
+
+            yield (discord_user, inat_user)
