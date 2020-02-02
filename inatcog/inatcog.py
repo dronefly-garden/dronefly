@@ -544,114 +544,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await config.user_projects.set(user_projects)
         await ctx.send("iNat user project removed.")
 
-    @inat.command()
-    @checks.admin_or_permissions(manage_roles=True)
-    async def useradd(self, ctx, discord_user: discord.User, inat_user):
-        """Add user as an iNat user (mods only)."""
-        config = self.config.user(discord_user)
-
-        inat_user_id = await config.inat_user_id()
-        if inat_user_id:
-            await ctx.send("iNat user already known.")
-            return
-
-        mat_link = re.search(PAT_USER_LINK, inat_user)
-        match = mat_link and (mat_link["user_id"] or mat_link["login"])
-        if match:
-            user_query = match
-        else:
-            user_query = inat_user
-
-        user = None
-        response = await self.api.get_users(user_query, refresh_cache=True)
-        if response and response["results"]:
-            user = User.from_dict(response["results"][0])
-            LOG.info(user)
-            mat_login = user_query.lower()
-            mat_id = int(user_query) if user_query.isnumeric() else None
-            if not ((user.login == mat_login) or (user.user_id == mat_id)):
-                user = None
-
-        if not user:
-            await ctx.send("iNat user not found.")
-            return
-
-        await config.inat_user_id.set(user.user_id)
-        await ctx.send(
-            f"{discord_user.display_name} is added as {user.display_name()}."
-        )
-
-    @inat.command()
-    @checks.admin_or_permissions(manage_roles=True)
-    async def userdel(self, ctx, discord_user: discord.User):
-        """Remove user as an iNat user (mods only)."""
-        config = self.config.user(discord_user)
-        if not await config.inat_user_id():
-            ctx.send("iNat user not known.")
-            return
-        await config.inat_user_id.clear()
-        await ctx.send("iNat user removed.")
-
-    @checks.admin_or_permissions(manage_roles=True)
-    @inat.command()
-    async def userlist(self, ctx):
-        """List members with known iNat ids (mods only)."""
-        if not ctx.guild:
-            return
-
-        # Avoid having to fully enumerate pages of discord/iNat user pairs
-        # which would otherwise do expensive API calls if not in the cache
-        # already just to get # of pages of member users:
-        all_users = await self.config.all_users()
-        config = self.config.guild(ctx.guild)
-        user_projects = await config.user_projects()
-
-        responses = [
-            await self.api.get_projects(int(project_id)) for project_id in user_projects
-        ]
-        projects = [
-            UserProject.from_dict(response["results"][0])
-            for response in responses
-            if response
-        ]
-
-        if not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(user_projects.keys())
-            self.user_cache_init[ctx.guild.id] = True
-
-        def emojis(user_id: int):
-            emojis = [
-                user_projects[str(project.project_id)]
-                for project in projects
-                if user_id in project.observed_by_ids()
-            ]
-            return " ".join(emojis)
-
-        all_member_users = {
-            key: value
-            for (key, value) in all_users.items()
-            if ctx.guild.get_member(key)
-        }
-        pages_num = ceil(len(all_member_users) / 10)
-
-        all_names = [
-            f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
-            async for (duser, iuser) in self.get_user_pairs(all_member_users)
-        ]
-
-        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
-
-        embeds = [
-            make_embed(
-                title=f"Discord iNat user list (page {index} of {pages_num})",
-                description=page,
-            )
-            for index, page in enumerate(pages, start=1)
-        ]
-        await menu(ctx, embeds, DEFAULT_CONTROLS)
-
-    @inat.command()
-    async def usershow(self, ctx, *, who: QuotedContextMemberConverter):
+    @inat.group(invoke_without_command=True)
+    async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known."""
         if not ctx.guild:
             return
@@ -725,6 +619,112 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         embed.add_field(name="Ids", value=user.identifications_count, inline=True)
 
         await ctx.send(embed=embed)
+
+    @user.command(name="add")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def user_add(self, ctx, discord_user: discord.User, inat_user):
+        """Add user as an iNat user (mods only)."""
+        config = self.config.user(discord_user)
+
+        inat_user_id = await config.inat_user_id()
+        if inat_user_id:
+            await ctx.send("iNat user already known.")
+            return
+
+        mat_link = re.search(PAT_USER_LINK, inat_user)
+        match = mat_link and (mat_link["user_id"] or mat_link["login"])
+        if match:
+            user_query = match
+        else:
+            user_query = inat_user
+
+        user = None
+        response = await self.api.get_users(user_query, refresh_cache=True)
+        if response and response["results"]:
+            user = User.from_dict(response["results"][0])
+            LOG.info(user)
+            mat_login = user_query.lower()
+            mat_id = int(user_query) if user_query.isnumeric() else None
+            if not ((user.login == mat_login) or (user.user_id == mat_id)):
+                user = None
+
+        if not user:
+            await ctx.send("iNat user not found.")
+            return
+
+        await config.inat_user_id.set(user.user_id)
+        await ctx.send(
+            f"{discord_user.display_name} is added as {user.display_name()}."
+        )
+
+    @user.command(name="remove")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def user_remove(self, ctx, discord_user: discord.User):
+        """Remove user as an iNat user (mods only)."""
+        config = self.config.user(discord_user)
+        if not await config.inat_user_id():
+            ctx.send("iNat user not known.")
+            return
+        await config.inat_user_id.clear()
+        await ctx.send("iNat user removed.")
+
+    @user.command(name="list")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def user_list(self, ctx):
+        """List members with known iNat ids (mods only)."""
+        if not ctx.guild:
+            return
+
+        # Avoid having to fully enumerate pages of discord/iNat user pairs
+        # which would otherwise do expensive API calls if not in the cache
+        # already just to get # of pages of member users:
+        all_users = await self.config.all_users()
+        config = self.config.guild(ctx.guild)
+        user_projects = await config.user_projects()
+
+        responses = [
+            await self.api.get_projects(int(project_id)) for project_id in user_projects
+        ]
+        projects = [
+            UserProject.from_dict(response["results"][0])
+            for response in responses
+            if response
+        ]
+
+        if not self.user_cache_init.get(ctx.guild.id):
+            await self.api.get_observers_from_projects(user_projects.keys())
+            self.user_cache_init[ctx.guild.id] = True
+
+        def emojis(user_id: int):
+            emojis = [
+                user_projects[str(project.project_id)]
+                for project in projects
+                if user_id in project.observed_by_ids()
+            ]
+            return " ".join(emojis)
+
+        all_member_users = {
+            key: value
+            for (key, value) in all_users.items()
+            if ctx.guild.get_member(key)
+        }
+        pages_num = ceil(len(all_member_users) / 10)
+
+        all_names = [
+            f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
+            async for (duser, iuser) in self.get_user_pairs(all_member_users)
+        ]
+
+        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
+
+        embeds = [
+            make_embed(
+                title=f"Discord iNat user list (page {index} of {pages_num})",
+                description=page,
+            )
+            for index, page in enumerate(pages, start=1)
+        ]
+        await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
         """
