@@ -345,7 +345,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
         try:
             place = await self.place_table.get_place(ctx.guild, query)
-            await ctx.send(place.url())
+            await ctx.send(place.url)
         except LookupError as err:
             await ctx.send(err)
 

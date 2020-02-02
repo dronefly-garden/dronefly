@@ -10,10 +10,11 @@ class Place(DataClassJsonMixin):
 
     display_name: str
     place_id: int = field(metadata=config(field_name="id"))
+    url: str = field(init=False)
 
-    def url(self):
+    def __post_init__(self):
         """URL for place."""
-        return f"{WWW_BASE_URL}/places/{self.place_id}"
+        self.url = f"{WWW_BASE_URL}/places/{self.place_id}"
 
 
 class INatPlaceTable:
