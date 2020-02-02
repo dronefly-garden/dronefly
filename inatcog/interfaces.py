@@ -5,6 +5,7 @@ from inflect import engine
 from redbot.core import Config
 from redbot.core.bot import Red
 from .api import INatAPI
+from .places import INatPlaceTable
 from .users import INatUserTable
 
 
@@ -21,3 +22,4 @@ class MixinMeta(ABC):
         self.bot: Red
         self.p: engine  # pylint: disable=invalid-name
         self.user_table: INatUserTable
+        self.place_table: INatPlaceTable

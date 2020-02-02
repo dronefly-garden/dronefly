@@ -12,7 +12,6 @@ from .embeds import make_embed
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
-from .places import get_place
 from .taxa import (
     get_taxon,
     format_place_taxon_counts,
@@ -167,9 +166,9 @@ class Listeners(INatEmbeds, MixinMeta):
                     error_msg = await msg.channel.send(error)
                     await asyncio.sleep(15)
                     await error_msg.delete()
-                    who = None
-                if who:
-                    await maybe_update_member(msg, embeds, who.member, "toggle")
+                    return
+
+                await maybe_update_member(msg, embeds, who.member, "toggle")
         elif reaction.emoji == "📌":
             response = None
             query = await msg.channel.send(
@@ -194,7 +193,16 @@ class Listeners(INatEmbeds, MixinMeta):
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
             if response:
-                place = await get_place(self, msg.guild, response.content)
+                try:
+                    place = await self.place_table.get_place(
+                        msg.guild, response.content
+                    )
+                except LookupError as error:
+                    error_msg = await msg.channel.send(error)
+                    await asyncio.sleep(15)
+                    await error_msg.delete()
+                    return
+
                 taxon = await get_taxon(self, taxon_id)
                 formatted_counts = await format_place_taxon_counts(self, place, taxon)
                 place_embed = make_embed(

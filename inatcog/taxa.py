@@ -5,7 +5,7 @@ from .api import WWW_BASE_URL
 from .common import LOG
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
-from .places import get_place
+from .places import Place
 from .users import User
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
@@ -32,7 +32,7 @@ class FilteredTaxon(NamedTuple):
 
     taxon: Taxon
     user: User
-    place: dict
+    place: Place
     # location: Location
 
 
@@ -467,15 +467,24 @@ class INatTaxaQuery:
         """Query for taxon and return single taxon if found."""
         compound_query = TAXON_QUERY_PARSER.parse(query)
         taxon = await self.maybe_match_taxon_compound(compound_query)
+        place = None
+        user = None
+
         if compound_query.user:
             who = await ContextMemberConverter.convert(ctx, compound_query.user)
-            user = await self.cog.user_table.get_user(who.member)
-        else:
-            user = None
+            try:
+                user = await self.cog.user_table.get_user(who.member)
+            except LookupError:
+                pass
+
         if compound_query.place:
-            place = await get_place(self.cog, ctx.guild, compound_query.place)
-        else:
-            place = None
+            try:
+                place = await self.cog.place_table.get_place(
+                    ctx.guild, compound_query.place
+                )
+            except LookupError:
+                pass
+
         return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, query):
@@ -497,15 +506,15 @@ class INatTaxaQuery:
         return result
 
 
-async def format_place_taxon_counts(cog, place: Union[dict, str], taxon):
+async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon):
     """Format user observation & species counts for taxon."""
     taxon_id = taxon.taxon_id
     if isinstance(place, str):
         place_id = place
         name = "*total*"
     else:
-        place_id = place["id"]
-        name = place["name"]
+        place_id = place.place_id
+        name = place.display_name
     observations = await cog.api.get_observations(
         taxon_id=taxon_id, place_id=place_id, per_page=0
     )

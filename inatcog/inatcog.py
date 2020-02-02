@@ -19,7 +19,7 @@ from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
-from .places import get_place
+from .places import INatPlaceTable
 from .projects import UserProject, ObserverStats
 from .listeners import Listeners
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
@@ -45,6 +45,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.taxa_query = INatTaxaQuery(self)
         self.user_table = INatUserTable(self)
+        self.place_table = INatPlaceTable(self)
         self.config = Config.get_conf(self, identifier=1607)
         self.config.register_guild(
             autoobs=False,
@@ -237,7 +238,10 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display == "from":
                     if last and last.taxon:
-                        place = await get_place(self, ctx.guild, arg)
+                        try:
+                            place = await self.place_table.get_place(ctx.guild, arg)
+                        except LookupError:
+                            place = None
                         filtered_taxon = FilteredTaxon(last.taxon, None, place)
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display in ("m", "map"):
@@ -339,12 +343,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     @inat.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
-        place = await get_place(self, ctx.guild, query)
-        if place:
-            url = f'{WWW_BASE_URL}/places/{place["id"]}'
-            await ctx.send(url)
-        else:
-            await ctx.send("Place not found.")
+        try:
+            place = await self.place_table.get_place(ctx.guild, query)
+            await ctx.send(place.url())
+        except LookupError as err:
+            await ctx.send(err)
 
     @place.command(name="add")
     async def place_add(self, ctx, abbrev: str, place_number: int):
