@@ -140,23 +140,15 @@ class TaxonQueryParser:
             + Group(taxon)("ancestor")
         ) | Group(taxon)("main")
 
-        by_user = (
-            within + Suppress(CaselessKeyword("by")) + Group(words)("user")
-        ) | within
-
         from_place = (
-            by_user + Suppress(CaselessKeyword("from")) + Group(words)("place")
+            within + Suppress(CaselessKeyword("from")) + Group(words)("place")
         ) | within
 
-        from_by = (
-            within
-            + Suppress(CaselessKeyword("from"))
-            + Group(words)("place")
-            + Suppress(CaselessKeyword("by"))
-            + Group(words)("user")
+        by_user = (
+            from_place + Suppress(CaselessKeyword("by")) + Group(words)("user")
         ) | from_place
 
-        return from_by
+        return by_user
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
