@@ -289,6 +289,8 @@ class INatEmbeds(MixinMeta):
         if image:
             embed.set_image(url=image)
             embed.set_footer(text=attribution)
+        else:
+            embed.description = "This taxon has no default photo!"
 
         return embed
 
