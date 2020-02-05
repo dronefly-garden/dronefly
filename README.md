@@ -121,28 +121,28 @@ The default is `[p]inat autoobs inherit`. Specify `on` or `off` to override the 
 
 #### User commands:
 
-##### inat useradd
+##### inat user add
 
 ```
-[p]inat useradd [discord-user] [inat-user]
+[p]inat user add [discord-user] [inat-user]
 ```
 
 Add the Discord user with the specified iNat user id#, login, or profile link to the User config store. **Requires Admin or Manage Roles permission.**
 
 *Note: discord-user is used here, not discord-member to improve comprehension of guild channel history & contributions from those users emeritus on the iNat platform.*
 
-##### inat userdel
+##### inat user remove
 
 ```
-[p]inat userdel [discord-user]
+[p]inat user remove [discord-user]
 ```
 
 Remove the user from the User config store. **Requires Admin or Manage Roles permission.**
 
-##### inat usershow
+##### inat user
 
 ```
-[p]inat userdel [discord-user]
+[p]inat user [discord-user]
 ```
 
 Show the user if present in the User config store.
