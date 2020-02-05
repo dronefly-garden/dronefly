@@ -269,6 +269,7 @@ class INatEmbeds(MixinMeta):
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
         title = format_taxon_title(rec)
+        image = None
 
         embed.title = title
         if rec.thumbnail:
