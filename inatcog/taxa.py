@@ -516,17 +516,21 @@ async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon)
         place_id = place.place_id
         name = place.display_name
     observations = await cog.api.get_observations(
-        taxon_id=taxon_id, place_id=place_id, per_page=0
+        taxon_id=taxon_id, place_id=place_id, per_page=0, verifiable="true"
     )
     species = await cog.api.get_observations(
-        "species_counts", taxon_id=taxon_id, place_id=place_id, per_page=0
+        "species_counts",
+        taxon_id=taxon_id,
+        place_id=place_id,
+        per_page=0,
+        verifiable="true",
     )
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
         url = (
             WWW_BASE_URL
-            + f"/observations?taxon_id={taxon_id}&place_id={place_id}&verifiable=any"
+            + f"/observations?taxon_id={taxon_id}&place_id={place_id}&verifiable=true"
         )
         if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {name}"
