@@ -77,9 +77,9 @@ class INatUserTable:
 
             discord_user = self.cog.bot.get_user(discord_id)
             if discord_user:
-                user_json = await self.cog.api.get_users(
-                    users[discord_id]["inat_user_id"]
-                )
+                inat_user_id = users[discord_id].get("inat_user_id")
+                if inat_user_id:
+                    user_json = await self.cog.api.get_users(inat_user_id)
             if user_json:
                 results = user_json["results"]
                 if results:
