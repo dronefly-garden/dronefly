@@ -85,5 +85,5 @@ class INatUserTable:
                 if results:
                     LOG.info(results[0])
                     inat_user = User.from_dict(results[0])
-
-            yield (discord_user, inat_user)
+            if discord_user and inat_user:
+                yield (discord_user, inat_user)
