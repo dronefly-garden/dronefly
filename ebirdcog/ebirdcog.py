@@ -24,7 +24,10 @@ class ObsRecord(dict):
 
     def __getitem__(self, key):
         """Reformat datetime into human-readable format."""
-        val = super().__getitem__(key)
+        try:
+            val = super().__getitem__(key)
+        except KeyError:
+            val = None
         if key == "obsDt":
             try:
                 parsed_time = datetime.strptime(val, "%Y-%m-%d %H:%M")
@@ -32,7 +35,7 @@ class ObsRecord(dict):
             except ValueError:
                 parsed_time = datetime.strptime(val, "%Y-%m-%d")
                 return parsed_time.strftime(self.date_format)
-        if key == "howMany" and not val:
+        if key == "howMany" and val is None:
             return "uncounted"
         return val
 
