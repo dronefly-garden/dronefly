@@ -53,7 +53,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             places={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
-        self.config.register_user(inat_user_id=None)
+        self.config.register_user(
+            inat_user_id=None, guilds=[525711945270296587], all_guilds=False
+        )
         self.config.register_channel(autoobs=None)
         self.user_cache_init = {}
         super().__init__()
@@ -627,7 +629,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
-        if inat_user_id:
+        all_guilds = await config.all_guilds()
+        guilds = await config.guilds()
+        if inat_user_id and all_guilds or ctx.guild.id in guilds:
             await ctx.send("iNat user already known.")
             return
 
@@ -652,7 +656,22 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send("iNat user not found.")
             return
 
-        await config.inat_user_id.set(user.user_id)
+        # We don't support registering one Discord user on different servers
+        # to different iNat user IDs! Corrective action is: bot owner removes
+        # the user (will be removed from all guilds) before they can be added
+        # under the new iNat ID.
+        if inat_user_id:
+            if inat_user_id != user.user_id:
+                await ctx.send(
+                    "New iNat user id for user! Registration under old id must be removed first."
+                )
+                return
+        else:
+            await config.inat_user_id.set(user.user_id)
+
+        guilds.append(ctx.guild.id)
+        await config.guilds.set(guilds)
+
         await ctx.send(
             f"{discord_user.display_name} is added as {user.display_name()}."
         )
@@ -712,7 +731,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         all_names = [
             f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
-            async for (duser, iuser) in self.user_table.get_user_pairs(all_member_users)
+            async for (duser, iuser) in self.user_table.get_user_pairs(
+                ctx.guild, all_member_users
+            )
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]

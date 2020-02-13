@@ -45,10 +45,15 @@ class INatUserTable:
 
     async def get_user(self, member: discord.Member, refresh_cache=False):
         """Get user for Discord member."""
+        inat_user_id = None
         user = None
         user_config = self.cog.config.user(member)
 
-        inat_user_id = await user_config.inat_user_id()
+        if (
+            member.guild.id in await user_config.guilds()
+            or await user_config.all_guilds()
+        ):
+            inat_user_id = await user_config.inat_user_id()
         if not inat_user_id:
             raise LookupError("iNat user not known.")
 
@@ -60,7 +65,9 @@ class INatUserTable:
 
         return user
 
-    async def get_user_pairs(self, users) -> AsyncIterator[Tuple[discord.User, User]]:
+    async def get_user_pairs(
+        self, guild: discord.Guild, users
+    ) -> AsyncIterator[Tuple[discord.User, User]]:
         """
         yields:
             discord.User, User
@@ -76,7 +83,11 @@ class INatUserTable:
             inat_user = None
 
             discord_user = self.cog.bot.get_user(discord_id)
-            if discord_user:
+            if (
+                discord_user
+                and guild.id in users[discord_id].get("guilds")
+                or users[discord_id].get("all_guilds")
+            ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:
                     user_json = await self.cog.api.get_users(inat_user_id)
