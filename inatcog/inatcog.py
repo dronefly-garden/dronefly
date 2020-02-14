@@ -706,11 +706,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             bot = self.bot.user.name
             if await config.all_guilds():
                 await ctx.send(
-                    f"{bot} will know your iNat login when you join a server it is on."
+                    f"{bot} will know your iNat settings when you join a server it is on."
                 )
             else:
                 await ctx.send(
-                    f"{bot} will not know your iNat login when you join a server it is on"
+                    f"{bot} will not know your iNat settings when you join a server it is on"
                     " until you have been added there."
                 )
         else:
