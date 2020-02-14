@@ -724,7 +724,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         known_in = await config.known_in()
         known_all = await config.known_all()
         if not inat_user_id or not (known_all or ctx.guild.id in known_in):
-            ctx.send("iNat user not known.")
+            await ctx.send("iNat user not known.")
             return
         # User can only be removed from servers where they were added:
         if ctx.guild.id in known_in:
