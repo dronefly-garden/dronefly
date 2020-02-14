@@ -50,8 +50,8 @@ class INatUserTable:
         user_config = self.cog.config.user(member)
 
         if (
-            member.guild.id in await user_config.guilds()
-            or await user_config.all_guilds()
+            member.guild.id in await user_config.known_in()
+            or await user_config.known_all()
         ):
             inat_user_id = await user_config.inat_user_id()
         if not inat_user_id:
@@ -85,8 +85,8 @@ class INatUserTable:
             discord_user = self.cog.bot.get_user(discord_id)
             if (
                 discord_user
-                and guild.id in users[discord_id].get("guilds")
-                or users[discord_id].get("all_guilds")
+                and guild.id in users[discord_id].get("known_in")
+                or users[discord_id].get("known_all")
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:

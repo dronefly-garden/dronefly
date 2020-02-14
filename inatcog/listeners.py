@@ -30,6 +30,7 @@ class Listeners(INatEmbeds, MixinMeta):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
         """Handle links to iNat."""
+        await self._ready_event.wait()
         if message.author.bot or message.guild is None:
             return
 
@@ -215,6 +216,7 @@ class Listeners(INatEmbeds, MixinMeta):
         self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
     ) -> None:
         """Central handler for reactions added to embeds."""
+        await self._ready_event.wait()
         if (
             user.bot
             or isinstance(user, discord.User)
@@ -228,6 +230,7 @@ class Listeners(INatEmbeds, MixinMeta):
         self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
     ) -> None:
         """Central handler for reactions removed from embeds."""
+        await self._ready_event.wait()
         if (
             user.bot
             or isinstance(user, discord.User)

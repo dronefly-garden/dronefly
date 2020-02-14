@@ -1,6 +1,7 @@
 """Module for abc interfaces."""
 
 from abc import ABC
+from asyncio import Event
 from inflect import engine
 from redbot.core import Config
 from redbot.core.bot import Red
@@ -23,3 +24,4 @@ class MixinMeta(ABC):
         self.p: engine  # pylint: disable=invalid-name
         self.user_table: INatUserTable
         self.place_table: INatPlaceTable
+        self._ready_event: Event

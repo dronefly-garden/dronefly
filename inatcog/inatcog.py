@@ -3,6 +3,7 @@ from abc import ABC
 from math import ceil
 import re
 from typing import Union
+import asyncio
 import discord
 import inflect
 from redbot.core import checks, commands, Config
@@ -25,6 +26,9 @@ from .listeners import Listeners
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
 from .users import INatUserTable, PAT_USER_LINK, User
 
+_SCHEMA_VERSION = 2
+_DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
+_INAT_GUILD_ID = 525711945270296587
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
 
@@ -40,29 +44,64 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     """The main iNaturalist cog class."""
 
     def __init__(self, bot):
+        super().__init__()
         self.bot = bot
+        self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.taxa_query = INatTaxaQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
-        self.config = Config.get_conf(self, identifier=1607)
+        self.user_cache_init = {}
+
+        self.config.register_global(schema_version=1)
         self.config.register_guild(
             autoobs=False,
             user_projects={},
             places={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
-        self.config.register_user(
-            inat_user_id=None, guilds=[525711945270296587], all_guilds=False
-        )
         self.config.register_channel(autoobs=None)
-        self.user_cache_init = {}
-        super().__init__()
+        self.config.register_user(inat_user_id=None, known_in=[], known_all=False)
+        self._cleaned_up = False
+        self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())
+        self._ready_event: asyncio.Event = asyncio.Event()
+
+    async def cog_before_invoke(self, ctx: commands.Context):
+        await self._ready_event.wait()
+
+    async def initialize(self) -> None:
+        """Initialization after bot is ready."""
+        await self.bot.wait_until_ready()
+        await self._migrate_config(await self.config.schema_version(), _SCHEMA_VERSION)
+        self._ready_event.set()
+
+    async def _migrate_config(self, from_version: int, to_version: int) -> None:
+        if from_version == to_version:
+            return
+
+        if from_version < 2 <= to_version:
+            # Initial registrations via the developer's own bot were intended
+            # to be for the iNat server only. Prevent leakage to other servers.
+            # Any other servers using this feature with schema 1 must now
+            # re-register each user, or the user must `[p]inat user set known
+            # true` to be known in other servers.
+            if self.bot.user.id in _DEVELOPER_BOT_IDS:
+                all_users = await self.config.all_users()
+                for (user_id, user_value) in all_users.items():
+                    if user_value["inat_user_id"]:
+                        await self.config.user_from_id(int(user_id)).known_in.set(
+                            [_INAT_GUILD_ID]
+                        )
+            await self.config.schema_version.set(2)
 
     def cog_unload(self):
         """Cleanup when the cog unloads."""
-        self.api.session.detach()
+        if not self._cleaned_up:
+            self.api.session.detach()
+            if self._init_task:
+                self._init_task.cancel()
+            self._cleaned_up = True
 
     @commands.group()
     async def inat(self, ctx):
@@ -629,9 +668,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
-        all_guilds = await config.all_guilds()
-        guilds = await config.guilds()
-        if inat_user_id and all_guilds or ctx.guild.id in guilds:
+        known_all = await config.known_all()
+        known_in = await config.known_in()
+        if inat_user_id and known_all or ctx.guild.id in known_in:
             await ctx.send("iNat user already known.")
             return
 
@@ -669,8 +708,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         else:
             await config.inat_user_id.set(user.user_id)
 
-        guilds.append(ctx.guild.id)
-        await config.guilds.set(guilds)
+        known_in.append(ctx.guild.id)
+        await config.known_in.set(known_in)
 
         await ctx.send(
             f"{discord_user.display_name} is added as {user.display_name()}."
@@ -682,24 +721,24 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         """Remove user as an iNat user (mods only)."""
         config = self.config.user(discord_user)
         inat_user_id = await config.inat_user_id()
-        guilds = await config.guilds()
-        all_guilds = await config.all_guilds()
-        if not inat_user_id or not (all_guilds or ctx.guild.id in guilds):
+        known_in = await config.known_in()
+        known_all = await config.known_all()
+        if not inat_user_id or not (known_all or ctx.guild.id in known_in):
             ctx.send("iNat user not known.")
             return
         # User can only be removed from servers where they were added:
-        if ctx.guild.id in guilds:
-            guilds.remove(ctx.guild.id)
-            await config.guilds.set(guilds)
-            if guilds:
+        if ctx.guild.id in known_in:
+            known_in.remove(ctx.guild.id)
+            await config.known_in.set(known_in)
+            if known_in:
                 await ctx.send("iNat user removed from this server.")
             else:
                 # Removal from last server removes all traces of the user:
                 await config.inat_user_id.clear()
-                await config.all_guilds.clear()
-                await config.guilds.clear()
+                await config.known_all.clear()
+                await config.known_in.clear()
                 await ctx.send("iNat user removed.")
-        elif guilds and all_guilds:
+        elif known_in and known_all:
             await ctx.send(
                 "iNat user was added on another server and can only be removed there."
             )
@@ -714,14 +753,14 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         """
         config = self.config.user(ctx.author)
         inat_user_id = await config.inat_user_id()
-        guilds = await config.guilds()
-        all_guilds = await config.all_guilds()
-        if inat_user_id and all_guilds or ctx.guild.id in guilds:
+        known_in = await config.known_in()
+        known_all = await config.known_all()
+        if inat_user_id and known_all or ctx.guild.id in known_in:
             if setting.lower() == "known":
                 if value is not None:
-                    await config.all_guilds.set(value)
+                    await config.known_all.set(value)
             bot = self.bot.user.name
-            if await config.all_guilds():
+            if await config.known_all():
                 await ctx.send(
                     f"{bot} will know your iNat settings when you join a server it is on."
                 )
