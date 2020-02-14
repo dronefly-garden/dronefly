@@ -823,11 +823,16 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
 
-        embeds = [
-            make_embed(
-                title=f"Discord iNat user list (page {index} of {pages_num})",
-                description=page,
+        if pages:
+            embeds = [
+                make_embed(
+                    title=f"Discord iNat user list (page {index} of {pages_num})",
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(
+                f"No iNat login ids are known. Add them with `{ctx.clean_prefix}inat user add`."
             )
-            for index, page in enumerate(pages, start=1)
-        ]
-        await menu(ctx, embeds, DEFAULT_CONTROLS)
