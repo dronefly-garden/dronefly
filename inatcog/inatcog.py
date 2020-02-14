@@ -807,12 +807,12 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             ]
             return " ".join(emojis)
 
+        # TODO: Support lazy loading of pages of users (issues noted in comments below).
         all_member_users = {
             key: value
             for (key, value) in all_users.items()
             if ctx.guild.get_member(key)
         }
-        pages_num = ceil(len(all_member_users) / 10)
 
         all_names = [
             f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
@@ -824,13 +824,15 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
 
         if pages:
+            pages_len = len(pages)  # Causes enumeration (works against lazy load).
             embeds = [
                 make_embed(
-                    title=f"Discord iNat user list (page {index} of {pages_num})",
+                    title=f"Discord iNat user list (page {index} of {pages_len})",
                     description=page,
                 )
                 for index, page in enumerate(pages, start=1)
             ]
+            # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
             await ctx.send(
