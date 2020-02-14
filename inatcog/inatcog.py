@@ -681,10 +681,15 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def user_remove(self, ctx, discord_user: discord.User):
         """Remove user as an iNat user (mods only)."""
         config = self.config.user(discord_user)
-        if not await config.inat_user_id():
+        inat_user_id = await config.inat_user_id()
+        guilds = await config.guilds()
+        all_guilds = await config.all_guilds()
+        if not inat_user_id and not guilds and not all_guilds:
             ctx.send("iNat user not known.")
             return
         await config.inat_user_id.clear()
+        await config.guilds.clear()
+        await config.all_guilds.clear()
         await ctx.send("iNat user removed.")
 
     @user.command(name="set")
@@ -714,7 +719,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                     " until you have been added there."
                 )
         else:
-            await ctx.send(f"You are not known to {self.bot.user.name}.")
+            await ctx.send("Ask a moderator to add your iNat profile link.")
 
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
