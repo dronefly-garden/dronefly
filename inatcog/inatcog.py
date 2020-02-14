@@ -684,13 +684,25 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         inat_user_id = await config.inat_user_id()
         guilds = await config.guilds()
         all_guilds = await config.all_guilds()
-        if not inat_user_id and not guilds and not all_guilds:
+        if not inat_user_id or not (all_guilds or ctx.guild.id in guilds):
             ctx.send("iNat user not known.")
             return
-        await config.inat_user_id.clear()
-        await config.guilds.clear()
-        await config.all_guilds.clear()
-        await ctx.send("iNat user removed.")
+        # User can only be removed from servers where they were added:
+        if ctx.guild.id in guilds:
+            guilds.remove(ctx.guild.id)
+            await config.guilds.set(guilds)
+            if guilds:
+                await ctx.send("iNat user removed from this server.")
+            else:
+                # Removal from last server removes all traces of the user:
+                await config.inat_user_id.clear()
+                await config.all_guilds.clear()
+                await config.guilds.clear()
+                await ctx.send("iNat user removed.")
+        elif guilds and all_guilds:
+            await ctx.send(
+                "iNat user was added on another server and can only be removed there."
+            )
 
     @user.command(name="set")
     async def user_set(self, ctx, setting="", value: bool = None):
