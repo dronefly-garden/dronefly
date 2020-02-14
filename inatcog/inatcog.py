@@ -687,6 +687,33 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await config.inat_user_id.clear()
         await ctx.send("iNat user removed.")
 
+    @user.command(name="set")
+    async def user_set(self, ctx, arg=""):
+        """Show or set iNat user settings.
+
+        `[p]inat user set` to show all settings
+        `[p]inat user set known` to toggle where you are known
+        """
+        config = self.config.user(ctx.author)
+        inat_user_id = await config.inat_user_id()
+        guilds = await config.guilds()
+        all_guilds = await config.all_guilds()
+        if inat_user_id and all_guilds or ctx.guild.id in guilds:
+            if arg.lower() == "known":
+                await config.all_guilds.set(not all_guilds)
+            bot = self.bot.user.name
+            if await config.all_guilds():
+                await ctx.send(
+                    f"{bot} will know your iNat login on servers where it is present if you join."
+                )
+            else:
+                await ctx.send(
+                    f"{bot} will not know your iNat login on servers where it is present that"
+                    " you join until you have been added there."
+                )
+        else:
+            await ctx.send(f"You are not known to {self.bot.user.name}.")
+
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
     async def user_list(self, ctx):
