@@ -688,11 +688,12 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send("iNat user removed.")
 
     @user.command(name="set")
-    async def user_set(self, ctx, setting=""):
+    async def user_set(self, ctx, setting="", value: bool = None):
         """Show or set iNat user settings.
 
-        `[p]inat user set` to show all settings
-        `[p]inat user set known` to toggle where you are known
+        `[p]inat user set` shows all settings
+        `[p]inat user set known` show known on other servers (default: not known)
+        `[p]inat user set known true` set known on other servers
         """
         config = self.config.user(ctx.author)
         inat_user_id = await config.inat_user_id()
@@ -700,7 +701,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         all_guilds = await config.all_guilds()
         if inat_user_id and all_guilds or ctx.guild.id in guilds:
             if setting.lower() == "known":
-                await config.all_guilds.set(not all_guilds)
+                if value is not None:
+                    await config.all_guilds.set(value)
             bot = self.bot.user.name
             if await config.all_guilds():
                 await ctx.send(
