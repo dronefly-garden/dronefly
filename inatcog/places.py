@@ -1,7 +1,11 @@
 """Module to handle users."""
+from typing import Union
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 from .api import WWW_BASE_URL
+
+
+RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 
 
 @dataclass
@@ -23,13 +27,13 @@ class INatPlaceTable:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_place(self, guild, query):
+    async def get_place(self, guild, query: Union[int, str]):
         """Get place by guild abbr or via id#/keyword lookup in API."""
         place = None
         response = None
 
-        if query.isnumeric():
-            response = await self.cog.api.get_places(query)
+        if isinstance(query, int) or query.isnumeric():
+            response = await self.cog.api.get_places(int(query))
         elif guild:
             abbrev = query.lower()
             guild_config = self.cog.config.guild(guild)

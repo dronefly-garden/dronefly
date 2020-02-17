@@ -20,7 +20,7 @@ from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
-from .places import INatPlaceTable
+from .places import INatPlaceTable, RESERVED_PLACES
 from .projects import UserProject, ObserverStats
 from .listeners import Listeners
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
@@ -62,7 +62,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
         )
         self.config.register_channel(autoobs=None)
-        self.config.register_user(inat_user_id=None, known_in=[], known_all=False)
+        self.config.register_user(
+            home=None, inat_user_id=None, known_in=[], known_all=False
+        )
         self._cleaned_up = False
         self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())
         self._ready_event: asyncio.Event = asyncio.Event()
@@ -399,6 +401,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         config = self.config.guild(ctx.guild)
         places = await config.places()
         abbrev_lowered = abbrev.lower()
+        if abbrev_lowered in RESERVED_PLACES:
+            await ctx.send(
+                f"Place abbreviation '{abbrev_lowered}' cannot be added as it is reserved."
+            )
+
         if abbrev_lowered in places:
             url = f"{WWW_BASE_URL}/places/{places[abbrev_lowered]}"
             await ctx.send(
@@ -753,11 +760,24 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             raise LookupError("Ask a moderator to add your iNat profile link.")
         return config
 
-    async def user_show_settings(self, ctx, config, setting=None):
+    async def user_show_settings(self, ctx, config, setting: str = "all"):
         """Show iNat user settings."""
-        if not setting or setting == "known":
+        if setting not in ["all", "known", "home"]:
+            await ctx.send(f"Unknown setting: {setting}")
+            return
+        if setting in ["all", "known"]:
             known_all = await config.known_all()
             await ctx.send(f"known: {known_all}")
+        if setting in ["all", "home"]:
+            home_id = await config.home()
+            if home_id:
+                try:
+                    home = await self.place_table.get_place(ctx.guild, home_id)
+                    await ctx.send(f"home: {home.display_name} (<{home.url}>)")
+                except LookupError:
+                    await ctx.send(f"Non-existent place ({home_id})")
+            else:
+                await ctx.send("home: none")
 
     @user.group(name="set", invoke_without_command=True)
     async def user_set(self, ctx):
@@ -774,6 +794,36 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             return
 
         await self.user_show_settings(ctx, config)
+
+    @user_set.command(name="home")
+    async def user_set_home(self, ctx, value: str = None):
+        """Show or set your home iNat place.
+
+        `[p]inat user set home` show your home place
+        `[p]inat user set home clear` clear your home place
+        `[p]inat user set home [place]` set your home place
+        """
+        try:
+            config = await self.get_valid_user_config(ctx)
+        except LookupError as err:
+            await ctx.send(err)
+
+        if value is not None:
+            bot = self.bot.user.name
+            if value.lower() in ["clear", "none"]:
+                await config.home.clear()
+                await ctx.send(f"{bot} no longer has a home place set for you.")
+            else:
+                try:
+                    home = await self.place_table.get_place(ctx.guild, value)
+                    await config.home.set(home.place_id)
+                    await ctx.send(
+                        f"{bot} will use {home.display_name} as your home place."
+                    )
+                except LookupError as err:
+                    ctx.send(err)
+
+        await self.user_show_settings(ctx, config, "home")
 
     @user_set.command(name="known")
     async def user_set_known(self, ctx, value: bool = None):
