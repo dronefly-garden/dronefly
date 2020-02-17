@@ -743,24 +743,55 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 "iNat user was added on another server and can only be removed there."
             )
 
-    @user.command(name="set")
-    async def user_set(self, ctx, setting="", value: bool = None):
-        """Show or set iNat user settings.
-
-        `[p]inat user set` shows all settings
-        `[p]inat user set known` show known on other servers (default: not known)
-        `[p]inat user set known true` set known on other servers
-        """
+    async def get_valid_user_config(self, ctx):
+        """Get iNat user config known in this guild."""
         config = self.config.user(ctx.author)
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
         known_all = await config.known_all()
-        if inat_user_id and known_all or ctx.guild.id in known_in:
-            if setting.lower() == "known":
-                if value is not None:
-                    await config.known_all.set(value)
+        if not (inat_user_id and known_all or ctx.guild.id in known_in):
+            raise LookupError("Ask a moderator to add your iNat profile link.")
+        return config
+
+    async def user_show_settings(self, ctx, config, setting=None):
+        """Show iNat user settings."""
+        if not setting or setting == "known":
+            known_all = await config.known_all()
+            await ctx.send(f"known: {known_all}")
+
+    @user.group(name="set", invoke_without_command=True)
+    async def user_set(self, ctx):
+        """Show or set your iNat user settings.
+
+        `[p]inat user set` shows all settings
+        `[p]inat user set [name]` shows the named setting
+        `[p]inat user set [name] [value]` set value of the named setting
+        """
+        try:
+            config = await self.get_valid_user_config(ctx)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+
+        await self.user_show_settings(ctx, config)
+
+    @user_set.command(name="known")
+    async def user_set_known(self, ctx, value: bool = None):
+        """Show or set if your iNat user settings are known on other servers.
+
+        `[p]inat user set known` show known on other servers (default: not known)
+        `[p]inat user set known true` set known on other servers
+        """
+        try:
+            config = await self.get_valid_user_config(ctx)
+        except LookupError as err:
+            await ctx.send(err)
+
+        if value is not None:
+            await config.known_all.set(value)
+
             bot = self.bot.user.name
-            if await config.known_all():
+            if value:
                 await ctx.send(
                     f"{bot} will know your iNat settings when you join a server it is on."
                 )
@@ -769,8 +800,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                     f"{bot} will not know your iNat settings when you join a server it is on"
                     " until you have been added there."
                 )
-        else:
-            await ctx.send("Ask a moderator to add your iNat profile link.")
+
+        await self.user_show_settings(ctx, config, "known")
 
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
