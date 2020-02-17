@@ -170,7 +170,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     return
 
                 await maybe_update_member(msg, embeds, who.member, "toggle")
-        elif reaction.emoji == "📌":
+        elif reaction.emoji == "📍":
             response = None
             query = await msg.channel.send(
                 "Observation & species counts for which place (you have 15 seconds to answer)?"
