@@ -782,13 +782,16 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 await ctx.send("home: none")
 
     @user.group(name="set", invoke_without_command=True)
-    async def user_set(self, ctx):
+    async def user_set(self, ctx, arg: str = None):
         """Show or set your iNat user settings.
 
         `[p]inat user set` shows all settings
         `[p]inat user set [name]` shows the named setting
         `[p]inat user set [name] [value]` set value of the named setting
         """
+        if arg:
+            await ctx.send(f"Unknown setting: {arg}")
+            return
         try:
             config = await self.get_valid_user_config(ctx)
         except LookupError as err:
