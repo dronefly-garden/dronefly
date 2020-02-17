@@ -480,7 +480,7 @@ class INatTaxaQuery:
         if compound_query.place:
             try:
                 place = await self.cog.place_table.get_place(
-                    ctx.guild, compound_query.place
+                    ctx.guild, compound_query.place, ctx.author
                 )
             except LookupError:
                 pass

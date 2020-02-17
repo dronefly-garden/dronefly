@@ -282,7 +282,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 elif display == "from":
                     if last and last.taxon:
                         try:
-                            place = await self.place_table.get_place(ctx.guild, arg)
+                            place = await self.place_table.get_place(
+                                ctx.guild, arg, ctx.author
+                            )
                         except LookupError:
                             place = None
                         filtered_taxon = FilteredTaxon(last.taxon, None, place)
@@ -387,7 +389,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def place(self, ctx, *, query):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
         try:
-            place = await self.place_table.get_place(ctx.guild, query)
+            place = await self.place_table.get_place(ctx.guild, query, ctx.author)
             await ctx.send(place.url)
         except LookupError as err:
             await ctx.send(err)

@@ -3,6 +3,7 @@ from typing import Union
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 from .api import WWW_BASE_URL
+from .converters import QuotedContextMemberConverter
 
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
@@ -27,15 +28,23 @@ class INatPlaceTable:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_place(self, guild, query: Union[int, str]):
+    async def get_place(
+        self, guild, query: Union[int, str], user: QuotedContextMemberConverter = None
+    ):
         """Get place by guild abbr or via id#/keyword lookup in API."""
         place = None
         response = None
+        home_id = None
 
-        if isinstance(query, int) or query.isnumeric():
-            response = await self.cog.api.get_places(int(query))
-        elif guild:
+        if isinstance(query, str):
             abbrev = query.lower()
+            if abbrev == "home" and user:
+                user_config = self.cog.config.user(user)
+                home_id = await user_config.home()
+        if home_id or isinstance(query, int) or query.isnumeric():
+            place_id = home_id or query
+            response = await self.cog.api.get_places(int(place_id))
+        elif guild:
             guild_config = self.cog.config.guild(guild)
             places = await guild_config.places()
             if abbrev in places:

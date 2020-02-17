@@ -196,7 +196,7 @@ class Listeners(INatEmbeds, MixinMeta):
             if response:
                 try:
                     place = await self.place_table.get_place(
-                        msg.guild, response.content
+                        msg.guild, response.content, member
                     )
                 except LookupError as error:
                     error_msg = await msg.channel.send(error)
