@@ -58,10 +58,9 @@ class Listeners(INatEmbeds, MixinMeta):
     ):
         """Central handler for member reactions."""
 
-        place_id = None
-        user_id = None
-
         def get_ids(embed):
+            place_id = None
+            user_id = None
             url = embed.url
             if not url:
                 return
