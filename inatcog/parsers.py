@@ -7,6 +7,7 @@ from pyparsing import (
     Group,
     Suppress,
     OneOrMore,
+    Optional,
     CaselessKeyword,
     oneOf,
 )
@@ -133,22 +134,19 @@ class TaxonQueryParser:
         terms = Group(OneOrMore(words | phrase, stopOn=stop))("terms")
 
         taxon = Group(Group(num)("taxon_id") | ranks_terms | terms_ranks | terms)
-
-        within = (
+        compound_taxon = (
             Group(taxon)("main")
             + Suppress(CaselessKeyword("in"))
             + Group(taxon)("ancestor")
         ) | Group(taxon)("main")
 
-        from_place = (
-            within + Suppress(CaselessKeyword("from")) + Group(words)("place")
-        ) | within
+        from_place = Suppress(CaselessKeyword("from")) + Group(words)("place")
+        by_user = Suppress(CaselessKeyword("by")) + Group(words)("user")
+        qualified_taxon = compound_taxon + Optional(
+            from_place + by_user | by_user + from_place | from_place | by_user
+        )
 
-        by_user = (
-            from_place + Suppress(CaselessKeyword("by")) + Group(words)("user")
-        ) | from_place
-
-        return by_user
+        return qualified_taxon
 
     def parse(self, query_str):
         """Parse using taxon query grammar."""
