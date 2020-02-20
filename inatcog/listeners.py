@@ -179,7 +179,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await error_msg.delete()
                     return
 
-                await maybe_update_member(msg, embeds, who.member, "toggle")
+                await maybe_update_member(msg, embed, who.member, "toggle")
         elif reaction.emoji == "📍":
             response = None
             query = await msg.channel.send(
