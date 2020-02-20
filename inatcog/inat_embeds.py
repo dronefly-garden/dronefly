@@ -93,6 +93,54 @@ class INatEmbeds(MixinMeta):
         if sound:
             await channel.send(file=File(sound, filename=response.url.name))
 
+    async def make_obs_counts_embed(self, arg):
+        """Return embed for observation counts from place or by user."""
+        group_by_param = ""
+        formatted_counts = ""
+
+        LOG.info(repr(arg))
+        if isinstance(arg, FilteredTaxon):
+            (taxon, user, place, group_by) = arg
+        else:
+            taxon = arg
+            user = None
+            place = None
+            group_by = None
+
+        title = format_taxon_title(taxon)
+        full_title = f"Observations of {title}"
+        description = ""
+        if place and user:
+            if group_by == "user":
+                full_title = f"Observations of {title} by {user.login}"
+                group_by_param = f"&user_id={user.user_id}"
+                formatted_counts = await format_place_taxon_counts(
+                    self, place, taxon, user.user_id
+                )
+                header = TAXON_PLACES_HEADER
+            else:
+                full_title = f"Observations of {title} from {place.display_name}"
+                group_by_param = f"&place_id={place.place_id}"
+                formatted_counts = await format_user_taxon_counts(
+                    self, user, taxon, place.place_id
+                )
+                header = TAXON_COUNTS_HEADER
+        elif user:
+            formatted_counts = await format_user_taxon_counts(self, user, taxon)
+            header = TAXON_COUNTS_HEADER
+        elif place:
+            formatted_counts = await format_place_taxon_counts(self, place, taxon)
+            header = TAXON_PLACES_HEADER
+        if formatted_counts:
+            description = f"\n{header}\n{formatted_counts}"
+
+        embed = make_embed(
+            url=f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}{group_by_param}",
+            title=full_title,
+            description=description,
+        )
+        return embed
+
     async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
@@ -297,11 +345,12 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, arg):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place) = arg
+            (taxon, user, place, _group_by) = arg
         else:
             taxon = arg
             user = None
             place = None
+            # group_by = None
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 

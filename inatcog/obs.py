@@ -12,6 +12,11 @@ PAT_OBS_LINK = re.compile(
     + r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+)))\b",
     re.I,
 )
+PAT_OBS_TAXON_LINK = re.compile(
+    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations"
+    r"\?taxon_id=(?P<taxon_id>\d+)(&place_id=(?P<place_id>\d+))?(&user_id=(?P<user_id>\d+))?)\b",
+    re.I,
+)
 
 
 class Obs(NamedTuple):

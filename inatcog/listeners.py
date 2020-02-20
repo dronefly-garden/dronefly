@@ -11,7 +11,7 @@ from .converters import ContextMemberConverter
 from .embeds import make_embed
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
-from .obs import maybe_match_obs
+from .obs import maybe_match_obs, PAT_OBS_TAXON_LINK
 from .taxa import (
     get_taxon,
     format_place_taxon_counts,
@@ -58,14 +58,22 @@ class Listeners(INatEmbeds, MixinMeta):
     ):
         """Central handler for member reactions."""
 
-        def get_taxon_id(embed):
+        place_id = None
+        user_id = None
+
+        def get_ids(embed):
             url = embed.url
             if not url:
                 return
             mat = re.match(PAT_TAXON_LINK, url)
             if not mat:
+                mat = re.match(PAT_OBS_TAXON_LINK, url)
+                if mat:
+                    place_id = mat["place_id"]
+                    user_id = mat["user_id"]
+            if not mat:
                 return
-            return mat["taxon_id"]
+            return (mat["taxon_id"], place_id, user_id)
 
         async def maybe_update_member(
             msg: discord.Message,
@@ -110,7 +118,9 @@ class Listeners(INatEmbeds, MixinMeta):
                 # Add the header if first one and the user's count:
                 if not matches:
                     description += "\n" + TAXON_COUNTS_HEADER
-                formatted_counts = await format_user_taxon_counts(cog, inat_user, taxon)
+                formatted_counts = await format_user_taxon_counts(
+                    cog, inat_user, taxon, place_id
+                )
                 description += "\n" + formatted_counts
 
             matches = re.findall(
@@ -119,7 +129,7 @@ class Listeners(INatEmbeds, MixinMeta):
             # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
-                    cog, ",".join(matches), taxon
+                    cog, ",".join(matches), taxon, place_id
                 )
                 description += f"\n{formatted_counts}"
                 return description
@@ -130,7 +140,7 @@ class Listeners(INatEmbeds, MixinMeta):
         if not embeds:
             return
         embed = embeds[0]
-        taxon_id = get_taxon_id(embed)
+        taxon_id, place_id, user_id = get_ids(embed)
         if not taxon_id:
             return
 
@@ -205,7 +215,9 @@ class Listeners(INatEmbeds, MixinMeta):
                     return
 
                 taxon = await get_taxon(self, taxon_id)
-                formatted_counts = await format_place_taxon_counts(self, place, taxon)
+                formatted_counts = await format_place_taxon_counts(
+                    self, place, taxon, user_id
+                )
                 place_embed = make_embed(
                     description=f"{taxon.name}: {formatted_counts}"
                 )

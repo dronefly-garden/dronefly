@@ -33,6 +33,7 @@ class FilteredTaxon(NamedTuple):
     taxon: Taxon
     user: User
     place: Place
+    group_by: str
     # location: Location
 
 
@@ -485,7 +486,7 @@ class INatTaxaQuery:
             except LookupError:
                 pass
 
-        return FilteredTaxon(taxon, user, place)
+        return FilteredTaxon(taxon, user, place, compound_query.group_by)
 
     async def query_taxa(self, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
@@ -506,7 +507,9 @@ class INatTaxaQuery:
         return result
 
 
-async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon):
+async def format_place_taxon_counts(
+    cog, place: Union[Place, str], taxon: Taxon, user_id: int = None
+):
     """Format user observation & species counts for taxon."""
     taxon_id = taxon.taxon_id
     if isinstance(place, str):
@@ -515,16 +518,23 @@ async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon)
     else:
         place_id = place.place_id
         name = place.display_name
-    observations = await cog.api.get_observations(
-        taxon_id=taxon_id, place_id=place_id, per_page=0, verifiable="true"
-    )
-    species = await cog.api.get_observations(
-        "species_counts",
-        taxon_id=taxon_id,
-        place_id=place_id,
-        per_page=0,
-        verifiable="true",
-    )
+    obs_opt = {
+        "taxon_id": taxon_id,
+        "place_id": place_id,
+        "per_page": 0,
+        "verifiable": "true",
+    }
+    species_opt = {
+        "taxon_id": taxon_id,
+        "place_id": place_id,
+        "per_page": 0,
+        "verifiable": "true",
+    }
+    if user_id:
+        obs_opt["user_id"] = user_id
+        species_opt["user_id"] = user_id
+    observations = await cog.api.get_observations(**obs_opt)
+    species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
@@ -532,6 +542,8 @@ async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon)
             WWW_BASE_URL
             + f"/observations?taxon_id={taxon_id}&place_id={place_id}&verifiable=true"
         )
+        if user_id:
+            url += f"&user_id={user_id}"
         if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {name}"
         else:
@@ -541,7 +553,9 @@ async def format_place_taxon_counts(cog, place: Union[Place, str], taxon: Taxon)
     return ""
 
 
-async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
+async def format_user_taxon_counts(
+    cog, user: Union[User, str], taxon, place_id: int = None
+):
     """Format user observation & species counts for taxon."""
     taxon_id = taxon.taxon_id
     if isinstance(user, str):
@@ -550,12 +564,13 @@ async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
     else:
         user_id = user.user_id
         login = user.login
-    observations = await cog.api.get_observations(
-        taxon_id=taxon_id, user_id=user_id, per_page=0
-    )
-    species = await cog.api.get_observations(
-        "species_counts", taxon_id=taxon_id, user_id=user_id, per_page=0
-    )
+    obs_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
+    species_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
+    if place_id:
+        obs_opt["place_id"] = place_id
+        species_opt["place_id"] = place_id
+    observations = await cog.api.get_observations(**obs_opt)
+    species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
@@ -563,6 +578,8 @@ async def format_user_taxon_counts(cog, user: Union[User, str], taxon):
             WWW_BASE_URL
             + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
         )
+        if place_id:
+            url += f"&place_id={place_id}"
         if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {login}"
         else:

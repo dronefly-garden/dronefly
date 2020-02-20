@@ -11,6 +11,7 @@ from pyparsing import (
     CaselessKeyword,
     oneOf,
 )
+from .common import LOG
 
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
@@ -89,7 +90,7 @@ TAXON_NAME_CHARS = (
 OPS = ("in", "by", "at", "from")
 
 SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
-CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user, place")
+CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user, place, group_by")
 
 
 class TaxonQueryParser:
@@ -192,4 +193,13 @@ class TaxonQueryParser:
                 place = " ".join(parsed["place"].asList())
             else:
                 place = None
-        return CompoundQuery(main=main, ancestor=ancestor, user=user, place=place)
+            option_keys = [key for key in parsed.asDict() if key in ["user", "place"]]
+            LOG.info(repr(parsed))
+            LOG.info(repr(option_keys))
+            if len(option_keys) > 1:
+                group_by = option_keys[0]
+            else:
+                group_by = None
+        return CompoundQuery(
+            main=main, ancestor=ancestor, user=user, place=place, group_by=group_by
+        )

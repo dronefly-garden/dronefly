@@ -7,7 +7,7 @@ import asyncio
 import discord
 import inflect
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
 from .common import grouper, LOG
@@ -277,7 +277,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                     if last and last.taxon:
                         who = await ContextMemberConverter.convert(ctx, arg)
                         user = await self.user_table.get_user(who.member)
-                        filtered_taxon = FilteredTaxon(last.taxon, user, None)
+                        filtered_taxon = FilteredTaxon(last.taxon, user, None, None)
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display == "from":
                     if last and last.taxon:
@@ -287,7 +287,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                             )
                         except LookupError:
                             place = None
-                        filtered_taxon = FilteredTaxon(last.taxon, None, place)
+                        filtered_taxon = FilteredTaxon(last.taxon, None, place, None)
                         await self.send_embed_for_taxon(ctx, filtered_taxon)
                 elif display in ("m", "map"):
                     if last and last.taxon:
@@ -448,6 +448,10 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         [p]inat obs https://inaturalist.org/observations/#
            -> an embed summarizing the observation link (minus the preview,
               which Discord provides itself)
+        [p]inat obs insects by kueda
+           -> an embed showing counts of insects by user kueda
+        [p]inat obs insects from canada
+           -> an embed showing counts of insects from Canada
         ```
         When configured as recommended,
         `[p]obs` is an alias for `[p]inat obs`.
@@ -464,8 +468,17 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                 await self.maybe_send_sound_url(ctx.channel, obs.sound)
             return
 
-        await ctx.send(embed=sorry())
-        return
+        try:
+            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+            msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
+            start_adding_reactions(msg, ["#️⃣", "📝"])  # , "📌"])
+        except ParseException:
+            await ctx.send(embed=sorry())
+            return
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
 
     @inat.command()
     async def related(self, ctx, *, taxa_list):
