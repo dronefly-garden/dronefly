@@ -7,6 +7,7 @@ from typing import Union
 import discord
 from redbot.core import commands
 from redbot.core.utils.predicates import MessagePredicate
+from .common import LOG
 from .converters import ContextMemberConverter
 from .embeds import make_embed
 from .inat_embeds import INatEmbeds
@@ -63,6 +64,7 @@ class Listeners(INatEmbeds, MixinMeta):
             user_id = None
             url = embed.url
             if not url:
+                LOG.debug("reaction to embed without url")
                 return
             mat = re.match(PAT_TAXON_LINK, url)
             if not mat:
@@ -71,6 +73,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     place_id = mat["place_id"]
                     user_id = mat["user_id"]
             if not mat:
+                LOG.debug("reaction to embed with unrecognized url")
                 return
             return (mat["taxon_id"], place_id, user_id)
 
@@ -84,6 +87,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 inat_user = await self.user_table.get_user(member)
                 counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
             except LookupError:
+                LOG.debug("reaction by user not in table")
                 return
 
             # Observed by count add/remove for taxon:
@@ -141,6 +145,7 @@ class Listeners(INatEmbeds, MixinMeta):
         embed = embeds[0]
         taxon_id, place_id, user_id = get_ids(embed)
         if not taxon_id:
+            LOG.debug("reaction to embed without taxon_id")
             return
 
         if reaction.emoji == "#️⃣":  # Add/remove counts for self
@@ -233,6 +238,7 @@ class Listeners(INatEmbeds, MixinMeta):
             or isinstance(user, discord.User)
             or reaction.message.author != self.bot.user
         ):
+            LOG.debug("reaction add from non-human/non-member or not our embed")
             return
         await self.handle_member_reaction(reaction, user, "add")
 
@@ -247,5 +253,6 @@ class Listeners(INatEmbeds, MixinMeta):
             or isinstance(user, discord.User)
             or reaction.message.author != self.bot.user
         ):
+            LOG.debug("reaction remove from non-human/non-member or not our embed")
             return
         await self.handle_member_reaction(reaction, user, "remove")
