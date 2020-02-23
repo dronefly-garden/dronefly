@@ -3,7 +3,6 @@ from collections import namedtuple
 import asyncio
 import contextlib
 import re
-from typing import Union
 import discord
 from redbot.core import commands
 from redbot.core.utils.predicates import MessagePredicate
@@ -54,7 +53,11 @@ class Listeners(INatEmbeds, MixinMeta):
         return
 
     async def handle_member_reaction(
-        self, reaction: discord.Reaction, member: discord.Member, action: str
+        self,
+        emoji: discord.PartialEmoji,
+        member: discord.Member,
+        message: discord.Message,
+        action: str,
     ):
         """Central handler for member reactions."""
 
@@ -134,8 +137,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 return description
             return description
 
-        msg = reaction.message
-        embeds = msg.embeds
+        embeds = message.embeds
         if not embeds:
             return
         embed = embeds[0]
@@ -143,18 +145,18 @@ class Listeners(INatEmbeds, MixinMeta):
         if not taxon_id:
             return
 
-        if reaction.emoji == "#️⃣":  # Add/remove counts for self
-            await maybe_update_member(msg, embed, member, action)
-        elif reaction.emoji == "📝":  # Add/remove counts by name
+        if str(emoji) == "#️⃣":  # Add/remove counts for self
+            await maybe_update_member(message, embed, member, action)
+        elif str(emoji) == "📝":  # Add/remove counts by name
             response = None
-            query = await msg.channel.send(
+            query = await message.channel.send(
                 "Add or remove which member (you have 15 seconds to answer)?"
             )
             try:
                 response = await self.bot.wait_for(
                     "message",
                     check=MessagePredicate.same_context(
-                        channel=msg.channel, user=member
+                        channel=message.channel, user=member
                     ),
                     timeout=15,
                 )
@@ -163,32 +165,32 @@ class Listeners(INatEmbeds, MixinMeta):
                     await query.delete()
             else:
                 try:
-                    await msg.channel.delete_messages((query, response))
+                    await message.channel.delete_messages((query, response))
                 except (discord.HTTPException, AttributeError):
                     # In case the bot can't delete other users' messages:
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
             if response:
-                ctx = MockContext(msg.guild, member, msg.channel, self.bot)
+                ctx = MockContext(message.guild, member, message.channel, self.bot)
                 try:
                     who = await ContextMemberConverter.convert(ctx, response.content)
                 except discord.ext.commands.errors.BadArgument as error:
-                    error_msg = await msg.channel.send(error)
+                    error_msg = await message.channel.send(error)
                     await asyncio.sleep(15)
                     await error_msg.delete()
                     return
 
-                await maybe_update_member(msg, embed, who.member, "toggle")
-        elif reaction.emoji == "📍":
+                await maybe_update_member(message, embed, who.member, "toggle")
+        elif str(emoji) == "📍":
             response = None
-            query = await msg.channel.send(
+            query = await message.channel.send(
                 "Observation & species counts for which place (you have 15 seconds to answer)?"
             )
             try:
                 response = await self.bot.wait_for(
                     "message",
                     check=MessagePredicate.same_context(
-                        channel=msg.channel, user=member
+                        channel=message.channel, user=member
                     ),
                     timeout=15,
                 )
@@ -197,7 +199,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await query.delete()
             else:
                 try:
-                    await msg.channel.delete_messages((query, response))
+                    await message.channel.delete_messages((query, response))
                 except (discord.HTTPException, AttributeError):
                     # In case the bot can't delete other users' messages:
                     with contextlib.suppress(discord.HTTPException):
@@ -205,10 +207,10 @@ class Listeners(INatEmbeds, MixinMeta):
             if response:
                 try:
                     place = await self.place_table.get_place(
-                        msg.guild, response.content, member
+                        message.guild, response.content, member
                     )
                 except LookupError as error:
-                    error_msg = await msg.channel.send(error)
+                    error_msg = await message.channel.send(error)
                     await asyncio.sleep(15)
                     await error_msg.delete()
                     return
@@ -220,32 +222,40 @@ class Listeners(INatEmbeds, MixinMeta):
                 place_embed = make_embed(
                     description=f"{taxon.name}: {formatted_counts}"
                 )
-                await msg.channel.send(embed=place_embed)
+                await message.channel.send(embed=place_embed)
 
     @commands.Cog.listener()
-    async def on_reaction_add(
-        self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
+    async def on_raw_reaction_add(
+        self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
         """Central handler for reactions added to embeds."""
         await self._ready_event.wait()
-        if (
-            user.bot
-            or isinstance(user, discord.User)
-            or reaction.message.author != self.bot.user
-        ):
+        if not payload.guild_id:
             return
-        await self.handle_member_reaction(reaction, user, "add")
+        guild = self.bot.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+        if member is None or member.bot:
+            return
+        channel = self.bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        if message.author != self.bot.user:
+            return
+        await self.handle_member_reaction(payload.emoji, member, message, "add")
 
     @commands.Cog.listener()
-    async def on_reaction_remove(
-        self, reaction: discord.Reaction, user: Union[discord.Member, discord.User]
+    async def on_raw_reaction_remove(
+        self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
         """Central handler for reactions removed from embeds."""
         await self._ready_event.wait()
-        if (
-            user.bot
-            or isinstance(user, discord.User)
-            or reaction.message.author != self.bot.user
-        ):
+        if not payload.guild_id:
             return
-        await self.handle_member_reaction(reaction, user, "remove")
+        guild = self.bot.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+        if member is None or member.bot:
+            return
+        channel = self.bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        if message.author != self.bot.user:
+            return
+        await self.handle_member_reaction(payload.emoji, member, message, "remove")
