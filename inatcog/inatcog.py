@@ -205,44 +205,16 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         return await inat_link_msg.get_last_taxon_msg(msgs)
 
     @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
-    async def last_obs(self, ctx, rank=None):
-        """Show recently mentioned iNat observation or ancestor rank for it.
-
-        ```
-        [p]inat last obs           last observation
-        [p]inat last obs <rank>    ancestor taxon <rank> for last obs
-        [p]inat last obs family    e.g. family for last obs, etc.
-        ```
-        """
+    async def last_obs(self, ctx):
+        """Show recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if not (last or last.obs):
             await ctx.send(embed=sorry(apology="Nothing found"))
             return
 
-        if not rank:
-            await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-            if last.obs.sound:
-                await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
-            return
-
-        rank_keyword = RANK_EQUIVALENTS.get(rank) or rank
-        if last.obs.taxon.rank == rank_keyword:
-            await self.send_embed_for_taxon(ctx, last.obs.taxon)
-        elif last.obs.taxon:
-            full_record = await get_taxon(self, last.obs.taxon.taxon_id)
-            ancestor = await self.taxa_query.get_taxon_ancestor(
-                full_record, rank_keyword
-            )
-            if ancestor:
-                await self.send_embed_for_taxon(ctx, ancestor)
-            else:
-                await ctx.send(
-                    embed=sorry(
-                        apology=f"The last observation has no {rank_keyword} ancestor."
-                    )
-                )
-        else:
-            await ctx.send(embed=sorry(apology="The last observation has no taxon."))
+        await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+        if last.obs.sound:
+            await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
 
     @last_obs.command(name="img", aliases=["image"])
     async def last_obs_img(self, ctx, number=None):
@@ -278,6 +250,38 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
+
+    @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
+    async def last_obs_rank(self, ctx):
+        """Get taxon of a rank in the ancestry of the last observation."""
+        last = await self.get_last_obs_from_history(ctx)
+        if not (last or last.obs):
+            await ctx.send(embed=sorry(apology="Nothing found"))
+            return
+
+        rank = ctx.invoked_with
+        if rank == "<rank>":
+            await ctx.send_help()
+            return
+
+        rank_keyword = RANK_EQUIVALENTS.get(rank) or rank
+        if last.obs.taxon.rank == rank_keyword:
+            await self.send_embed_for_taxon(ctx, last.obs.taxon)
+        elif last.obs.taxon:
+            full_record = await get_taxon(self, last.obs.taxon.taxon_id)
+            ancestor = await self.taxa_query.get_taxon_ancestor(
+                full_record, rank_keyword
+            )
+            if ancestor:
+                await self.send_embed_for_taxon(ctx, ancestor)
+            else:
+                await ctx.send(
+                    embed=sorry(
+                        apology=f"The last observation has no {rank_keyword} ancestor."
+                    )
+                )
+        else:
+            await ctx.send(embed=sorry(apology="The last observation has no taxon."))
 
     @last.command(name="taxon", aliases=["t"])
     async def last_taxon(self, ctx, display=None, arg=None):
