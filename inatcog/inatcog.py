@@ -188,16 +188,102 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
-    @inat.command()
-    async def last(self, ctx, kind, display=None, arg=None):
-        """Show info for recently mentioned iNat page:
+    @inat.group()
+    async def last(self, ctx):
+        """Show info for recently mentioned iNat page."""
+
+    async def get_last_obs_from_history(self, ctx):
+        """Get last obs from history."""
+        msgs = await ctx.history(limit=1000).flatten()
+        inat_link_msg = INatLinkMsg(self.api)
+        return await inat_link_msg.get_last_obs_msg(msgs)
+
+    async def get_last_taxon_from_history(self, ctx):
+        """Get last taxon from history."""
+        msgs = await ctx.history(limit=1000).flatten()
+        inat_link_msg = INatLinkMsg(self.api)
+        return await inat_link_msg.get_last_taxon_msg(msgs)
+
+    @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
+    async def last_obs(self, ctx, rank=None):
+        """Show recently mentioned iNat observation or ancestor rank for it.
 
         ```
-        [p]inat last observation
-        [p]inat last obs image 2
-        [p]inat last obs map
-        [p]inat last obs taxon
-        [p]inat last obs family
+        [p]inat last obs           last observation
+        [p]inat last obs <rank>    ancestor taxon <rank> for last obs
+        [p]inat last obs family    e.g. family for last obs, etc.
+        ```
+        """
+        last = await self.get_last_obs_from_history(ctx)
+        if not (last or last.obs):
+            await ctx.send(embed=sorry(apology="Nothing found"))
+            return
+
+        if not rank:
+            await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+            if last.obs.sound:
+                await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
+            return
+
+        rank_keyword = RANK_EQUIVALENTS.get(rank) or rank
+        if last.obs.taxon.rank == rank_keyword:
+            await self.send_embed_for_taxon(ctx, last.obs.taxon)
+        elif last.obs.taxon:
+            full_record = await get_taxon(self, last.obs.taxon.taxon_id)
+            ancestor = await self.taxa_query.get_taxon_ancestor(
+                full_record, rank_keyword
+            )
+            if ancestor:
+                await self.send_embed_for_taxon(ctx, ancestor)
+            else:
+                await ctx.send(
+                    embed=sorry(
+                        apology=f"The last observation has no {rank_keyword} ancestor."
+                    )
+                )
+        else:
+            await ctx.send(embed=sorry(apology="The last observation has no taxon."))
+
+    @last_obs.command(name="img", aliases=["image"])
+    async def last_obs_img(self, ctx, number=None):
+        """Show image for recently mentioned iNat observation."""
+        last = await self.get_last_obs_from_history(ctx)
+        if last.obs and last.obs.taxon:
+            try:
+                num = 1 if number is None else int(number)
+            except ValueError:
+                num = 0
+            await ctx.send(
+                embed=await self.make_obs_embed(
+                    ctx.guild, last.obs, last.url, preview=num
+                )
+            )
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+
+    @last_obs.command(name="taxon", aliases=["t"])
+    async def last_obs_taxon(self, ctx):
+        """Show taxon for recently mentioned iNat observation."""
+        last = await self.get_last_obs_from_history(ctx)
+        if last and last.obs and last.obs.taxon:
+            await self.send_embed_for_taxon(ctx, last.obs.taxon)
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+
+    @last_obs.command(name="map", aliases=["m"])
+    async def last_obs_map(self, ctx):
+        """Show map for recently mentioned iNat observation."""
+        last = await self.get_last_obs_from_history(ctx)
+        if last and last.obs and last.obs.taxon:
+            await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+
+    @last.command(name="taxon", aliases=["t"])
+    async def last_taxon(self, ctx, display=None, arg=None):
+        """Show info for recently mentioned iNat taxon:
+
+        ```
         [p]inat last taxon
         [p]inat last taxon by user
         [p]inat last taxon image
@@ -205,126 +291,62 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         [p]inat last taxon family
         ```
         Keywords can be abbreviated:
-        - `obs` for `observation`
         - `img` for `image`
         - `m` for `map`
-        - `t` for `taxon`
         When configured as recommended, `[p]last` is an alias for `[p]inat last`.
         """
-
-        if kind in ("obs", "observation"):
-            msgs = await ctx.history(limit=1000).flatten()
-            inat_link_msg = INatLinkMsg(self.api)
-            last = await inat_link_msg.get_last_obs_msg(msgs)
-            if not last:
-                await ctx.send(embed=sorry(apology="Nothing found"))
-            elif display:
-                if display in ("img", "image"):
-                    if last and last.obs and last.obs.taxon:
-                        try:
-                            num = 1 if arg is None else int(arg)
-                        except ValueError:
-                            num = 0
-                        await ctx.send(
-                            embed=await self.make_obs_embed(
-                                ctx.guild, last.obs, last.url, preview=num
-                            )
+        last = await self.get_last_taxon_from_history(ctx)
+        if not last:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+        elif display:
+            if display == "by":
+                if last and last.taxon:
+                    who = await ContextMemberConverter.convert(ctx, arg)
+                    user = await self.user_table.get_user(who.member)
+                    filtered_taxon = FilteredTaxon(last.taxon, user, None, None)
+                    await self.send_embed_for_taxon(ctx, filtered_taxon)
+            elif display == "from":
+                if last and last.taxon:
+                    try:
+                        place = await self.place_table.get_place(
+                            ctx.guild, arg, ctx.author
                         )
-                elif display in ("t", "taxon"):
-                    if last and last.obs and last.obs.taxon:
-                        await self.send_embed_for_taxon(ctx, last.obs.taxon)
-                elif display in ("m", "map"):
-                    if last and last.obs and last.obs.taxon:
-                        await ctx.send(
-                            embed=await self.make_map_embed([last.obs.taxon])
-                        )
-                elif display in RANK_KEYWORDS:
-                    rank = RANK_EQUIVALENTS.get(display) or display
-                    if last.obs.taxon.rank == rank:
-                        await self.send_embed_for_taxon(ctx, last.obs.taxon)
-                    elif last.obs.taxon:
-                        full_record = await get_taxon(self, last.obs.taxon.taxon_id)
-                        ancestor = await self.taxa_query.get_taxon_ancestor(
-                            full_record, display
-                        )
-                        if ancestor:
-                            await self.send_embed_for_taxon(ctx, ancestor)
-                        else:
-                            await ctx.send(
-                                embed=sorry(
-                                    apology=f"The last observation has no {rank} ancestor."
-                                )
-                            )
-                    else:
-                        await ctx.send(
-                            embed=sorry(apology="The last observation has no taxon.")
-                        )
-                else:
-                    await ctx.send_help()
-            else:
-                # By default, display the observation embed for the matched last obs.
-                await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-                if last and last.obs and last.obs.sound:
-                    await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
-        elif kind in ("t", "taxon"):
-            msgs = await ctx.history(limit=1000).flatten()
-            inat_link_msg = INatLinkMsg(self.api)
-            last = await inat_link_msg.get_last_taxon_msg(msgs)
-            if not last:
-                await ctx.send(embed=sorry(apology="Nothing found"))
-            elif display:
-                if display == "by":
-                    if last and last.taxon:
-                        who = await ContextMemberConverter.convert(ctx, arg)
-                        user = await self.user_table.get_user(who.member)
-                        filtered_taxon = FilteredTaxon(last.taxon, user, None, None)
-                        await self.send_embed_for_taxon(ctx, filtered_taxon)
-                elif display == "from":
-                    if last and last.taxon:
-                        try:
-                            place = await self.place_table.get_place(
-                                ctx.guild, arg, ctx.author
-                            )
-                        except LookupError:
-                            place = None
-                        filtered_taxon = FilteredTaxon(last.taxon, None, place, None)
-                        await self.send_embed_for_taxon(ctx, filtered_taxon)
-                elif display in ("m", "map"):
-                    if last and last.taxon:
-                        await ctx.send(embed=await self.make_map_embed([last.taxon]))
-                elif display in ("img", "image"):
-                    if last and last.taxon:
-                        await self.send_embed_for_taxon_image(ctx, last.taxon)
-                elif display in RANK_KEYWORDS:
-                    rank = RANK_EQUIVALENTS.get(display) or display
-                    if last.taxon.rank == rank:
-                        await self.send_embed_for_taxon(ctx, last.taxon)
-                    elif last.taxon:
-                        full_record = await get_taxon(self, last.taxon.taxon_id)
-                        ancestor = await self.taxa_query.get_taxon_ancestor(
-                            full_record, display
-                        )
-                        if ancestor:
-                            await self.send_embed_for_taxon(ctx, ancestor)
-                        else:
-                            await ctx.send(
-                                embed=sorry(
-                                    apology=f"The last taxon has no {rank} ancestor."
-                                )
-                            )
+                    except LookupError:
+                        place = None
+                    filtered_taxon = FilteredTaxon(last.taxon, None, place, None)
+                    await self.send_embed_for_taxon(ctx, filtered_taxon)
+            elif display in ("m", "map"):
+                if last and last.taxon:
+                    await ctx.send(embed=await self.make_map_embed([last.taxon]))
+            elif display in ("img", "image"):
+                if last and last.taxon:
+                    await self.send_embed_for_taxon_image(ctx, last.taxon)
+            elif display in RANK_KEYWORDS:
+                rank = RANK_EQUIVALENTS.get(display) or display
+                if last.taxon.rank == rank:
+                    await self.send_embed_for_taxon(ctx, last.taxon)
+                elif last.taxon:
+                    full_record = await get_taxon(self, last.taxon.taxon_id)
+                    ancestor = await self.taxa_query.get_taxon_ancestor(
+                        full_record, display
+                    )
+                    if ancestor:
+                        await self.send_embed_for_taxon(ctx, ancestor)
                     else:
                         await ctx.send(
                             embed=sorry(
-                                apology="Lookup failed using the last taxon link."
+                                apology=f"The last taxon has no {rank} ancestor."
                             )
                         )
                 else:
-                    await ctx.send_help()
+                    await ctx.send(
+                        embed=sorry(apology="Lookup failed using the last taxon link.")
+                    )
             else:
-                # By default, display the embed for the matched last taxon.
-                await self.send_embed_for_taxon(ctx, last.taxon)
+                await ctx.send_help()
         else:
-            await ctx.send_help()
+            # By default, display the embed for the matched last taxon.
+            await self.send_embed_for_taxon(ctx, last.taxon)
 
     @inat.command()
     async def link(self, ctx, *, query):
