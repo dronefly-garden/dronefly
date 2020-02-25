@@ -253,7 +253,13 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_obs_rank(self, ctx):
-        """Get taxon of a rank in the ancestry of the last observation."""
+        """Get taxon of a rank in the ancestry of the last observation.
+
+        `[p]inat last obs <rank>`      show <rank> of last obs
+        e.g.
+        `[p]inat last obs family`      show family of last obs
+        `[p]inat last obs superfamily` show superfamily of last obs
+        """
         last = await self.get_last_obs_from_history(ctx)
         if not (last or last.obs):
             await ctx.send(embed=sorry(apology="Nothing found"))
