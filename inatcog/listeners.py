@@ -100,6 +100,14 @@ class Listeners(INatEmbeds, MixinMeta):
                 embed.description = await update_totals(
                     self, description, taxon, inat_user, action, counts_pat
                 )
+                if re.search(r"\*total\*", embed.description):
+                    embed.set_footer(
+                        text="User counts may not add up to "
+                        "the total if they changed since they were added. "
+                        "Remove, then add them again to update their counts."
+                    )
+                else:
+                    embed.set_footer(text="")
                 await msg.edit(embed=embed)
 
         async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
