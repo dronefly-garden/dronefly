@@ -91,7 +91,8 @@ class INatEmbeds(MixinMeta):
             except OSError:
                 sound = None
         if sound:
-            await channel.send(file=File(sound, filename=response.url.name))
+            filename = response.url.name.replace(".m4a", ".mp3")
+            await channel.send(file=File(sound, filename=filename))
 
     async def make_obs_counts_embed(self, arg):
         """Return embed for observation counts from place or by user."""
