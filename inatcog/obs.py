@@ -3,17 +3,22 @@
 import re
 from typing import List, NamedTuple
 
-from .api import WWW_BASE_URL
+from .api import WWW_BASE_URL, WWW_URL_PAT
 from .taxa import Taxon, get_taxon_fields
 from .users import User
 
+# Match observation URL or command.
 PAT_OBS_LINK = re.compile(
-    r"\b((?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations/(?P<obs_id>\d+))"
-    + r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+)))\b",
+    r"\b("
+    r"(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))"
+    r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+))"
+    r")\b",
     re.I,
 )
+# Match observation URL from `obs` embed generated for observations matching a
+# specific taxon_id and filtered by optional place_id and/or user_id.
 PAT_OBS_TAXON_LINK = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/observations"
+    r"\b(?P<url>" + WWW_URL_PAT + r"/observations"
     r"\?taxon_id=(?P<taxon_id>\d+)(&place_id=(?P<place_id>\d+))?(&user_id=(?P<user_id>\d+))?)\b",
     re.I,
 )
