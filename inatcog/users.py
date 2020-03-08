@@ -4,12 +4,14 @@ from typing import AsyncIterator, Tuple
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 import discord
-from .api import WWW_BASE_URL
+from .api import WWW_BASE_URL, WWW_URL_PAT
 from .common import LOG
 
+# Match user profile link from any partner site.
 PAT_USER_LINK = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/(people|users)/"
-    + r"((?P<user_id>\d+)|(?P<login>[a-z][-_a-z0-9]{2,39})))\b",
+    r"\b(?P<url>" + WWW_URL_PAT + r"/(people|users)"
+    r"/((?P<user_id>\d+)|(?P<login>[a-z][-_a-z0-9]{2,39}))"
+    r")\b",
     re.I,
 )
 
