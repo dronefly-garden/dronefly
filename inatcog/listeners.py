@@ -62,20 +62,21 @@ class Listeners(INatEmbeds, MixinMeta):
         """Central handler for member reactions."""
 
         def get_ids(embed):
+            """Match taxon_id & optional place_id/user_id."""
+            taxon_id = None
             place_id = None
             user_id = None
             url = embed.url
-            if not url:
-                return
-            mat = re.match(PAT_TAXON_LINK, url)
-            if not mat:
-                mat = re.match(PAT_OBS_TAXON_LINK, url)
+            if url:
+                mat = re.match(PAT_TAXON_LINK, url)
+                if not mat:
+                    mat = re.match(PAT_OBS_TAXON_LINK, url)
+                    if mat:
+                        place_id = mat["place_id"]
+                        user_id = mat["user_id"]
                 if mat:
-                    place_id = mat["place_id"]
-                    user_id = mat["user_id"]
-            if not mat:
-                return
-            return (mat["taxon_id"], place_id, user_id)
+                    taxon_id = mat["taxon_id"]
+            return (taxon_id, place_id, user_id)
 
         async def maybe_update_member(
             msg: discord.Message,
@@ -110,7 +111,92 @@ class Listeners(INatEmbeds, MixinMeta):
                     embed.set_footer(text="")
                 await msg.edit(embed=embed)
 
+        async def maybe_update_member_by_name(
+            msg: discord.Message, embed: discord.Embed, member: discord.Member
+        ):
+            """Prompt for a user by name and update the embed if provided & valid."""
+            response = None
+            query = await msg.channel.send(
+                "Add or remove which member (you have 15 seconds to answer)?"
+            )
+            try:
+                response = await self.bot.wait_for(
+                    "message",
+                    check=MessagePredicate.same_context(
+                        channel=msg.channel, user=member
+                    ),
+                    timeout=15,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+            else:
+                try:
+                    await msg.channel.delete_messages((query, response))
+                except (discord.HTTPException, AttributeError):
+                    # In case the bot can't delete other users' messages:
+                    with contextlib.suppress(discord.HTTPException):
+                        await query.delete()
+            if response:
+                ctx = MockContext(msg.guild, member, msg.channel, self.bot)
+                try:
+                    who = await ContextMemberConverter.convert(ctx, response.content)
+                except discord.ext.commands.errors.BadArgument as error:
+                    error_msg = await msg.channel.send(error)
+                    await asyncio.sleep(15)
+                    await error_msg.delete()
+                    return
+
+                await maybe_update_member(msg, embed, who.member, "toggle")
+
+        async def maybe_send_place_by_name(
+            msg: discord.Message, member: discord.Member
+        ):
+            """Prompt user for place by name and send an embed if provided & valid."""
+            response = None
+            query = await msg.channel.send(
+                "Observation & species counts for which place (you have 15 seconds to answer)?"
+            )
+            try:
+                response = await self.bot.wait_for(
+                    "message",
+                    check=MessagePredicate.same_context(
+                        channel=msg.channel, user=member
+                    ),
+                    timeout=15,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+            else:
+                try:
+                    await msg.channel.delete_messages((query, response))
+                except (discord.HTTPException, AttributeError):
+                    # In case the bot can't delete other users' messages:
+                    with contextlib.suppress(discord.HTTPException):
+                        await query.delete()
+            if response:
+                try:
+                    place = await self.place_table.get_place(
+                        msg.guild, response.content, member
+                    )
+                except LookupError as error:
+                    error_msg = await msg.channel.send(error)
+                    await asyncio.sleep(15)
+                    await error_msg.delete()
+                    return
+
+                taxon = await get_taxon(self, taxon_id)
+                formatted_counts = await format_place_taxon_counts(
+                    self, place, taxon, user_id
+                )
+                place_embed = make_embed(
+                    description=f"{taxon.name}: {formatted_counts}"
+                )
+                await msg.channel.send(embed=place_embed)
+
         async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
+            """Update the totals for the embed."""
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
                 r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
@@ -156,81 +242,9 @@ class Listeners(INatEmbeds, MixinMeta):
         if str(emoji) == "#️⃣":  # Add/remove counts for self
             await maybe_update_member(message, embed, member, action)
         elif str(emoji) == "📝":  # Add/remove counts by name
-            response = None
-            query = await message.channel.send(
-                "Add or remove which member (you have 15 seconds to answer)?"
-            )
-            try:
-                response = await self.bot.wait_for(
-                    "message",
-                    check=MessagePredicate.same_context(
-                        channel=message.channel, user=member
-                    ),
-                    timeout=15,
-                )
-            except asyncio.TimeoutError:
-                with contextlib.suppress(discord.HTTPException):
-                    await query.delete()
-            else:
-                try:
-                    await message.channel.delete_messages((query, response))
-                except (discord.HTTPException, AttributeError):
-                    # In case the bot can't delete other users' messages:
-                    with contextlib.suppress(discord.HTTPException):
-                        await query.delete()
-            if response:
-                ctx = MockContext(message.guild, member, message.channel, self.bot)
-                try:
-                    who = await ContextMemberConverter.convert(ctx, response.content)
-                except discord.ext.commands.errors.BadArgument as error:
-                    error_msg = await message.channel.send(error)
-                    await asyncio.sleep(15)
-                    await error_msg.delete()
-                    return
-
-                await maybe_update_member(message, embed, who.member, "toggle")
+            await maybe_update_member_by_name(message, embed, member)
         elif str(emoji) == "📍":
-            response = None
-            query = await message.channel.send(
-                "Observation & species counts for which place (you have 15 seconds to answer)?"
-            )
-            try:
-                response = await self.bot.wait_for(
-                    "message",
-                    check=MessagePredicate.same_context(
-                        channel=message.channel, user=member
-                    ),
-                    timeout=15,
-                )
-            except asyncio.TimeoutError:
-                with contextlib.suppress(discord.HTTPException):
-                    await query.delete()
-            else:
-                try:
-                    await message.channel.delete_messages((query, response))
-                except (discord.HTTPException, AttributeError):
-                    # In case the bot can't delete other users' messages:
-                    with contextlib.suppress(discord.HTTPException):
-                        await query.delete()
-            if response:
-                try:
-                    place = await self.place_table.get_place(
-                        message.guild, response.content, member
-                    )
-                except LookupError as error:
-                    error_msg = await message.channel.send(error)
-                    await asyncio.sleep(15)
-                    await error_msg.delete()
-                    return
-
-                taxon = await get_taxon(self, taxon_id)
-                formatted_counts = await format_place_taxon_counts(
-                    self, place, taxon, user_id
-                )
-                place_embed = make_embed(
-                    description=f"{taxon.name}: {formatted_counts}"
-                )
-                await message.channel.send(embed=place_embed)
+            await maybe_send_place_by_name(message, member)
 
     async def maybe_get_reaction(
         self, payload: discord.raw_models.RawReactionActionEvent
