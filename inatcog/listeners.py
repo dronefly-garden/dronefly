@@ -232,21 +232,31 @@ class Listeners(INatEmbeds, MixinMeta):
                 )
                 await message.channel.send(embed=place_embed)
 
+    async def maybe_get_reaction(
+        self, payload: discord.raw_models.RawReactionActionEvent
+    ) -> (discord.Member, discord.Message):
+        """Return reaction member & message if valid."""
+        await self._ready_event.wait()
+        if not payload.guild_id:
+            raise ValueError("Reaction is not on a guild channel.")
+        guild = self.bot.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+        if member is None or member.bot:
+            raise ValueError("User is not a guild member.")
+        channel = self.bot.get_channel(payload.channel_id)
+        message = await channel.fetch_message(payload.message_id)
+        if message.author != self.bot.user:
+            raise ValueError("Reaction is not to our own message.")
+        return (member, message)
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(
         self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
-        """Central handler for reactions added to embeds."""
-        await self._ready_event.wait()
-        if not payload.guild_id:
-            return
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-        if member is None or member.bot:
-            return
-        channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        if message.author != self.bot.user:
+        """Central handler for reactions added to bot messages."""
+        try:
+            (member, message) = await self.maybe_get_reaction(payload)
+        except ValueError:
             return
         await self.handle_member_reaction(payload.emoji, member, message, "add")
 
@@ -254,16 +264,9 @@ class Listeners(INatEmbeds, MixinMeta):
     async def on_raw_reaction_remove(
         self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
-        """Central handler for reactions removed from embeds."""
-        await self._ready_event.wait()
-        if not payload.guild_id:
-            return
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-        if member is None or member.bot:
-            return
-        channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
-        if message.author != self.bot.user:
+        """Central handler for reactions removed from bot messages."""
+        try:
+            (member, message) = await self.maybe_get_reaction(payload)
+        except ValueError:
             return
         await self.handle_member_reaction(payload.emoji, member, message, "remove")
