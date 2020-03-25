@@ -2,7 +2,6 @@
 import re
 from typing import NamedTuple, Union
 from .api import WWW_BASE_URL
-from .common import LOG
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
 from .places import Place
@@ -365,14 +364,8 @@ def match_taxon(query, records):
         scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
 
     best_score = max(scores)
-    LOG.info("Best score: %d", best_score)
     best_record = records[scores.index(best_score)]
     min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
-    LOG.info(
-        "Best match: %s%s",
-        repr(best_record),
-        "" if min_score_met else " (score too low)",
-    )
 
     return best_record if min_score_met else None
 
@@ -440,13 +433,10 @@ class INatTaxaQuery:
             ancestor = await self.maybe_match_taxon(query_ancestor)
             if ancestor:
                 if query_main.ranks:
-                    LOG.info("query ranks = %s", ",".join(query_main.ranks))
                     max_query_rank_level = max(
                         [RANK_LEVELS[rank] for rank in query_main.ranks]
                     )
-                    LOG.info("max_query_rank_level = %3.1f", max_query_rank_level)
                     ancestor_rank_level = RANK_LEVELS[ancestor.rank]
-                    LOG.info("ancestor_rank_level = %3.1f", ancestor_rank_level)
                     if max_query_rank_level >= ancestor_rank_level:
                         raise LookupError(
                             "Child rank%s: `%s` must be below ancestor rank: `%s`"

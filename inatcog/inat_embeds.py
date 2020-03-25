@@ -99,7 +99,6 @@ class INatEmbeds(MixinMeta):
         group_by_param = ""
         formatted_counts = ""
 
-        LOG.info(repr(arg))
         if isinstance(arg, FilteredTaxon):
             (taxon, user, place, group_by) = arg
         else:

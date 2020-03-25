@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 import discord
 from .api import WWW_BASE_URL, WWW_URL_PAT
-from .common import LOG
 
 # Match user profile link from any partner site.
 PAT_USER_LINK = re.compile(
@@ -96,7 +95,6 @@ class INatUserTable:
             if user_json:
                 results = user_json["results"]
                 if results:
-                    LOG.info(results[0])
                     inat_user = User.from_dict(results[0])
             if discord_user and inat_user:
                 yield (discord_user, inat_user)

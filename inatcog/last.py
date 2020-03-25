@@ -7,7 +7,6 @@ from discord import User
 import timeago
 
 from .api import WWW_BASE_URL
-from .common import LOG
 from .obs import get_obs_fields, PAT_OBS_LINK
 from .taxa import get_taxon, PAT_TAXON_LINK
 
@@ -43,7 +42,6 @@ class INatLinkMsg:
                 for m in msgs
                 if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
             )
-            LOG.info(repr(found))
         except StopIteration:
             return None
 
@@ -79,7 +77,6 @@ class INatLinkMsg:
         #   url (only 1st embed for the message is checked).
         try:
             found = next(m for m in msgs if match_taxon_link(m))
-            LOG.info(repr(found))
         except StopIteration:
             return None
 

@@ -3,7 +3,6 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
-from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -171,7 +170,6 @@ class INatAPI:
         results = response.get("results") or []
         for observer in results:
             user = observer.get("user")
-            LOG.info(user)
             if user:
                 user_id = user.get("id")
                 if user_id:

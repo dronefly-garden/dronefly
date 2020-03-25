@@ -10,7 +10,7 @@ from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
-from .common import grouper, LOG
+from .common import grouper
 from .converters import QuotedContextMemberConverter, InheritableBoolConverter
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
@@ -763,7 +763,6 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         response = await self.api.get_users(user_query, refresh_cache=True)
         if response and response["results"]:
             user = User.from_dict(response["results"][0])
-            LOG.info(user)
             mat_login = user_query.lower()
             mat_id = int(user_query) if user_query.isnumeric() else None
             if not ((user.login == mat_login) or (user.user_id == mat_id)):
