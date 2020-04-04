@@ -1,6 +1,6 @@
 """Module to work with iNat taxa."""
 import re
-from typing import NamedTuple, Union
+from typing import NamedTuple, Optional, Union
 from .api import WWW_BASE_URL
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
@@ -15,15 +15,15 @@ class Taxon(NamedTuple):
 
     name: str
     taxon_id: int
-    common: str or None
+    common: Optional[str]
     term: str
-    thumbnail: str or None
-    image: str or None
-    image_attribution: str or None
+    thumbnail: Optional[str]
+    image: Optional[str]
+    image_attribution: Optional[str]
     rank: str
     ancestor_ids: list
     observations: int
-    ancestor_ranks: list or None
+    ancestor_ranks: Optional[list]
 
 
 class FilteredTaxon(NamedTuple):
@@ -236,9 +236,9 @@ def get_taxon_fields(record):
 class NameMatch(NamedTuple):
     """Match for each name field in Taxon matching a pattern."""
 
-    term: re.match or None
-    name: re.match or None
-    common: re.match or None
+    term: Optional[re.match]
+    name: Optional[re.match]
+    common: Optional[re.match]
 
 
 NO_NAME_MATCH = NameMatch(None, None, None)
