@@ -27,7 +27,7 @@ class Listeners(INatEmbeds, MixinMeta):
     """Listeners mixin for inatcog."""
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
+    async def on_message_without_command(self, message: discord.Message) -> None:
         """Handle links to iNat."""
         await self._ready_event.wait()
         if message.author.bot or message.guild is None:
@@ -41,6 +41,9 @@ class Listeners(INatEmbeds, MixinMeta):
         else:
             autoobs = channel_autoobs
         # FIXME: should ignore all bot prefixes of the server instead of hardwired list
+        # - on_message_without_command only ignores bot prefixes for this instance
+        # - consider Trusty's suggestion here for a more thorough approach:
+        #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
         if autoobs and re.match(r"^[^;./,]", message.content):
             obs, url = await maybe_match_obs(self.api, message.content)
             # Only output if an observation is found
