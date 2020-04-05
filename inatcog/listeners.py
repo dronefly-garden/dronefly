@@ -35,16 +35,26 @@ class Listeners(INatEmbeds, MixinMeta):
 
         guild = message.guild
         channel = message.channel
+        guild_config = self.config.guild(guild)
+
+        # - on_message_without_command only ignores bot prefixes for this instance
+        # - implementation as suggested by Trusty:
+        #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
+        bot_prefixes = await guild_config.bot_prefixes()
+
+        if bot_prefixes:
+            prefixes = r"|".join(re.escape(bot_prefix) for bot_prefix in bot_prefixes)
+            prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
+            if re.match(prefix_pattern, message.content):
+                return
+
         channel_autoobs = await self.config.channel(channel).autoobs()
         if channel_autoobs is None:
-            autoobs = await self.config.guild(guild).autoobs()
+            autoobs = await guild_config.autoobs()
         else:
             autoobs = channel_autoobs
-        # FIXME: should ignore all bot prefixes of the server instead of hardwired list
-        # - on_message_without_command only ignores bot prefixes for this instance
-        # - consider Trusty's suggestion here for a more thorough approach:
-        #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
-        if autoobs and re.match(r"^[^;./,]", message.content):
+
+        if autoobs:
             obs, url = await maybe_match_obs(self.api, message.content)
             # Only output if an observation is found
             if obs:

@@ -56,6 +56,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             user_projects={},
             places={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
+            bot_prefixes=[],
         )
         self.config.register_channel(autoobs=None)
         self.config.register_user(
@@ -110,6 +111,57 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         `[p]inat taxon family`, and likewise for all other ranks. See the
         help topics for each subcommand for details.
         """
+
+    @inat.group(name="set")
+    async def inat_set(self, ctx):
+        """Show/change settings for this server."""
+
+    @inat_set.command(name="bot_prefixes")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_bot_prefixes(self, ctx, *prefixes):
+        """Set ignored bot prefixes for this server.
+
+        All messages starting with one of these prefixes will be ignored by
+        this bot.
+
+        - If prefixes is empty, current setting is shown.
+        - Use `[p]inat clear bot_prefixes` to clear.
+        - You don't need to include the prefix of this bot: [p]
+
+        If other bots are present on this server, you might need to set this
+        to the prefixes of those bots separated by spaces to prevent this bot
+        from responding to commands sent to them (e.g. autoobs previews
+        triggered by URL's in ordinary messages). You particularly need to
+        set bot_prefixes if your server has more than one Dronefly instance
+        on it, otherwise it's unlikely you need to set this.
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if prefixes:
+            await config.bot_prefixes.set(prefixes)
+        else:
+            prefixes = await config.bot_prefixes()
+
+        await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
+
+    @inat.group(name="clear")
+    async def inat_clear(self, ctx):
+        """Clear settings for this server."""
+
+    @inat_clear.command(name="bot_prefixes")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def clear_bot_prefixes(self, ctx):
+        """Clear ignored bot prefixes for this server."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.bot_prefixes.clear()
+
+        await ctx.send("Other bot prefixes have been cleared.")
 
     @inat.group(invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
