@@ -1,6 +1,6 @@
 """Module to handle users."""
 import re
-from typing import AsyncIterator, Tuple
+from typing import AsyncIterator, Optional, Tuple
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 import discord
@@ -20,7 +20,7 @@ class User(DataClassJsonMixin):
     """A user."""
 
     user_id: int = field(metadata=config(field_name="id"))
-    name: str
+    name: Optional[str]
     login: str
     observations_count: int
     identifications_count: int
