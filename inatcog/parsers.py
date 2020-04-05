@@ -16,6 +16,7 @@ from pyparsing import (
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
 RANK_LEVELS = {
     "stateofmatter": 100,
+    "unranked": 90,  # Invented to make parent check work (this is null in the db)
     "kingdom": 70,
     "phylum": 60,
     "subphylum": 57,

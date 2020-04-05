@@ -23,7 +23,8 @@ class Taxon(NamedTuple):
     rank: str
     ancestor_ids: list
     observations: int
-    ancestor_ranks: Optional[list]
+    ancestor_ranks: list
+    active: bool
 
 
 class FilteredTaxon(NamedTuple):
@@ -169,7 +170,10 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
             if len(tri) == 3:
                 # Note: name already italicized, so close/reopen italics around insertion.
                 name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
-    return f"{name} ({common})" if common else name
+    full_name = f"{name} ({common})" if common else name
+    if not rec.active:
+        full_name += " :exclamation: Inactive Taxon"
+    return full_name
 
 
 def get_taxon_fields(record):
@@ -216,7 +220,7 @@ def get_taxon_fields(record):
     ancestor_ranks = (
         ["stateofmatter"] + [ancestor["rank"] for ancestor in ancestors]
         if ancestors
-        else None
+        else []
     )
     return Taxon(
         record["name"],
@@ -230,6 +234,7 @@ def get_taxon_fields(record):
         record["ancestor_ids"],
         record["observations_count"],
         ancestor_ranks,
+        record["is_active"],
     )
 
 
