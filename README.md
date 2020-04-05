@@ -1,3 +1,6 @@
+[![Red cogs](https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg)](https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop)
+[![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
+
 # dronefly
 Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) Cog collection for naturalists.
 
