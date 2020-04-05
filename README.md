@@ -2,13 +2,17 @@
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
 # dronefly
-Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) Cog collection for naturalists.
+Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) Cog collection for naturalists, providing access to the iNaturalist &amp; eBird platforms.
 
 ## Cogs:
 
 ### inatcog
 
-Provides commands to access the iNat platform.
+Use iNat in Discord: search for species, automatic observation preview,
+compare observations/species per user & place, and more.
+
+A selection of the principal commands are listed below. Use `[p]help inat`
+for more commands &amp; details.
 
 #### Query Commands:
 
@@ -20,6 +24,8 @@ Provides commands to access the iNat platform.
 - Match words that start with the terms typed.
 - Exactly match words enclosed in double-quotes.
 - Match a taxon 'in' an ancestor taxon.
+- List # of observations &amp; species 'by' a user.
+- List # of observations &amp; species 'from' a place.
 - Filter matches by rank keywords before or after other terms.
 - Match the AOU 4-letter bird code (if it's in iNat's Taxonomy).
 
@@ -313,11 +319,4 @@ Example issues supporting this goal are https://github.com/synrg/dronefly/issues
 
 ## TODO
 
-The following is a quick and not very thorough list of some ideas for improvements, some of which are too broad to make just one Issue, and others of which are specific, but are waiting to have Issues filed for them. Check the [Issues](https://github.com/synrg/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
-
-- add more useful / interesting commands
-- provide helper commands to:
-    - add / remove all of the recommended `inat taxon` aliases automatically
-    - schedule an `ebird hybrids` report for a channel more conveniently
-- improve default permissions; document changing default permissions
-- ~~make a proper parser so that the command query language can be made richer (see taxon-pyparsing branch)~~
+Check the [Issues](https://github.com/synrg/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
