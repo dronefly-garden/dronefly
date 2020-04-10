@@ -11,14 +11,14 @@ Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) 
 Use iNat in Discord: search for species, automatic observation preview,
 compare observations/species per user & place, and more.
 
-A selection of the principal commands are listed below. Use `[p]help inat`
+A selection of the principal commands are listed below. Use `[p]help iNat`
 for more commands &amp; details.
 
 #### Query Commands:
 
-##### inat taxon
+##### taxon
 
-`[p]inat taxon [query]` looks up the taxon best matching the query (where `[p]` is the bot prefix). It will:
+`[p]taxon [query]` looks up the taxon best matching the query (where `[p]` is the bot prefix). It will:
 
 - Match the taxon with the given iNat id#.
 - Match words that start with the terms typed.
@@ -29,9 +29,7 @@ for more commands &amp; details.
 - Filter matches by rank keywords before or after other terms.
 - Match the AOU 4-letter bird code (if it's in iNat's Taxonomy).
 
-*Note: It is recommended that `[p]taxon` itself and individual ranks be set up as shortcuts for the corresponding commands the bot owner has created those aliases with the `alias` cog.*
-
-Example `[p]inat taxon` queries using aliases:
+Example `[p]taxon` queries:
 
 ```
 [p]taxon bear family          -> Ursidae (Bears)
@@ -57,12 +55,12 @@ For each successful response, the scientific name, followed by the preferred com
 
 If the matched term was neither in the scientific name, nor the preferred common name, the term that matched is shown as well.
 
-##### inat map
+##### map
 
-`[p]inat map [taxon query 1, taxon query 2, ...]` looks up one or more taxa (see [inat taxon](#inat-taxon)) and displays a link to a range map for all matching taxa. For example:
+`[p]map [taxon query 1, taxon query 2, ...]` looks up one or more taxa (see [taxon](#taxon)) and displays a link to a range map for all matching taxa. For example:
 
 ```
-[p]inat map boreal chorus frog, spring peeper
+[p]map boreal chorus frog, spring peeper
 ```
 
 <span align="top">
@@ -71,34 +69,34 @@ If the matched term was neither in the scientific name, nor the preferred common
     </blockquote>
 </span>
 
-##### inat obs
+##### obs
 
-`[p]inat obs [link|#]` looks up the observation and displays a summary. See also [Auto Commands](#auto-commands). With `autoobs` turned on (either for the channel or whole server), this command is automatically performed every time a link to the observation is mentioned by a user.
+`[p]obs [link|#]` looks up the observation and displays a summary. See also [Auto Commands](#auto-commands). With `autoobs` turned on (either for the channel or whole server), this command is automatically performed every time a link to the observation is mentioned by a user.
 
 If there are sounds for the observation, the first sound will be included in the summary. On the Discord webapp or desktop client, Discord embeds a player for sounds.
 
-##### inat link
+##### link
 
-`[p]inat link [<link>|#]` looks up an iNat link and displays a preview & summary. See also [Auto Commands](#auto-commands).
+`[p]link [<link>|#]` looks up an iNat link and displays a preview & summary. See also [Auto Commands](#auto-commands).
 
-The command is subtly different from `[p]inat obs` in that it is intended to preview any link, including any image on the page, thereby providing a functional replacement for Discord's own automatic preview. Therefore, to suppress Discord's preview, enclose the link in angle-brackets.
+The command is subtly different from `[p]obs` in that it is intended to preview any link, including any image on the page, thereby providing a functional replacement for Discord's own automatic preview. Therefore, to suppress Discord's preview, enclose the link in angle-brackets.
 
 To date, only observation link previews are supported. Previews for different iNat link types may be added in future releases.
 
 ```
-[p]inat link <https://inaturalist.org/observations/2>
+[p]link <https://inaturalist.org/observations/2>
 ```
 
-##### inat last
+##### last
 
 Lookup maps, taxa, or ranks for recently mentioned observations or taxa, e.g.
 
 ```
-[p]inat last obs          -> The last observation
-[p]inat last obs map      -> Range map for last observation
-[p]inat last obs taxon    -> Taxon of the last observation
-[p]inat last obs family   -> Family of the last observation
-[p]inat last taxon order  -> The order of the last taxon
+[p]last obs          -> The last observation
+[p]last obs map      -> Range map for last observation
+[p]last obs taxon    -> Taxon of the last observation
+[p]last obs family   -> Family of the last observation
+[p]last taxon order  -> The order of the last taxon
 ```
 
 #### Auto Commands:
@@ -130,28 +128,28 @@ The default is `[p]inat autoobs inherit`. Specify `on` or `off` to override the 
 
 #### User commands:
 
-##### inat user add
+##### user add
 
 ```
-[p]inat user add [discord-user] [inat-user]
+[p]user add [discord-user] [inat-user]
 ```
 
 Add the Discord user with the specified iNat user id#, login, or profile link to the User config store. **Requires Admin or Manage Roles permission.**
 
 *Note: discord-user is used here, not discord-member to improve comprehension of guild channel history & contributions from those users emeritus on the iNat platform.*
 
-##### inat user remove
+##### user remove
 
 ```
-[p]inat user remove [discord-user]
+[p]user remove [discord-user]
 ```
 
 Remove the user from the User config store. **Requires Admin or Manage Roles permission.**
 
-##### inat user
+##### user
 
 ```
-[p]inat user [discord-user]
+[p]user [discord-user]
 ```
 
 Show the user if present in the User config store.
@@ -212,19 +210,6 @@ After adding the repo as per Installation, install & load ebirdcog:
 ```
 
 ## Configuration
-
-### inatcog
-
-Set aliases for the server (as bot owner):
-
-```
-[p]load alias
-[p]set global alias taxon inat taxon
-[p]set global alias kingdom inat taxon kingdom
-... etc. for all ranks, including common abbreviations (see Note below)
-```
-
-*Note: The keywords sp, ssp, & var are accepted as abbreviations for species, subspecies, and variety, respectively. Set aliases for those keywords as well as spelled out.*
 
 ### ebirdcog
 
