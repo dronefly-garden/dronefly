@@ -128,6 +128,10 @@ class Listeners(INatEmbeds, MixinMeta):
             msg: discord.Message, embed: discord.Embed, member: discord.Member
         ):
             """Prompt for a user by name and update the embed if provided & valid."""
+            try:
+                await self.user_table.get_user(member)
+            except LookupError:
+                return
             response = None
             query = await msg.channel.send(
                 "Add or remove which member (you have 15 seconds to answer)?"
@@ -166,6 +170,10 @@ class Listeners(INatEmbeds, MixinMeta):
             msg: discord.Message, member: discord.Member
         ):
             """Prompt user for place by name and send an embed if provided & valid."""
+            try:
+                await self.user_table.get_user(member)
+            except LookupError:
+                return
             response = None
             query = await msg.channel.send(
                 "Observation & species counts for which place (you have 15 seconds to answer)?"
