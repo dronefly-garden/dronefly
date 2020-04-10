@@ -482,7 +482,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @commands.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
-        """Show a place by number, name, or abbreviation defined with `[p]place add`."""
+        """Show iNat place or abbreviation.
+
+        **query** may contain:
+        - *id#* of the iNat place
+        - *words* in the iNat place name
+        - *abbreviation* defined with `[p]place add`
+        """
         try:
             place = await self.place_table.get_place(ctx.guild, query, ctx.author)
             await ctx.send(place.url)
