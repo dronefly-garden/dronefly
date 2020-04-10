@@ -83,7 +83,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             # Initial registrations via the developer's own bot were intended
             # to be for the iNat server only. Prevent leakage to other servers.
             # Any other servers using this feature with schema 1 must now
-            # re-register each user, or the user must `[p]inat user set known
+            # re-register each user, or the user must `[p]user set known
             # true` to be known in other servers.
             if self.bot.user.id in _DEVELOPER_BOT_IDS:
                 all_users = await self.config.all_users()
@@ -104,17 +104,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
     @commands.group()
     async def inat(self, ctx):
-        """Access the iNat platform.
-
-        Note: When configured as recommended, single word command aliases are
-        defined for every `[p]inat` subcommand, `[p]family` is an alias for
-        `[p]inat taxon family`, and likewise for all other ranks. See the
-        help topics for each subcommand for details.
-        """
+        """Show/change iNat settings."""
 
     @inat.group(name="set")
     async def inat_set(self, ctx):
-        """Show/change settings for this server."""
+        """Show/change selected settings for this server."""
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
@@ -149,12 +143,12 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
     @inat.group(name="clear")
     async def inat_clear(self, ctx):
-        """Clear settings for this server."""
+        """Clear settings for this server (mods only)."""
 
     @inat_clear.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def clear_bot_prefixes(self, ctx):
-        """Clear ignored bot prefixes for this server."""
+        """Clear ignored bot prefixes for this server (mods only)."""
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -236,7 +230,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
-    @inat.group()
+    @commands.group()
     async def last(self, ctx):
         """Show info for recently mentioned iNat page."""
 
@@ -303,8 +297,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def last_obs_rank(self, ctx):
         """Show the `<rank>` of the last observation (e.g. `family`).
 
-        `[p]inat last obs family`      show family of last obs
-        `[p]inat last obs superfamily` show superfamily of last obs
+        `[p]last obs family`      show family of last obs
+        `[p]last obs superfamily` show superfamily of last obs
 
         Any rank known to iNat can be specified.
         """
@@ -398,8 +392,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def last_taxon_rank(self, ctx):
         """Show the `<rank>` of the last taxon (e.g. `family`).
 
-        `[p]inat last taxon family`      show family of last taxon
-        `[p]inat last taxon superfamily` show superfamily of last taxon
+        `[p]last taxon family`      show family of last taxon
+        `[p]last taxon superfamily` show superfamily of last taxon
 
         Any rank known to iNat can be specified.
         """
@@ -428,17 +422,15 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
                     embed=sorry(apology=f"The last taxon has no {rank} ancestor.")
                 )
 
-    @inat.command()
+    @commands.command()
     async def link(self, ctx, *, query):
         """Show summary for iNaturalist link.
 
         e.g.
         ```
-        [p]inat link https://inaturalist.org/observations/#
+        [p]link https://inaturalist.org/observations/#
            -> an embed summarizing the observation link
         ```
-        When configured as recommended,
-        `[p]link` is an alias for `[p]inat link`.
         """
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
@@ -455,20 +447,17 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         else:
             await ctx.send(embed=sorry())
 
-    @inat.command()
+    @commands.command()
     async def map(self, ctx, *, taxa_list):
         """Show range map for a list of one or more taxa.
 
         **Examples:**
         ```
-        [p]inat map polar bear
-        [p]inat map 24255,24267
-        [p]inat map boreal chorus frog,western chorus frog
+        [p]map polar bear
+        [p]map 24255,24267
+        [p]map boreal chorus frog,western chorus frog
         ```
-        See `[p]help inat taxon` for help specifying taxa.
-
-        When configured as recommended,
-        `[p]map` is an alias for `[p]inat map`.
+        See `[p]help taxon` for help specifying taxa.
         """
 
         if not taxa_list:
@@ -487,7 +476,7 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         await ctx.send(embed=await self.make_map_embed(taxa))
 
-    @inat.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
     async def place(self, ctx, *, query):
         """Show a place by number, name, or abbreviation defined with `[p]place add`."""
         try:
@@ -539,24 +528,22 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await config.places.set(places)
         await ctx.send("Place abbreviation removed.")
 
-    @inat.command()
+    @commands.command(aliases=["observation"])
     async def obs(self, ctx, *, query):
         """Show observation summary for link or number.
 
         e.g.
         ```
-        [p]inat obs #
+        [p]obs #
            -> an embed summarizing the numbered observation
-        [p]inat obs https://inaturalist.org/observations/#
+        [p]obs https://inaturalist.org/observations/#
            -> an embed summarizing the observation link (minus the preview,
               which Discord provides itself)
-        [p]inat obs insects by kueda
+        [p]obs insects by kueda
            -> an embed showing counts of insects by user kueda
-        [p]inat obs insects from canada
+        [p]obs insects from canada
            -> an embed showing counts of insects from Canada
         ```
-        When configured as recommended,
-        `[p]obs` is an alias for `[p]inat obs`.
         """
 
         obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
@@ -588,19 +575,16 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await ctx.send(embed=sorry(apology=reason))
             return
 
-    @inat.command()
+    @commands.command()
     async def related(self, ctx, *, taxa_list):
         """Relatedness of a list of taxa.
 
         **Examples:**
         ```
-        [p]inat related 24255,24267
-        [p]inat related boreal chorus frog,western chorus frog
+        [p]related 24255,24267
+        [p]related boreal chorus frog,western chorus frog
         ```
-        See `[p]help inat taxon` for help specifying taxa.
-
-        When configured as recommended,
-        `[p]related` is an alias for `[p]inat related`.
+        See `[p]help taxon` for help specifying taxa.
         """
 
         if not taxa_list:
@@ -619,11 +603,13 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         await ctx.send(embed=await self.make_related_embed(taxa))
 
-    @inat.command()
+    @commands.command(aliases=["img"])
     async def image(self, ctx, *, taxon_query):
         """Show default image for taxon query.
 
-        See `[p]help inat taxon` for `taxon_query` format."""
+        `Aliases: [p]img`
+
+        See `[p]help taxon` for `taxon_query` format."""
         try:
             filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
         except ParseException:
@@ -636,10 +622,11 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
 
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
 
-    @inat.command()
+    @commands.command(aliases=["t"])
     async def taxon(self, ctx, *, query):
         """Show taxon best matching the query.
 
+        `Aliases: [p]t`
         - Match the taxon with the given iNat id#.
         - Match words that start with the terms typed.
         - Exactly match words enclosed in double-quotes.
@@ -648,27 +635,25 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         - Match the AOU 4-letter code (if it's in iNat's Taxonomy).
         **Examples:**
         ```
-        [p]inat taxon bear family
+        [p]taxon family bear
            -> Ursidae (Bears)
-        [p]inat taxon prunella
+        [p]taxon prunella
            -> Prunella (self-heals)
-        [p]inat taxon prunella in animals
+        [p]taxon prunella in animals
            -> Prunella
-        [p]inat taxon wtsp
+        [p]taxon wtsp
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
-        When configured as recommended, these aliases save typing:
-        - `[p]t` or `[p]taxon` for `[p]inat taxon`
-        and all rank keywords also work as command aliases, e.g.
-        - `[p]family bear`
-        - `[p]t family bear` (both equivalent to the 1st example)
+        When configured as recommended, all rank keywords also work as
+        command aliases, e.g.
+        - `[p]family bear` is a shortcut for `[p]taxon family bear`
         Abbreviated rank keywords are:
         - `sp` for `species`
         - `ssp` for `subspecies`
         - `gen` for `genus`
         - `var` for `variety`
         Multiple rank keywords may be given, e.g.
-        - `[p]t ssp var form domestic duck` to search for domestic
+        - `[p]taxon ssp var form domestic duck` to search for domestic
         duck subspecies, variety, or form
         """
 
@@ -715,9 +700,28 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
         await config.user_projects.set(user_projects)
         await ctx.send("iNat user project removed.")
 
-    @inat.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True, aliases=["who"])
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
-        """Show user if their iNat id is known."""
+        """Show user if their iNat id is known.
+
+        `Aliases: [p]who`
+
+        First characters of the nickname or username are matched provided
+        that user is cached by the server (e.g. if they were recently active).
+        Otherwise, the nickname or username must be exact. If there is more
+        than one username that exactly matches, append '#' plus the 4-digit
+        discriminator to disambiguate.
+
+        Examples:
+
+        `[p]user Syn`
+          matches `SyntheticBee#4951` if they spoke recently.
+        `[p]user SyntheticBee`
+          matches `SyntheticBee#4951` even if not recently active, assuming
+          there is only one `SyntheticBee`.
+        `[p]user SyntheticBee#4951`
+          matches `SyntheticBee#4951` even if not recently active.
+        """
         if not ctx.guild:
             return
 
@@ -905,9 +909,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def user_set(self, ctx, arg: str = None):
         """Show or set your iNat user settings.
 
-        `[p]inat user set` shows all settings
-        `[p]inat user set [name]` shows the named setting
-        `[p]inat user set [name] [value]` set value of the named setting
+        `[p]user set` shows all settings
+        `[p]user set [name]` shows the named setting
+        `[p]user set [name] [value]` set value of the named setting
         """
         if arg:
             await ctx.send(f"Unknown setting: {arg}")
@@ -924,9 +928,9 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def user_set_home(self, ctx, value: str = None):
         """Show or set your home iNat place.
 
-        `[p]inat user set home` show your home place
-        `[p]inat user set home clear` clear your home place
-        `[p]inat user set home [place]` set your home place
+        `[p]user set home` show your home place
+        `[p]user set home clear` clear your home place
+        `[p]user set home [place]` set your home place
         """
         try:
             config = await self.get_valid_user_config(ctx)
@@ -954,8 +958,8 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
     async def user_set_known(self, ctx, value: bool = None):
         """Show or set if your iNat user settings are known on other servers.
 
-        `[p]inat user set known` show known on other servers (default: not known)
-        `[p]inat user set known true` set known on other servers
+        `[p]user set known` show known on other servers (default: not known)
+        `[p]user set known true` set known on other servers
         """
         try:
             config = await self.get_valid_user_config(ctx)
@@ -1042,5 +1046,5 @@ class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
             await ctx.send(
-                f"No iNat login ids are known. Add them with `{ctx.clean_prefix}inat user add`."
+                f"No iNat login ids are known. Add them with `{ctx.clean_prefix}user add`."
             )
