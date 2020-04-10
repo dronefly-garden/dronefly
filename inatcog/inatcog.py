@@ -36,7 +36,7 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
 
 
 # pylint: disable=too-many-ancestors
-class INatCog(Listeners, commands.Cog, metaclass=CompositeMetaClass):
+class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass):
     """The main iNaturalist cog class."""
 
     def __init__(self, bot):

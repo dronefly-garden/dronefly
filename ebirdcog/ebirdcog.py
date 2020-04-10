@@ -40,7 +40,7 @@ class ObsRecord(dict):
         return val
 
 
-class EBirdCog(commands.Cog):
+class EBirdCog(commands.Cog, name="eBird"):
     """An eBird commands cog."""
 
     def __init__(self, bot):
