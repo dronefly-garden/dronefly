@@ -631,12 +631,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """Show taxon best matching the query.
 
         `Aliases: [p]t`
-        - Match the taxon with the given iNat id#.
-        - Match words that start with the terms typed.
-        - Exactly match words enclosed in double-quotes.
-        - Match a taxon 'in' an ancestor taxon.
-        - Filter matches by rank keywords before or after other terms.
-        - Match the AOU 4-letter code (if it's in iNat's Taxonomy).
+        **query** may contain:
+        - *id#* of the iNat taxon
+        - *initial letters* of scientific or common names
+        - *double-quotes* around exact words in the name
+        - *rank keywords* filter by ranks (`sp`, `family`, etc.)
+        - *4-letter AOU codes* for birds
+        - *taxon* `in` *an ancestor taxon*
         **Examples:**
         ```
         [p]taxon family bear
@@ -648,17 +649,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         [p]taxon wtsp
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
-        When configured as recommended, all rank keywords also work as
-        command aliases, e.g.
-        - `[p]family bear` is a shortcut for `[p]taxon family bear`
-        Abbreviated rank keywords are:
-        - `sp` for `species`
-        - `ssp` for `subspecies`
-        - `gen` for `genus`
-        - `var` for `variety`
-        Multiple rank keywords may be given, e.g.
-        - `[p]taxon ssp var form domestic duck` to search for domestic
-        duck subspecies, variety, or form
         """
 
         try:
@@ -677,6 +667,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def species(self, ctx, *, query):
         """Show species best matching the query.
 
+        `Aliases: [p]sp`
         See `[p]help taxon` for query help."""
         await self.taxon(ctx, query="species " + query)
 
