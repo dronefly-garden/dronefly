@@ -11,7 +11,11 @@ from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTRO
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
 from .common import grouper
-from .converters import QuotedContextMemberConverter, InheritableBoolConverter
+from .converters import (
+    ContextMemberConverter,
+    QuotedContextMemberConverter,
+    InheritableBoolConverter,
+)
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
@@ -669,6 +673,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
+    @commands.command(aliases=["sp"])
+    async def species(self, ctx, *, query):
+        """Show species best matching the query.
+
+        See `[p]help taxon` for query help."""
+        await self.taxon(ctx, query="species " + query)
+
     @inat.command()
     @checks.admin_or_permissions(manage_roles=True)
     async def projectadd(self, ctx, project_id: int, emoji: Union[str, discord.Emoji]):
@@ -794,6 +805,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         embed.add_field(name="Ids", value=user.identifications_count, inline=True)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def me(self, ctx):  # pylint: disable=invalid-name
+        """Show your iNat info & stats for this server."""
+        member = await ContextMemberConverter.convert(ctx, "me")
+        await self.user(ctx, who=member)
 
     @user.command(name="add")
     @checks.admin_or_permissions(manage_roles=True)
