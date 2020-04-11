@@ -33,7 +33,6 @@ Example `[p]taxon` queries:
 
 ```
 [p]taxon bear family          -> Ursidae (Bears)
-[p]family bear                -> Ursidae (Bears)
 [p]taxon prunella             -> Prunella (self-heals)
 [p]taxon prunella in animals  -> Prunella
 [p]taxon wtsp                 -> Zonotrichia albicollis (White-throated Sparrow)
@@ -101,9 +100,9 @@ Lookup maps, taxa, or ranks for recently mentioned observations or taxa, e.g.
 
 #### Auto Commands:
 
-##### inat autoobs show
+##### inat show autoobs
 
-`[p]inat autoobs show`
+`[p]inat show autoobs`
 
 Shows the automatic observation summary settings for the server & channel. Example output:
 
@@ -112,19 +111,19 @@ Dronefly: Server observation auto-preview is on.
 Dronefly: Channel observation auto-preview is inherited from server (on).
 ```
 
-##### inat autoobs server
+##### inat set autoobs server
 
-`[p]inat autoobs server [on|off]`
+`[p]inat set autoobs server [on|off]`
 
 Turn on or off automatic summaries of observation links mentioned in any channel on the server. **Requires Admin or Manage Messages permission**.
 
-##### inat autoobs
+##### inat set autoobs
 
-`[p]inat autoobs [on|off|inherit]`
+`[p]inat set autoobs [on|off|inherit]`
 
 Turn on, off, or inherit from the `autoobs server` setting automatic summaries of observation links pasted to the current channel. **Requires Admin or Manage Messages permission**.
 
-The default is `[p]inat autoobs inherit`. Specify `on` or `off` to override the server setting per channel.
+The default is `[p]inat set autoobs inherit`. Specify `on` or `off` to override the server setting per channel.
 
 #### User commands:
 
