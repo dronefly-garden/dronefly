@@ -41,7 +41,7 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
 
 # pylint: disable=too-many-ancestors
 class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass):
-    """The main iNaturalist cog class."""
+    """Commands provided by `inatcog`."""
 
     def __init__(self, bot):
         super().__init__()
@@ -114,18 +114,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @inat.group(name="set")
     async def inat_set(self, ctx):
-        """Show/change selected settings for this server."""
+        """Change settings for this server."""
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_bot_prefixes(self, ctx, *prefixes):
-        """Set ignored bot prefixes for this server.
+        """Set server ignored bot prefixes (mods).
 
         All messages starting with one of these *prefixes* will be ignored by
         [botname].
 
         - If *prefixes* is empty, current setting is shown.
-        - Use `[p]inat clear bot_prefixes` to clear.
         - You particularly need to set *bot_prefixes* if your server has more
           than one bot with `inatcog` loaded, otherwise it's unlikely you
           need to set this.
@@ -147,31 +146,32 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
 
     @inat.group(name="clear")
+    @checks.admin_or_permissions(manage_messages=True)
     async def inat_clear(self, ctx):
-        """Clear settings for this server (mods only)."""
+        """Clear iNat settings (mods)."""
 
     @inat_clear.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def clear_bot_prefixes(self, ctx):
-        """Clear ignored bot prefixes for this server (mods only)."""
+        """Clear server ignored bot prefixes (mods)."""
         if ctx.author.bot or ctx.guild is None:
             return
 
         config = self.config.guild(ctx.guild)
         await config.bot_prefixes.clear()
 
-        await ctx.send("Other bot prefixes have been cleared.")
+        await ctx.send("Server ignored bot prefixes cleared.")
 
-    @inat.group(invoke_without_command=True)
+    @inat_set.group(invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def autoobs(self, ctx, state: InheritableBoolConverter):
-        """Set auto-observation mode for channel (mods only).
+        """Set channel auto-observation mode (mods).
 
         To set the mode for the channel:
         ```
-        [p]inat autoobs on
-        [p]inat autoobs off
-        [p]inat autoobs inherit
+        [p]inat set autoobs on
+        [p]inat set autoobs off
+        [p]inat set autoobs inherit
         ```
         When `inherit` is specified, channel mode inherits from the server
         setting.
@@ -193,11 +193,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     @autoobs.command()
     @checks.admin_or_permissions(manage_messages=True)
     async def server(self, ctx, state: bool):
-        """Set auto-observation mode for server (mods only).
+        """Set server auto-observation mode (mods).
 
         ```
-        [p]inat autoobs server on
-        [p]inat autoobs server off
+        [p]inat set autoobs server on
+        [p]inat set autoobs server off
         ```
         """
         if ctx.author.bot or ctx.guild is None:
@@ -210,12 +210,16 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         )
         return
 
-    @autoobs.command()
-    async def show(self, ctx):
-        """Show auto-observation mode for channel & server.
+    @inat.group(name="show")
+    async def inat_show(self, ctx):
+        """Show iNat settings."""
+
+    @inat_show.command(name="autoobs")
+    async def show_autoobs(self, ctx):
+        """Show channel & server auto-observation mode.
 
         ```
-        [p]inat autoobs show
+        [p]inat show autoobs
         ```
         """
         if ctx.author.bot or ctx.guild is None:
@@ -234,6 +238,16 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             value = "on" if channel_state else "off"
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
+
+    @inat_show.command(name="bot_prefixes")
+    async def show_bot_prefixes(self, ctx):
+        """Show server ignored bot prefixes."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        prefixes = await config.bot_prefixes()
+        await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
 
     @commands.group()
     async def last(self, ctx):
