@@ -108,7 +108,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @commands.group()
     async def inat(self, ctx):
-        """Show/change iNat settings."""
+        """Show/change iNat settings.
+
+        See `[p]help iNat` for all `inatcog` help topics."""
 
     @inat.group(name="set")
     async def inat_set(self, ctx):
