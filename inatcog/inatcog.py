@@ -121,19 +121,18 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def set_bot_prefixes(self, ctx, *prefixes):
         """Set ignored bot prefixes for this server.
 
-        All messages starting with one of these prefixes will be ignored by
-        this bot.
+        All messages starting with one of these *prefixes* will be ignored by
+        [botname].
 
-        - If prefixes is empty, current setting is shown.
+        - If *prefixes* is empty, current setting is shown.
         - Use `[p]inat clear bot_prefixes` to clear.
-        - You don't need to include the prefix of this bot: [p]
-
-        If other bots are present on this server, you might need to set this
-        to the prefixes of those bots separated by spaces to prevent this bot
-        from responding to commands sent to them (e.g. autoobs previews
-        triggered by URL's in ordinary messages). You particularly need to
-        set bot_prefixes if your server has more than one Dronefly instance
-        on it, otherwise it's unlikely you need to set this.
+        - You particularly need to set *bot_prefixes* if your server has more
+          than one bot with `inatcog` loaded, otherwise it's unlikely you
+          need to set this.
+        - Set this to all prefixes of other bots separated by spaces to
+          ensure [botname] ignores commands sent to them, especially when
+          *autoobs* is enabled.
+        - You don't need to include any prefixes of [botname] itself.
         """
         if ctx.author.bot or ctx.guild is None:
             return
