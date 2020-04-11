@@ -113,8 +113,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         See `[p]help iNat` for all `inatcog` help topics."""
 
     @inat.group(name="set")
+    @checks.admin_or_permissions(manage_messages=True)
     async def inat_set(self, ctx):
-        """Change settings for this server."""
+        """Change iNat settings (mods)."""
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
