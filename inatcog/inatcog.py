@@ -693,10 +693,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         See `[p]help taxon` for query help."""
         await self.taxon(ctx, query="species " + query)
 
-    @inat.command()
+    @inat_set.command(name="user_project")
     @checks.admin_or_permissions(manage_roles=True)
-    async def projectadd(self, ctx, project_id: int, emoji: Union[str, discord.Emoji]):
-        """Add user project for guild (mods only)."""
+    async def set_user_project(
+        self, ctx, project_id: int, emoji: Union[str, discord.Emoji]
+    ):
+        """Add a server user project (mods)."""
         config = self.config.guild(ctx.guild)
         user_projects = await config.user_projects()
         project_id_str = str(project_id)
@@ -708,10 +710,10 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await config.user_projects.set(user_projects)
         await ctx.send("iNat user project added.")
 
-    @inat.command()
+    @inat_clear.command(name="user_project")
     @checks.admin_or_permissions(manage_roles=True)
-    async def projectdel(self, ctx, project_id: int):
-        """Remove user project for guild (mods only)."""
+    async def clear_user_project(self, ctx, project_id: int):
+        """Clear a server user project (mods)."""
         config = self.config.guild(ctx.guild)
         user_projects = await config.user_projects()
         project_id_str = str(project_id)
@@ -723,6 +725,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         del user_projects[project_id_str]
         await config.user_projects.set(user_projects)
         await ctx.send("iNat user project removed.")
+
+    @inat_show.command(name="user_projects")
+    async def show_user_projects(self, ctx):
+        """Show server user projects."""
+        config = self.config.guild(ctx.guild)
+        user_projects = await config.user_projects()
+        for project_id in user_projects:
+            await ctx.send(
+                f"{user_projects[project_id]} {WWW_BASE_URL}/projects/{project_id}"
+            )
+            await asyncio.sleep(1)
 
     @commands.group(invoke_without_command=True, aliases=["who"])
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
