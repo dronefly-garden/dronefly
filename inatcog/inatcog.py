@@ -217,12 +217,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @inat_show.command(name="autoobs")
     async def show_autoobs(self, ctx):
-        """Show channel & server auto-observation mode.
-
-        ```
-        [p]inat show autoobs
-        ```
-        """
+        """Show channel & server auto-observation mode."""
         if ctx.author.bot or ctx.guild is None:
             return
 
