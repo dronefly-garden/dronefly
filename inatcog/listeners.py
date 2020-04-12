@@ -115,16 +115,14 @@ class Listeners(INatEmbeds, MixinMeta):
                 prefixes = await self.bot.get_valid_prefixes(msg.guild)
                 config = self.config.guild(msg.guild)
                 other_bot_prefixes = await config.bot_prefixes()
-                if other_bot_prefixes:
-                    ignore_prefixes = r"|".join(
-                        re.escape(prefix) for prefix in other_bot_prefixes + prefixes
-                    )
-                    prefix_pat = re.compile(
-                        r"^({prefixes})".format(prefixes=ignore_prefixes)
-                    )
-                    return not re.match(prefix_pat, response.content)
-                else:
-                    return True
+                all_prefixes = prefixes + other_bot_prefixes
+                ignore_prefixes = r"|".join(
+                    re.escape(prefix) for prefix in all_prefixes
+                )
+                prefix_pat = re.compile(
+                    r"^({prefixes})".format(prefixes=ignore_prefixes)
+                )
+                return not re.match(prefix_pat, response.content)
 
             response = None
             if member.id not in self.predicate_locks:
