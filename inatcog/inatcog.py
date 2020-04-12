@@ -53,6 +53,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
         self.user_cache_init = {}
+        self.reaction_locks = {}
+        self.predicate_locks = {}
 
         self.config.register_global(schema_version=1)
         self.config.register_guild(

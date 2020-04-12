@@ -23,5 +23,7 @@ class MixinMeta(ABC):
         self.bot: Red
         self.p: engine  # pylint: disable=invalid-name
         self.user_table: INatUserTable
+        self.reaction_locks: dict
+        self.predicate_locks: dict
         self.place_table: INatPlaceTable
         self._ready_event: Event

@@ -92,10 +92,7 @@ class Listeners(INatEmbeds, MixinMeta):
             return (taxon_id, place_id, user_id)
 
         async def maybe_update_member(
-            msg: discord.Message,
-            embed: discord.Embed,
-            member: discord.Member,
-            action: str,
+            msg: discord.Message, member: discord.Member, action: str
         ):
             try:
                 inat_user = await self.user_table.get_user(member)
@@ -103,59 +100,59 @@ class Listeners(INatEmbeds, MixinMeta):
             except LookupError:
                 return
 
+            taxon = await get_taxon(self, taxon_id)
             # Observed by count add/remove for taxon:
-            description = embed.description or ""
-            mat = re.search(counts_pat, description)
-            if action == "toggle":
-                action = "remove" if mat else "add"
+            await edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat)
 
-            if (mat and (action == "remove")) or (not mat and (action == "add")):
-                taxon = await get_taxon(self, taxon_id)
-                embed.description = await update_totals(
-                    self, description, taxon, inat_user, action, counts_pat
-                )
-                if re.search(r"\*total\*", embed.description):
-                    embed.set_footer(
-                        text="User counts may not add up to "
-                        "the total if they changed since they were added. "
-                        "Remove, then add them again to update their counts."
-                    )
-                else:
-                    embed.set_footer(text="")
-                await msg.edit(embed=embed)
-
-        async def maybe_update_member_by_name(
-            msg: discord.Message, embed: discord.Embed, member: discord.Member
-        ):
-            """Prompt for a user by name and update the embed if provided & valid."""
-            try:
-                await self.user_table.get_user(member)
-            except LookupError:
-                return
+        async def query_locked(msg, user, prompt, timeout):
+            """Query member with user lock."""
             response = None
-            query = await msg.channel.send(
-                "Add or remove which member (you have 15 seconds to answer)?"
-            )
-            try:
-                response = await self.bot.wait_for(
-                    "message",
-                    check=MessagePredicate.same_context(
-                        channel=msg.channel, user=member
-                    ),
-                    timeout=15,
-                )
-            except asyncio.TimeoutError:
-                with contextlib.suppress(discord.HTTPException):
-                    await query.delete()
-            else:
+            if member.id not in self.predicate_locks:
+                self.predicate_locks[user.id] = asyncio.Lock()
+            lock = self.predicate_locks[user.id]
+            if lock.locked():
+                # An outstanding query for this user hasn't been answered.
+                # They must answer it or the timeout must expire before they
+                # can start another interaction.
+                return
+            async with self.predicate_locks[user.id]:
+                query = await msg.channel.send(prompt)
                 try:
-                    await msg.channel.delete_messages((query, response))
-                except (discord.HTTPException, AttributeError):
-                    # In case the bot can't delete other users' messages:
+                    response = await self.bot.wait_for(
+                        "message",
+                        check=MessagePredicate.same_context(
+                            channel=msg.channel, user=user
+                        ),
+                        timeout=timeout,
+                    )
+                except asyncio.TimeoutError:
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
+                else:
+                    try:
+                        await msg.channel.delete_messages((query, response))
+                    except (discord.HTTPException, AttributeError):
+                        # In case the bot can't delete other users' messages:
+                        with contextlib.suppress(discord.HTTPException):
+                            await query.delete()
+            return response
+
+        async def maybe_update_member_by_name(
+            msg: discord.Message, user: discord.Member
+        ):
+            """Prompt for a member by name and update the embed if provided & valid."""
+            try:
+                await self.user_table.get_user(user)
+            except LookupError:
+                return
+            response = await query_locked(
+                msg,
+                user,
+                "Add or remove which member (you have 15 seconds to answer)?",
+                15,
+            )
             if response:
-                ctx = MockContext(msg.guild, member, msg.channel, self.bot)
+                ctx = MockContext(msg.guild, user, msg.channel, self.bot)
                 try:
                     who = await ContextMemberConverter.convert(ctx, response.content)
                 except discord.ext.commands.errors.BadArgument as error:
@@ -164,7 +161,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await error_msg.delete()
                     return
 
-                await maybe_update_member(msg, embed, who.member, "toggle")
+                await maybe_update_member(msg, who.member, "toggle")
 
         async def maybe_send_place_by_name(
             msg: discord.Message, member: discord.Member
@@ -252,6 +249,35 @@ class Listeners(INatEmbeds, MixinMeta):
                 return description
             return description
 
+        async def edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat):
+            """Update totals for message locked."""
+            if msg.id not in self.reaction_locks:
+                self.reaction_locks[msg.id] = asyncio.Lock()
+            async with self.reaction_locks[msg.id]:
+                # Refetch the message because it may have changed prior to
+                # acquiring lock
+                msg = await msg.channel.fetch_message(msg.id)
+                embeds = msg.embeds
+                embed = embeds[0]
+                description = embed.description or ""
+                mat = re.search(counts_pat, description)
+                if action == "toggle":
+                    action = "remove" if mat else "add"
+
+                if (mat and (action == "remove")) or (not mat and (action == "add")):
+                    embed.description = await update_totals(
+                        self, embed.description, taxon, inat_user, action, counts_pat
+                    )
+                    if re.search(r"\*total\*", embed.description):
+                        embed.set_footer(
+                            text="User counts may not add up to "
+                            "the total if they changed since they were added. "
+                            "Remove, then add them again to update their counts."
+                        )
+                    else:
+                        embed.set_footer(text="")
+                    await msg.edit(embed=embed)
+
         embeds = message.embeds
         if not embeds:
             return
@@ -261,9 +287,9 @@ class Listeners(INatEmbeds, MixinMeta):
             return
 
         if str(emoji) == "#️⃣":  # Add/remove counts for self
-            await maybe_update_member(message, embed, member, action)
-        elif str(emoji) == "📝":  # Add/remove counts by name
-            await maybe_update_member_by_name(message, embed, member)
+            await maybe_update_member(message, member, action)
+        elif str(emoji) == "📝":  # Toggle counts by name
+            await maybe_update_member_by_name(message, member)
         elif str(emoji) == "📍":
             await maybe_send_place_by_name(message, member)
 
