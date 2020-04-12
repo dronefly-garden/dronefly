@@ -106,6 +106,26 @@ class Listeners(INatEmbeds, MixinMeta):
 
         async def query_locked(msg, user, prompt, timeout):
             """Query member with user lock."""
+
+            async def is_query_response(response):
+                # so we can ignore '[p]cancel` too. doh!
+                # - FIXME: for the love of Pete, why does response.content
+                #   contain the cancel command? then we could remove this
+                #   foolishness.
+                prefixes = await self.bot.get_valid_prefixes(msg.guild)
+                config = self.config.guild(msg.guild)
+                other_bot_prefixes = await config.bot_prefixes()
+                if other_bot_prefixes:
+                    ignore_prefixes = r"|".join(
+                        re.escape(prefix) for prefix in other_bot_prefixes + prefixes
+                    )
+                    prefix_pat = re.compile(
+                        r"^({prefixes})".format(prefixes=ignore_prefixes)
+                    )
+                    return not re.match(prefix_pat, response.content)
+                else:
+                    return True
+
             response = None
             if member.id not in self.predicate_locks:
                 self.predicate_locks[user.id] = asyncio.Lock()
@@ -115,11 +135,12 @@ class Listeners(INatEmbeds, MixinMeta):
                 # They must answer it or the timeout must expire before they
                 # can start another interaction.
                 return
+
             async with self.predicate_locks[user.id]:
                 query = await msg.channel.send(prompt)
                 try:
                     response = await self.bot.wait_for(
-                        "message",
+                        "message_without_command",
                         check=MessagePredicate.same_context(
                             channel=msg.channel, user=user
                         ),
@@ -128,13 +149,23 @@ class Listeners(INatEmbeds, MixinMeta):
                 except asyncio.TimeoutError:
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
-                else:
+                        return
+
+                # Cleanup messages:
+                if await is_query_response(response):
                     try:
                         await msg.channel.delete_messages((query, response))
                     except (discord.HTTPException, AttributeError):
                         # In case the bot can't delete other users' messages:
                         with contextlib.suppress(discord.HTTPException):
                             await query.delete()
+                else:
+                    # Response was a command for another bot: just delete the prompt
+                    # and discard the response.
+                    with contextlib.suppress(discord.HTTPException):
+                        await query.delete()
+                    response = None
+            await msg.channel.send(response.content)
             return response
 
         async def maybe_update_member_by_name(
@@ -177,7 +208,7 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             try:
                 response = await self.bot.wait_for(
-                    "message",
+                    "message_without_command",
                     check=MessagePredicate.same_context(
                         channel=msg.channel, user=member
                     ),
