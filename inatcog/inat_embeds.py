@@ -19,6 +19,7 @@ from .taxa import (
     FilteredTaxon,
     format_place_taxon_counts,
     format_user_taxon_counts,
+    TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
     TAXON_PLACES_HEADER,
 )
@@ -303,8 +304,13 @@ class INatEmbeds(MixinMeta):
                 first_taxon_ancestor_ids.index(ancestor_id)
                 for ancestor_id in common_ancestors
             ]
-            common_ancestor_id = first_taxon_ancestor_ids[max(common_ancestor_indices)]
-            taxon = await get_taxon(self, common_ancestor_id)
+            if not common_ancestor_indices:
+                taxon = await get_taxon(self, TAXON_ID_LIFE)
+            else:
+                common_ancestor_id = first_taxon_ancestor_ids[
+                    max(common_ancestor_indices)
+                ]
+                taxon = await get_taxon(self, common_ancestor_id)
 
         description = (
             f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon)}"
