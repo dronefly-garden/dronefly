@@ -279,7 +279,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def last_obs_img(self, ctx, number=None):
         """Show image for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
-        if last.obs and last.obs.taxon:
+        if last and last.obs and last.obs.taxon:
             try:
                 num = 1 if number is None else int(number)
             except ValueError:
