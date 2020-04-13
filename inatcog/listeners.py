@@ -6,6 +6,7 @@ import re
 import discord
 from redbot.core import commands
 from redbot.core.utils.predicates import MessagePredicate
+from .common import LOG
 from .converters import ContextMemberConverter
 from .embeds import make_embed
 from .inat_embeds import INatEmbeds
@@ -163,7 +164,6 @@ class Listeners(INatEmbeds, MixinMeta):
                     with contextlib.suppress(discord.HTTPException):
                         await query.delete()
                     response = None
-            await msg.channel.send(response.content)
             return response
 
         async def maybe_update_member_by_name(
@@ -315,12 +315,22 @@ class Listeners(INatEmbeds, MixinMeta):
         if not taxon_id:
             return
 
-        if str(emoji) == "#️⃣":  # Add/remove counts for self
-            await maybe_update_member(message, member, action)
-        elif str(emoji) == "📝":  # Toggle counts by name
-            await maybe_update_member_by_name(message, member)
-        elif str(emoji) == "📍":
-            await maybe_send_place_by_name(message, member)
+        try:
+            if str(emoji) == "#️⃣":  # Add/remove counts for self
+                await maybe_update_member(message, member, action)
+            elif str(emoji) == "📝":  # Toggle counts by name
+                await maybe_update_member_by_name(message, member)
+            elif str(emoji) == "📍":
+                await maybe_send_place_by_name(message, member)
+        except Exception:
+            LOG.error(
+                "Exception handling %s %s reaction by %s on %s",
+                action,
+                str(emoji),
+                repr(member),
+                repr(message),
+            )
+            raise
 
     async def maybe_get_reaction(
         self, payload: discord.raw_models.RawReactionActionEvent
