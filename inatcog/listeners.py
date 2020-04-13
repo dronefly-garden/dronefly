@@ -5,6 +5,7 @@ import contextlib
 import re
 import discord
 from redbot.core import commands
+from redbot.core.bot import Red
 from redbot.core.utils.predicates import MessagePredicate
 from .common import LOG
 from .converters import ContextMemberConverter
@@ -25,7 +26,7 @@ from .taxa import (
 class PartialContext(NamedTuple):
     "Partial Context synthesized from objects passed into listeners."
 
-    bot: discord.ext.commands.Bot
+    bot: Red
     guild: discord.Guild
     channel: discord.ChannelType
     author: discord.User
