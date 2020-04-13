@@ -1,5 +1,5 @@
 """Listeners module for inatcog."""
-from collections import namedtuple
+from typing import NamedTuple
 import asyncio
 import contextlib
 import re
@@ -21,7 +21,14 @@ from .taxa import (
     TAXON_COUNTS_HEADER_PAT,
 )
 
-MockContext = namedtuple("MockContext", "guild, author, channel, bot")
+
+class PartialContext(NamedTuple):
+    "Partial Context synthesized from objects passed into listeners."
+
+    bot: discord.ext.commands.Bot
+    guild: discord.Guild
+    channel: discord.ChannelType
+    author: discord.User
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -181,7 +188,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 15,
             )
             if response:
-                ctx = MockContext(msg.guild, user, msg.channel, self.bot)
+                ctx = PartialContext(self.bot, msg.guild, msg.channel, user)
                 try:
                     who = await ContextMemberConverter.convert(ctx, response.content)
                 except discord.ext.commands.errors.BadArgument as error:
