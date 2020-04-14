@@ -9,10 +9,10 @@ from redbot.core.bot import Red
 from redbot.core.utils.predicates import MessagePredicate
 from .common import LOG
 from .converters import ContextMemberConverter
-from .embeds import make_embed
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs, PAT_OBS_TAXON_LINK
+from .places import Place
 from .taxa import (
     get_taxon,
     format_place_taxon_counts,
@@ -20,6 +20,8 @@ from .taxa import (
     PAT_TAXON_LINK,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
+    TAXON_PLACES_HEADER,
+    TAXON_PLACES_HEADER_PAT,
 )
 
 
@@ -113,6 +115,15 @@ class Listeners(INatEmbeds, MixinMeta):
             # Observed by count add/remove for taxon:
             await edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat)
 
+        async def maybe_update_place(msg: discord.Message, place: Place, action: str):
+            taxon = await get_taxon(self, taxon_id)
+            place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
+                place.display_name
+            )
+            await edit_place_totals_locked(
+                self, msg, taxon, place, action, place_counts_pat
+            )
+
         async def query_locked(msg, user, prompt, timeout):
             """Query member with user lock."""
 
@@ -200,36 +211,18 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 await maybe_update_member(msg, who.member, "toggle")
 
-        async def maybe_send_place_by_name(
-            msg: discord.Message, member: discord.Member
-        ):
-            """Prompt user for place by name and send an embed if provided & valid."""
+        async def maybe_send_place_by_name(msg: discord.Message, user: discord.Member):
+            """Prompt user for place by name and update the embed if provided & valid."""
             try:
-                await self.user_table.get_user(member)
+                await self.user_table.get_user(user)
             except LookupError:
                 return
-            response = None
-            query = await msg.channel.send(
-                "Observation & species counts for which place (you have 15 seconds to answer)?"
+            response = await query_locked(
+                msg,
+                user,
+                "Add or remove which place (you have 15 seconds to answer)?",
+                15,
             )
-            try:
-                response = await self.bot.wait_for(
-                    "message_without_command",
-                    check=MessagePredicate.same_context(
-                        channel=msg.channel, user=member
-                    ),
-                    timeout=15,
-                )
-            except asyncio.TimeoutError:
-                with contextlib.suppress(discord.HTTPException):
-                    await query.delete()
-            else:
-                try:
-                    await msg.channel.delete_messages((query, response))
-                except (discord.HTTPException, AttributeError):
-                    # In case the bot can't delete other users' messages:
-                    with contextlib.suppress(discord.HTTPException):
-                        await query.delete()
             if response:
                 try:
                     place = await self.place_table.get_place(
@@ -241,14 +234,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await error_msg.delete()
                     return
 
-                taxon = await get_taxon(self, taxon_id)
-                formatted_counts = await format_place_taxon_counts(
-                    self, place, taxon, user_id
-                )
-                place_embed = make_embed(
-                    description=f"{taxon.name}: {formatted_counts}"
-                )
-                await msg.channel.send(embed=place_embed)
+                await maybe_update_place(msg, place, "toggle")
 
         async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
             """Update the totals for the embed."""
@@ -308,6 +294,77 @@ class Listeners(INatEmbeds, MixinMeta):
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
                             text="User counts may not add up to "
+                            "the total if they changed since they were added. "
+                            "Remove, then add them again to update their counts."
+                        )
+                    else:
+                        embed.set_footer(text="")
+                    await msg.edit(embed=embed)
+
+        async def update_place_totals(
+            cog, description, taxon, place, action, place_counts_pat
+        ):
+            """Update the place totals for the embed."""
+            # Add/remove always results in a change to totals, so remove:
+            description = re.sub(
+                r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
+            )
+
+            matches = re.findall(
+                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
+            )
+            if action == "remove":
+                # Remove the header if last one and the place's count:
+                if len(matches) == 1:
+                    description = re.sub(TAXON_PLACES_HEADER_PAT, "", description)
+                description = re.sub(
+                    place_counts_pat + r".*?((?=\n)|$)", "", description
+                )
+            else:
+                # Add the header if first one and the place's count:
+                if not matches:
+                    description += "\n" + TAXON_PLACES_HEADER
+                formatted_counts = await format_place_taxon_counts(
+                    cog, place, taxon, user_id
+                )
+                description += "\n" + formatted_counts
+
+            matches = re.findall(
+                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
+            )
+            # Total added only if more than one place:
+            if len(matches) > 1:
+                formatted_counts = await format_place_taxon_counts(
+                    cog, ",".join(matches), taxon, user_id
+                )
+                description += f"\n{formatted_counts}"
+                return description
+            return description
+
+        async def edit_place_totals_locked(
+            self, msg, taxon, place, action, place_counts_pat
+        ):
+            """Update place totals for message locked."""
+            if msg.id not in self.reaction_locks:
+                self.reaction_locks[msg.id] = asyncio.Lock()
+            async with self.reaction_locks[msg.id]:
+                # Refetch the message because it may have changed prior to
+                # acquiring lock
+                msg = await msg.channel.fetch_message(msg.id)
+                embeds = msg.embeds
+                embed = embeds[0]
+                description = embed.description or ""
+                mat = re.search(place_counts_pat, description)
+                if action == "toggle":
+                    action = "remove" if mat else "add"
+
+                if (mat and (action == "remove")) or (not mat and (action == "add")):
+                    embed.description = await update_place_totals(
+                        self, embed.description, taxon, place, action, place_counts_pat
+                    )
+                    if re.search(r"\*total\*", embed.description):
+                        embed.set_footer(
+                            text="Non-overlapping place counts may not add up to "
                             "the total if they changed since they were added. "
                             "Remove, then add them again to update their counts."
                         )
