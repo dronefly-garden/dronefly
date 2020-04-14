@@ -303,7 +303,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
                     embed.description = await update_totals(
-                        self, embed.description, taxon, inat_user, action, counts_pat
+                        self, description, taxon, inat_user, action, counts_pat
                     )
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
