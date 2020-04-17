@@ -991,6 +991,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     )
                 except LookupError as err:
                     ctx.send(err)
+                    return
 
         await self.user_show_settings(ctx, config, "home")
 
@@ -1005,6 +1006,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             config = await self.get_valid_user_config(ctx)
         except LookupError as err:
             await ctx.send(err)
+            return
 
         if value is not None:
             await config.known_all.set(value)
