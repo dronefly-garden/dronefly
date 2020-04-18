@@ -1,5 +1,5 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Union
 import asyncio
 import contextlib
 import re
@@ -116,29 +116,34 @@ class Listeners(INatEmbeds, MixinMeta):
             await edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat)
 
         async def maybe_update_place(
-            msg: discord.Message, place: Optional[Place], action: str
+            msg: discord.Message,
+            place_or_member: Union[Place, discord.Member],
+            action: str,
         ):
             try:
                 await self.user_table.get_user(member)
             except LookupError:
                 return
 
-            config = self.config.user(member)
-            home = await config.home()
-            if not home:
-                return
+            if isinstance(place_or_member, discord.Member):
+                config = self.config.user(member)
+                home = await config.home()
+                if not home:
+                    return
 
-            try:
-                home_place = await self.place_table.get_place(msg.guild, home, member)
-            except LookupError:
-                return
+                try:
+                    place = await self.place_table.get_place(msg.guild, home, member)
+                except LookupError:
+                    return
+            else:
+                place = place_or_member
 
             place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
-                home_place.display_name
+                place.display_name
             )
             taxon = await get_taxon(self, taxon_id)
             await edit_place_totals_locked(
-                self, msg, taxon, home_place, action, place_counts_pat
+                self, msg, taxon, place, action, place_counts_pat
             )
 
         async def query_locked(msg, user, prompt, timeout):
@@ -410,7 +415,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await maybe_update_member_by_name(message, member)
             if has_users is None:
                 if str(emoji) == "🏠":
-                    await maybe_update_place(message, None, action)
+                    await maybe_update_place(message, member, action)
                 elif str(emoji) == "📍":
                     await maybe_update_place_by_name(message, member)
         except Exception:
