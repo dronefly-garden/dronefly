@@ -588,8 +588,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             user = filtered_taxon.user
             if group_by == "place" or (user and not place):
                 start_adding_reactions(msg, ["#️⃣", "📝"])
-            # if group_by == "user" or (place and not user):
-            #    start_adding_reactions(msg, ["📍", "📝"])
+            if group_by == "user" or (place and not user):
+                start_adding_reactions(msg, ["🏠", "📍"])
         except ParseException:
             await ctx.send(embed=sorry())
             return

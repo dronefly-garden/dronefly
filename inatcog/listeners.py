@@ -1,5 +1,5 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 import asyncio
 import contextlib
 import re
@@ -115,13 +115,30 @@ class Listeners(INatEmbeds, MixinMeta):
             # Observed by count add/remove for taxon:
             await edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat)
 
-        async def maybe_update_place(msg: discord.Message, place: Place, action: str):
-            taxon = await get_taxon(self, taxon_id)
+        async def maybe_update_place(
+            msg: discord.Message, place: Optional[Place], action: str
+        ):
+            try:
+                await self.user_table.get_user(member)
+            except LookupError:
+                return
+
+            config = self.config.user(member)
+            home = await config.home()
+            if not home:
+                return
+
+            try:
+                home_place = await self.place_table.get_place(msg.guild, home, member)
+            except LookupError:
+                return
+
             place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
-                place.display_name
+                home_place.display_name
             )
+            taxon = await get_taxon(self, taxon_id)
             await edit_place_totals_locked(
-                self, msg, taxon, place, action, place_counts_pat
+                self, msg, taxon, home_place, action, place_counts_pat
             )
 
         async def query_locked(msg, user, prompt, timeout):
@@ -211,7 +228,9 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 await maybe_update_member(msg, who.member, "toggle")
 
-        async def maybe_send_place_by_name(msg: discord.Message, user: discord.Member):
+        async def maybe_update_place_by_name(
+            msg: discord.Message, user: discord.Member
+        ):
             """Prompt user for place by name and update the embed if provided & valid."""
             try:
                 await self.user_table.get_user(user)
@@ -387,8 +406,10 @@ class Listeners(INatEmbeds, MixinMeta):
                 await maybe_update_member(message, member, action)
             elif str(emoji) == "📝":  # Toggle counts by name
                 await maybe_update_member_by_name(message, member)
+            elif str(emoji) == "🏠":
+                await maybe_update_place(message, None, action)
             elif str(emoji) == "📍":
-                await maybe_send_place_by_name(message, member)
+                await maybe_update_place_by_name(message, member)
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",

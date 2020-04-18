@@ -401,9 +401,9 @@ class INatEmbeds(MixinMeta):
     async def send_embed_for_taxon_image(self, ctx, taxon):
         """Make embed for taxon image & send."""
         msg = await ctx.send(embed=await self.make_image_embed(taxon))
-        start_adding_reactions(msg, ["#️⃣", "📝"])  # , "📌"])
+        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
 
     async def send_embed_for_taxon(self, ctx, taxon):
         """Make embed for taxon & send."""
         msg = await ctx.send(embed=await self.make_taxa_embed(taxon))
-        start_adding_reactions(msg, ["#️⃣", "📝"])  # , "📌"])
+        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
