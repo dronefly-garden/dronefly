@@ -310,9 +310,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
             )
 
-            matches = re.findall(
-                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
-            )
+            matches = re.findall(r"\n\[[0-9 \(\)]+\]\(.*?\) (.*?)(\n|$)", description)
             if action == "remove":
                 # Remove the header if last one and the place's count:
                 if len(matches) == 1:
@@ -330,10 +328,14 @@ class Listeners(INatEmbeds, MixinMeta):
                 description += "\n" + formatted_counts
 
             matches = re.findall(
-                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
+                r"\n\[[0-9 \(\)]+\]\(.*?&place_id=(?P<place_id>\d+?)&.*?\) .*?(?:(?=\n|$))",
+                description,
             )
+            LOG.info(matches)
             # Total added only if more than one place:
             if len(matches) > 1:
+                LOG.info(repr(matches))
+                LOG.info(repr(user_id))
                 formatted_counts = await format_place_taxon_counts(
                     cog, ",".join(matches), taxon, user_id
                 )
