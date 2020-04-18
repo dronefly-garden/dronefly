@@ -378,7 +378,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
                     embed.description = await update_place_totals(
-                        self, embed.description, taxon, place, action, place_counts_pat
+                        self, description, taxon, place, action, place_counts_pat
                     )
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
@@ -398,8 +398,9 @@ class Listeners(INatEmbeds, MixinMeta):
         if not taxon_id:
             return
 
-        has_users = re.search(TAXON_COUNTS_HEADER_PAT, embed.description)
-        has_places = re.search(TAXON_PLACES_HEADER_PAT, embed.description)
+        description = embed.description or ""
+        has_users = re.search(TAXON_COUNTS_HEADER_PAT, description)
+        has_places = re.search(TAXON_PLACES_HEADER_PAT, description)
 
         try:
             if has_places is None:
