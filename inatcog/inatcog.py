@@ -583,13 +583,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         try:
             filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
-            group_by = filtered_taxon.group_by
-            place = filtered_taxon.place
-            user = filtered_taxon.user
-            if group_by == "place" or (user and not place):
-                start_adding_reactions(msg, ["#️⃣", "📝"])
-            if group_by == "user" or (place and not user):
-                start_adding_reactions(msg, ["🏠", "📍"])
+            start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
         except ParseException:
             await ctx.send(embed=sorry())
             return
