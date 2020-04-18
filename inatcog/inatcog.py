@@ -970,6 +970,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             config = await self.get_valid_user_config(ctx)
         except LookupError as err:
             await ctx.send(err)
+            return
 
         if value is not None:
             bot = self.bot.user.name
