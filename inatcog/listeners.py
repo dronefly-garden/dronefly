@@ -350,11 +350,8 @@ class Listeners(INatEmbeds, MixinMeta):
                 r"\n\[[0-9 \(\)]+\]\(.*?&place_id=(?P<place_id>\d+?)&.*?\) .*?(?:(?=\n|$))",
                 description,
             )
-            LOG.info(matches)
             # Total added only if more than one place:
             if len(matches) > 1:
-                LOG.info(repr(matches))
-                LOG.info(repr(user_id))
                 formatted_counts = await format_place_taxon_counts(
                     cog, ",".join(matches), taxon, user_id
                 )
@@ -401,15 +398,20 @@ class Listeners(INatEmbeds, MixinMeta):
         if not taxon_id:
             return
 
+        has_users = re.search(TAXON_COUNTS_HEADER_PAT, embed.description)
+        has_places = re.search(TAXON_PLACES_HEADER_PAT, embed.description)
+
         try:
-            if str(emoji) == "#️⃣":  # Add/remove counts for self
-                await maybe_update_member(message, member, action)
-            elif str(emoji) == "📝":  # Toggle counts by name
-                await maybe_update_member_by_name(message, member)
-            elif str(emoji) == "🏠":
-                await maybe_update_place(message, None, action)
-            elif str(emoji) == "📍":
-                await maybe_update_place_by_name(message, member)
+            if has_places is None:
+                if str(emoji) == "#️⃣":  # Add/remove counts for self
+                    await maybe_update_member(message, member, action)
+                elif str(emoji) == "📝":  # Toggle counts by name
+                    await maybe_update_member_by_name(message, member)
+            if has_users is None:
+                if str(emoji) == "🏠":
+                    await maybe_update_place(message, None, action)
+                elif str(emoji) == "📍":
+                    await maybe_update_place_by_name(message, member)
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
