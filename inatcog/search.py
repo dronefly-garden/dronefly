@@ -66,9 +66,12 @@ class INatSiteSearch:
     def __init__(self, cog):
         self.cog = cog
 
-    async def search(self, query):
+    async def search(self, query, **kwargs):
         """Search iNat site."""
-        search_results = await self.cog.api.get_search_results(q=query, per_page=10)
+
+        api_kwargs = {"q": query, "per_page": 10}
+        api_kwargs.update(kwargs)
+        search_results = await self.cog.api.get_search_results(**api_kwargs)
         results = "\n".join(
             [
                 "{0.name} ({0.kind} matching {0.match}): id={0.match_id}".format(

@@ -2,7 +2,7 @@
 from abc import ABC
 from math import ceil
 import re
-from typing import Union
+from typing import Optional, Union
 import urllib.parse
 import asyncio
 import discord
@@ -679,19 +679,45 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
-    @commands.command(aliases=["s"])
+    async def _search(self, ctx, query, keyword: Optional[str]):
+        kwargs = {}
+        url = f"{WWW_BASE_URL}?q={urllib.parse.quote_plus(query)}"
+        if keyword:
+            kwargs["sources"] = keyword
+            url += f"&sources={keyword}"
+        results = await self.site_search.search(query, **kwargs)
+        embed = make_embed(
+            title=f"Search: {query}", url=url, description=f"```{results}```"
+        )
+        await ctx.send(embed=embed)
+
+    @commands.group(aliases=["s"], invoke_without_command=True)
     async def search(self, ctx, *, query):
         """Search iNat.
 
         `Aliases: [p]s`
         """
-        results = await self.site_search.search(query)
-        embed = make_embed(
-            title=f"Search: {query}",
-            url=f"{WWW_BASE_URL}?q={urllib.parse.quote_plus(query)}",
-            description=f"```{results}```",
-        )
-        await ctx.send(embed=embed)
+        await self._search(ctx, query, None)
+
+    @search.command(name="places", aliases=["place"])
+    async def search_places(self, ctx, *, query):
+        """Search iNat places."""
+        await self._search(ctx, query, "places")
+
+    @search.command(name="projects", aliases=["project"])
+    async def search_projects(self, ctx, *, query):
+        """Search iNat projects."""
+        await self._search(ctx, query, "projects")
+
+    @search.command(name="taxa", aliases=["taxon"])
+    async def search_taxa(self, ctx, *, query):
+        """Search iNat taxa."""
+        await self._search(ctx, query, "taxa")
+
+    @search.command(name="users", aliases=["user", "person", "people"])
+    async def search_users(self, ctx, *, query):
+        """Search iNat users."""
+        await self._search(ctx, query, "users")
 
     @commands.command(aliases=["sp"])
     async def species(self, ctx, *, query):
