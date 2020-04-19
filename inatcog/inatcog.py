@@ -10,7 +10,7 @@ from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
-from .common import grouper
+from .common import DEQUOTE, grouper
 from .converters import (
     ContextMemberConverter,
     QuotedContextMemberConverter,
@@ -959,7 +959,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self.user_show_settings(ctx, config)
 
     @user_set.command(name="home")
-    async def user_set_home(self, ctx, value: str = None):
+    async def user_set_home(self, ctx, *, value: str = None):
         """Show or set your home iNat place.
 
         `[p]user set home` show your home place
@@ -973,8 +973,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         if value is not None:
+            value = re.sub(DEQUOTE, r"\1", value)
             bot = self.bot.user.name
-            if value.lower() in ["clear", "none"]:
+            if value.lower() in ["clear", "none", ""]:
                 await config.home.clear()
                 await ctx.send(f"{bot} no longer has a home place set for you.")
             else:

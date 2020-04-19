@@ -3,6 +3,7 @@ import re
 from typing import NamedTuple
 import discord
 from redbot.core import commands
+from .common import DEQUOTE
 
 
 class ContextMemberConverter(NamedTuple):
@@ -55,9 +56,6 @@ class ContextMemberConverter(NamedTuple):
         raise commands.BadArgument(
             "No recently active member found. Try exact username or nickname."
         )
-
-
-DEQUOTE = re.compile(r'^"?(.*?)"?$')
 
 
 class QuotedContextMemberConverter(commands.Converter):
