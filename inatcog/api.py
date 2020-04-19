@@ -130,6 +130,14 @@ class INatAPI:
             if response.status == 200:
                 return await response.json()
 
+    async def get_search_results(self, **kwargs):
+        """Get site search results."""
+        async with self.session.get(
+            f"{API_BASE_URL}/v1/search", params=kwargs
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+
     async def get_users(self, query: Union[int, str], refresh_cache=False):
         """Get the users for the specified login, user_id, or query."""
         if isinstance(query, int) or query.isnumeric():

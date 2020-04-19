@@ -3,6 +3,7 @@ from abc import ABC
 from math import ceil
 import re
 from typing import Union
+import urllib.parse
 import asyncio
 import discord
 import inflect
@@ -675,6 +676,33 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
+
+    @commands.command(aliases=["s"])
+    async def search(self, ctx, *, query):
+        """Search iNat.
+
+        `Aliases: [p]s`
+        """
+        search_results = await self.api.get_search_results(q=query, per_page=10)
+        results = "\n".join(
+            [
+                "{name} ({kind} matching {match}): id={match_id}".format(
+                    name=result.get("record").get("name"),
+                    kind=result.get("type"),
+                    match='"{matches}"'.format(
+                        matches=result.get("record").get("matched_term")
+                    ),
+                    match_id=result.get("record").get("id"),
+                )
+                for result in search_results["results"]
+            ]
+        )
+        embed = make_embed(
+            title=f"Search: {query}",
+            url=f"{WWW_BASE_URL}?q={urllib.parse.quote_plus(query)}",
+            description=f"```{results}```",
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=["sp"])
     async def species(self, ctx, *, query):
