@@ -5,6 +5,14 @@ from dataclasses_json import config, DataClassJsonMixin
 
 
 @dataclass
+class Project(DataClassJsonMixin):
+    """A project."""
+
+    project_id: int = field(metadata=config(field_name="id"))
+    title: str
+
+
+@dataclass
 class UserProject(DataClassJsonMixin):
     """A collection project for observations by specific users."""
 

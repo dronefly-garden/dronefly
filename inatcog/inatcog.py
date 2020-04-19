@@ -681,15 +681,31 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     async def _search(self, ctx, query, keyword: Optional[str]):
         kwargs = {}
-        url = f"{WWW_BASE_URL}?q={urllib.parse.quote_plus(query)}"
+        url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
             kwargs["sources"] = keyword
             url += f"&sources={keyword}"
-        results = await self.site_search.search(query, **kwargs)
-        embed = make_embed(
-            title=f"Search: {query}", url=url, description=f"```{results}```"
-        )
-        await ctx.send(embed=embed)
+        (result_pages, total_results) = await self.site_search.search(query, **kwargs)
+        pages = [
+            "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+        ]
+
+        if pages:
+            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            if len(result_pages) < total_results:
+                pages_len = (
+                    f"{pages_len}; {ceil((total_results - 30)/10)} more not shown"
+                )
+            embeds = [
+                make_embed(
+                    title=f"Search: {query} (page {index} of {pages_len})",
+                    url=url,
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            # menu() does not support lazy load of embeds iterator.
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     async def search(self, ctx, *, query):
