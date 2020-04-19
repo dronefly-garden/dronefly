@@ -24,6 +24,7 @@ from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .places import INatPlaceTable, RESERVED_PLACES
 from .projects import UserProject, ObserverStats
 from .listeners import Listeners
+from .search import INatSiteSearch
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
 from .users import INatUserTable, PAT_USER_LINK, User
 
@@ -53,6 +54,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.taxa_query = INatTaxaQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
+        self.site_search = INatSiteSearch(self)
         self.user_cache_init = {}
         self.reaction_locks = {}
         self.predicate_locks = {}
@@ -683,20 +685,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         `Aliases: [p]s`
         """
-        search_results = await self.api.get_search_results(q=query, per_page=10)
-        results = "\n".join(
-            [
-                "{name} ({kind} matching {match}): id={match_id}".format(
-                    name=result.get("record").get("name"),
-                    kind=result.get("type"),
-                    match='"{matches}"'.format(
-                        matches=result.get("record").get("matched_term")
-                    ),
-                    match_id=result.get("record").get("id"),
-                )
-                for result in search_results["results"]
-            ]
-        )
+        results = await self.site_search.search(query)
         embed = make_embed(
             title=f"Search: {query}",
             url=f"{WWW_BASE_URL}?q={urllib.parse.quote_plus(query)}",
