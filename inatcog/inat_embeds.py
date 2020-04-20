@@ -184,7 +184,11 @@ class INatEmbeds(MixinMeta):
             if obs.description:
                 # Contribute up to 10 lines from the description, and no more
                 # than 500 characters:
-                text_description = html2markdown.convert(obs.description)
+                #
+                # TODO: if https://bugs.launchpad.net/beautifulsoup/+bug/1873787 is
+                # ever fixed, suppress the warning instead of adding this blank
+                # as a workaround.
+                text_description = html2markdown.convert(" " + obs.description)
                 lines = text_description.split("\n", 11)
                 description = "\n> %s" % "\n> ".join(lines[:10])
                 if len(lines) > 10:
