@@ -303,7 +303,10 @@ class Listeners(INatEmbeds, MixinMeta):
             async with self.reaction_locks[msg.id]:
                 # Refetch the message because it may have changed prior to
                 # acquiring lock
-                msg = await msg.channel.fetch_message(msg.id)
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
                 embeds = msg.embeds
                 embed = embeds[0]
                 description = embed.description or ""
@@ -373,7 +376,10 @@ class Listeners(INatEmbeds, MixinMeta):
             async with self.reaction_locks[msg.id]:
                 # Refetch the message because it may have changed prior to
                 # acquiring lock
-                msg = await msg.channel.fetch_message(msg.id)
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
                 embeds = msg.embeds
                 embed = embeds[0]
                 description = embed.description or ""
@@ -440,7 +446,14 @@ class Listeners(INatEmbeds, MixinMeta):
         if member is None or member.bot:
             raise ValueError("User is not a guild member.")
         channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
+        message = next(
+            msg for msg in self.bot.cached_messages if msg.id == payload.message_id
+        )
+        if not message:  # too old; have to fetch it
+            try:
+                message = await channel.fetch_message(payload.message_id)
+            except discord.errors.NotFound:
+                raise ValueError("Message was deleted before reaction handled.")
         if message.author != self.bot.user:
             raise ValueError("Reaction is not to our own message.")
         return (member, message)
