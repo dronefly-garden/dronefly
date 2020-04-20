@@ -1045,7 +1045,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                         f"{bot} will use {home.display_name} as your home place."
                     )
                 except LookupError as err:
-                    ctx.send(err)
+                    await ctx.send(err)
                     return
 
         await self.user_show_settings(ctx, config, "home")
