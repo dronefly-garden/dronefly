@@ -446,10 +446,11 @@ class Listeners(INatEmbeds, MixinMeta):
         if member is None or member.bot:
             raise ValueError("User is not a guild member.")
         channel = self.bot.get_channel(payload.channel_id)
-        message = next(
-            msg for msg in self.bot.cached_messages if msg.id == payload.message_id
-        )
-        if not message:  # too old; have to fetch it
+        try:
+            message = next(
+                msg for msg in self.bot.cached_messages if msg.id == payload.message_id
+            )
+        except StopIteration:  # too old; have to fetch it
             try:
                 message = await channel.fetch_message(payload.message_id)
             except discord.errors.NotFound:
