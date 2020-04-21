@@ -706,6 +706,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ]
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     async def search(self, ctx, *, query):
