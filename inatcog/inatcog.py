@@ -679,6 +679,26 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
+    @commands.command()
+    async def tname(self, ctx, *, query):
+        """Show taxon name best matching the query.
+
+        See `[p]help taxon` for help with the query.
+        ```
+        """
+
+        try:
+            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+        except ParseException:
+            await ctx.send("I don't understand")
+            return
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(reason)
+            return
+
+        await ctx.send(filtered_taxon.taxon.name)
+
     async def _search(self, ctx, query, keyword: Optional[str]):
         kwargs = {}
         url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
