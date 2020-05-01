@@ -842,10 +842,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
-        user_projects = await self.config.guild(ctx.guild).user_projects() or []
-        for project_id in user_projects:
-            response = await self.api.get_projects(int(project_id), refresh_cache=True)
-            user_project = UserProject.from_dict(response["results"][0])
+        user_projects = await self.config.guild(ctx.guild).user_projects() or {}
+        project_ids = list(map(int, user_projects))
+        projects = await self.api.get_projects(project_ids, refresh_cache=True)
+        for project_id in projects:
+            user_project = UserProject.from_dict(projects[project_id]["results"][0])
             if user.user_id in user_project.observed_by_ids():
                 response = await self.api.get_project_observers_stats(
                     project_id=project_id
@@ -855,7 +856,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     for observer in response["results"]
                 ]
                 if stats:
-                    emoji = user_projects[project_id]
+                    emoji = user_projects[str(project_id)]
                     # FIXME: DRY!
                     obs_rank = next(
                         (

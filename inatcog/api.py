@@ -104,20 +104,41 @@ class INatAPI:
             if response.status == 200:
                 return await response.json()
 
-    async def get_projects(self, project_id: int, refresh_cache=False):
+    async def get_projects(self, project_id: Union[int, list], refresh_cache=False):
         """Get the project for the specified id."""
-        request = f"/v1/projects/{project_id}"
 
-        if refresh_cache or project_id not in self.projects_cache:
+        if isinstance(project_id, int):
+            project_ids = [project_id]
+        else:
+            project_ids = project_id
+        request = f"/v1/projects/{','.join(map(str, project_ids))}"
+        if refresh_cache or not set(project_ids).issubset(set(self.projects_cache)):
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 if response.status == 200:
-                    self.projects_cache[project_id] = await response.json()
+                    results = await response.json()
+                    projects = results.get("results") or []
+                    for project in projects:
+                        key = project.get("id")
+                        if key:
+                            record = {
+                                "total_results": 1,
+                                "page": 1,
+                                "per_page": 1,
+                                "results": [project],
+                            }
+                            self.projects_cache[key] = record
 
-        return (
-            self.projects_cache[project_id]
-            if project_id in self.projects_cache
-            else None
-        )
+        if isinstance(project_id, int):
+            return (
+                self.projects_cache[project_id]
+                if project_id in self.projects_cache
+                else None
+            )
+        return {
+            project_id: self.projects_cache[project_id]
+            for project_id in self.projects_cache
+            if self.projects_cache[project_id]
+        }
 
     async def get_project_observers_stats(self, **kwargs):
         """Query API for user counts & rankings in a project."""
@@ -172,7 +193,7 @@ class INatAPI:
             return
 
         response = await self.get_observations(
-            "observers", project_id=",".join(project_ids)
+            "observers", project_id=",".join(map(str, project_ids))
         )
         users = []
         results = response.get("results") or []
