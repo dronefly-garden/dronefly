@@ -30,7 +30,10 @@ def get_user(result):
 def get_taxon(result):
     """Get taxon result."""
     taxon = get_taxon_fields(result.get("record"))
-    return f":green_circle: [{format_taxon_name(taxon)}]({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
+    return (
+        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
+        "({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
+    )
 
 
 # pylint: disable=invalid-name
