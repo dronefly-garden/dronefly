@@ -845,7 +845,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         user_projects = await self.config.guild(ctx.guild).user_projects() or {}
         project_ids = list(map(int, user_projects))
         projects = await self.api.get_projects(project_ids, refresh_cache=True)
-        for project_id in projects:
+        for project_id in project_ids:
+            if project_id not in projects:
+                continue
             user_project = UserProject.from_dict(projects[project_id]["results"][0])
             if user.user_id in user_project.observed_by_ids():
                 response = await self.api.get_project_observers_stats(
