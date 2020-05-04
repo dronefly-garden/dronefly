@@ -615,9 +615,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send("Project abbreviation removed.")
 
     @project.command(name="stats")
-    async def project_stats(
-        self, ctx, query: str, discord_user: Optional[QuotedContextMemberConverter]
-    ):
+    async def project_stats(self, ctx, query: str, discord_user: str = "me"):
         """Show project stats for the named user."""
         try:
             project = await self.project_table.get_project(ctx.guild, query)
@@ -625,14 +623,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(err)
             return
 
-        if discord_user:
-            member = discord_user.member
-        else:
-            user_me = await ContextMemberConverter.convert(ctx, "me")
-            member = user_me.member
-        user = await self.user_table.get_user(member)
-        if not user:
-            await ctx.send(f"iNat user not known.")
+        try:
+            ctx_member = await ContextMemberConverter.convert(ctx, discord_user)
+            member = ctx_member.member
+            user = await self.user_table.get_user(member)
+        except (commands.BadArgument, LookupError) as err:
+            await ctx.send(err)
             return
 
         response = await self.api.get_project_observers_stats(
