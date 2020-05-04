@@ -104,22 +104,35 @@ class INatAPI:
             if response.status == 200:
                 return await response.json()
 
-    async def get_projects(self, project_id: Union[int, list], refresh_cache=False):
+    async def get_projects(
+        self, query: Union[str, int, list], refresh_cache=False, **kwargs
+    ):
         """Get the project for the specified id."""
 
-        if isinstance(project_id, int):
-            project_ids = [project_id]
+        last_project_id = None
+        if isinstance(query, list):
+            cached = set(query).issubset(set(self.projects_cache))
+            request = f"/v1/projects/{','.join(map(str, query))}"
+        elif isinstance(query, int):
+            cached = query in self.projects_cache
+            if cached:
+                last_project_id = query
+            request = f"/v1/projects/{query}"
         else:
-            project_ids = project_id
-        request = f"/v1/projects/{','.join(map(str, project_ids))}"
-        if refresh_cache or not set(project_ids).issubset(set(self.projects_cache)):
-            async with self.session.get(f"{API_BASE_URL}{request}") as response:
+            cached = False
+            request = f"/v1/projects/{query}"
+
+        if refresh_cache or not cached:
+            async with self.session.get(
+                f"{API_BASE_URL}{request}", params=kwargs
+            ) as response:
                 if response.status == 200:
                     results = await response.json()
                     projects = results.get("results") or []
                     for project in projects:
                         key = project.get("id")
                         if key:
+                            last_project_id = key
                             record = {
                                 "total_results": 1,
                                 "page": 1,
@@ -128,17 +141,15 @@ class INatAPI:
                             }
                             self.projects_cache[key] = record
 
-        if isinstance(project_id, int):
-            return (
-                self.projects_cache[project_id]
-                if project_id in self.projects_cache
-                else None
-            )
-        return {
-            project_id: self.projects_cache[project_id]
-            for project_id in self.projects_cache
-            if self.projects_cache[project_id]
-        }
+        if isinstance(query, list):
+            return {
+                project_id: self.projects_cache[project_id]
+                for project_id in query
+                if self.projects_cache[project_id]
+            }
+        if last_project_id in self.projects_cache:
+            return self.projects_cache[last_project_id]
+        return None
 
     async def get_project_observers_stats(self, **kwargs):
         """Query API for user counts & rankings in a project."""

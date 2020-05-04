@@ -22,7 +22,7 @@ from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .places import INatPlaceTable, RESERVED_PLACES
-from .projects import UserProject, ObserverStats
+from .projects import INatProjectTable, UserProject, ObserverStats
 from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
@@ -54,6 +54,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.taxa_query = INatTaxaQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
+        self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
         self.user_cache_init = {}
         self.reaction_locks = {}
@@ -64,6 +65,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             autoobs=False,
             user_projects={},
             places={},
+            projects={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
             bot_prefixes=[],
         )
@@ -513,7 +515,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @place.command(name="add")
     async def place_add(self, ctx, abbrev: str, place_number: int):
-        """Add place abbreviation for guild."""
+        """Add place abbreviation for server."""
         if not ctx.guild:
             return
 
@@ -538,7 +540,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @place.command(name="remove")
     async def place_remove(self, ctx, abbrev: str):
-        """Remove place abbreviation for guild."""
+        """Remove place abbreviation for server."""
         if not ctx.guild:
             return
 
@@ -553,6 +555,64 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         del places[abbrev_lowered]
         await config.places.set(places)
         await ctx.send("Place abbreviation removed.")
+
+    @commands.group(invoke_without_command=True)
+    async def project(self, ctx, *, query):
+        """Show iNat project or abbreviation.
+
+        **query** may contain:
+        - *id#* of the iNat project
+        - *words* in the iNat project name
+        - *abbreviation* defined with `[p]project add`
+        """
+        try:
+            project = await self.project_table.get_project(ctx.guild, query)
+            await ctx.send(project.url)
+        except LookupError as err:
+            await ctx.send(err)
+
+    @project.command(name="add")
+    async def project_add(self, ctx, abbrev: str, project_number: int):
+        """Add project abbreviation for server."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        projects = await config.projects()
+        abbrev_lowered = abbrev.lower()
+        if abbrev_lowered in RESERVED_PLACES:
+            await ctx.send(
+                f"Project abbreviation '{abbrev_lowered}' cannot be added as it is reserved."
+            )
+
+        if abbrev_lowered in projects:
+            url = f"{WWW_BASE_URL}/projects/{projects[abbrev_lowered]}"
+            await ctx.send(
+                f"Project abbreviation '{abbrev_lowered}' is already defined as: {url}"
+            )
+            return
+
+        projects[abbrev_lowered] = project_number
+        await config.projects.set(projects)
+        await ctx.send(f"Project abbreviation added.")
+
+    @project.command(name="remove")
+    async def project_remove(self, ctx, abbrev: str):
+        """Remove project abbreviation for server."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        projects = await config.projects()
+        abbrev_lowered = abbrev.lower()
+
+        if abbrev_lowered not in projects:
+            await ctx.send("Project abbreviation not defined.")
+            return
+
+        del projects[abbrev_lowered]
+        await config.projects.set(projects)
+        await ctx.send("Project abbreviation removed.")
 
     @commands.command(aliases=["observation"])
     async def obs(self, ctx, *, query):
