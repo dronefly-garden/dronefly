@@ -930,11 +930,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     )
                     if obs_rank:
                         obs_cnt = stats[obs_rank - 1].observation_count
-                        obs_pct = ceil(100 * (obs_rank / len(stats)))
                     else:
                         obs_rank = "unranked"
                         obs_cnt = "unknown"
-                        obs_pct = "na"
                     response = await self.api.get_project_observers_stats(
                         project_id=project_id, order_by="species_count"
                     )
@@ -952,18 +950,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     )
                     if spp_rank:
                         spp_cnt = stats[spp_rank - 1].species_count
-                        spp_pct = ceil(100 * (spp_rank / len(stats)))
                     else:
-                        spp_rank = "unranked"
                         spp_cnt = "unknown"
-                        spp_pct = "na"
-                    fmt = f"{obs_cnt} (#{obs_rank}, {obs_pct}%) {spp_cnt} (#{spp_rank}, {spp_pct}%)"
-                    embed.add_field(
-                        name=f"{emoji} Obs# (rank,%) Spp# (rank,%)",
-                        value=fmt,
-                        inline=True,
+                    url = (
+                        f"{WWW_BASE_URL}/observations?project_id={project_id}"
+                        f"&user_id={user.user_id}"
                     )
-        embed.add_field(name="Ids", value=user.identifications_count, inline=True)
+                    fmt = f"[{obs_cnt}]({url}&view=observations) / [{spp_cnt}]({url}&view=species)"
+                    embed.add_field(name=f"Obs / Spp {emoji}", value=fmt, inline=True)
+        ids = user.identifications_count
+        url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
+        embed.add_field(name="Ids", value=url, inline=True)
 
         await ctx.send(embed=embed)
 
