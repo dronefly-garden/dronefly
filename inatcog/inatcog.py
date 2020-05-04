@@ -639,56 +639,48 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             project_id=project.project_id
         )
         stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
-        if stats:
-            # FIXME: DRY!
-            obs_rank = next(
-                (
-                    index + 1
-                    for (index, d) in enumerate(stats)
-                    if d.user_id == user.user_id
-                ),
-                None,
-            )
-            if obs_rank:
-                obs_cnt = stats[obs_rank - 1].observation_count
-                obs_pct = ceil(100 * (obs_rank / len(stats)))
-            else:
-                obs_rank = "unranked"
-                obs_cnt = "unknown"
-                obs_pct = "na"
-            response = await self.api.get_project_observers_stats(
-                project_id=project.project_id, order_by="species_count"
-            )
-            stats = [
-                ObserverStats.from_dict(observer) for observer in response["results"]
-            ]
-            spp_rank = next(
-                (
-                    index + 1
-                    for (index, d) in enumerate(stats)
-                    if d.user_id == user.user_id
-                ),
-                None,
-            )
-            if spp_rank:
-                spp_cnt = stats[spp_rank - 1].species_count
-                spp_pct = ceil(100 * (spp_rank / len(stats)))
-            else:
-                spp_rank = "unranked"
-                spp_cnt = "unknown"
-                spp_pct = "na"
-            url = (
-                f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
-                f"&user_id={user.user_id}"
-            )
-            fmt = (
-                f"[{obs_cnt}]({url}&view=observations) (#{obs_rank}, {obs_pct}%) "
-                f"[{spp_cnt}]({url}&view=species) (#{spp_rank}, {spp_pct}%)"
-            )
-            embed = make_embed(description=f"{project.title}:\n{member.mention}")
-            embed.add_field(
-                name=f"Obs (rank, %) / Spp (rank, %)", value=fmt, inline=True
-            )
+
+        if not stats:
+            await ctx.send(f"No stats found.")
+            return
+
+        # FIXME: DRY!
+        obs_rank = next(
+            (index + 1 for (index, d) in enumerate(stats) if d.user_id == user.user_id),
+            None,
+        )
+        if obs_rank:
+            obs_cnt = stats[obs_rank - 1].observation_count
+            obs_pct = ceil(100 * (obs_rank / len(stats)))
+        else:
+            obs_rank = "unranked"
+            obs_cnt = "unknown"
+            obs_pct = "na"
+        response = await self.api.get_project_observers_stats(
+            project_id=project.project_id, order_by="species_count"
+        )
+        stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
+        spp_rank = next(
+            (index + 1 for (index, d) in enumerate(stats) if d.user_id == user.user_id),
+            None,
+        )
+        if spp_rank:
+            spp_cnt = stats[spp_rank - 1].species_count
+            spp_pct = ceil(100 * (spp_rank / len(stats)))
+        else:
+            spp_rank = "unranked"
+            spp_cnt = "unknown"
+            spp_pct = "na"
+        url = (
+            f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
+            f"&user_id={user.user_id}"
+        )
+        fmt = (
+            f"[{obs_cnt}]({url}&view=observations) (#{obs_rank}, {obs_pct}%) "
+            f"[{spp_cnt}]({url}&view=species) (#{spp_rank}, {spp_pct}%)"
+        )
+        embed = make_embed(description=f"{project.title}:\n{member.mention}")
+        embed.add_field(name=f"Obs (rank, %) / Spp (rank, %)", value=fmt, inline=True)
 
         await ctx.send(embed=embed)
 
