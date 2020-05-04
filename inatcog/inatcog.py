@@ -623,6 +623,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             project = await self.project_table.get_project(ctx.guild, query)
         except LookupError as err:
             await ctx.send(err)
+            return
 
         if discord_user:
             member = discord_user.member
