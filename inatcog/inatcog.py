@@ -675,7 +675,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             f"[{obs_cnt}]({url}&view=observations) (#{obs_rank}, {obs_pct}%) "
             f"[{spp_cnt}]({url}&view=species) (#{spp_rank}, {spp_pct}%)"
         )
-        embed = make_embed(description=f"{project.title}:\n{member.mention}")
+        embed = make_embed(
+            title=project.title, url=project.url, description=member.mention
+        )
         embed.add_field(name=f"Obs (rank, %) / Spp (rank, %)", value=fmt, inline=True)
 
         await ctx.send(embed=embed)
