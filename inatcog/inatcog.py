@@ -640,6 +640,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(f"No stats found.")
             return
 
+        include_footnote = False
         # FIXME: DRY!
         obs_rank = next(
             (index + 1 for (index, d) in enumerate(stats) if d.user_id == user.user_id),
@@ -649,6 +650,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             obs_cnt = stats[obs_rank - 1].observation_count
             obs_pct = ceil(100 * (obs_rank / len(stats)))
         else:
+            include_footnote = True
             obs_rank = "unranked"
             obs_cnt = "unknown"
             obs_pct = "na"
@@ -664,6 +666,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             spp_cnt = stats[spp_rank - 1].species_count
             spp_pct = ceil(100 * (spp_rank / len(stats)))
         else:
+            include_footnote = True
             spp_rank = "unranked"
             spp_cnt = "unknown"
             spp_pct = "na"
@@ -678,6 +681,10 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         embed = make_embed(
             title=project.title, url=project.url, description=member.mention
         )
+        if include_footnote:
+            embed.set_footer(
+                text="Unknown & unranked indicates counts & ranks below the top 500."
+            )
         embed.add_field(name=f"Obs (rank, %) / Spp (rank, %)", value=fmt, inline=True)
 
         await ctx.send(embed=embed)
