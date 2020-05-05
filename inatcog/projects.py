@@ -60,13 +60,14 @@ class INatProjectTable:
         """Get project by guild abbr or via id#/keyword lookup in API."""
         project = None
         response = None
+        abbrev = None
 
         if isinstance(query, str):
             abbrev = query.lower()
         if isinstance(query, int) or query.isnumeric():
             project_id = query
             response = await self.cog.api.get_projects(int(project_id))
-        if guild:
+        if guild and abbrev:
             guild_config = self.cog.config.guild(guild)
             projects = await guild_config.projects()
             if abbrev in projects:

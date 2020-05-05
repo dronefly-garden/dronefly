@@ -596,6 +596,49 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await config.projects.set(projects)
         await ctx.send(f"Project abbreviation added.")
 
+    @project.command(name="list")
+    async def project_list(self, ctx):
+        """List projects with abbreviations on this server."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        projects = await config.projects()
+        result_pages = []
+        for proj in projects:
+            # Only lookup cached projects. Uncached projects will just be shown by number.
+            proj_id = int(projects[proj])
+            if proj_id in self.api.projects_cache:
+                try:
+                    project = await self.project_table.get_project(ctx.guild, proj_id)
+                    proj_str = f"{proj}: [{project.title}]({project.url})"
+                except LookupError:
+                    proj_str = f"{proj}: {proj_id} not found."
+            else:
+                proj_str = f"{proj}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+            result_pages.append(proj_str)
+        pages = [
+            "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+        ]
+        total_results = len(result_pages)
+        if pages:
+            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            if len(result_pages) < total_results:
+                pages_len = (
+                    f"{pages_len}; {ceil((total_results - 30)/10)} more not shown"
+                )
+            embeds = [
+                make_embed(
+                    title=f"Project abbreviations (page {index} of {pages_len})",
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            # menu() does not support lazy load of embeds iterator.
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+
     @project.command(name="remove")
     async def project_remove(self, ctx, abbrev: str):
         """Remove project abbreviation for server."""
