@@ -63,11 +63,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.config.register_global(schema_version=1)
         self.config.register_guild(
             autoobs=False,
+            active_role=None,
+            bot_prefixes=[],
+            inactive_role=None,
             user_projects={},
             places={},
             projects={},
             project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
-            bot_prefixes=[],
         )
         self.config.register_channel(autoobs=None)
         self.config.register_user(
@@ -152,6 +154,58 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             prefixes = await config.bot_prefixes()
 
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
+
+    @inat_set.command(name="inactive_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def set_inactive_role(self, ctx, inactive_role: Optional[discord.Role]):
+        """Set server Inactive role."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if inactive_role:
+            msg = inactive_role.mention
+            await config.inactive_role.set(inactive_role.id)
+        else:
+            find = await config.inactive_role()
+            if find:
+                inactive_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = (
+                    inactive_role.mention
+                    if inactive_role
+                    else f"missing role: <@&{find}>"
+                )
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Inactive role: {msg}"))
+
+    @inat_set.command(name="active_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def set_active_role(self, ctx, active_role: Optional[discord.Role]):
+        """Set server Active role."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if active_role:
+            msg = active_role.mention
+            await config.active_role.set(active_role.id)
+        else:
+            find = await config.active_role()
+            if find:
+                active_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = (
+                    active_role.mention if active_role else f"missing role: <@&{find}>"
+                )
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
 
     @inat.group(name="clear")
     @checks.admin_or_permissions(manage_messages=True)
@@ -1281,7 +1335,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
-    async def user_list(self, ctx):
+    async def user_list(self, ctx, with_role: str = None):
         """List members with known iNat ids (mods only)."""
         if not ctx.guild:
             return
@@ -1292,6 +1346,32 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         all_users = await self.config.all_users()
         config = self.config.guild(ctx.guild)
         user_projects = await config.user_projects()
+        filter_role = None
+        filter_role_id = None
+        if with_role:
+            if with_role == "active":
+                filter_role_id = await config.active_role()
+            elif with_role == "inactive":
+                filter_role_id = await config.inactive_role()
+            else:
+                await ctx.send_help()
+                return
+        if with_role and not filter_role_id:
+            await ctx.send(embed=make_embed(description=f"No {with_role} role set."))
+            return
+
+        if filter_role_id:
+            filter_role = next(
+                (role for role in ctx.guild.roles if role.id == filter_role_id), None
+            )
+            if not filter_role:
+                await ctx.send(
+                    embed=make_embed(
+                        description=f"The {with_role} role is not a guild role: "
+                        f"<@&{filter_role_id}>."
+                    )
+                )
+                return
 
         responses = [
             await self.api.get_projects(int(project_id)) for project_id in user_projects
@@ -1315,17 +1395,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return " ".join(emojis)
 
         # TODO: Support lazy loading of pages of users (issues noted in comments below).
-        all_member_users = {
-            key: value
-            for (key, value) in all_users.items()
-            if ctx.guild.get_member(key)
-        }
-
         all_names = [
-            f"{duser.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
-            async for (duser, iuser) in self.user_table.get_user_pairs(
-                ctx.guild, all_member_users
+            f"{dmember.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
+            async for (dmember, iuser) in self.user_table.get_member_pairs(
+                ctx.guild, all_users
             )
+            if not filter_role or filter_role in dmember.roles
         ]
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]

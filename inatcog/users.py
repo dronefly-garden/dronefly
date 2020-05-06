@@ -66,12 +66,12 @@ class INatUserTable:
 
         return user
 
-    async def get_user_pairs(
+    async def get_member_pairs(
         self, guild: discord.Guild, users
-    ) -> AsyncIterator[Tuple[discord.User, User]]:
+    ) -> AsyncIterator[Tuple[discord.Member, User]]:
         """
         yields:
-            discord.User, User
+            discord.Member, User
 
         Parameters
         ----------
@@ -83,9 +83,9 @@ class INatUserTable:
             user_json = None
             inat_user = None
 
-            discord_user = self.cog.bot.get_user(discord_id)
+            discord_member = guild.get_member(discord_id)
             if (
-                discord_user
+                discord_member
                 and guild.id in users[discord_id].get("known_in")
                 or users[discord_id].get("known_all")
             ):
@@ -96,5 +96,5 @@ class INatUserTable:
                 results = user_json["results"]
                 if results:
                     inat_user = User.from_dict(results[0])
-            if discord_user and inat_user:
-                yield (discord_user, inat_user)
+            if discord_member and inat_user:
+                yield (discord_member, inat_user)
