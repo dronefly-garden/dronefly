@@ -1142,6 +1142,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.command()
+    @known_inat_user()
     async def me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
         member = await ContextMemberConverter.convert(ctx, "me")
@@ -1258,6 +1259,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 await ctx.send("home: none")
 
     @user.group(name="set", invoke_without_command=True)
+    @known_inat_user()
     async def user_set(self, ctx, arg: str = None):
         """Show or set your iNat user settings.
 
@@ -1277,6 +1279,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self.user_show_settings(ctx, config)
 
     @user_set.command(name="home")
+    @known_inat_user()
     async def user_set_home(self, ctx, *, value: str = None):
         """Show or set your home iNat place.
 
@@ -1310,6 +1313,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self.user_show_settings(ctx, config, "home")
 
     @user_set.command(name="known")
+    @known_inat_user()
     async def user_set_known(self, ctx, value: bool = None):
         """Show or set if your iNat user settings are known on other servers.
 
