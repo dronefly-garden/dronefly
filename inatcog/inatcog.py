@@ -11,6 +11,7 @@ from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
+from .checks import known_inat_user
 from .common import DEQUOTE, grouper
 from .converters import (
     ContextMemberConverter,
@@ -567,6 +568,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except LookupError as err:
             await ctx.send(err)
 
+    @known_inat_user()
     @place.command(name="add")
     async def place_add(self, ctx, abbrev: str, place_number: int):
         """Add place abbreviation for server."""
@@ -592,6 +594,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await config.places.set(places)
         await ctx.send(f"Place abbreviation added.")
 
+    @known_inat_user()
     @place.command(name="remove")
     async def place_remove(self, ctx, abbrev: str):
         """Remove place abbreviation for server."""
@@ -625,6 +628,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except LookupError as err:
             await ctx.send(err)
 
+    @known_inat_user()
     @project.command(name="add")
     async def project_add(self, ctx, abbrev: str, project_number: int):
         """Add project abbreviation for server."""
@@ -693,6 +697,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
+    @known_inat_user()
     @project.command(name="remove")
     async def project_remove(self, ctx, abbrev: str):
         """Remove project abbreviation for server."""
@@ -1225,13 +1230,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     async def get_valid_user_config(self, ctx):
         """Get iNat user config known in this guild."""
-        config = self.config.user(ctx.author)
-        inat_user_id = await config.inat_user_id()
-        known_in = await config.known_in()
-        known_all = await config.known_all()
+        user_config = self.config.user(ctx.author)
+        inat_user_id = await user_config.inat_user_id()
+        known_in = await user_config.known_in()
+        known_all = await user_config.known_all()
         if not (inat_user_id and known_all or ctx.guild.id in known_in):
             raise LookupError("Ask a moderator to add your iNat profile link.")
-        return config
+        return user_config
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """Show iNat user settings."""
