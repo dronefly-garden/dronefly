@@ -70,7 +70,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             user_projects={},
             places={},
             projects={},
-            project_emojis={33276: "<:discord:638537174048047106>", 15232: ":poop:"},
+            project_emojis={},
         )
         self.config.register_channel(autoobs=None)
         self.config.register_user(

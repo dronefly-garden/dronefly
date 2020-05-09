@@ -224,16 +224,6 @@ class INatEmbeds(MixinMeta):
                 title += format_count("sound", len(obs.sounds))
             return title
 
-        async def format_projects(title, obs):
-            project_emojis = (
-                await self.config.guild(guild).project_emojis() if guild else None
-            )
-            if project_emojis:
-                for obs_id in obs.project_ids:
-                    if obs_id in project_emojis:
-                        title += project_emojis[obs_id]
-            return title
-
         embed = make_embed(url=url)
 
         if obs:
@@ -269,7 +259,6 @@ class INatEmbeds(MixinMeta):
                 summary = format_summary(user, obs)
                 title, summary = format_community_id(title, summary, obs)
                 title = format_media_counts(title, obs)
-                title = await format_projects(title, obs)
 
                 embed.title = title
                 if error:
