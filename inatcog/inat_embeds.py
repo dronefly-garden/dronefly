@@ -479,7 +479,9 @@ class INatEmbeds(MixinMeta):
                 f"[{obs_count}]({obs_url}) / [{spp_count}]({spp_url}) / "
                 f"[{taxa_count}]({taxa_url})"
             )
-            embed.add_field(name=f"Obs / Spp / Taxa ({abbrev})", value=fmt, inline=True)
+            embed.add_field(
+                name=f"Obs / Spp / Leaf taxa ({abbrev})", value=fmt, inline=True
+            )
         ids = user.identifications_count
         url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
         embed.add_field(name="Ids", value=url, inline=True)
@@ -509,7 +511,9 @@ class INatEmbeds(MixinMeta):
             f"[{obs_count}]({obs_url}) (#{obs_rank}) / [{spp_count}]({spp_url}) (#{spp_rank}) / "
             f"[{taxa_count}]({taxa_url})"
         )
-        embed.add_field(name=f"Obs (rank) / Spp (rank) / Taxa", value=fmt, inline=True)
+        embed.add_field(
+            name=f"Obs (rank) / Spp (rank) / Leaf taxa", value=fmt, inline=True
+        )
         if "unknown" in (obs_count, spp_count, taxa_count) or "unranked" in (
             obs_rank,
             spp_rank,

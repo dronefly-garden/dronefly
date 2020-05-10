@@ -718,7 +718,16 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @project.command(name="stats")
     async def project_stats(self, ctx, query: str, discord_user: str = "me"):
-        """Show project stats for the named user."""
+        """Show project stats for the named user.
+
+        Observation & species count & rank of the user within the project
+        are shown, as well as leaf taxa, which are not ranked. Leaf taxa
+        are explained here:
+        https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
+        """
+
+        if query == "":
+            await ctx.send_help()
         try:
             project = await self.project_table.get_project(ctx.guild, query)
         except LookupError as err:
@@ -1012,6 +1021,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
           there is only one `SyntheticBee`.
         `[p]user SyntheticBee#4951`
           matches `SyntheticBee#4951` even if not recently active.
+
+        If the server has defined any user_projects, then observations,
+        species, & leaf taxa stats for each project are shown. Leaf taxa are
+        explained here:
+        https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """
         if not ctx.guild:
             return
