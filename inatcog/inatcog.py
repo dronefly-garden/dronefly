@@ -23,7 +23,7 @@ from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
 from .places import INatPlaceTable, RESERVED_PLACES
-from .projects import INatProjectTable, UserProject, ObserverStats
+from .projects import INatProjectTable, UserProject
 from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
@@ -733,62 +733,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(err)
             return
 
-        response = await self.api.get_project_observers_stats(
-            project_id=project.project_id
-        )
-        stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
-
-        if not stats:
-            await ctx.send(f"No stats found.")
-            return
-
-        include_footnote = False
-        # FIXME: DRY!
-        obs_rank = next(
-            (index + 1 for (index, d) in enumerate(stats) if d.user_id == user.user_id),
-            None,
-        )
-        if obs_rank:
-            obs_cnt = stats[obs_rank - 1].observation_count
-            obs_pct = ceil(100 * (obs_rank / len(stats)))
-        else:
-            include_footnote = True
-            obs_rank = "unranked"
-            obs_cnt = "unknown"
-            obs_pct = "na"
-        response = await self.api.get_project_observers_stats(
-            project_id=project.project_id, order_by="species_count"
-        )
-        stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
-        spp_rank = next(
-            (index + 1 for (index, d) in enumerate(stats) if d.user_id == user.user_id),
-            None,
-        )
-        if spp_rank:
-            spp_cnt = stats[spp_rank - 1].species_count
-            spp_pct = ceil(100 * (spp_rank / len(stats)))
-        else:
-            include_footnote = True
-            spp_rank = "unranked"
-            spp_cnt = "unknown"
-            spp_pct = "na"
-        url = (
-            f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
-            f"&user_id={user.user_id}"
-        )
-        fmt = (
-            f"[{obs_cnt}]({url}&view=observations) (#{obs_rank}, {obs_pct}%) "
-            f"[{spp_cnt}]({url}&view=species) (#{spp_rank}, {spp_pct}%)"
-        )
-        embed = make_embed(
-            title=project.title, url=project.url, description=member.mention
-        )
-        if include_footnote:
-            embed.set_footer(
-                text="Unknown & unranked indicates counts & ranks below the top 500."
-            )
-        embed.add_field(name=f"Obs (rank, %) / Spp (rank, %)", value=fmt, inline=True)
-
+        embed = await self.make_stats_embed(member, user, project)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["observation"])

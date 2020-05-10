@@ -485,6 +485,40 @@ class INatEmbeds(MixinMeta):
         embed.add_field(name="Ids", value=url, inline=True)
         return embed
 
+    async def make_stats_embed(self, member, user, project):
+        """Make an embed for user showing stats for a project."""
+        embed = make_embed(
+            title=project.title, url=project.url, description=member.mention
+        )
+        project_id = project.project_id
+        obs_count, obs_rank = await self.get_user_project_stats(project_id, user)
+        spp_count, spp_rank = await self.get_user_project_stats(
+            project_id, user, category="spp"
+        )
+        taxa_count, _taxa_rank = await self.get_user_project_stats(
+            project_id, user, category="taxa"
+        )
+        url = (
+            f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
+            f"&user_id={user.user_id}"
+        )
+        obs_url = f"{url}&view=observations"
+        spp_url = f"{url}&view=species&verifiable=any&hrank=species"
+        taxa_url = f"{url}&view=species&verifiable=any"
+        fmt = (
+            f"[{obs_count}]({obs_url}) (#{obs_rank}) / [{spp_count}]({spp_url}) (#{spp_rank}) / "
+            f"[{taxa_count}]({taxa_url})"
+        )
+        embed.add_field(name=f"Obs (rank) / Spp (rank) / Taxa", value=fmt, inline=True)
+        if "unknown" in (obs_count, spp_count, taxa_count) or "unranked" in (
+            obs_rank,
+            spp_rank,
+        ):
+            embed.set_footer(
+                text="Unknown & unranked indicates counts & ranks below the top 500."
+            )
+        return embed
+
     async def send_embed_for_taxon_image(self, ctx, taxon):
         """Make embed for taxon image & send."""
         msg = await ctx.send(embed=await self.make_image_embed(taxon))
