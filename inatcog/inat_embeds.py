@@ -392,10 +392,24 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def get_user_project_stats(self, project_id, user, species=False):
+    async def get_user_project_stats(self, project_id, user, category: str = "obs"):
         """Get user's ranked obs & spp stats for a project."""
+        if category == "taxa":
+            rank = "unranked"
+            response = await self.api.get_observations(
+                "species_counts",
+                project_id=project_id,
+                user_id=user.user_id,
+                per_page=0,
+            )
+            if response:
+                count = response["total_results"]
+            else:
+                count = "unknown"
+            return (count, rank)
+
         kwargs = {}
-        if species:
+        if category == "spp":
             kwargs["order_by"] = "species_count"
         # FIXME: cache for a short while so users can compare stats but not
         # have to worry about stale data.
@@ -414,7 +428,11 @@ class INatEmbeds(MixinMeta):
             )
             if rank:
                 ranked = stats[rank - 1]
-                count = ranked.species_count if species else ranked.observation_count
+                count = (
+                    ranked.species_count
+                    if category == "spp"
+                    else ranked.observation_count
+                )
             else:
                 rank = "unranked"
                 count = "unknown"
@@ -434,24 +452,34 @@ class INatEmbeds(MixinMeta):
                 abbrev = user_projects[str(project_id)]
                 obs_stats = await self.get_user_project_stats(project_id, user)
                 spp_stats = await self.get_user_project_stats(
-                    project_id, user, species=True
+                    project_id, user, category="spp"
                 )
-            stats.append((project_id, abbrev, obs_stats, spp_stats))
+                taxa_stats = await self.get_user_project_stats(
+                    project_id, user, category="taxa"
+                )
+            stats.append((project_id, abbrev, obs_stats, spp_stats, taxa_stats))
         return stats
 
     async def make_user_embed(self, ctx, member, user):
         """Make an embed for user including user stats."""
         embed = make_embed(description=f"{member.mention} is {user.profile_link()}")
         project_stats = await self.get_user_server_projects_stats(ctx, user)
-        for project_id, abbrev, obs_stats, spp_stats in project_stats:
+        for project_id, abbrev, obs_stats, spp_stats, taxa_stats in project_stats:
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
+            taxa_count, _taxa_rank = taxa_stats
             url = (
                 f"{WWW_BASE_URL}/observations?project_id={project_id}"
                 f"&user_id={user.user_id}"
             )
-            fmt = f"[{obs_count}]({url}&view=observations) / [{spp_count}]({url}&view=species)"
-            embed.add_field(name=f"Obs / Spp {abbrev}", value=fmt, inline=True)
+            obs_url = f"{url}&view=observations"
+            spp_url = f"{url}&view=species&verifiable=any&hrank=species"
+            taxa_url = f"{url}&view=species&verifiable=any"
+            fmt = (
+                f"[{obs_count}]({obs_url}) / [{spp_count}]({spp_url}) / "
+                f"[{taxa_count}]({taxa_url})"
+            )
+            embed.add_field(name=f"Obs / Spp / Taxa ({abbrev})", value=fmt, inline=True)
         ids = user.identifications_count
         url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
         embed.add_field(name="Ids", value=url, inline=True)
