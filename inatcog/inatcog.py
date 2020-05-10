@@ -1071,74 +1071,15 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         if not ctx.guild:
             return
 
+        member = who.member
         try:
-            user = await self.user_table.get_user(who.member, refresh_cache=True)
+            user = await self.user_table.get_user(member, refresh_cache=True)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        embed = make_embed(description=f"{who.member.mention} is {user.profile_link()}")
-        user_projects = await self.config.guild(ctx.guild).user_projects() or {}
-        project_ids = list(map(int, user_projects))
-        projects = await self.api.get_projects(project_ids, refresh_cache=True)
-        for project_id in project_ids:
-            if project_id not in projects:
-                continue
-            user_project = UserProject.from_dict(projects[project_id]["results"][0])
-            if user.user_id in user_project.observed_by_ids():
-                response = await self.api.get_project_observers_stats(
-                    project_id=project_id
-                )
-                stats = [
-                    ObserverStats.from_dict(observer)
-                    for observer in response["results"]
-                ]
-                if stats:
-                    emoji = user_projects[str(project_id)]
-                    # FIXME: DRY!
-                    obs_rank = next(
-                        (
-                            index + 1
-                            for (index, d) in enumerate(stats)
-                            if d.user_id == user.user_id
-                        ),
-                        None,
-                    )
-                    if obs_rank:
-                        obs_cnt = stats[obs_rank - 1].observation_count
-                    else:
-                        obs_rank = "unranked"
-                        obs_cnt = "unknown"
-                    response = await self.api.get_project_observers_stats(
-                        project_id=project_id, order_by="species_count"
-                    )
-                    stats = [
-                        ObserverStats.from_dict(observer)
-                        for observer in response["results"]
-                    ]
-                    spp_rank = next(
-                        (
-                            index + 1
-                            for (index, d) in enumerate(stats)
-                            if d.user_id == user.user_id
-                        ),
-                        None,
-                    )
-                    if spp_rank:
-                        spp_cnt = stats[spp_rank - 1].species_count
-                    else:
-                        spp_cnt = "unknown"
-                    url = (
-                        f"{WWW_BASE_URL}/observations?project_id={project_id}"
-                        f"&user_id={user.user_id}"
-                    )
-                    fmt = f"[{obs_cnt}]({url}&view=observations) / [{spp_cnt}]({url}&view=species)"
-                    embed.add_field(name=f"Obs / Spp {emoji}", value=fmt, inline=True)
-        ids = user.identifications_count
-        url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
-        embed.add_field(name="Ids", value=url, inline=True)
-
+        embed = await self.make_user_embed(ctx, member, user)
         await ctx.send(embed=embed)
 
     @commands.command()

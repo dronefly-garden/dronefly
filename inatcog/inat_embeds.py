@@ -11,6 +11,7 @@ from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
 from .obs import PAT_OBS_LINK
+from .projects import UserProject, ObserverStats
 from .taxa import (
     format_taxon_name,
     format_taxon_names,
@@ -389,6 +390,71 @@ class INatEmbeds(MixinMeta):
         if taxon.thumbnail:
             embed.set_thumbnail(url=taxon.thumbnail)
 
+        return embed
+
+    async def get_user_project_stats(self, project_id, user, species=False):
+        """Get user's ranked obs & spp stats for a project."""
+        kwargs = {}
+        if species:
+            kwargs["order_by"] = "species_count"
+        # FIXME: cache for a short while so users can compare stats but not
+        # have to worry about stale data.
+        response = await self.api.get_project_observers_stats(
+            project_id=project_id, **kwargs
+        )
+        stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
+        if stats:
+            rank = next(
+                (
+                    index + 1
+                    for (index, d) in enumerate(stats)
+                    if d.user_id == user.user_id
+                ),
+                None,
+            )
+            if rank:
+                ranked = stats[rank - 1]
+                count = ranked.species_count if species else ranked.observation_count
+            else:
+                rank = "unranked"
+                count = "unknown"
+        return (count, rank)
+
+    async def get_user_server_projects_stats(self, ctx, user):
+        """Get a user's stats for the server's user projects."""
+        user_projects = await self.config.guild(ctx.guild).user_projects() or {}
+        project_ids = list(map(int, user_projects))
+        projects = await self.api.get_projects(project_ids, refresh_cache=True)
+        stats = []
+        for project_id in project_ids:
+            if project_id not in projects:
+                continue
+            user_project = UserProject.from_dict(projects[project_id]["results"][0])
+            if user.user_id in user_project.observed_by_ids():
+                abbrev = user_projects[str(project_id)]
+                obs_stats = await self.get_user_project_stats(project_id, user)
+                spp_stats = await self.get_user_project_stats(
+                    project_id, user, species=True
+                )
+            stats.append((project_id, abbrev, obs_stats, spp_stats))
+        return stats
+
+    async def make_user_embed(self, ctx, member, user):
+        """Make an embed for user including user stats."""
+        embed = make_embed(description=f"{member.mention} is {user.profile_link()}")
+        project_stats = await self.get_user_server_projects_stats(ctx, user)
+        for project_id, abbrev, obs_stats, spp_stats in project_stats:
+            obs_count, _obs_rank = obs_stats
+            spp_count, _spp_rank = spp_stats
+            url = (
+                f"{WWW_BASE_URL}/observations?project_id={project_id}"
+                f"&user_id={user.user_id}"
+            )
+            fmt = f"[{obs_count}]({url}&view=observations) / [{spp_count}]({url}&view=species)"
+            embed.add_field(name=f"Obs / Spp {abbrev}", value=fmt, inline=True)
+        ids = user.identifications_count
+        url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
+        embed.add_field(name="Ids", value=url, inline=True)
         return embed
 
     async def send_embed_for_taxon_image(self, ctx, taxon):
