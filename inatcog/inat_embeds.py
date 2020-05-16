@@ -457,7 +457,7 @@ class INatEmbeds(MixinMeta):
                 taxa_stats = await self.get_user_project_stats(
                     project_id, user, category="taxa"
                 )
-            stats.append((project_id, abbrev, obs_stats, spp_stats, taxa_stats))
+                stats.append((project_id, abbrev, obs_stats, spp_stats, taxa_stats))
         return stats
 
     async def make_user_embed(self, ctx, member, user):
