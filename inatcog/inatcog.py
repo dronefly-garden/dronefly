@@ -594,6 +594,44 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await config.places.set(places)
         await ctx.send(f"Place abbreviation added.")
 
+    @place.command(name="list")
+    async def place_list(self, ctx):
+        """List places with abbreviations on this server."""
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        places = await config.places()
+        result_pages = []
+        for abbrev in places:
+            # Only lookup cached places. Uncached places will just be shown by number.
+            place_id = int(places[abbrev])
+            if place_id in self.api.places_cache:
+                try:
+                    place = await self.place_table.get_place(ctx.guild, place_id)
+                    place_str = f"{abbrev}: [{place.display_name}]({place.url})"
+                except LookupError:
+                    place_str = f"{abbrev}: {place_id} not found."
+            else:
+                place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
+            result_pages.append(place_str)
+        pages = [
+            "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+        ]
+        if pages:
+            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            embeds = [
+                make_embed(
+                    title=f"Place abbreviations (page {index} of {pages_len})",
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            # menu() does not support lazy load of embeds iterator.
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=sorry(apology="Nothing found"))
+
     @known_inat_user()
     @place.command(name="remove")
     async def place_remove(self, ctx, abbrev: str):
@@ -663,28 +701,23 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         config = self.config.guild(ctx.guild)
         projects = await config.projects()
         result_pages = []
-        for proj in projects:
+        for abbrev in projects:
             # Only lookup cached projects. Uncached projects will just be shown by number.
-            proj_id = int(projects[proj])
+            proj_id = int(projects[abbrev])
             if proj_id in self.api.projects_cache:
                 try:
                     project = await self.project_table.get_project(ctx.guild, proj_id)
-                    proj_str = f"{proj}: [{project.title}]({project.url})"
+                    proj_str = f"{abbrev}: [{project.title}]({project.url})"
                 except LookupError:
-                    proj_str = f"{proj}: {proj_id} not found."
+                    proj_str = f"{abbrev}: {proj_id} not found."
             else:
-                proj_str = f"{proj}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
             result_pages.append(proj_str)
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
         ]
-        total_results = len(result_pages)
         if pages:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
-            if len(result_pages) < total_results:
-                pages_len = (
-                    f"{pages_len}; {ceil((total_results - 30)/10)} more not shown"
-                )
             embeds = [
                 make_embed(
                     title=f"Project abbreviations (page {index} of {pages_len})",
