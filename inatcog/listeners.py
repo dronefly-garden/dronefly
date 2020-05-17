@@ -32,6 +32,8 @@ class PartialContext(NamedTuple):
     guild: discord.Guild
     channel: discord.ChannelType
     author: discord.User
+    message: discord.Message = None
+    command: str = ""
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -74,6 +76,10 @@ class Listeners(INatEmbeds, MixinMeta):
                 )
                 if obs and obs.sound:
                     await self.maybe_send_sound_url(channel, obs.sound)
+                ctx = PartialContext(
+                    self.bot, guild, channel, message.author, message, "msg autoobs"
+                )
+                self.bot.dispatch("commandstats_action", ctx)
         return
 
     async def handle_member_reaction(
@@ -417,13 +423,53 @@ class Listeners(INatEmbeds, MixinMeta):
             if has_places is None:
                 if str(emoji) == "#️⃣":  # Add/remove counts for self
                     await maybe_update_member(message, member, action)
+                    message.author = member
+                    ctx = PartialContext(
+                        self.bot,
+                        message.guild,
+                        message.channel,
+                        message.author,
+                        message,
+                        "react self",
+                    )
+                    self.bot.dispatch("commandstats_action", ctx)
                 elif str(emoji) == "📝":  # Toggle counts by name
                     await maybe_update_member_by_name(message, member)
+                    message.author = member
+                    ctx = PartialContext(
+                        self.bot,
+                        message.guild,
+                        message.channel,
+                        message.author,
+                        message,
+                        "react user",
+                    )
+                    self.bot.dispatch("commandstats_action", ctx)
             if has_users is None:
                 if str(emoji) == "🏠":
                     await maybe_update_place(message, member, action)
+                    message.author = member
+                    ctx = PartialContext(
+                        self.bot,
+                        message.guild,
+                        message.channel,
+                        message.author,
+                        message,
+                        "react home",
+                    )
+                    self.bot.dispatch("commandstats_action", ctx)
                 elif str(emoji) == "📍":
                     await maybe_update_place_by_name(message, member)
+                    message.author = member
+                    ctx = PartialContext(
+                        self.bot,
+                        message.guild,
+                        message.channel,
+                        message.author,
+                        message,
+                        "react place",
+                    )
+                    self.bot.dispatch("commandstats_action", ctx)
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
