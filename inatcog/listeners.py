@@ -26,10 +26,14 @@ from .taxa import (
 
 
 class PartialAuthor(NamedTuple):
+    """Partial Author to satisfy bot check."""
+
     bot: bool
 
 
 class PartialMessage(NamedTuple):
+    """Partial Message to satisfy bot & guild checks."""
+
     author: PartialAuthor
     guild: discord.Guild
 
@@ -128,7 +132,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
             taxon = await get_taxon(self, taxon_id)
             # Observed by count add/remove for taxon:
-            await edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat)
+            await edit_totals_locked(msg, taxon, inat_user, action, counts_pat)
 
         async def maybe_update_place(
             msg: discord.Message,
@@ -157,9 +161,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 place.display_name
             )
             taxon = await get_taxon(self, taxon_id)
-            await edit_place_totals_locked(
-                self, msg, taxon, place, action, place_counts_pat
-            )
+            await edit_place_totals_locked(msg, taxon, place, action, place_counts_pat)
 
         async def query_locked(msg, user, prompt, timeout):
             """Query member with user lock."""
@@ -275,7 +277,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 await maybe_update_place(msg, place, "toggle")
 
-        async def update_totals(cog, description, taxon, inat_user, action, counts_pat):
+        async def update_totals(description, taxon, inat_user, action, counts_pat):
             """Update the totals for the embed."""
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
@@ -295,7 +297,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 if not matches:
                     description += "\n" + TAXON_COUNTS_HEADER
                 formatted_counts = await format_user_taxon_counts(
-                    cog, inat_user, taxon, place_id
+                    self, inat_user, taxon, place_id
                 )
                 description += "\n" + formatted_counts
 
@@ -305,13 +307,13 @@ class Listeners(INatEmbeds, MixinMeta):
             # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
-                    cog, ",".join(matches), taxon, place_id
+                    self, ",".join(matches), taxon, place_id
                 )
                 description += f"\n{formatted_counts}"
                 return description
             return description
 
-        async def edit_totals_locked(self, msg, taxon, inat_user, action, counts_pat):
+        async def edit_totals_locked(msg, taxon, inat_user, action, counts_pat):
             """Update totals for message locked."""
             if msg.id not in self.reaction_locks:
                 self.reaction_locks[msg.id] = asyncio.Lock()
@@ -331,7 +333,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
                     embed.description = await update_totals(
-                        self, description, taxon, inat_user, action, counts_pat
+                        description, taxon, inat_user, action, counts_pat
                     )
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
@@ -344,7 +346,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await msg.edit(embed=embed)
 
         async def update_place_totals(
-            cog, description, taxon, place, action, place_counts_pat
+            description, taxon, place, action, place_counts_pat
         ):
             """Update the place totals for the embed."""
             # Add/remove always results in a change to totals, so remove:
@@ -365,7 +367,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 if not matches:
                     description += "\n" + TAXON_PLACES_HEADER
                 formatted_counts = await format_place_taxon_counts(
-                    cog, place, taxon, user_id
+                    self, place, taxon, user_id
                 )
                 description += "\n" + formatted_counts
 
@@ -376,13 +378,13 @@ class Listeners(INatEmbeds, MixinMeta):
             # Total added only if more than one place:
             if len(matches) > 1:
                 formatted_counts = await format_place_taxon_counts(
-                    cog, ",".join(matches), taxon, user_id
+                    self, ",".join(matches), taxon, user_id
                 )
                 description += f"\n{formatted_counts}"
                 return description
             return description
 
-        def dispatch_commandstats(self, message, command):
+        def dispatch_commandstats(message, command):
             partial_author = PartialAuthor(bot=False)
             fake_command_message = PartialMessage(partial_author, message.guild)
             ctx = PartialContext(
@@ -395,9 +397,7 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             self.bot.dispatch("commandstats_action", ctx)
 
-        async def edit_place_totals_locked(
-            self, msg, taxon, place, action, place_counts_pat
-        ):
+        async def edit_place_totals_locked(msg, taxon, place, action, place_counts_pat):
             """Update place totals for message locked."""
             if msg.id not in self.reaction_locks:
                 self.reaction_locks[msg.id] = asyncio.Lock()
@@ -417,7 +417,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
                     embed.description = await update_place_totals(
-                        self, description, taxon, place, action, place_counts_pat
+                        description, taxon, place, action, place_counts_pat
                     )
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
@@ -445,17 +445,17 @@ class Listeners(INatEmbeds, MixinMeta):
             if has_places is None:
                 if str(emoji) == "#️⃣":  # Add/remove counts for self
                     await maybe_update_member(message, member, action)
-                    dispatch_commandstats(self, message, "react self")
+                    dispatch_commandstats(message, "react self")
                 elif str(emoji) == "📝":  # Toggle counts by name
                     await maybe_update_member_by_name(message, member)
-                    dispatch_commandstats(self, message, "react user")
+                    dispatch_commandstats(message, "react user")
             if has_users is None:
                 if str(emoji) == "🏠":
                     await maybe_update_place(message, member, action)
-                    dispatch_commandstats(self, message, "react home")
+                    dispatch_commandstats(message, "react home")
                 elif str(emoji) == "📍":
                     await maybe_update_place_by_name(message, member)
-                    dispatch_commandstats(self, message, "react place")
+                    dispatch_commandstats(message, "react place")
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
