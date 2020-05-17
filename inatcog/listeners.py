@@ -25,6 +25,15 @@ from .taxa import (
 )
 
 
+class PartialAuthor(NamedTuple):
+    bot: bool
+
+
+class PartialMessage(NamedTuple):
+    author: PartialAuthor
+    guild: discord.Guild
+
+
 class PartialContext(NamedTuple):
     "Partial Context synthesized from objects passed into listeners."
 
@@ -32,7 +41,7 @@ class PartialContext(NamedTuple):
     guild: discord.Guild
     channel: discord.ChannelType
     author: discord.User
-    message: discord.Message = None
+    message: Union[discord.Message, PartialMessage] = None
     command: str = ""
 
 
@@ -373,6 +382,19 @@ class Listeners(INatEmbeds, MixinMeta):
                 return description
             return description
 
+        def dispatch_commandstats(self, message, command):
+            partial_author = PartialAuthor(bot=False)
+            fake_command_message = PartialMessage(partial_author, message.guild)
+            ctx = PartialContext(
+                self.bot,
+                message.guild,
+                message.channel,
+                message.author,
+                fake_command_message,
+                command,
+            )
+            self.bot.dispatch("commandstats_action", ctx)
+
         async def edit_place_totals_locked(
             self, msg, taxon, place, action, place_counts_pat
         ):
@@ -423,53 +445,17 @@ class Listeners(INatEmbeds, MixinMeta):
             if has_places is None:
                 if str(emoji) == "#️⃣":  # Add/remove counts for self
                     await maybe_update_member(message, member, action)
-                    message.author = member
-                    ctx = PartialContext(
-                        self.bot,
-                        message.guild,
-                        message.channel,
-                        message.author,
-                        message,
-                        "react self",
-                    )
-                    self.bot.dispatch("commandstats_action", ctx)
+                    dispatch_commandstats(self, message, "react self")
                 elif str(emoji) == "📝":  # Toggle counts by name
                     await maybe_update_member_by_name(message, member)
-                    message.author = member
-                    ctx = PartialContext(
-                        self.bot,
-                        message.guild,
-                        message.channel,
-                        message.author,
-                        message,
-                        "react user",
-                    )
-                    self.bot.dispatch("commandstats_action", ctx)
+                    dispatch_commandstats(self, message, "react user")
             if has_users is None:
                 if str(emoji) == "🏠":
                     await maybe_update_place(message, member, action)
-                    message.author = member
-                    ctx = PartialContext(
-                        self.bot,
-                        message.guild,
-                        message.channel,
-                        message.author,
-                        message,
-                        "react home",
-                    )
-                    self.bot.dispatch("commandstats_action", ctx)
+                    dispatch_commandstats(self, message, "react home")
                 elif str(emoji) == "📍":
                     await maybe_update_place_by_name(message, member)
-                    message.author = member
-                    ctx = PartialContext(
-                        self.bot,
-                        message.guild,
-                        message.channel,
-                        message.author,
-                        message,
-                        "react place",
-                    )
-                    self.bot.dispatch("commandstats_action", ctx)
+                    dispatch_commandstats(self, message, "react place")
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
