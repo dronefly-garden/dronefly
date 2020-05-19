@@ -32,7 +32,7 @@ def get_taxon(result):
     taxon = get_taxon_fields(result.get("record"))
     return (
         f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
-        "({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
+        f"({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
     )
 
 
