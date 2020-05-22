@@ -750,7 +750,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send("Project abbreviation removed.")
 
     @project.command(name="stats")
-    async def project_stats(self, ctx, query: str, discord_user: str = "me"):
+    async def project_stats(self, ctx, project: str, user: str = "me"):
         """Show project stats for the named user.
 
         Observation & species count & rank of the user within the project
@@ -759,23 +759,23 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """
 
-        if query == "":
+        if project == "":
             await ctx.send_help()
         try:
-            project = await self.project_table.get_project(ctx.guild, query)
+            proj = await self.project_table.get_project(ctx.guild, project)
         except LookupError as err:
             await ctx.send(err)
             return
 
         try:
-            ctx_member = await ContextMemberConverter.convert(ctx, discord_user)
+            ctx_member = await ContextMemberConverter.convert(ctx, user)
             member = ctx_member.member
             user = await self.user_table.get_user(member)
         except (commands.BadArgument, LookupError) as err:
             await ctx.send(err)
             return
 
-        embed = await self.make_stats_embed(member, user, project)
+        embed = await self.make_stats_embed(member, user, proj)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["observation"])
@@ -1080,6 +1080,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """Show your iNat info & stats for this server."""
         member = await ContextMemberConverter.convert(ctx, "me")
         await self.user(ctx, who=member)
+
+    @commands.command()
+    @known_inat_user()
+    async def my(self, ctx, project: str):  # pylint: disable=invalid-name
+        """Show your observations, species, & ranks for an iNat project."""
+        await self.project_stats(ctx, project, "me")
+
+    @commands.command()
+    async def rank(self, ctx, project: str, user: str):  # pylint: disable=invalid-name
+        """Show observations, species, & ranks in an iNat project for a user."""
+        await self.project_stats(ctx, project, user)
 
     @user.command(name="add")
     @checks.admin_or_permissions(manage_roles=True)
