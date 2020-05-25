@@ -71,11 +71,27 @@ class INatSiteSearch:
     async def search(self, query, **kwargs):
         """Search iNat site."""
 
-        api_kwargs = {"q": query, "per_page": 30}
+        # Through experimentation on May 25, 2020, I've determined a smaller
+        # number than 500 will usually be returned:
+        # - for /v1/taxa it will be 500
+        # - for /v1/search?source=x (for any single source) it will be 100
+        # - for /v1/search without a source it will be 30
+        # If more than the maximum per_page is specified, however, it defaults
+        # back to 30, so we try to intelligently adjust the per_page in our
+        # request.
+        result_type = "Inactive" if "is_active" in kwargs else None
+        if result_type == "Inactive":
+            per_page = 500
+        elif "sources" in kwargs:
+            per_page = 100
+        else:
+            per_page = 30
+        api_kwargs = {"q": query, "per_page": per_page}
         api_kwargs.update(kwargs)
         search_results = await self.cog.api.get_search_results(**api_kwargs)
-        result_type = "Inactive" if "is_active" in kwargs else None
         results = [
             get_result(result, result_type) for result in search_results["results"]
         ]
-        return (results, search_results["total_results"])
+        # But we return the actual per_page so the pager can accurately report
+        # how many results were not shown.
+        return (results, search_results["total_results"], search_results["per_page"])

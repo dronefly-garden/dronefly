@@ -935,7 +935,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
-        (result_pages, total_results) = await self.site_search.search(query, **kwargs)
+        (result_pages, total_results, per_page) = await self.site_search.search(
+            query, **kwargs
+        )
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
         ]
@@ -944,7 +946,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             if len(result_pages) < total_results:
                 pages_len = (
-                    f"{pages_len}; {ceil((total_results - 30)/10)} more not shown"
+                    f"{pages_len}; {ceil((total_results - per_page)/10)} more not shown"
                 )
             embeds = [
                 make_embed(
