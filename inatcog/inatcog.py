@@ -927,8 +927,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         kwargs = {}
         url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
-            kwargs["sources"] = keyword
-            url += f"&sources={keyword}"
+            kw_lowered = keyword.lower()
+            if kw_lowered == "inactive":
+                url = f"{WWW_BASE_URL}/taxa/search?q={urllib.parse.quote_plus(query)}"
+                url += f"&sources={keyword}"
+                kwargs["is_active"] = "any"
+            else:
+                kwargs["sources"] = kw_lowered
+                url += f"&sources={keyword}"
         (result_pages, total_results) = await self.site_search.search(query, **kwargs)
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
@@ -975,6 +981,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def search_taxa(self, ctx, *, query):
         """Search iNat taxa."""
         await self._search(ctx, query, "taxa")
+
+    @search.command(name="inactive")
+    async def search_inactive(self, ctx, *, query):
+        """Search iNat taxa (includes inactive)."""
+        await self._search(ctx, query, "inactive")
 
     @search.command(name="users", aliases=["user", "person", "people"])
     async def search_users(self, ctx, *, query):

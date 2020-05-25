@@ -28,8 +28,17 @@ def get_user(result):
 
 
 def get_taxon(result):
-    """Get taxon result."""
+    """Get taxon result (v1/search)."""
     taxon = get_taxon_fields(result.get("record"))
+    return (
+        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
+        f"({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
+    )
+
+
+def get_taxon2(result):
+    """Get taxon result (/v1/taxa)."""
+    taxon = get_taxon_fields(result)
     return (
         f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
@@ -42,12 +51,14 @@ get_result_type = {
     "Project": get_project,
     "User": get_user,
     "Taxon": get_taxon,
+    "Inactive": get_taxon2,
 }
 
 
-def get_result(result):
+def get_result(result, result_type: str = None):
     """Get fields for any result type."""
-    return get_result_type[result.get("type")](result)
+    res_type = result_type or result.get("type")
+    return get_result_type[res_type](result)
 
 
 # pylint: disable=too-few-public-methods
@@ -63,5 +74,8 @@ class INatSiteSearch:
         api_kwargs = {"q": query, "per_page": 30}
         api_kwargs.update(kwargs)
         search_results = await self.cog.api.get_search_results(**api_kwargs)
-        results = [get_result(result) for result in search_results["results"]]
+        result_type = "Inactive" if "is_active" in kwargs else None
+        results = [
+            get_result(result, result_type) for result in search_results["results"]
+        ]
         return (results, search_results["total_results"])
