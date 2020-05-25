@@ -64,6 +64,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.config.register_global(schema_version=1)
         self.config.register_guild(
             autoobs=False,
+            dot_taxon=False,
             active_role=None,
             bot_prefixes=[],
             inactive_role=None,
@@ -72,7 +73,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             projects={},
             project_emojis={},
         )
-        self.config.register_channel(autoobs=None)
+        self.config.register_channel(autoobs=None, dot_taxon=None)
         self.config.register_user(
             home=None, inat_user_id=None, known_in=[], known_all=False
         )
@@ -253,9 +254,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
-    @autoobs.command()
+    @autoobs.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
-    async def server(self, ctx, state: bool):
+    async def autoobs_server(self, ctx, state: bool):
         """Set server auto-observation mode (mods).
 
         ```
@@ -271,6 +272,52 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(
             f"Server observation auto-preview is {'on' if state else 'off'}."
         )
+        return
+
+    @inat_set.group(invoke_without_command=True)
+    @checks.admin_or_permissions(manage_messages=True)
+    async def dot_taxon(self, ctx, state: InheritableBoolConverter):
+        """Set channel .taxon. lookup (mods).
+
+        To set .taxon. lookup for the channel:
+        ```
+        [p]inat set dot_taxon on
+        [p]inat set dot_taxon off
+        [p]inat set dot_taxon inherit
+        ```
+        When `inherit` is specified, channel mode inherits from the server
+        setting.
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.channel(ctx.channel)
+        await config.dot_taxon.set(state)
+
+        if state is None:
+            server_state = await self.config.guild(ctx.guild).dot_taxon()
+            value = f"inherited from server ({'on' if server_state else 'off'})"
+        else:
+            value = "on" if state else "off"
+        await ctx.send(f"Channel .taxon. lookup is {value}.")
+        return
+
+    @dot_taxon.command(name="server")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def dot_taxon_server(self, ctx, state: bool):
+        """Set server .taxon. lookup (mods).
+
+        ```
+        [p]inat set dot_taxon server on
+        [p]inat set dot_taxon server off
+        ```
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.dot_taxon.set(state)
+        await ctx.send(f"Server .taxon. lookup is {'on' if state else 'off'}.")
         return
 
     @inat.group(name="show")
@@ -295,6 +342,24 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         else:
             value = "on" if channel_state else "off"
         await ctx.send(f"Channel observation auto-preview is {value}.")
+        return
+
+    @inat_show.command(name="dot_taxon")
+    async def show_dot_taxon(self, ctx):
+        """Show channel & server .taxon. lookup."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        server_config = self.config.guild(ctx.guild)
+        server_state = await server_config.dot_taxon()
+        await ctx.send(f"Server .taxon. lookup is {'on' if server_state else 'off'}.")
+        channel_config = self.config.channel(ctx.channel)
+        channel_state = await channel_config.dot_taxon()
+        if channel_state is None:
+            value = f"inherited from server ({'on' if server_state else 'off'})"
+        else:
+            value = "on" if channel_state else "off"
+        await ctx.send(f"Channel .taxon. lookup is {value}.")
         return
 
     @inat_show.command(name="bot_prefixes")

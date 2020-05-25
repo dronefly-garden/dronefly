@@ -7,6 +7,7 @@ from redbot.core import Config
 from redbot.core.bot import Red
 from .api import INatAPI
 from .places import INatPlaceTable
+from .taxa import INatTaxaQuery
 from .users import INatUserTable
 
 
@@ -26,4 +27,5 @@ class MixinMeta(ABC):
         self.reaction_locks: dict
         self.predicate_locks: dict
         self.place_table: INatPlaceTable
+        self.taxa_query: INatTaxaQuery
         self._ready_event: Event

@@ -4,8 +4,10 @@ import asyncio
 import contextlib
 import re
 import discord
+from pyparsing import ParseException
 from redbot.core import commands
 from redbot.core.bot import Red
+from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 from .common import LOG
 from .converters import ContextMemberConverter
@@ -23,6 +25,8 @@ from .taxa import (
     TAXON_PLACES_HEADER,
     TAXON_PLACES_HEADER_PAT,
 )
+
+DOT_TAXON_PAT = re.compile(r"\s\.(?P<query>.*?)\.\s")
 
 
 class PartialAuthor(NamedTuple):
@@ -93,7 +97,30 @@ class Listeners(INatEmbeds, MixinMeta):
                     self.bot, guild, channel, message.author, message, "msg autoobs"
                 )
                 self.bot.dispatch("commandstats_action", ctx)
-        return
+
+        channel_dot_taxon = await self.config.channel(channel).dot_taxon()
+        if channel_dot_taxon is None:
+            dot_taxon = await guild_config.dot_taxon()
+        else:
+            dot_taxon = channel_dot_taxon
+
+        if dot_taxon:
+            mat = re.search(DOT_TAXON_PAT, message.content)
+            if mat:
+                ctx = PartialContext(
+                    self.bot, guild, channel, message.author, message, "msg dot_taxon"
+                )
+                try:
+                    filtered_taxon = await self.taxa_query.query_taxon(
+                        ctx, mat["query"]
+                    )
+                except (LookupError, ParseException):
+                    return
+                msg = await channel.send(
+                    embed=await self.make_taxa_embed(filtered_taxon)
+                )
+                start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+                self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
         self,
