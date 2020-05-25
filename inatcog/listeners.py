@@ -26,7 +26,7 @@ from .taxa import (
     TAXON_PLACES_HEADER_PAT,
 )
 
-DOT_TAXON_PAT = re.compile(r"\s\.(?P<query>.*?)\.\s")
+DOT_TAXON_PAT = re.compile(r"\s\.(?P<query>.*?)\.(\s|$)")
 
 
 class PartialAuthor(NamedTuple):
