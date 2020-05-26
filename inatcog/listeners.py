@@ -118,9 +118,15 @@ class Listeners(INatEmbeds, MixinMeta):
                     )
                 except (LookupError, ParseException):
                     return
-                msg = await channel.send(
-                    embed=await self.make_taxa_embed(filtered_taxon)
-                )
+                if filtered_taxon.user or filtered_taxon.place:
+                    msg = await channel.send(
+                        embed=await self.make_obs_counts_embed(filtered_taxon)
+                    )
+                else:
+                    msg = await channel.send(
+                        embed=await self.make_taxa_embed(filtered_taxon)
+                    )
+
                 start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
                 self.bot.dispatch("commandstats_action", ctx)
 
