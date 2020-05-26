@@ -26,7 +26,9 @@ from .taxa import (
     TAXON_PLACES_HEADER_PAT,
 )
 
-DOT_TAXON_PAT = re.compile(r"\s\.(?P<query>.*?)\.(\s|$)")
+# Minimum 4 characters, first dot must not be followed by a space. Last dot
+# must not be preceded by a space.
+DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
 
 
 class PartialAuthor(NamedTuple):
