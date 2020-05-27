@@ -1,6 +1,7 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple, Optional, Union
+from redbot.core.commands import BadArgument
 from .api import WWW_BASE_URL
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser, RANK_EQUIVALENTS, RANK_LEVELS
@@ -468,19 +469,16 @@ class INatTaxaQuery:
         user = None
 
         if compound_query.user:
-            who = await ContextMemberConverter.convert(ctx, compound_query.user)
             try:
-                user = await self.cog.user_table.get_user(who.member)
-            except LookupError:
-                pass
+                who = await ContextMemberConverter.convert(ctx, compound_query.user)
+            except BadArgument as err:
+                raise LookupError(str(err))
+            user = await self.cog.user_table.get_user(who.member)
 
         if compound_query.place:
-            try:
-                place = await self.cog.place_table.get_place(
-                    ctx.guild, compound_query.place, ctx.author
-                )
-            except LookupError:
-                pass
+            place = await self.cog.place_table.get_place(
+                ctx.guild, compound_query.place, ctx.author
+            )
 
         return FilteredTaxon(taxon, user, place, compound_query.group_by)
 
