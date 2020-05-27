@@ -282,7 +282,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         • Separate from other text with blanks
         • Only one lookup will be performed per message
         • Taxonomy tree is omitted for `by` or `from` lookups
-        • Use `[p]inat show dot_taxon` to show this setting
+        • Show the setting with `[p]inat show dot_taxon`
+        • Set with `[p]inat set dot_taxon` (mods)
 
         **Examples:**
         ```
@@ -372,7 +373,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @inat_show.command(name="dot_taxon")
     async def show_dot_taxon(self, ctx):
-        """Show channel & server .taxon. lookup."""
+        """Show channel & server .taxon. lookup.
+
+        See `[p]help dot_taxon` for how to use the feature."""
         if ctx.author.bot or ctx.guild is None:
             return
 
