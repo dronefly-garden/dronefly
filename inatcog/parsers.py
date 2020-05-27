@@ -79,12 +79,17 @@ RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
 # - See: https://github.com/synrg/dronefly/issues/57
 # - Hybrids:
 #   - Anas × Mareca (from Latin1.printables)
+# - Unicode curly apostrophes:
+#   - "‘’"
 # - Hawaiian common names:
 #   - ʻAlae ʻula
 #   - Note: Hawaiian ʻokina is not the same as curly apostrophe even though similar!
 #   - Hawaiian has some characters in LatinA
 TAXON_NAME_CHARS = (
-    "ʻ" + pyparsing_unicode.Latin1.printables + pyparsing_unicode.LatinA.printables
+    "‘’"
+    + "ʻ"
+    + pyparsing_unicode.Latin1.printables
+    + pyparsing_unicode.LatinA.printables
 )
 
 OPS = ("in", "by", "at", "from")
