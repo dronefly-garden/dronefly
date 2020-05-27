@@ -3,7 +3,6 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
-from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -169,8 +168,6 @@ class INatAPI:
             url = f"{API_BASE_URL}/v1/taxa"
         else:
             url = f"{API_BASE_URL}/v1/search"
-        LOG.info(url)
-        LOG.info(repr(kwargs))
         async with self.session.get(url, params=kwargs) as response:
             if response.status == 200:
                 return await response.json()
