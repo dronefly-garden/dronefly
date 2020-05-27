@@ -274,9 +274,31 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         )
         return
 
-    @inat_set.group(invoke_without_command=True)
+    @commands.command()
+    async def dot_taxon(self, ctx):
+        """How to use the `.taxon.` lookup feature.
+
+        • Surround taxon to lookup with `.`
+        • Separate from other text with blanks
+        • Only one lookup will be performed per message
+        • Taxonomy tree is omitted for `by` or `from` lookups
+        • Use `[p]inat show dot_taxon` to show this setting
+
+        **Examples:**
+        ```
+        It's .rwbl. for sure.
+        ```
+        • behaves like  `[p]taxon rwbl`
+        ```
+        Check out these .lace bugs by me. , please.
+        ```
+        • behaves like `[p]obs lace bugs by me`
+        """
+        await ctx.send_help()
+
+    @inat_set.group(invoke_without_command=True, name="dot_taxon")
     @checks.admin_or_permissions(manage_messages=True)
-    async def dot_taxon(self, ctx, state: InheritableBoolConverter):
+    async def set_dot_taxon(self, ctx, state: InheritableBoolConverter):
         """Set channel .taxon. lookup (mods).
 
         To set .taxon. lookup for the channel:
@@ -287,6 +309,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         ```
         When `inherit` is specified, channel mode inherits from the server
         setting.
+
+        See `[p]help dot_taxon` for usage of the feature.
         """
         if ctx.author.bot or ctx.guild is None:
             return
@@ -302,7 +326,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(f"Channel .taxon. lookup is {value}.")
         return
 
-    @dot_taxon.command(name="server")
+    @set_dot_taxon.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
     async def dot_taxon_server(self, ctx, state: bool):
         """Set server .taxon. lookup (mods).
@@ -311,6 +335,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         [p]inat set dot_taxon server on
         [p]inat set dot_taxon server off
         ```
+
+        See `[p]help dot_taxon` for usage of the feature.
         """
         if ctx.author.bot or ctx.guild is None:
             return
