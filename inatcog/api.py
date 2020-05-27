@@ -17,6 +17,7 @@ WWW_URL_PAT = (
     r"|naturalista\.mx"
     r"|biodiversity4all\.org"
     r"|argentinat\.org"
+    r"|inaturalist\.laji\.fi"
     r")"
     r")"
 )
