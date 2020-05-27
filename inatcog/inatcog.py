@@ -966,7 +966,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        if filtered_taxon.user and filtered_taxon.place:
+            reason = (
+                "I don't understand that query.\nPerhaps you meant:\n"
+                f"`{ctx.clean_prefix}obs {query}`"
+            )
+            await ctx.send(embed=sorry(apology=reason))
+        else:
+            await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @commands.command()
     async def tname(self, ctx, *, query):
