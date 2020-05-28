@@ -25,7 +25,7 @@ and moral support.
     - Suggestions for & testing of new features. See mentions in
       [issues](https://github.com/synrg/dronefly/search?q=mws&type=Issues).
 
-- **[upupa-epops]*(https://www.inaturalist.org/people/upupa-epops)**
+- **[upupa-epops](https://www.inaturalist.org/people/upupa-epops)**
     - Relied on for input & testing when developing new features, as well as starting
       to file some issues.
     - See mentions in [issues](https://github.com/synrg/dronefly/search?q=upupa-epops&unscoped_q=upupa-epops&type=Issues)
