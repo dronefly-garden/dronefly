@@ -14,3 +14,7 @@ TODO: Guidelines for contributions.
 - pytest, unittest, unittest-mock for tests
 - sphinx, autodoc for documentation (planned)
 - [travis](https://travis-ci.com/synrg/dronefly) for build / test automation
+
+## Donations
+
+You can [BuyMeACoffee](https://www.buymeacoffee.com/SyntheticBee) if you like.
