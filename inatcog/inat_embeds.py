@@ -155,7 +155,7 @@ class INatEmbeds(MixinMeta):
             else:
                 title = "Unknown"
             title += f" (Image {num} of {len(obs.images)})"
-            mat = re.search(r"/photos/(\d+)", obs.images[num - 1])
+            mat = re.search(r"/photos/(\d+)", obs.images[num - 1].url)
             if mat:
                 photo_id = mat[1]
                 url = f"{WWW_BASE_URL}/photos/{photo_id}"
@@ -240,7 +240,9 @@ class INatEmbeds(MixinMeta):
                     image_number = preview
                     image_only = True
                 if obs.images and image_number >= 1 and image_number <= len(obs.images):
-                    embed.set_image(url=obs.images[image_number - 1])
+                    image = obs.images[image_number - 1]
+                    embed.set_image(url=image.url)
+                    embed.set_footer(text=image.attribution)
                 else:
                     image_only = False
                     if obs.images:
