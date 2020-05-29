@@ -93,8 +93,8 @@ class Listeners(INatEmbeds, MixinMeta):
                 await message.channel.send(
                     embed=await self.make_obs_embed(guild, obs, url, preview=False)
                 )
-                if obs and obs.sound:
-                    await self.maybe_send_sound_url(channel, obs.sound)
+                if obs and obs.sounds:
+                    await self.maybe_send_sound_url(channel, obs.sounds[0])
                 ctx = PartialContext(
                     self.bot, guild, channel, message.author, message, "msg autoobs"
                 )

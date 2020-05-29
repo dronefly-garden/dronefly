@@ -5,6 +5,7 @@ from typing import List, NamedTuple
 
 from .api import WWW_BASE_URL, WWW_URL_PAT
 from .photos import Photo
+from .sounds import Sound
 from .taxa import Taxon, get_taxon_fields
 from .users import User
 
@@ -43,8 +44,7 @@ class Obs(NamedTuple):
     comments_count: int
     description: str
     project_ids: list
-    sound: str
-    sounds: List[str]
+    sounds: List[Sound]
 
 
 def get_obs_fields(obs):
@@ -114,13 +114,14 @@ def get_obs_fields(obs):
     else:
         thumbnail = ""
 
-    sounds = obs.get("sounds")
-    if sounds:
-        sound = sounds[0].get("file_url")
-        sound_urls = [sound.get("file_url") for sound in sounds]
+    sound_recs = obs.get("sounds")
+    if sound_recs:
+        sounds = [
+            Sound(sound.get("file_url"), sound.get("attribution"))
+            for sound in sound_recs
+        ]
     else:
-        sound = ""
-        sound_urls = []
+        sounds = []
     project_ids = obs["project_ids"]
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
@@ -142,8 +143,7 @@ def get_obs_fields(obs):
         obs["comments_count"],
         obs["description"],
         obs["project_ids"],
-        sound,
-        sound_urls,
+        sounds,
     )
 
 

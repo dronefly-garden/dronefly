@@ -85,16 +85,18 @@ class INatEmbeds(MixinMeta):
         url = await inat_map_url.get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
-    async def maybe_send_sound_url(self, channel, url):
+    async def maybe_send_sound_url(self, channel, sound):
         """Given a URL to a sound, send it if it can be retrieved."""
-        async with self.api.session.get(url) as response:
+        async with self.api.session.get(sound.url) as response:
             try:
-                sound = BytesIO(await response.read())
+                sound_io = BytesIO(await response.read())
             except OSError:
-                sound = None
-        if sound:
+                sound_io = None
+        if sound_io:
             filename = response.url.name.replace(".m4a", ".mp3")
-            await channel.send(file=File(sound, filename=filename))
+            embed = make_embed()
+            embed.set_footer(text=sound.attribution)
+            await channel.send(embed=embed, file=File(sound_io, filename=filename))
 
     async def make_obs_counts_embed(self, arg):
         """Return embed for observation counts from place or by user."""

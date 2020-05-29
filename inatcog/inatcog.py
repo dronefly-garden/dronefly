@@ -426,8 +426,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-        if last.obs.sound:
-            await self.maybe_send_sound_url(ctx.channel, last.obs.sound)
+        if last.obs.sounds:
+            await self.maybe_send_sound_url(ctx.channel, last.obs.sounds[0])
 
     @last_obs.command(name="img", aliases=["image"])
     async def last_obs_img(self, ctx, number=None):
@@ -613,8 +613,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
-            if obs and obs.sound:
-                await self.maybe_send_sound_url(ctx.channel, obs.sound)
+            if obs and obs.sounds:
+                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
         else:
             await ctx.send(embed=sorry())
 
@@ -897,8 +897,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(
                 embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
             )
-            if obs and obs.sound:
-                await self.maybe_send_sound_url(ctx.channel, obs.sound)
+            if obs and obs.sounds:
+                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
             return
 
         try:
