@@ -464,6 +464,33 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
+    @last_obs_taxon.command(name="by")
+    async def last_obs_taxon_by(self, ctx, user: QuotedContextMemberConverter):
+        """Show taxon for recently mentioned observation with counts for a user."""
+        last = await self.get_last_obs_from_history(ctx)
+        if not (last and last.obs and last.obs.taxon):
+            await ctx.send(embed=sorry(apology="Nothing found"))
+            return
+
+        inat_user = await self.user_table.get_user(user.member)
+        filtered_taxon = FilteredTaxon(last.obs.taxon, inat_user, None, None)
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
+
+    @last_obs_taxon.command(name="from")
+    async def last_obs_taxon_from(self, ctx, place: str):
+        """Show taxon for recently mentioned observation with counts for a place."""
+        last = await self.get_last_obs_from_history(ctx)
+        if not (last and last.obs and last.obs.taxon):
+            await ctx.send(embed=sorry(apology="Nothing found"))
+            return
+
+        try:
+            place = await self.place_table.get_place(ctx.guild, place, ctx.author)
+        except LookupError:
+            place = None
+        filtered_taxon = FilteredTaxon(last.obs.taxon, None, place, None)
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
+
     @last_obs.command(name="map", aliases=["m"])
     async def last_obs_map(self, ctx):
         """Show map for recently mentioned iNat observation."""
