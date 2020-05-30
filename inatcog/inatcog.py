@@ -460,7 +460,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """Show default taxon image for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await self.send_embed_for_taxon_image(ctx, last.taxon)
+            await self.send_embed_for_taxon_image(ctx, last.obs.taxon)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
