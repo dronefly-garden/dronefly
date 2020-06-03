@@ -398,24 +398,28 @@ class INatEmbeds(MixinMeta):
 
     async def get_user_project_stats(self, project_id, user, category: str = "obs"):
         """Get user's ranked obs & spp stats for a project."""
-        if category == "taxa":
-            rank = "unranked"
+
+        async def get_unranked_count(*args, **kwargs):
             response = await self.api.get_observations(
-                "species_counts",
+                *args,
                 project_id=project_id,
                 user_id=user.user_id,
                 per_page=0,
+                **kwargs,
             )
             if response:
-                count = response["total_results"]
-            else:
-                count = "unknown"
+                return response["total_results"]
+            return "unknown"
+
+        if category == "taxa":
+            rank = "unranked"
+            count = await get_unranked_count("species_counts")
             return (count, rank)
 
         kwargs = {}
         if category == "spp":
             kwargs["order_by"] = "species_count"
-        # FIXME: cache for a short while so users can compare stats but not
+        # TODO: cache for a short while so users can compare stats but not
         # have to worry about stale data.
         response = await self.api.get_project_observers_stats(
             project_id=project_id, **kwargs
@@ -438,8 +442,11 @@ class INatEmbeds(MixinMeta):
                     else ranked.observation_count
                 )
             else:
-                rank = "unranked"
-                count = "unknown"
+                if category == "spp":
+                    count = await get_unranked_count("species_counts", hrank="species")
+                else:
+                    count = await get_unranked_count()  # obs
+                rank = ">500" if count > 0 else "unranked"
         return (count, rank)
 
     async def get_user_server_projects_stats(self, ctx, user):
@@ -518,13 +525,6 @@ class INatEmbeds(MixinMeta):
         embed.add_field(
             name=f"Obs (rank) / Spp (rank) / Leaf taxa", value=fmt, inline=True
         )
-        if "unknown" in (obs_count, spp_count, taxa_count) or "unranked" in (
-            obs_rank,
-            spp_rank,
-        ):
-            embed.set_footer(
-                text="Unknown & unranked indicates counts & ranks below the top 500."
-            )
         return embed
 
     async def send_embed_for_taxon_image(self, ctx, taxon):
