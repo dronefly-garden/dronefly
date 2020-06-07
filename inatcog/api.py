@@ -33,6 +33,19 @@ class INatAPI:
         self.users_cache = {}
         self.session = aiohttp.ClientSession()
 
+    async def get_controlled_terms(self, *args, **kwargs):
+        """Query API for controlled terms."""
+
+        # Select endpoint based on call signature:
+        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
+        endpoint = "/".join(("/v1/controlled_terms", *args))
+
+        async with self.session.get(
+            f"{API_BASE_URL}{endpoint}", params=kwargs
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+
     async def get_taxa(self, *args, **kwargs):
         """Query API for taxa matching parameters."""
 
