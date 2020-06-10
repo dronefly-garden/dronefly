@@ -27,7 +27,7 @@ from .places import INatPlaceTable, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject
 from .listeners import Listeners
 from .search import INatSiteSearch
-from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon
+from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon, PAT_TAXON_LINK
 from .users import INatUserTable, PAT_USER_LINK, User
 
 _SCHEMA_VERSION = 2
@@ -1111,6 +1111,16 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(filtered_taxon.taxon.name)
 
     async def _search(self, ctx, query, keyword: Optional[str]):
+        async def taxon_reaction(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):
+            number = buttons.index(reaction)
+            result = result_pages[number + page * 10]
+            mat = re.search(PAT_TAXON_LINK, result)
+            if mat:
+                await self.taxon(ctx, query=mat["taxon_id"])
+            await menu(ctx, pages, controls, message, page, timeout)
+
         kwargs = {}
         url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
@@ -1125,9 +1135,19 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         (result_pages, total_results, per_page) = await self.site_search.search(
             query, **kwargs
         )
-        pages = [
-            "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
-        ]
+        buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"]
+        controls = DEFAULT_CONTROLS.copy()
+        for button in buttons:
+            controls[button] = taxon_reaction
+
+        pages = []
+        for group in grouper(result_pages, 10):
+            lines = [
+                " ".join((buttons[i], result))
+                for i, result in enumerate(filter(None, group), 0)
+            ]
+            page = "\n".join(lines)
+            pages.append(page)
 
         if pages:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
@@ -1144,7 +1164,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 for index, page in enumerate(pages, start=1)
             ]
             # menu() does not support lazy load of embeds iterator.
-            await menu(ctx, embeds, DEFAULT_CONTROLS)
+            await menu(ctx, embeds, controls)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
