@@ -1,8 +1,9 @@
 """Module to handle projects."""
 from dataclasses import dataclass, field
+import re
 from typing import List, Union
 from dataclasses_json import config, DataClassJsonMixin
-from .api import WWW_BASE_URL
+from .api import WWW_BASE_URL, WWW_URL_PAT
 
 
 @dataclass
@@ -16,6 +17,14 @@ class Project(DataClassJsonMixin):
     def __post_init__(self):
         """URL for project."""
         self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
+
+# Match project link from any partner site.
+PAT_PROJECT_LINK = re.compile(
+    r"\b(?P<url>" + WWW_URL_PAT + r"/projects"
+    r"/((?P<project_id>\d+)|(?P<project_slug>[a-z][-_a-z0-9]{2,39}))"
+    r")\b",
+    re.I,
+)
 
 
 @dataclass

@@ -1,10 +1,18 @@
 """Module to handle users."""
+import re
 from typing import Union
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
-from .api import WWW_BASE_URL
+from .api import WWW_BASE_URL, WWW_URL_PAT
 from .converters import QuotedContextMemberConverter
 
+# Match place link from any partner site.
+PAT_PLACE_LINK = re.compile(
+    r"\b(?P<url>" + WWW_URL_PAT + r"/places"
+    r"/((?P<place_id>\d+)|(?P<place_slug>[a-z][-_a-z0-9]{2,39}))"
+    r")\b",
+    re.I,
+)
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 

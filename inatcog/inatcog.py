@@ -23,8 +23,8 @@ from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
 from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
-from .places import INatPlaceTable, RESERVED_PLACES
-from .projects import INatProjectTable, UserProject
+from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
+from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon, PAT_TAXON_LINK
@@ -1119,6 +1119,15 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 await self.taxon(ctx, query=mat["taxon_id"])
+            mat = re.search(PAT_USER_LINK, result)
+            if mat:
+                await ctx.send(f"{WWW_BASE_URL}/people/{mat['user_id'] or mat['login']}")
+            mat = re.search(PAT_PROJECT_LINK, result)
+            if mat:
+                await self.project(ctx, query=mat["project_id"])
+            mat = re.search(PAT_PLACE_LINK, result)
+            if mat:
+                await self.place(ctx, query=mat["place_id"])
             await menu(ctx, pages, controls, message, page, timeout)
 
         kwargs = {}
