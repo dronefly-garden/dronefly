@@ -253,7 +253,7 @@ class INatEmbeds(MixinMeta):
                             f"*Image number out of range; must be between 1 and {num}.*"
                         )
                     else:
-                        error = f"*This observation has no images.*"
+                        error = "*This observation has no images.*"
 
             if image_only:
                 (title, url) = format_image_title_url(taxon, obs, image_number)
@@ -523,7 +523,7 @@ class INatEmbeds(MixinMeta):
             f"[{taxa_count}]({taxa_url})"
         )
         embed.add_field(
-            name=f"Obs (rank) / Spp (rank) / Leaf taxa", value=fmt, inline=True
+            name="Obs (rank) / Spp (rank) / Leaf taxa", value=fmt, inline=True
         )
         return embed
 

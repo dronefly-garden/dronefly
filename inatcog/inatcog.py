@@ -723,7 +723,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         places[abbrev_lowered] = place_number
         await config.places.set(places)
-        await ctx.send(f"Place abbreviation added.")
+        await ctx.send("Place abbreviation added.")
 
     @place.command(name="list")
     async def place_list(self, ctx):
@@ -821,7 +821,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         projects[abbrev_lowered] = project_number
         await config.projects.set(projects)
-        await ctx.send(f"Project abbreviation added.")
+        await ctx.send("Project abbreviation added.")
 
     @project.command(name="list")
     async def project_list(self, ctx):
@@ -953,7 +953,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     @obs.command(name="with")
     async def obs_with(self, ctx, term_name, value_name, *, taxon_query):
         """Show first matching observation with term & value for taxon.
-        
+
         Note: this is an experimental feature. The command may change form or
         be replaced with a different command before it is finalized."""
         controlled_terms_dict = await self.api.get_controlled_terms()
