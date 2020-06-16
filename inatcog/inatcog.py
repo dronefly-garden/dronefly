@@ -1111,23 +1111,32 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(filtered_taxon.taxon.name)
 
     async def _search(self, ctx, query, keyword: Optional[str]):
-        async def taxon_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):
-            number = buttons.index(reaction)
-            result = result_pages[number + page * 10]
+        async def display_selected(result):
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 await self.taxon(ctx, query=mat["taxon_id"])
+                return
             mat = re.search(PAT_USER_LINK, result)
             if mat:
                 await ctx.send(f"{WWW_BASE_URL}/people/{mat['user_id'] or mat['login']}")
+                return
             mat = re.search(PAT_PROJECT_LINK, result)
             if mat:
                 await self.project(ctx, query=mat["project_id"])
+                return
             mat = re.search(PAT_PLACE_LINK, result)
             if mat:
                 await self.place(ctx, query=mat["place_id"])
+
+        async def select_result_reaction(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):
+            number = buttons.index(reaction)
+            selected_result_offset = number + page * 10
+            if selected_result_offset > len(results) - 1:
+                return
+            result = results[number + page * 10]
+            await display_selected(result)
             await menu(ctx, pages, controls, message, page, timeout)
 
         kwargs = {}
@@ -1141,16 +1150,19 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
-        (result_pages, total_results, per_page) = await self.site_search.search(
+        (results, total_results, per_page) = await self.site_search.search(
             query, **kwargs
         )
-        buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"]
+
+        all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"]
+        buttons_count = min(len(results), len(all_buttons))
+        buttons = all_buttons[:buttons_count]
         controls = DEFAULT_CONTROLS.copy()
         for button in buttons:
-            controls[button] = taxon_reaction
+            controls[button] = select_result_reaction
 
         pages = []
-        for group in grouper(result_pages, 10):
+        for group in grouper(results, 10):
             lines = [
                 " ".join((buttons[i], result))
                 for i, result in enumerate(filter(None, group), 0)
@@ -1160,7 +1172,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         if pages:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
-            if len(result_pages) < total_results:
+            if len(results) < total_results:
                 pages_len = (
                     f"{pages_len}; {ceil((total_results - per_page)/10)} more not shown"
                 )
@@ -1172,7 +1184,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 )
                 for index, page in enumerate(pages, start=1)
             ]
-            # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, controls)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
