@@ -1118,7 +1118,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 return
             mat = re.search(PAT_USER_LINK, result)
             if mat:
-                await ctx.send(f"{WWW_BASE_URL}/people/{mat['user_id'] or mat['login']}")
+                await ctx.send(
+                    f"{WWW_BASE_URL}/people/{mat['user_id'] or mat['login']}"
+                )
                 return
             mat = re.search(PAT_PROJECT_LINK, result)
             if mat:

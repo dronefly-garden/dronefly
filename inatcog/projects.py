@@ -18,6 +18,7 @@ class Project(DataClassJsonMixin):
         """URL for project."""
         self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
 
+
 # Match project link from any partner site.
 PAT_PROJECT_LINK = re.compile(
     r"\b(?P<url>" + WWW_URL_PAT + r"/projects"
