@@ -31,6 +31,7 @@ class INatAPI:
         self.places_cache = {}
         self.projects_cache = {}
         self.users_cache = {}
+        self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
 
     async def get_controlled_terms(self, *args, **kwargs):
@@ -189,11 +190,15 @@ class INatAPI:
     async def get_users(self, query: Union[int, str], refresh_cache=False):
         """Get the users for the specified login, user_id, or query."""
         if isinstance(query, int) or query.isnumeric():
+            user_id = int(query)
             request = f"/v1/users/{query}"
         else:
+            user_id = None
             request = f"/v1/users/autocomplete?q={query}"
 
-        if refresh_cache or query not in self.users_cache:
+        if refresh_cache or (
+            query not in self.users_cache and query not in self.users_login_cache
+        ):
             time_since_request = time() - self.request_time
             # Limit to 60 requests every minute. Hard upper limit is 100 per minute
             # after which they rate-limit, but the API doc requests that we
@@ -204,10 +209,70 @@ class INatAPI:
                 await asyncio.sleep(1.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 if response.status == 200:
-                    self.users_cache[query] = await response.json()
+                    users = await response.json()
+                    if user_id is None:
+                        if len(users) == 1:
+                            # String query matched exactly one result; cache it:
+                            user = users[0]
+                            # The entry itself is put in the main cache, indexed by user_id.
+                            self.users_cache[user["id"]] = users
+                            # Lookaside by login stores only linkage to the
+                            # entry just stored in the main cache.
+                            self.users_login_cache[user["login"]] = user["id"]
+                            # Additionally add an entry to the main cache for
+                            # the query string, but only for other than an
+                            # exact login id match as that would serve no
+                            # purpose. This is slightly wasteful, but makes for
+                            # simpler code.
+                            if user["login"] != query:
+                                self.users_cache[query] = users
+                        else:
+                            # Cache multiple results matched by string.
+                            self.users_cache[query] = users
+                            # Additional synthesized cache results per matched user, as
+                            # if they were queried individually.
+                            for user in users["results"]:
+                                user_json = {}
+                                user_json["results"] = [user]
+                                self.users_cache[user["id"]] = user_json
+                                # Only index the login in the lookaside cache if it
+                                # isn't the query string itself, already indexed above
+                                # in the main cache.
+                                # - i.e. it's possible a search for a login matches
+                                #   more than one entry (e.g. david, david99, etc.)
+                                #   so retrieving it from cache must always return
+                                #   all matching results, not just one for the login
+                                #   itself
+                                if user["login"] != query:
+                                    self.users_login_cache[user["login"]] = user["id"]
+                    else:
+                        # i.e. lookup by user_id only returns one match
+                        user = users[0]
+                        if user:
+                            self.users_cache[user_id] = user
+                            self.users_login_cache[user["login"]] = user_id
                     self.request_time = time()
 
-        return self.users_cache[query] if query in self.users_cache else None
+        if query in self.users_cache:
+            return self.users_cache[query]
+        # - Lookaside for login is only consulted if not found in the main
+        #   users_cache.
+        # - This is important, since a lookup by user_id could prime the
+        #   lookaside cache with the single login entry, and then a subsequent
+        #   search by login could return multiple results into the main cache.
+        #   From then on, searching for the login should return the cached
+        #   multiple results from the main cache, not the single result that the
+        #   lookaside users_login_cache supports.
+        # - This shortcut seems like it would return incomplete results depending
+        #   on the order in which lookups are performed. However, since the login
+        #   lookaside is primarily in support of iNat login lookups from already
+        #   cached project members, this is OK. The load of the whole project
+        #   membership at once (get_observers_from_projects) for that use case
+        #   ensures all relevant matches are already individually cached.
+        if query in self.users_login_cache:
+            user_id = self.users_login_cache[query]
+            return self.users_cache[user_id]
+        return None
 
     async def get_observers_from_projects(self, project_ids: list):
         """Get observers for a list of project ids.
@@ -234,5 +299,6 @@ class INatAPI:
                     user_json = {}
                     user_json["results"] = [user]
                     self.users_cache[user_id] = user_json
+                    self.users_login_cache[user["login"]] = user_id
 
         return users

@@ -1275,6 +1275,31 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             )
             await asyncio.sleep(1)
 
+    @commands.command()
+    async def iuser(self, ctx, *, login: str):
+        """Show iNat user matching login.
+
+        Examples:
+
+        `[p]iuser kueda`
+        """
+        if not ctx.guild:
+            return
+
+        found = None
+        response = await self.api.get_users(login, refresh_cache=True)
+        if response and response["results"]:
+            found = next(
+                (result for result in response["results"] if result["login"] == login),
+                None,
+            )
+        if not found:
+            await ctx.send(embed=sorry(apology="Not found"))
+            return
+
+        inat_user = User.from_dict(found)
+        await ctx.send(inat_user.profile_url())
+
     @commands.group(invoke_without_command=True, aliases=["who"])
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known.
