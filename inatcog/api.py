@@ -209,13 +209,16 @@ class INatAPI:
                 await asyncio.sleep(1.0 - time_since_request)
             async with self.session.get(f"{API_BASE_URL}{request}") as response:
                 if response.status == 200:
-                    users = await response.json()
+                    json_data = await response.json()
+                    results = json_data.get("results")
+                    if not results:
+                        return None
                     if user_id is None:
-                        if len(users) == 1:
+                        if len(results) == 1:
                             # String query matched exactly one result; cache it:
-                            user = users[0]
+                            user = results[0]
                             # The entry itself is put in the main cache, indexed by user_id.
-                            self.users_cache[user["id"]] = users
+                            self.users_cache[user["id"]] = json_data
                             # Lookaside by login stores only linkage to the
                             # entry just stored in the main cache.
                             self.users_login_cache[user["login"]] = user["id"]
@@ -225,13 +228,13 @@ class INatAPI:
                             # purpose. This is slightly wasteful, but makes for
                             # simpler code.
                             if user["login"] != query:
-                                self.users_cache[query] = users
+                                self.users_cache[query] = json_data
                         else:
                             # Cache multiple results matched by string.
-                            self.users_cache[query] = users
+                            self.users_cache[query] = json_data
                             # Additional synthesized cache results per matched user, as
                             # if they were queried individually.
-                            for user in users["results"]:
+                            for user in results:
                                 user_json = {}
                                 user_json["results"] = [user]
                                 self.users_cache[user["id"]] = user_json
@@ -247,9 +250,9 @@ class INatAPI:
                                     self.users_login_cache[user["login"]] = user["id"]
                     else:
                         # i.e. lookup by user_id only returns one match
-                        user = users[0]
+                        user = results[0]
                         if user:
-                            self.users_cache[user_id] = user
+                            self.users_cache[user_id] = json_data
                             self.users_login_cache[user["login"]] = user_id
                     self.request_time = time()
 
