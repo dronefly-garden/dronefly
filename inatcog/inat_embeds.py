@@ -401,18 +401,16 @@ class INatEmbeds(MixinMeta):
 
         async def get_unranked_count(*args, **kwargs):
             response = await self.api.get_observations(
-                *args,
-                project_id=project_id,
-                user_id=user.user_id,
-                per_page=0,
-                **kwargs,
+                *args, project_id=project_id, user_id=user.user_id, per_page=0, **kwargs
             )
             if response:
                 return response["total_results"]
             return "unknown"
 
+        rank = "unranked"
+        count = 0
+
         if category == "taxa":
-            rank = "unranked"
             count = await get_unranked_count("species_counts")
             return (count, rank)
 
