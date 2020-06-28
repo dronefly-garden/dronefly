@@ -1290,7 +1290,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         response = await self.api.get_users(login, refresh_cache=True)
         if response and response["results"]:
             found = next(
-                (result for result in response["results"] if result["login"] == login),
+                (
+                    result
+                    for result in response["results"]
+                    if login in (str(result["id"]), result["login"])
+                ),
                 None,
             )
         if not found:

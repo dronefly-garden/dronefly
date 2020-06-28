@@ -3,6 +3,7 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
+from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -192,13 +193,17 @@ class INatAPI:
         if isinstance(query, int) or query.isnumeric():
             user_id = int(query)
             request = f"/v1/users/{query}"
+            key = user_id
         else:
             user_id = None
             request = f"/v1/users/autocomplete?q={query}"
+            key = query
+        LOG.info(repr(key))
 
         if refresh_cache or (
-            query not in self.users_cache and query not in self.users_login_cache
+            key not in self.users_cache and key not in self.users_login_cache
         ):
+            LOG.info("cache miss")
             time_since_request = time() - self.request_time
             # Limit to 60 requests every minute. Hard upper limit is 100 per minute
             # after which they rate-limit, but the API doc requests that we
@@ -213,8 +218,10 @@ class INatAPI:
                     results = json_data.get("results")
                     if not results:
                         return None
+                    LOG.info("found")
                     if user_id is None:
                         if len(results) == 1:
+                            LOG.info("unique text")
                             # String query matched exactly one result; cache it:
                             user = results[0]
                             # The entry itself is put in the main cache, indexed by user_id.
@@ -227,11 +234,12 @@ class INatAPI:
                             # exact login id match as that would serve no
                             # purpose. This is slightly wasteful, but makes for
                             # simpler code.
-                            if user["login"] != query:
-                                self.users_cache[query] = json_data
+                            if user["login"] != key:
+                                self.users_cache[key] = json_data
                         else:
+                            LOG.info("non-unique text")
                             # Cache multiple results matched by string.
-                            self.users_cache[query] = json_data
+                            self.users_cache[key] = json_data
                             # Additional synthesized cache results per matched user, as
                             # if they were queried individually.
                             for user in results:
@@ -246,18 +254,22 @@ class INatAPI:
                                 #   so retrieving it from cache must always return
                                 #   all matching results, not just one for the login
                                 #   itself
-                                if user["login"] != query:
+                                if user["login"] != key:
                                     self.users_login_cache[user["login"]] = user["id"]
                     else:
+                        LOG.info("numeric")
+                        LOG.info(repr(results))
                         # i.e. lookup by user_id only returns one match
                         user = results[0]
                         if user:
-                            self.users_cache[user_id] = json_data
-                            self.users_login_cache[user["login"]] = user_id
+                            LOG.info("caching numeric")
+                            self.users_cache[key] = json_data
+                            self.users_login_cache[user["login"]] = key
                     self.request_time = time()
 
-        if query in self.users_cache:
-            return self.users_cache[query]
+        if key in self.users_cache:
+            LOG.info("cache hit")
+            return self.users_cache[key]
         # - Lookaside for login is only consulted if not found in the main
         #   users_cache.
         # - This is important, since a lookup by user_id could prime the
@@ -272,9 +284,11 @@ class INatAPI:
         #   cached project members, this is OK. The load of the whole project
         #   membership at once (get_observers_from_projects) for that use case
         #   ensures all relevant matches are already individually cached.
-        if query in self.users_login_cache:
-            user_id = self.users_login_cache[query]
+        if key in self.users_login_cache:
+            LOG.info("login cache hit")
+            user_id = self.users_login_cache[key]
             return self.users_cache[user_id]
+        LOG.info("cache miss")
         return None
 
     async def get_observers_from_projects(self, project_ids: list):
