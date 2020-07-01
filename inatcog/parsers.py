@@ -90,6 +90,7 @@ TAXON_NAME_CHARS = (
     + "ʻ"
     + pyparsing_unicode.Latin1.printables
     + pyparsing_unicode.LatinA.printables
+    + pyparsing_unicode.Japanese.Katakana.printables
 )
 
 OPS = ("in", "by", "at", "from")
