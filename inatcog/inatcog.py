@@ -652,8 +652,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sounds:
                 await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-        else:
-            await ctx.send(embed=sorry())
+            return
+
+        mat = re.search(PAT_TAXON_LINK, query)
+        if mat:
+            await self.taxon(ctx, query=mat["taxon_id"])
+            return
+
+        await ctx.send(embed=sorry())
 
     @commands.command()
     async def map(self, ctx, *, taxa_list):
