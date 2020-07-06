@@ -145,26 +145,11 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
-        """Return embed for an observation link."""
-        # pylint: disable=too-many-locals
+    def format_obs(self, obs):
+        """Format an observation title & description."""
+
         def format_count(label, count):
             return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
-
-        def format_image_title_url(taxon, obs, num):
-            if taxon:
-                title = format_taxon_name(taxon)
-            else:
-                title = "Unknown"
-            title += f" (Image {num} of {len(obs.images)})"
-            mat = re.search(r"/photos/(\d+)", obs.images[num - 1].url)
-            if mat:
-                photo_id = mat[1]
-                url = f"{WWW_BASE_URL}/photos/{photo_id}"
-            else:
-                url = None
-
-            return (title, url)
 
         def format_title(taxon, obs):
             if taxon:
@@ -227,12 +212,36 @@ class INatEmbeds(MixinMeta):
                 title += format_count("sound", len(obs.sounds))
             return title
 
+        taxon = obs.taxon
+        user = obs.user
+        title = format_title(taxon, obs)
+        summary = format_summary(user, obs)
+        title, summary = format_community_id(title, summary, obs)
+        title = format_media_counts(title, obs)
+        return (title, summary)
+
+    async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
+        """Return embed for an observation link."""
+        # pylint: disable=too-many-locals
+
+        def format_image_title_url(taxon, obs, num):
+            if taxon:
+                title = format_taxon_name(taxon)
+            else:
+                title = "Unknown"
+            title += f" (Image {num} of {len(obs.images)})"
+            mat = re.search(r"/photos/(\d+)", obs.images[num - 1].url)
+            if mat:
+                photo_id = mat[1]
+                url = f"{WWW_BASE_URL}/photos/{photo_id}"
+            else:
+                url = None
+
+            return (title, url)
+
         embed = make_embed(url=url)
 
         if obs:
-            taxon = obs.taxon
-            user = obs.user
-
             image_only = False
             error = None
             if preview:
@@ -256,16 +265,11 @@ class INatEmbeds(MixinMeta):
                         error = "*This observation has no images.*"
 
             if image_only:
-                (title, url) = format_image_title_url(taxon, obs, image_number)
+                (title, url) = format_image_title_url(obs.taxon, obs, image_number)
                 embed.title = title
                 embed.url = url
             else:
-                title = format_title(taxon, obs)
-                summary = format_summary(user, obs)
-                title, summary = format_community_id(title, summary, obs)
-                title = format_media_counts(title, obs)
-
-                embed.title = title
+                embed.title, summary = self.format_obs(obs)
                 if error:
                     summary += "\n" + error
                 embed.description = summary

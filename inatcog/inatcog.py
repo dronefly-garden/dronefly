@@ -1118,6 +1118,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     async def _search(self, ctx, query, keyword: Optional[str]):
         async def display_selected(result):
+            mat = re.search(r"obs#:\s+(?P<obs_id>[0-9]+)", result)
+            if mat:
+                await self.link(
+                    ctx, query=f"{WWW_BASE_URL}/observations/{mat['obs_id']}"
+                )
+                return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 await self.taxon(ctx, query=mat["taxon_id"])
@@ -1140,10 +1146,10 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ctx, pages, controls, message, page, timeout, reaction
         ):
             number = buttons.index(reaction)
-            selected_result_offset = number + page * 10
+            selected_result_offset = number + page * per_embed_page
             if selected_result_offset > len(results) - 1:
                 return
-            result = results[number + page * 10]
+            result = results[number + page * per_embed_page]
             await display_selected(result)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -1155,14 +1161,46 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 url = f"{WWW_BASE_URL}/taxa/search?q={urllib.parse.quote_plus(query)}"
                 url += f"&sources={keyword}"
                 kwargs["is_active"] = "any"
+            elif kw_lowered == "obs":
+                try:
+                    filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+                    kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
+                    if filtered_taxon.user:
+                        kwargs["user_id"] = filtered_taxon.user.user_id
+                    if filtered_taxon.place:
+                        kwargs["place_id"] = filtered_taxon.place.place_id
+                except ParseException:
+                    await ctx.send(embed=sorry())
+                    return
+                except LookupError as err:
+                    reason = err.args[0]
+                    await ctx.send(embed=sorry(apology=reason))
+                    return
+
+                url = f"{WWW_BASE_URL}/observations?q={urllib.parse.quote_plus(query)}"
+                kwargs["include_new_projects"] = 1
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
-        (results, total_results, per_page) = await self.site_search.search(
-            query, **kwargs
-        )
+        if kw_lowered == "obs":
+            response = await self.api.get_observations(**kwargs)
+            raw_results = response["results"]
+            results = [
+                "\n".join(self.format_obs(get_obs_fields(result)))
+                for result in raw_results
+            ]
+            total_results = response["total_results"]
+            per_page = response["per_page"]
+            per_embed_page = 5
+        else:
+            (results, total_results, per_page) = await self.site_search.search(
+                query, **kwargs
+            )
+            per_embed_page = 10
 
-        all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"]
+        all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"][
+            :per_embed_page
+        ]
         buttons_count = min(len(results), len(all_buttons))
         buttons = all_buttons[:buttons_count]
         controls = DEFAULT_CONTROLS.copy()
@@ -1170,7 +1208,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             controls[button] = select_result_reaction
 
         pages = []
-        for group in grouper(results, 10):
+        for group in grouper(results, per_embed_page):
             lines = [
                 " ".join((buttons[i], result))
                 for i, result in enumerate(filter(None, group), 0)
@@ -1182,7 +1220,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             if len(results) < total_results:
                 pages_len = (
-                    f"{pages_len}; {ceil((total_results - per_page)/10)} more not shown"
+                    f"{pages_len}; "
+                    f"{ceil((total_results - per_page)/per_embed_page)} more not shown"
                 )
             embeds = [
                 make_embed(
@@ -1228,6 +1267,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def search_users(self, ctx, *, query):
         """Search iNat users."""
         await self._search(ctx, query, "users")
+
+    @search.command(name="obs", aliases=["observation", "observations"])
+    async def search_obs(self, ctx, *, query):
+        """Search iNat observations."""
+        await self._search(ctx, query, "obs")
 
     @commands.command(aliases=["sp"])
     async def species(self, ctx, *, query):
