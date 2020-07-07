@@ -1126,10 +1126,22 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         async def display_selected(result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
-                await self.link(
-                    ctx, query=f"{WWW_BASE_URL}/observations/{mat['obs_id']}"
-                )
-                return
+                results = (
+                    await self.api.get_observations(
+                        mat["obs_id"], include_new_projects=1
+                    )
+                )["results"]
+                obs = get_obs_fields(results[0]) if results else None
+                if obs:
+                    embed = await self.make_obs_embed(ctx.guild, obs, url)
+                    if obs and obs.sounds:
+                        await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                    controls = {"❌": DEFAULT_CONTROLS["❌"]}
+                    await menu(ctx, [embed], controls)
+                    return
+                else:
+                    await ctx.send(embed=sorry(apology="Not found"))
+                    return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 await self.taxon(ctx, query=mat["taxon_id"])
