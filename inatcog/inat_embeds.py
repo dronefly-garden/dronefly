@@ -192,7 +192,8 @@ class INatEmbeds(MixinMeta):
                 idents_count = (
                     f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
                 )
-            summary += f" [obs#: {obs.obs_id}]"
+            if with_id:
+                summary += f" [obs#: {obs.obs_id}]"
             if (
                 obs.community_taxon
                 and obs.community_taxon.taxon_id != obs.taxon.taxon_id
