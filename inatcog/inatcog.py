@@ -27,7 +27,13 @@ from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
 from .search import INatSiteSearch
-from .taxa import FilteredTaxon, INatTaxaQuery, get_taxon, PAT_TAXON_LINK
+from .taxa import (
+    FilteredTaxon,
+    INatTaxaQuery,
+    format_taxon_name,
+    get_taxon,
+    PAT_TAXON_LINK,
+)
 from .users import INatUserTable, PAT_USER_LINK, User
 
 _SCHEMA_VERSION = 2
@@ -1118,7 +1124,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     async def _search(self, ctx, query, keyword: Optional[str]):
         async def display_selected(result):
-            mat = re.search(r"obs#:\s+(?P<obs_id>[0-9]+)", result)
+            mat = re.search(PAT_OBS_LINK, result)
             if mat:
                 await self.link(
                     ctx, query=f"{WWW_BASE_URL}/observations/{mat['obs_id']}"
@@ -1170,6 +1176,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                         kwargs["user_id"] = filtered_taxon.user.user_id
                     if filtered_taxon.place:
                         kwargs["place_id"] = filtered_taxon.place.place_id
+                    kwargs["verifiable"] = "any"
+                    query = format_taxon_name(filtered_taxon.taxon)
                 except ParseException:
                     await ctx.send(embed=sorry())
                     return
@@ -1178,8 +1186,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     await ctx.send(embed=sorry(apology=reason))
                     return
 
-                url = f"{WWW_BASE_URL}/observations?q={urllib.parse.quote_plus(query)}"
+                url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
                 kwargs["include_new_projects"] = 1
+                kwargs["per_page"] = 200
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
@@ -1187,7 +1196,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             response = await self.api.get_observations(**kwargs)
             raw_results = response["results"]
             results = [
-                "\n".join(self.format_obs(get_obs_fields(result)))
+                "\n".join(
+                    self.format_obs(
+                        get_obs_fields(result),
+                        with_description=False,
+                        with_id=False,
+                        with_link=True,
+                    )
+                )
                 for result in raw_results
             ]
             total_results = response["total_results"]

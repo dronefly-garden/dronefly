@@ -145,7 +145,7 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def format_obs(self, obs):
+    def format_obs(self, obs, with_description=True, with_id=True, with_link=False):
         """Format an observation title & description."""
 
         def format_count(label, count):
@@ -169,7 +169,7 @@ class INatEmbeds(MixinMeta):
                 summary += " on " + obs.obs_on
             if obs.obs_at:
                 summary += " at " + obs.obs_at
-            if obs.description:
+            if with_description and obs.description:
                 # Contribute up to 10 lines from the description, and no more
                 # than 500 characters:
                 #
@@ -218,6 +218,8 @@ class INatEmbeds(MixinMeta):
         summary = format_summary(user, obs)
         title, summary = format_community_id(title, summary, obs)
         title = format_media_counts(title, obs)
+        if with_link:
+            title = f"[{title}]({WWW_BASE_URL}/observations/{obs.obs_id})"
         return (title, summary)
 
     async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
