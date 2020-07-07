@@ -1154,6 +1154,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await menu(ctx, pages, controls, message, page, timeout)
 
         kwargs = {}
+        kw_lowered = ""
         url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
             kw_lowered = keyword.lower()
