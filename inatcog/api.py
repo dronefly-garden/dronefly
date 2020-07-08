@@ -3,7 +3,6 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
-from .common import LOG
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
@@ -198,12 +197,10 @@ class INatAPI:
             user_id = None
             request = f"/v1/users/autocomplete?q={query}"
             key = query
-        LOG.info(repr(key))
 
         if refresh_cache or (
             key not in self.users_cache and key not in self.users_login_cache
         ):
-            LOG.info("cache miss")
             time_since_request = time() - self.request_time
             # Limit to 60 requests every minute. Hard upper limit is 100 per minute
             # after which they rate-limit, but the API doc requests that we
@@ -218,10 +215,8 @@ class INatAPI:
                     results = json_data.get("results")
                     if not results:
                         return None
-                    LOG.info("found")
                     if user_id is None:
                         if len(results) == 1:
-                            LOG.info("unique text")
                             # String query matched exactly one result; cache it:
                             user = results[0]
                             # The entry itself is put in the main cache, indexed by user_id.
@@ -237,7 +232,6 @@ class INatAPI:
                             if user["login"] != key:
                                 self.users_cache[key] = json_data
                         else:
-                            LOG.info("non-unique text")
                             # Cache multiple results matched by string.
                             self.users_cache[key] = json_data
                             # Additional synthesized cache results per matched user, as
@@ -257,18 +251,14 @@ class INatAPI:
                                 if user["login"] != key:
                                     self.users_login_cache[user["login"]] = user["id"]
                     else:
-                        LOG.info("numeric")
-                        LOG.info(repr(results))
                         # i.e. lookup by user_id only returns one match
                         user = results[0]
                         if user:
-                            LOG.info("caching numeric")
                             self.users_cache[key] = json_data
                             self.users_login_cache[user["login"]] = key
                     self.request_time = time()
 
         if key in self.users_cache:
-            LOG.info("cache hit")
             return self.users_cache[key]
         # - Lookaside for login is only consulted if not found in the main
         #   users_cache.
@@ -285,10 +275,8 @@ class INatAPI:
         #   membership at once (get_observers_from_projects) for that use case
         #   ensures all relevant matches are already individually cached.
         if key in self.users_login_cache:
-            LOG.info("login cache hit")
             user_id = self.users_login_cache[key]
             return self.users_cache[user_id]
-        LOG.info("cache miss")
         return None
 
     async def get_observers_from_projects(self, project_ids: list):
