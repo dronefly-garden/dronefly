@@ -1133,7 +1133,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 )["results"]
                 obs = get_obs_fields(results[0]) if results else None
                 if obs:
-                    embed = await self.make_obs_embed(ctx.guild, obs, url)
+                    embed = await self.make_obs_embed(
+                        ctx.guild, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                    )
                     if obs and obs.sounds:
                         await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                     controls = {"❌": DEFAULT_CONTROLS["❌"]}
