@@ -232,7 +232,8 @@ class INatEmbeds(MixinMeta):
         title, summary = format_community_id(title, summary, obs)
         title = format_media_counts(title, obs)
         if with_link:
-            title = f"[{title}]({WWW_BASE_URL}/observations/{obs.obs_id})"
+            link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+            title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
     async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
