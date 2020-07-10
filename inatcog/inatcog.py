@@ -1123,6 +1123,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(filtered_taxon.taxon.name)
 
     async def _search(self, ctx, query, keyword: Optional[str]):
+        async def cancel_timeout(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):
+            await menu(ctx, pages, controls, message, page, 0.1)
+
         async def display_selected(result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
@@ -1138,7 +1143,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     )
                     if obs and obs.sounds:
                         await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-                    controls = {"❌": DEFAULT_CONTROLS["❌"]}
+                    controls = {"❌": DEFAULT_CONTROLS["❌"], "✅": cancel_timeout}
                     await menu(ctx, [embed], controls)
                     return
                 else:
