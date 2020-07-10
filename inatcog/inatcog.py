@@ -1214,8 +1214,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     self.format_obs(
                         get_obs_fields(result),
                         with_description=False,
-                        with_id=False,
                         with_link=True,
+                        compact=True,
                     )
                 )
                 for result in raw_results

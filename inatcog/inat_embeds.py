@@ -25,6 +25,10 @@ from .taxa import (
     TAXON_PLACES_HEADER,
 )
 
+SHORT_DATE_PAT = re.compile(
+    r"(^.*\d{1,2}:\d{2}(:\d{2})?(\s+(am|pm))?)(.*$)", flags=re.I
+)
+
 
 @format_items_for_embed
 def format_taxon_names_for_embed(*args, **kwargs):
@@ -145,7 +149,7 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def format_obs(self, obs, with_description=True, with_id=True, with_link=False):
+    def format_obs(self, obs, with_description=True, with_link=False, compact=False):
         """Format an observation title & description."""
 
         def format_count(label, count):
@@ -164,10 +168,18 @@ class INatEmbeds(MixinMeta):
             return title
 
         def format_summary(user, obs):
-            summary = "Observed by " + user.profile_link()
+            if compact:
+                summary = "by " + user.login
+            else:
+                summary = "Observed by " + user.profile_link()
             if obs.obs_on:
-                summary += " on " + obs.obs_on
+                if compact:
+                    summary += " on " + re.sub(SHORT_DATE_PAT, r"\1", obs.obs_on)
+                else:
+                    summary += " on " + obs.obs_on
             if obs.obs_at:
+                if compact:
+                    summary += "\n"
                 summary += " at " + obs.obs_at
             if with_description and obs.description:
                 # Contribute up to 10 lines from the description, and no more
@@ -192,7 +204,7 @@ class INatEmbeds(MixinMeta):
                 idents_count = (
                     f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
                 )
-            if with_id:
+            if not compact:
                 summary += f" [obs#: {obs.obs_id}]"
             if (
                 obs.community_taxon
