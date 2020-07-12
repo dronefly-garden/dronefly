@@ -28,13 +28,13 @@ from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxa import (
     FilteredTaxon,
-    INatTaxaQuery,
     format_taxon_name,
     get_taxon,
     PAT_TAXON_LINK,
     RANK_EQUIVALENTS,
     RANK_KEYWORDS,
 )
+from .taxon_query import INatTaxonQuery
 from .users import INatUserTable, PAT_USER_LINK, User
 
 _SCHEMA_VERSION = 2
@@ -60,7 +60,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
         self.p = inflect.engine()  # pylint: disable=invalid-name
-        self.taxa_query = INatTaxaQuery(self)
+        self.taxon_query = INatTaxonQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
@@ -532,7 +532,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await self.send_embed_for_taxon(ctx, last.obs.taxon)
         elif last.obs.taxon:
             full_record = await get_taxon(self, last.obs.taxon.taxon_id)
-            ancestor = await self.taxa_query.get_taxon_ancestor(
+            ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )
             if ancestor:
@@ -627,7 +627,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
             full_record = await get_taxon(self, last.taxon.taxon_id)
-            ancestor = await self.taxa_query.get_taxon_ancestor(
+            ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )
             if ancestor:
@@ -686,7 +686,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxa_query.query_taxa(taxa_list)
+            taxa = await self.taxon_query.query_taxa(taxa_list)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -952,7 +952,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
             start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
         except ParseException:
@@ -984,7 +984,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -1029,7 +1029,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxa_query.query_taxa(taxa_list)
+            taxa = await self.taxon_query.query_taxa(taxa_list)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -1048,7 +1048,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         See `[p]help taxon` for `taxon_query` format."""
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -1085,7 +1085,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -1112,7 +1112,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except ParseException:
             await ctx.send("I don't understand")
             return
@@ -1190,7 +1190,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 kwargs["is_active"] = "any"
             elif kw_lowered == "obs":
                 try:
-                    filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
+                    filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
                     kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
                     if filtered_taxon.user:
                         kwargs["user_id"] = filtered_taxon.user.user_id
