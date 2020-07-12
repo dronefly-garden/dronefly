@@ -1,9 +1,12 @@
 """Converters for command arguments."""
+import argparse
 import re
+import shlex
 from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
+from .taxon_classes import CompoundQuery
 
 
 class ContextMemberConverter(NamedTuple):
@@ -78,3 +81,34 @@ class InheritableBoolConverter(Converter):
         if lowered in ("i", "inherit", "inherits", "inherited"):
             return None
         raise BadArgument(f'{argument} is not a recognized boolean option or "inherit"')
+
+
+class NoExitParser(argparse.ArgumentParser):
+    """Handle default error as bad argument, not sys.exit."""
+
+    def error(self, message):
+        raise BadArgument() from None
+
+
+class CompoundQueryConverter(CompoundQuery):
+    """Convert query with natural language filters via argparse."""
+
+    @classmethod
+    async def convert(cls, ctx: Context, argument: str):
+        """Parse argument into compound taxon query."""
+
+        parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
+        parser.add_argument("--of", nargs="*", dest="main", default=[])
+        parser.add_argument("--in", nargs="*", dest="ancestor", default=[])
+        parser.add_argument("--by", nargs="*", dest="user", default=[])
+        parser.add_argument("--from", nargs="*", dest="place", default=[])
+
+        vals = parser.parse_args(shlex.split(argument))
+
+        return cls(
+            main=vals["main"],
+            ancestor=vals["ancestor"],
+            user=vals["user"],
+            place=vals["place"],
+            group_by="",
+        )
