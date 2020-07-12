@@ -1,5 +1,4 @@
 """Module providing parsers for natural language query DSLs."""
-from collections import namedtuple
 from pyparsing import (
     Word,
     pyparsing_unicode,
@@ -11,68 +10,14 @@ from pyparsing import (
     CaselessKeyword,
     oneOf,
 )
+from .taxa import (
+    CompoundQuery,
+    SimpleQuery,
+    RANK_LEVELS,
+    RANK_EQUIVALENTS,
+    RANK_KEYWORDS,
+)
 
-# RANK_LEVELS and RANK_EQUIVALENTS are from:
-# - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
-RANK_LEVELS = {
-    "stateofmatter": 100,
-    "unranked": 90,  # Invented to make parent check work (this is null in the db)
-    "kingdom": 70,
-    "phylum": 60,
-    "subphylum": 57,
-    "superclass": 53,
-    "class": 50,
-    "subclass": 47,
-    "infraclass": 45,
-    "subterclass": 44,
-    "superorder": 43,
-    "order": 40,
-    "suborder": 37,
-    "infraorder": 35,
-    "parvorder": 34.5,
-    "zoosection": 34,
-    "zoosubsection": 33.5,
-    "superfamily": 33,
-    "epifamily": 32,
-    "family": 30,
-    "subfamily": 27,
-    "supertribe": 26,
-    "tribe": 25,
-    "subtribe": 24,
-    "genus": 20,
-    "genushybrid": 20,
-    "subgenus": 15,
-    "section": 13,
-    "subsection": 12,
-    "complex": 11,
-    "species": 10,
-    "hybrid": 10,
-    "subspecies": 5,
-    "variety": 5,
-    "form": 5,
-    "infrahybrid": 5,
-}
-
-RANK_EQUIVALENTS = {
-    "division": "phylum",
-    "sub-class": "subclass",
-    "super-order": "superorder",
-    "sub-order": "suborder",
-    "super-family": "superfamily",
-    "sub-family": "subfamily",
-    "gen": "genus",
-    "sp": "species",
-    "spp": "species",
-    "infraspecies": "subspecies",
-    "ssp": "subspecies",
-    "sub-species": "subspecies",
-    "subsp": "subspecies",
-    "trinomial": "subspecies",
-    "var": "variety",
-    # 'unranked': None,
-}
-
-RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
 # These are Unicode characters that are either symbols, or else are letters
 # & diacritics from foreign names that may be known to English speakers
 # (e.g. Hawaiian common names).
@@ -94,9 +39,6 @@ TAXON_NAME_CHARS = (
 )
 
 OPS = ("in", "by", "at", "from")
-
-SimpleQuery = namedtuple("SimpleQuery", "taxon_id, terms, phrases, ranks, code")
-CompoundQuery = namedtuple("CompoundQuery", "main, ancestor, user, place, group_by")
 
 
 class TaxonQueryParser:
