@@ -2,7 +2,7 @@
 import re
 from typing import NamedTuple
 import discord
-from redbot.core import commands
+from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
 
 
@@ -12,7 +12,7 @@ class ContextMemberConverter(NamedTuple):
     member: discord.Member
 
     @classmethod
-    async def convert(cls, ctx: commands.Context, arg: str):
+    async def convert(cls, ctx: Context, arg: str):
         """Find best match for member from recent messages."""
         if not ctx.guild:
             return
@@ -23,9 +23,9 @@ class ContextMemberConverter(NamedTuple):
 
         # Prefer exact match:
         try:
-            match = await commands.MemberConverter().convert(ctx, arg)
+            match = await MemberConverter().convert(ctx, arg)
             return cls(match)
-        except commands.BadArgument:
+        except BadArgument:
             match = None
 
         pat = re.escape(arg)
@@ -53,12 +53,12 @@ class ContextMemberConverter(NamedTuple):
             return cls(match)
 
         # Otherwise no partial match from context, & no exact match
-        raise commands.BadArgument(
+        raise BadArgument(
             "No recently active member found. Try exact username or nickname."
         )
 
 
-class QuotedContextMemberConverter(commands.Converter):
+class QuotedContextMemberConverter(Converter):
     """Convert possibly quoted arg by dropping double-quotes."""
 
     async def convert(self, ctx, argument):
@@ -66,7 +66,7 @@ class QuotedContextMemberConverter(commands.Converter):
         return await ContextMemberConverter.convert(ctx, dequoted)
 
 
-class InheritableBoolConverter(commands.Converter):
+class InheritableBoolConverter(Converter):
     """Convert truthy or 'inherit' to True, False, or None (inherit)."""
 
     async def convert(self, ctx, argument):
@@ -77,6 +77,4 @@ class InheritableBoolConverter(commands.Converter):
             return False
         if lowered in ("i", "inherit", "inherits", "inherited"):
             return None
-        raise commands.BadArgument(
-            f'{argument} is not a recognized boolean option or "inherit"'
-        )
+        raise BadArgument(f'{argument} is not a recognized boolean option or "inherit"')
