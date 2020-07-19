@@ -178,7 +178,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if argument.isnumeric():
             return argument
         mat = re.search(PAT_OBS_LINK, argument)
-        if mat["url"]:
+        if mat and mat["url"]:
             return argument
         args_normalized = shlex.split(argument, posix=False)
         if not re.match(r"^--", args_normalized[0]):

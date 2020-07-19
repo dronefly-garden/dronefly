@@ -926,7 +926,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
         """Show observation summary for link or number.
 
         e.g.
