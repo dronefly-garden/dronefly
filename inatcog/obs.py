@@ -2,12 +2,10 @@
 
 import re
 
-from .api_classes import WWW_BASE_URL
+from .base_classes import WWW_BASE_URL, Obs, PAT_OBS_LINK, User
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields
-from .users import User
-from .obs_classes import Obs, PAT_OBS_LINK
 
 
 def get_obs_fields(obs):

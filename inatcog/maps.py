@@ -1,7 +1,7 @@
 """Module to make maps for iNat."""
 from collections import namedtuple
 import math
-from .api_classes import WWW_BASE_URL
+from .base_classes import WWW_BASE_URL
 
 MapCoords = namedtuple("MapCoords", "zoom_level, center_lat, center_lon")
 MapLink = namedtuple("MapLink", "title, url")

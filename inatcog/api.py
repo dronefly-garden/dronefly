@@ -3,7 +3,7 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
-from .api_classes import API_BASE_URL
+from .base_classes import API_BASE_URL
 
 
 class INatAPI:

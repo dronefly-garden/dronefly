@@ -10,7 +10,7 @@ from pyparsing import (
     CaselessKeyword,
     oneOf,
 )
-from .taxon_classes import (
+from .base_classes import (
     CompoundQuery,
     SimpleQuery,
     RANK_LEVELS,

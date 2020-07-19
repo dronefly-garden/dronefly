@@ -1,10 +1,8 @@
 """Module to search iNat site."""
 
-from .api_classes import WWW_BASE_URL
-from .places import Place
+from .base_classes import Place, WWW_BASE_URL, User
 from .projects import Project
 from .taxa import format_taxon_name, get_taxon_fields
-from .users import User
 
 
 def get_place(result):

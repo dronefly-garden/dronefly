@@ -6,9 +6,8 @@ from discord import User
 
 import timeago
 
-from .api_classes import WWW_BASE_URL
+from .base_classes import WWW_BASE_URL, PAT_OBS_LINK
 from .obs import get_obs_fields
-from .obs_classes import PAT_OBS_LINK
 from .taxa import get_taxon, PAT_TAXON_LINK
 
 

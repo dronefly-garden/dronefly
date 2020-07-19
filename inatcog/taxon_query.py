@@ -4,7 +4,7 @@ from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .taxon_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
+from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 

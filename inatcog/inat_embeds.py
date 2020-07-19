@@ -5,12 +5,11 @@ from typing import Union
 from discord import File
 import html2markdown
 from redbot.core.utils.menus import start_adding_reactions
-from .api_classes import WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
-from .obs_classes import PAT_OBS_LINK
+from .base_classes import WWW_BASE_URL, PAT_OBS_LINK, FilteredTaxon
 from .projects import UserProject, ObserverStats
 from .taxa import (
     format_taxon_name,
@@ -23,7 +22,6 @@ from .taxa import (
     TAXON_COUNTS_HEADER,
     TAXON_PLACES_HEADER,
 )
-from .taxon_classes import FilteredTaxon
 
 SHORT_DATE_PAT = re.compile(
     r"(^.*\d{1,2}:\d{2}(:\d{2})?(\s+(am|pm))?)(.*$)", flags=re.I

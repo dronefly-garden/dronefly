@@ -1,10 +1,7 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple, Optional, Union
-from .api_classes import WWW_BASE_URL
-from .places import Place
-from .users import User
-from .taxon_classes import RANK_LEVELS, Taxon
+from .base_classes import WWW_BASE_URL, RANK_LEVELS, Taxon, User, Place
 
 
 TAXON_ID_LIFE = 48460

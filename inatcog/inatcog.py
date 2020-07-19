@@ -11,7 +11,14 @@ from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
-from .api_classes import WWW_BASE_URL
+from .base_classes import (
+    WWW_BASE_URL,
+    PAT_OBS_LINK,
+    FilteredTaxon,
+    RANK_EQUIVALENTS,
+    RANK_KEYWORDS,
+    User,
+)
 from .checks import known_inat_user
 from .common import DEQUOTE, grouper
 from .controlled_terms import ControlledTerm, match_controlled_term
@@ -24,15 +31,13 @@ from .converters import (
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs
-from .obs_classes import PAT_OBS_LINK
 from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxa import format_taxon_name, get_taxon, PAT_TAXON_LINK
-from .taxon_classes import FilteredTaxon, RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxon_query import INatTaxonQuery
-from .users import INatUserTable, PAT_USER_LINK, User
+from .users import INatUserTable, PAT_USER_LINK
 
 _SCHEMA_VERSION = 2
 _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]

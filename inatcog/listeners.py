@@ -13,9 +13,8 @@ from .common import LOG
 from .converters import ContextMemberConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
-from .obs_classes import PAT_OBS_TAXON_LINK
+from .base_classes import PAT_OBS_TAXON_LINK, Place
 from .obs import maybe_match_obs
-from .places import Place
 from .taxa import (
     get_taxon,
     format_place_taxon_counts,

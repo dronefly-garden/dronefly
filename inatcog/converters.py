@@ -6,9 +6,9 @@ from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
-from .obs_classes import PAT_OBS_LINK
-from .taxon_classes import (
+from .base_classes import (
     CompoundQuery,
+    PAT_OBS_LINK,
     SimpleQuery,
     RANK_EQUIVALENTS,
     RANK_KEYWORDS,
