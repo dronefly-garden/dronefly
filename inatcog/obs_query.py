@@ -1,6 +1,7 @@
 """Module to query iNat observations."""
 from typing import Union
 from .base_classes import CompoundQuery
+from .converters import ContextMemberConverter
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
 
@@ -14,12 +15,28 @@ class INatObsQuery:
     async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
         """Query observations and return best matching (usually most recent) if found."""
         kwargs = {}
-        filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
-        kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
-        if filtered_taxon.user:
-            kwargs["user_id"] = filtered_taxon.user.user_id
-        if filtered_taxon.place:
-            kwargs["place_id"] = filtered_taxon.place.place_id
+        filtered_taxon = None
+        try:
+            filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
+        except LookupError:
+            pass
+        if filtered_taxon:
+            kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
+            if filtered_taxon.user:
+                kwargs["user_id"] = filtered_taxon.user.user_id
+            if filtered_taxon.place:
+                kwargs["place_id"] = filtered_taxon.place.place_id
+        else:
+            if query.user:
+                who = await ContextMemberConverter.convert(ctx, query.user)
+                user = await self.cog.user_table.get_user(who.member)
+                kwargs["user_id"] = user.user_id
+
+            if query.place:
+                place = await self.cog.place_table.get_place(
+                    ctx.guild, query.place, ctx.author
+                )
+                kwargs["place_id"] = place.place_id
         if query.controlled_term:
             query_term, query_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()
