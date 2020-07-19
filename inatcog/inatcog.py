@@ -955,7 +955,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                 return
             else:
-                await ctx.send(embed=sorry(apology="Is string"))
+                await ctx.send(embed=sorry(apology="I don't understand"))
                 return
 
         try:
