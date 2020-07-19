@@ -10,7 +10,8 @@ from .taxon_classes import (
     CompoundQuery,
     SimpleQuery,
     RANK_EQUIVALENTS,
-)  # RANK_KEYWORDS,
+    RANK_KEYWORDS,
+)
 
 
 class ContextMemberConverter(NamedTuple):
@@ -164,8 +165,23 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
     @classmethod
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
-        argument_normalized = argument
-        # TODO: do stuff to argument_normalized
-        # - unadorned ranks added to --rank arg list
-        # - initial words not belonging to an option added to --of arg list
-        super(argument_normalized)
+        args_normalized = shlex.split(argument, posix=False)
+        if not re.match(r"^--", args_normalized[0]):
+            args_normalized.insert(0, "--of")
+        ranks = []
+        for arg in args_normalized:
+            arg_lowered = arg.lower()
+            if arg_lowered in RANK_KEYWORDS:
+                args_normalized.remove(arg_lowered)
+                ranks.append(arg_lowered)
+            # FIXME: determine programmatically from parser:
+            if arg_lowered in ["of", "in", "by", "from", "rank"]:
+                args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
+        if ranks:
+            args_normalized.append("--rank")
+            args_normalized += ranks
+        argument_normalized = " ".join(args_normalized)
+        await ctx.send(argument_normalized)
+        return await super(NaturalCompoundQueryConverter, cls).convert(
+            ctx, argument_normalized
+        )

@@ -16,7 +16,7 @@ from .common import DEQUOTE, grouper
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import (
     ContextMemberConverter,
-    CompoundQueryConverter,
+    NaturalCompoundQueryConverter,
     QuotedContextMemberConverter,
     InheritableBoolConverter,
 )
@@ -918,7 +918,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query: Union[CompoundQueryConverter, str]):
+    async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
         """Show observation summary for link or number.
 
         e.g.
