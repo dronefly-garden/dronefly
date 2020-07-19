@@ -181,8 +181,6 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if mat and mat["url"]:
             return argument
         args_normalized = shlex.split(argument, posix=False)
-        if not re.match(r"^--", args_normalized[0]):
-            args_normalized.insert(0, "--of")
         ranks = []
         for arg in args_normalized:
             arg_lowered = arg.lower()
@@ -192,6 +190,8 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
             # FIXME: determine programmatically from parser:
             if arg_lowered in ["of", "in", "by", "from", "rank", "with"]:
                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
+        if not re.match(r"^--", args_normalized[0]):
+            args_normalized.insert(0, "--of")
         if ranks:
             args_normalized.append("--rank")
             args_normalized += ranks
