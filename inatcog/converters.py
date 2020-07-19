@@ -101,6 +101,19 @@ class CompoundQueryConverter(CompoundQuery):
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
+        def detect_terms_phrases_code(terms_and_phrases: list):
+            """Detect terms, phrases, and code."""
+            terms = shlex.split(" ".join(list(terms_and_phrases)))
+            phrases = [
+                mat[1].split()
+                for phrase in terms_and_phrases
+                if (mat := re.match(r'^"(.*)"$', phrase))
+            ]
+            code = None
+            if not phrases and len(terms) == 1 and len(terms[0]) == 4:
+                code = terms[0].upper()
+            return terms, phrases, code
+
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
         parser.add_argument("--of", nargs="+", dest="main", default=[])
         parser.add_argument("--in", nargs="+", dest="ancestor", default=[])
@@ -108,7 +121,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--from", nargs="+", dest="place", default=[])
         parser.add_argument("--rank", dest="rank", default="")
 
-        vals = parser.parse_args(shlex.split(argument))
+        vals = parser.parse_args(shlex.split(argument, posix=False))
         ranks = []
         if vals.rank:
             parsed_ranks = shlex.shlex(vals.rank)
@@ -122,15 +135,15 @@ class CompoundQueryConverter(CompoundQuery):
                 ]
             )
 
-        # TODO: of & in can contain phrases (starts & ends with double-quotes)
-        # TODO: support multiple by & from (implicit 'or'), delimited by commas
         if vals.main or vals.ancestor or vals.user or vals.place:
+            terms, phrases, code = detect_terms_phrases_code(vals.main)
             main = SimpleQuery(
-                taxon_id=None, terms=vals.main, phrases=None, ranks=ranks, code=None
+                taxon_id=None, terms=terms, phrases=phrases, ranks=ranks, code=code,
             )
             if vals.ancestor:
+                terms, phrases, code = detect_terms_phrases_code(vals.ancestor)
                 ancestor = SimpleQuery(
-                    taxon_id=None, terms=vals.ancestor, phrases=None, code=None
+                    taxon_id=None, terms=terms, phrases=phrases, code=code
                 )
             else:
                 ancestor = None

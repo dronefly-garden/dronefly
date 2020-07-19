@@ -12,7 +12,7 @@ from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTRO
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
 from .checks import known_inat_user
-from .common import DEQUOTE, grouper, LOG
+from .common import DEQUOTE, grouper
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import (
     ContextMemberConverter,
@@ -935,7 +935,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         ```
         """
 
-        LOG.info(repr(query))
         if isinstance(query, str):
             obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
             # Note: if the user specified an invalid or deleted id, a url is still
