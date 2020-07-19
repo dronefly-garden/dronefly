@@ -6,7 +6,11 @@ from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
-from .taxon_classes import CompoundQuery, SimpleQuery
+from .taxon_classes import (
+    CompoundQuery,
+    SimpleQuery,
+    RANK_EQUIVALENTS,
+)  # RANK_KEYWORDS,
 
 
 class ContextMemberConverter(NamedTuple):
@@ -91,31 +95,42 @@ class NoExitParser(argparse.ArgumentParser):
 
 
 class CompoundQueryConverter(CompoundQuery):
-    """Convert query with natural language filters via argparse."""
+    """Convert query via argparse."""
 
     @classmethod
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
-        parser.add_argument("--of", nargs="*", dest="main", default=[])
-        parser.add_argument("--in", nargs="*", dest="ancestor", default=[])
-        parser.add_argument("--by", nargs="*", dest="user", default=[])
-        parser.add_argument("--from", nargs="*", dest="place", default=[])
+        parser.add_argument("--of", nargs="+", dest="main", default=[])
+        parser.add_argument("--in", nargs="+", dest="ancestor", default=[])
+        parser.add_argument("--by", nargs="+", dest="user", default=[])
+        parser.add_argument("--from", nargs="+", dest="place", default=[])
+        parser.add_argument("--rank", dest="rank", default="")
 
         vals = parser.parse_args(shlex.split(argument))
+        ranks = []
+        if vals.rank:
+            parsed_ranks = shlex.shlex(vals.rank)
+            parsed_ranks.whitespace += ","
+            parsed_ranks.whitespace_split = True
+            ranks_with_equivalents = list(parsed_ranks)
+            ranks = list(
+                [
+                    RANK_EQUIVALENTS[rank] if rank in RANK_EQUIVALENTS else rank
+                    for rank in ranks_with_equivalents
+                ]
+            )
 
+        # TODO: of & in can contain phrases (starts & ends with double-quotes)
+        # TODO: support multiple by & from (implicit 'or'), delimited by commas
         if vals.main or vals.ancestor or vals.user or vals.place:
             main = SimpleQuery(
-                taxon_id=None, terms=vals.main, phrases=None, ranks=None, code=None
+                taxon_id=None, terms=vals.main, phrases=None, ranks=ranks, code=None
             )
             if vals.ancestor:
                 ancestor = SimpleQuery(
-                    taxon_id=None,
-                    terms=vals.ancestor,
-                    phrases=None,
-                    ranks=None,
-                    code=None,
+                    taxon_id=None, terms=vals.ancestor, phrases=None, code=None
                 )
             else:
                 ancestor = None
@@ -128,3 +143,16 @@ class CompoundQueryConverter(CompoundQuery):
             )
 
         return argument
+
+
+class NaturalCompoundQueryConverter(CompoundQueryConverter):
+    """Convert query with natural language filters via argparse."""
+
+    @classmethod
+    async def convert(cls, ctx: Context, argument: str):
+        """Parse argument into compound taxon query."""
+        argument_normalized = argument
+        # TODO: do stuff to argument_normalized
+        # - unadorned ranks added to --rank arg list
+        # - initial words not belonging to an option added to --of arg list
+        super(argument_normalized)

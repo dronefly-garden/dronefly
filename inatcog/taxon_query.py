@@ -3,15 +3,8 @@ from typing import Union
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser
-from .taxa import (
-    FilteredTaxon,
-    get_taxon,
-    get_taxon_fields,
-    match_taxon,
-    RANK_EQUIVALENTS,
-    RANK_LEVELS,
-)
-from .taxon_classes import CompoundQuery
+from .taxa import FilteredTaxon, get_taxon, get_taxon_fields, match_taxon
+from .taxon_classes import CompoundQuery, RANK_EQUIVALENTS, RANK_LEVELS
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 

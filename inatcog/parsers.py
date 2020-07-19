@@ -10,8 +10,13 @@ from pyparsing import (
     CaselessKeyword,
     oneOf,
 )
-from .taxa import RANK_LEVELS, RANK_EQUIVALENTS, RANK_KEYWORDS
-from .taxon_classes import CompoundQuery, SimpleQuery
+from .taxon_classes import (
+    CompoundQuery,
+    SimpleQuery,
+    RANK_LEVELS,
+    RANK_EQUIVALENTS,
+    RANK_KEYWORDS,
+)
 
 # These are Unicode characters that are either symbols, or else are letters
 # & diacritics from foreign names that may be known to English speakers
