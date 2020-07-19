@@ -13,7 +13,8 @@ from .common import LOG
 from .converters import ContextMemberConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
-from .obs import maybe_match_obs, PAT_OBS_TAXON_LINK
+from .obs_classes import PAT_OBS_TAXON_LINK
+from .obs import maybe_match_obs
 from .places import Place
 from .taxa import (
     get_taxon,
@@ -113,7 +114,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     self.bot, guild, channel, message.author, message, "msg dot_taxon"
                 )
                 try:
-                    filtered_taxon = await self.taxa_query.query_taxon(
+                    filtered_taxon = await self.taxon_query.query_taxon(
                         ctx, mat["query"]
                     )
                 except (LookupError, ParseException):

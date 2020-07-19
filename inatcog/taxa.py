@@ -4,34 +4,7 @@ from typing import NamedTuple, Optional, Union
 from .api import WWW_BASE_URL
 from .places import Place
 from .users import User
-from .taxon_classes import RANK_LEVELS
-
-
-class Taxon(NamedTuple):
-    """A taxon."""
-
-    name: str
-    taxon_id: int
-    common: Optional[str]
-    term: str
-    thumbnail: Optional[str]
-    image: Optional[str]
-    image_attribution: Optional[str]
-    rank: str
-    ancestor_ids: list
-    observations: int
-    ancestor_ranks: list
-    active: bool
-
-
-class FilteredTaxon(NamedTuple):
-    """A taxon with optional filters."""
-
-    taxon: Taxon
-    user: User
-    place: Place
-    group_by: str
-    # location: Location
+from .taxon_classes import RANK_LEVELS, Taxon
 
 
 TAXON_ID_LIFE = 48460

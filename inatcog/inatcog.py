@@ -22,13 +22,14 @@ from .converters import (
 )
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
-from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
+from .obs import get_obs_fields, maybe_match_obs
+from .obs_classes import PAT_OBS_LINK
 from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
 from .search import INatSiteSearch
-from .taxa import FilteredTaxon, format_taxon_name, get_taxon, PAT_TAXON_LINK
-from .taxon_classes import RANK_EQUIVALENTS, RANK_KEYWORDS
+from .taxa import format_taxon_name, get_taxon, PAT_TAXON_LINK
+from .taxon_classes import FilteredTaxon, RANK_EQUIVALENTS, RANK_KEYWORDS
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable, PAT_USER_LINK, User
 

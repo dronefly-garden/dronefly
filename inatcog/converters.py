@@ -6,6 +6,7 @@ from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
+from .obs_classes import PAT_OBS_LINK
 from .taxon_classes import (
     CompoundQuery,
     SimpleQuery,
@@ -165,6 +166,11 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
     @classmethod
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
+        if argument.isnumeric():
+            return argument
+        mat = re.search(PAT_OBS_LINK, argument)
+        if mat["url"]:
+            return argument
         args_normalized = shlex.split(argument, posix=False)
         if not re.match(r"^--", args_normalized[0]):
             args_normalized.insert(0, "--of")

@@ -1,5 +1,7 @@
 """Module containing taxon query classes."""
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Optional
+from .places import Place
+from .users import User
 
 
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
@@ -83,3 +85,30 @@ class CompoundQuery(NamedTuple):
     user: str
     place: str
     group_by: str
+
+
+class Taxon(NamedTuple):
+    """A taxon."""
+
+    name: str
+    taxon_id: int
+    common: Optional[str]
+    term: str
+    thumbnail: Optional[str]
+    image: Optional[str]
+    image_attribution: Optional[str]
+    rank: str
+    ancestor_ids: list
+    observations: int
+    ancestor_ranks: list
+    active: bool
+
+
+class FilteredTaxon(NamedTuple):
+    """A taxon with optional filters."""
+
+    taxon: Taxon
+    user: User
+    place: Place
+    group_by: str
+    # location: Location
