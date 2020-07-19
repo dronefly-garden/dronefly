@@ -15,8 +15,6 @@ class INatObsQuery:
         """Query observations and return best matching (usually most recent) if found."""
         kwargs = {}
         filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
-        ctx.send(repr(query))
-        ctx.send(repr(filtered_taxon))
         kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
         if filtered_taxon.user:
             kwargs["user_id"] = filtered_taxon.user.user_id
