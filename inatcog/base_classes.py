@@ -121,6 +121,7 @@ class CompoundQuery(NamedTuple):
     user: str
     place: str
     group_by: str
+    controlled_term: str
 
 
 class Taxon(NamedTuple):

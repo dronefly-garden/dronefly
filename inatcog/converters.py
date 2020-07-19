@@ -122,6 +122,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--by", nargs="+", dest="user", default=[])
         parser.add_argument("--from", nargs="+", dest="place", default=[])
         parser.add_argument("--rank", dest="rank", default="")
+        parser.add_argument("--with", nargs=2, dest="controlled_term")
 
         vals = parser.parse_args(shlex.split(argument, posix=False))
         ranks = []
@@ -137,7 +138,14 @@ class CompoundQueryConverter(CompoundQuery):
                 ]
             )
 
-        if vals.main or vals.ancestor or vals.user or vals.place:
+        if (
+            vals.main
+            or vals.ancestor
+            or vals.user
+            or vals.place
+            or vals.rank
+            or vals.controlled_term
+        ):
             terms, phrases, code = detect_terms_phrases_code(vals.main)
             main = SimpleQuery(
                 taxon_id=None, terms=terms, phrases=phrases, ranks=ranks, code=code,
@@ -155,6 +163,7 @@ class CompoundQueryConverter(CompoundQuery):
                 user=" ".join(vals.user),
                 place=" ".join(vals.place),
                 group_by="",
+                controlled_term=vals.controlled_term,
             )
 
         return argument
@@ -181,7 +190,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 args_normalized.remove(arg_lowered)
                 ranks.append(arg_lowered)
             # FIXME: determine programmatically from parser:
-            if arg_lowered in ["of", "in", "by", "from", "rank"]:
+            if arg_lowered in ["of", "in", "by", "from", "rank", "with"]:
                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
         if ranks:
             args_normalized.append("--rank")

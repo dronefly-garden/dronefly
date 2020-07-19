@@ -53,5 +53,5 @@ def match_controlled_term(
         )
         if matched_value:
             return (matched_term, matched_value)
-        raise LookupError("No matching value")
-    raise LookupError("No matching term")
+        raise LookupError("No matching value for controlled term")
+    raise LookupError("No matching controlled term")

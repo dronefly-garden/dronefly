@@ -8,7 +8,7 @@ import asyncio
 import discord
 import inflect
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
 from .base_classes import (
@@ -21,7 +21,6 @@ from .base_classes import (
 )
 from .checks import known_inat_user
 from .common import DEQUOTE, grouper
-from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import (
     ContextMemberConverter,
     NaturalCompoundQueryConverter,
@@ -31,6 +30,7 @@ from .converters import (
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
 from .obs import get_obs_fields, maybe_match_obs
+from .obs_query import INatObsQuery
 from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
@@ -62,6 +62,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
         self.p = inflect.engine()  # pylint: disable=invalid-name
+        self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
@@ -925,7 +926,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
+    async def obs(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show observation summary for link or number.
 
         e.g.
@@ -935,10 +936,10 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         [p]obs https://inaturalist.org/observations/#
            -> an embed summarizing the observation link (minus the preview,
               which Discord provides itself)
-        [p]obs insects by kueda
-           -> an embed showing counts of insects by user kueda
+        [p]obs insects by benarmstrong
+           -> the best matching (usually latest) observation of insects by benarmstrong
         [p]obs insects from canada
-           -> an embed showing counts of insects from Canada
+           -> the best matching (usually latest) observation of insects from Canada
         ```
         """
 
@@ -953,11 +954,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 if obs and obs.sounds:
                     await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                 return
+            else:
+                await ctx.send(embed=sorry(apology="Is string"))
+                return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-            msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
-            start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+            obs = await self.obs_query.query_single_obs(ctx, query)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -966,48 +968,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology=reason))
             return
 
-    @obs.command(name="with")
-    async def obs_with(self, ctx, term_name, value_name, *, taxon_query):
-        """Show first matching observation with term & value for taxon.
-
-        Note: this is an experimental feature. The command may change form or
-        be replaced with a different command before it is finalized."""
-        controlled_terms_dict = await self.api.get_controlled_terms()
-        controlled_terms = [
-            ControlledTerm.from_dict(term, infer_missing=True)
-            for term in controlled_terms_dict["results"]
-        ]
-        try:
-            (term, value) = match_controlled_term(
-                controlled_terms, term_name, value_name
-            )
-        except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
-            return
-
-        try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
-        except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
-            return
-
-        kwargs = {"term_id": term.id, "term_value_id": value.id}
-        kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
-        if filtered_taxon.user:
-            kwargs["user_id"] = filtered_taxon.user.user_id
-        if filtered_taxon.place:
-            kwargs["place_id"] = filtered_taxon.place.place_id
-        observations_results = await self.api.get_observations(**kwargs)
-        if not observations_results["results"]:
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        obs = get_obs_fields(observations_results["results"][0])
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
         await ctx.send(
             embed=await self.make_obs_embed(ctx.guild, obs, url, preview=True)

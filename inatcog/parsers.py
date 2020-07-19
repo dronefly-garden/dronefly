@@ -147,5 +147,10 @@ class TaxonQueryParser:
             else:
                 group_by = None
         return CompoundQuery(
-            main=main, ancestor=ancestor, user=user, place=place, group_by=group_by
+            main=main,
+            ancestor=ancestor,
+            user=user,
+            place=place,
+            group_by=group_by,
+            controlled_term=[],
         )

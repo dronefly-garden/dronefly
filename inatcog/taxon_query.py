@@ -1,4 +1,4 @@
-"""Module to work with iNat taxa."""
+"""Module to query iNat taxa."""
 from typing import Union
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter
