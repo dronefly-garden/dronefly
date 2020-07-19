@@ -1,7 +1,7 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple, Optional, Union
-from .api import WWW_BASE_URL
+from .api_classes import WWW_BASE_URL
 from .places import Place
 from .users import User
 from .taxon_classes import RANK_LEVELS, Taxon

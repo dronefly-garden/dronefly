@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import re
 from typing import List, Union
 from dataclasses_json import config, DataClassJsonMixin
-from .api import WWW_BASE_URL, WWW_URL_PAT
+from .api_classes import WWW_BASE_URL, WWW_URL_PAT
 
 
 @dataclass

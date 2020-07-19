@@ -2,7 +2,7 @@
 
 import re
 from typing import List, NamedTuple
-from .api import WWW_URL_PAT
+from .api_classes import WWW_URL_PAT
 from .photos import Photo
 from .sounds import Sound
 from .taxon_classes import Taxon

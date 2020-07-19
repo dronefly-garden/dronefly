@@ -2,7 +2,7 @@
 
 import re
 
-from .api import WWW_BASE_URL
+from .api_classes import WWW_BASE_URL
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields

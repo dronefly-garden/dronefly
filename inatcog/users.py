@@ -4,7 +4,7 @@ from typing import AsyncIterator, Optional, Tuple
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 import discord
-from .api import WWW_BASE_URL, WWW_URL_PAT
+from .api_classes import WWW_BASE_URL, WWW_URL_PAT
 
 # Match user profile link from any partner site.
 PAT_USER_LINK = re.compile(

@@ -5,7 +5,7 @@ from typing import Union
 from discord import File
 import html2markdown
 from redbot.core.utils.menus import start_adding_reactions
-from .api import WWW_BASE_URL
+from .api_classes import WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta

@@ -10,7 +10,8 @@ import inflect
 from redbot.core import checks, commands, Config
 from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
 from pyparsing import ParseException
-from .api import INatAPI, WWW_BASE_URL
+from .api import INatAPI
+from .api_classes import WWW_BASE_URL
 from .checks import known_inat_user
 from .common import DEQUOTE, grouper
 from .controlled_terms import ControlledTerm, match_controlled_term

@@ -1,6 +1,6 @@
 """Module to search iNat site."""
 
-from .api import WWW_BASE_URL
+from .api_classes import WWW_BASE_URL
 from .places import Place
 from .projects import Project
 from .taxa import format_taxon_name, get_taxon_fields
