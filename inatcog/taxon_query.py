@@ -1,4 +1,5 @@
 """Module to work with iNat taxa."""
+from typing import Union
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter
 from .parsers import TaxonQueryParser
@@ -10,6 +11,7 @@ from .taxa import (
     RANK_EQUIVALENTS,
     RANK_LEVELS,
 )
+from .taxon_classes import CompoundQuery
 
 TAXON_QUERY_PARSER = TaxonQueryParser()
 
@@ -98,9 +100,12 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, query):
+    async def query_taxon(self, ctx, query: Union[str, CompoundQuery]):
         """Query for taxon and return single taxon if found."""
-        compound_query = TAXON_QUERY_PARSER.parse(query)
+        if isinstance(query, str):
+            compound_query = TAXON_QUERY_PARSER.parse(query)
+        else:
+            compound_query = query
         taxon = await self.maybe_match_taxon_compound(compound_query)
         place = None
         user = None

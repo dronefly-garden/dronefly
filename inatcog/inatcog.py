@@ -12,10 +12,11 @@ from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTRO
 from pyparsing import ParseException
 from .api import INatAPI, WWW_BASE_URL
 from .checks import known_inat_user
-from .common import DEQUOTE, grouper
+from .common import DEQUOTE, grouper, LOG
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import (
     ContextMemberConverter,
+    CompoundQueryConverter,
     QuotedContextMemberConverter,
     InheritableBoolConverter,
 )
@@ -923,7 +924,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query):
+    async def obs(self, ctx, *, query: Union[CompoundQueryConverter, str]):
         """Show observation summary for link or number.
 
         e.g.
@@ -940,16 +941,18 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         ```
         """
 
-        obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
-        # Note: if the user specified an invalid or deleted id, a url is still
-        # produced (i.e. should 404).
-        if url:
-            await ctx.send(
-                embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
-            )
-            if obs and obs.sounds:
-                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-            return
+        LOG.info(repr(query))
+        if isinstance(query, str):
+            obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
+            # Note: if the user specified an invalid or deleted id, a url is still
+            # produced (i.e. should 404).
+            if url:
+                await ctx.send(
+                    embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
+                )
+                if obs and obs.sounds:
+                    await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                return
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)

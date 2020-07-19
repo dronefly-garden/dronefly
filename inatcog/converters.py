@@ -6,7 +6,7 @@ from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
 from .common import DEQUOTE
-from .taxon_classes import CompoundQuery
+from .taxon_classes import CompoundQuery, SimpleQuery
 
 
 class ContextMemberConverter(NamedTuple):
@@ -105,10 +105,26 @@ class CompoundQueryConverter(CompoundQuery):
 
         vals = parser.parse_args(shlex.split(argument))
 
-        return cls(
-            main=vals["main"],
-            ancestor=vals["ancestor"],
-            user=vals["user"],
-            place=vals["place"],
-            group_by="",
-        )
+        if vals.main or vals.ancestor or vals.user or vals.place:
+            main = SimpleQuery(
+                taxon_id=None, terms=vals.main, phrases=None, ranks=None, code=None
+            )
+            if vals.ancestor:
+                ancestor = SimpleQuery(
+                    taxon_id=None,
+                    terms=vals.ancestor,
+                    phrases=None,
+                    ranks=None,
+                    code=None,
+                )
+            else:
+                ancestor = None
+            return cls(
+                main=main,
+                ancestor=ancestor,
+                user=" ".join(vals.user),
+                place=" ".join(vals.place),
+                group_by="",
+            )
+
+        return argument
