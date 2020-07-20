@@ -1,7 +1,6 @@
 """Module to query iNat observations."""
 from typing import Union
 from .base_classes import CompoundQuery
-from .converters import ContextMemberConverter
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
 
@@ -12,31 +11,17 @@ class INatObsQuery:
     def __init__(self, cog):
         self.cog = cog
 
-    async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
-        """Query observations and return best matching (usually most recent) if found."""
+    async def get_query_args(self, ctx, query: Union[CompoundQuery, str]):
+        """Get arguments for observation query from query string."""
         kwargs = {}
-        filtered_taxon = None
-        try:
-            filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
-        except LookupError:
-            pass
+        filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
         if filtered_taxon:
-            kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
+            if filtered_taxon.taxon:
+                kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
             if filtered_taxon.user:
                 kwargs["user_id"] = filtered_taxon.user.user_id
             if filtered_taxon.place:
                 kwargs["place_id"] = filtered_taxon.place.place_id
-        else:
-            if query.user:
-                who = await ContextMemberConverter.convert(ctx, query.user)
-                user = await self.cog.user_table.get_user(who.member)
-                kwargs["user_id"] = user.user_id
-
-            if query.place:
-                place = await self.cog.place_table.get_place(
-                    ctx.guild, query.place, ctx.author
-                )
-                kwargs["place_id"] = place.place_id
         if query.controlled_term:
             query_term, query_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()
@@ -49,9 +34,27 @@ class INatObsQuery:
             )
             kwargs["term_id"] = term.id
             kwargs["term_value_id"] = value.id
+        return kwargs
 
+    async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
+        """Query observations and return first if found."""
+
+        kwargs = await self.get_query_args(ctx, query)
+        kwargs["verifiable"] = "any"
         observations_results = await self.cog.api.get_observations(**kwargs)
         if not observations_results["results"]:
-            raise LookupError("Nothing found")
+            raise LookupError("No observation found")
 
         return get_obs_fields(observations_results["results"][0])
+
+    async def query_observations(self, ctx, query: Union[CompoundQuery, str]):
+        """Query observations and return iterator for any found."""
+
+        kwargs = await self.get_query_args(ctx, query)
+        kwargs["verifiable"] = "any"
+        kwargs["per_page"] = 200
+        observations_results = await self.cog.api.get_observations(**kwargs)
+        if not observations_results["results"]:
+            raise LookupError("No observations found")
+
+        return [get_obs_fields(result) for result in observations_results["results"]]

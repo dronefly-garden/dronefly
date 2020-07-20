@@ -146,17 +146,24 @@ class CompoundQueryConverter(CompoundQuery):
             or vals.rank
             or vals.controlled_term
         ):
-            terms, phrases, code = detect_terms_phrases_code(vals.main)
-            main = SimpleQuery(
-                taxon_id=None, terms=terms, phrases=phrases, ranks=ranks, code=code,
-            )
+            main = None
+            ancestor = None
+            if vals.main:
+                terms, phrases, code = detect_terms_phrases_code(vals.main)
+                if terms:
+                    main = SimpleQuery(
+                        taxon_id=None,
+                        terms=terms,
+                        phrases=phrases,
+                        ranks=ranks,
+                        code=code,
+                    )
             if vals.ancestor:
                 terms, phrases, code = detect_terms_phrases_code(vals.ancestor)
-                ancestor = SimpleQuery(
-                    taxon_id=None, terms=terms, phrases=phrases, code=code
-                )
-            else:
-                ancestor = None
+                if terms:
+                    ancestor = SimpleQuery(
+                        taxon_id=None, terms=terms, phrases=phrases, ranks=[], code=code
+                    )
             return cls(
                 main=main,
                 ancestor=ancestor,
@@ -196,7 +203,6 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
             args_normalized.append("--rank")
             args_normalized += ranks
         argument_normalized = " ".join(args_normalized)
-        await ctx.send(argument_normalized)
         return await super(NaturalCompoundQueryConverter, cls).convert(
             ctx, argument_normalized
         )

@@ -51,7 +51,7 @@ class INatTaxonQuery:
             records = (await self.cog.api.get_taxa(**kwargs))["results"]
 
         if not records:
-            raise LookupError("Nothing found")
+            raise LookupError("No matching taxon found")
 
         taxon = match_taxon(query, list(map(get_taxon_fields, records)))
 
@@ -93,16 +93,17 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, query: Union[str, CompoundQuery]):
+    async def query_taxon(self, ctx, query: Union[CompoundQuery, str]):
         """Query for taxon and return single taxon if found."""
+        taxon = None
+        place = None
+        user = None
         if isinstance(query, str):
             compound_query = TAXON_QUERY_PARSER.parse(query)
         else:
             compound_query = query
-        taxon = await self.maybe_match_taxon_compound(compound_query)
-        place = None
-        user = None
-
+        if compound_query.main:
+            taxon = await self.maybe_match_taxon_compound(compound_query)
         if compound_query.user:
             try:
                 who = await ContextMemberConverter.convert(ctx, compound_query.user)
@@ -131,6 +132,6 @@ class INatTaxonQuery:
 
         result = taxa.values()
         if not result:
-            raise LookupError("Nothing found")
+            raise LookupError("No taxon found")
 
         return result
