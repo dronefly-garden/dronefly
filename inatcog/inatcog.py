@@ -652,7 +652,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
-            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+            obs_id = int(mat["obs_id"])
             url = mat["url"]
 
             results = (await self.api.get_observations(obs_id, include_new_projects=1))[

@@ -113,7 +113,7 @@ async def maybe_match_obs(api, content, id_permitted=False):
     mat = re.search(PAT_OBS_LINK, content)
     obs = url = obs_id = None
     if mat:
-        obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+        obs_id = int(mat["obs_id"])
         url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
 
     if id_permitted:

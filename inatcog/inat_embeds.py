@@ -68,11 +68,13 @@ class INatEmbeds(MixinMeta):
         else:
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
-            obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+            obs_id = int(mat["obs_id"])
             LOG.info("Observation not found for link: %d", obs_id)
             embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
-        shared_by = f"· shared {last.ago} by @{last.name}"
+        shared_by = f"· shared {last.ago}"
+        if last.name:
+            shared_by += f" by @{last.name}"
         embed.description = (
             f"{embed.description}\n\n{shared_by}" if embed.description else shared_by
         )
@@ -290,7 +292,7 @@ class INatEmbeds(MixinMeta):
         else:
             mat = re.search(PAT_OBS_LINK, url)
             if mat:
-                obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+                obs_id = int(mat["obs_id"])
                 LOG.info("Observation not found for: %s", obs_id)
                 embed.title = "No observation found for id: %s (deleted?)" % obs_id
             else:

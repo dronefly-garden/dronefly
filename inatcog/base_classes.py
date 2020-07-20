@@ -26,11 +26,7 @@ WWW_URL_PAT = (
 
 # Match observation URL or command.
 PAT_OBS_LINK = re.compile(
-    r"\b("
-    r"(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))"
-    r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+))"
-    r")\b",
-    re.I,
+    r"\b(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))\b", re.I
 )
 # Match observation URL from `obs` embed generated for observations matching a
 # specific taxon_id and filtered by optional place_id and/or user_id.
