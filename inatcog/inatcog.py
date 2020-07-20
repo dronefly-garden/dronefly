@@ -927,20 +927,30 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
     async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
-        """Show observation summary for link or number.
+        """Show observation matching query, link, or number.
 
-        e.g.
+        **query** may contain:
+        - `by [name]` to match the named resgistered user (or `me`)
+        - `from [place]` to match the named place
+        - `with [term] [value]` to matched the controlled term with the
+          given value
+        **Examples:**
         ```
-        [p]obs #
-           -> an embed summarizing the numbered observation
+        [p]obs by benarmstrong
+           -> most recently added observation by benarmstrong
+        [p]obs insecta by benarmstrong
+           -> most recent insecta by benarmstrong
+        [p]obs insecta from canada
+           -> most recent insecta from Canada
+        [p]obs insecta with life larva
+           -> most recent insecta with life stage = larva
         [p]obs https://inaturalist.org/observations/#
-           -> an embed summarizing the observation link (minus the preview,
-              which Discord provides itself)
-        [p]obs insects by benarmstrong
-           -> the best matching (usually latest) observation of insects by benarmstrong
-        [p]obs insects from canada
-           -> the best matching (usually latest) observation of insects from Canada
+           -> display the linked observation
+        [p]obs #
+           -> display the observation for id #
         ```
+        - Use `[p]search obs` to find more than one observation.
+        - See `[p]help taxon` for help specifying optional taxa.
         """
 
         if isinstance(query, str):
