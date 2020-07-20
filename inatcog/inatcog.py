@@ -963,7 +963,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except ParseException:
             await ctx.send(embed=sorry())
             return
-        except LookupError as err:
+        except (commands.BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
