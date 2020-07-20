@@ -35,24 +35,32 @@ class INatLinkMsg:
 
     async def get_last_obs_msg(self, msgs):
         """Find recent observation link."""
-        # Skip bot messages so we can extract the user info for the user who shared it
-        try:
-            found = next(
-                m
-                for m in msgs
-                if not m.author.bot and re.search(PAT_OBS_LINK, m.content)
+
+        def match_obs_link(message):
+            return re.search(PAT_OBS_LINK, message.content) or (
+                message.embeds
+                and message.embeds[0].url
+                and re.search(PAT_OBS_LINK, message.embeds[0].url)
             )
+
+        try:
+            found = next(m for m in msgs if match_obs_link(m))
         except StopIteration:
             return None
 
-        mat = re.search(PAT_OBS_LINK, found.content)
-        obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+        mat = match_obs_link(found)
+        obs_id = int(mat["obs_id"])
         url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
         ago = timeago.format(found.created_at, datetime.utcnow())
-        if isinstance(found.author, User):
-            name = found.author.name
+        if found.author.bot:
+            name = None
         else:
-            name = found.author.nick or found.author.name
+            # Unless autoobs is turned off, it's more likely the
+            # bot message for the shared link will be found first.
+            if isinstance(found.author, User):
+                name = found.author.name
+            else:
+                name = found.author.nick or found.author.name
 
         results = (await self.api.get_observations(obs_id, include_new_projects=1))[
             "results"

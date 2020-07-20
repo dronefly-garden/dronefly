@@ -11,11 +11,7 @@ from .users import User
 
 # Match observation URL or command.
 PAT_OBS_LINK = re.compile(
-    r"\b("
-    r"(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))"
-    r"|(?P<cmd>obs\s+(?P<cmd_obs_id>\d+))"
-    r")\b",
-    re.I,
+    r"\b(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))\b", re.I
 )
 # Match observation URL from `obs` embed generated for observations matching a
 # specific taxon_id and filtered by optional place_id and/or user_id.
@@ -152,7 +148,7 @@ async def maybe_match_obs(api, content, id_permitted=False):
     mat = re.search(PAT_OBS_LINK, content)
     obs = url = obs_id = None
     if mat:
-        obs_id = int(mat["obs_id"] or mat["cmd_obs_id"])
+        obs_id = int(mat["obs_id"])
         url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
 
     if id_permitted:
