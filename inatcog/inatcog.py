@@ -1154,7 +1154,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         kwargs = {}
         kw_lowered = ""
-        url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
+        if isinstance(query, str):
+            query_title = query
+            url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
             kw_lowered = keyword.lower()
             if kw_lowered == "inactive":
@@ -1163,14 +1165,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 kwargs["is_active"] = "any"
             elif kw_lowered == "obs":
                 try:
-                    filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-                    kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
+                    kwargs, filtered_taxon = await self.obs_query.get_query_args(
+                        ctx, query
+                    )
+                    if filtered_taxon.taxon:
+                        query_title = format_taxon_name(filtered_taxon.taxon)
+                    else:
+                        query_title = "any"
                     if filtered_taxon.user:
-                        kwargs["user_id"] = filtered_taxon.user.user_id
+                        query_title += f" by {filtered_taxon.user.login}"
                     if filtered_taxon.place:
-                        kwargs["place_id"] = filtered_taxon.place.place_id
-                    kwargs["verifiable"] = "any"
-                    query = format_taxon_name(filtered_taxon.taxon)
+                        query_title += f" from {filtered_taxon.place.display_name}"
                 except ParseException:
                     await ctx.send(embed=sorry())
                     return
@@ -1180,27 +1185,24 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     return
 
                 url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
-                kwargs["include_new_projects"] = 1
                 kwargs["per_page"] = 200
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
         if kw_lowered == "obs":
-            response = await self.api.get_observations(**kwargs)
-            raw_results = response["results"]
+            (
+                observations,
+                total_results,
+                per_page,
+            ) = await self.obs_query.query_observations(ctx, query)
             results = [
                 "\n".join(
                     self.format_obs(
-                        get_obs_fields(result),
-                        with_description=False,
-                        with_link=True,
-                        compact=True,
+                        obs, with_description=False, with_link=True, compact=True,
                     )
                 )
-                for result in raw_results
+                for obs in observations
             ]
-            total_results = response["total_results"]
-            per_page = response["per_page"]
             per_embed_page = 5
         else:
             (results, total_results, per_page) = await self.site_search.search(
@@ -1235,7 +1237,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 )
             embeds = [
                 make_embed(
-                    title=f"Search: {query} (page {index} of {pages_len})",
+                    title=f"Search: {query_title} (page {index} of {pages_len})",
                     url=url,
                     description=page,
                 )
@@ -1279,7 +1281,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
-    async def search_obs(self, ctx, *, query):
+    async def search_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Search iNat observations."""
         await self._search(ctx, query, "obs")
 

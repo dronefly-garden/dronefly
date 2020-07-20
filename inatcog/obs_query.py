@@ -34,27 +34,32 @@ class INatObsQuery:
             )
             kwargs["term_id"] = term.id
             kwargs["term_value_id"] = value.id
-        return kwargs
+        kwargs["verifiable"] = "any"
+        kwargs["include_new_projects"] = 1
+        return kwargs, filtered_taxon
 
     async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
         """Query observations and return first if found."""
 
-        kwargs = await self.get_query_args(ctx, query)
-        kwargs["verifiable"] = "any"
-        observations_results = await self.cog.api.get_observations(**kwargs)
-        if not observations_results["results"]:
+        kwargs, _taxon = await self.get_query_args(ctx, query)
+        kwargs["per_page"] = 1
+        response = await self.cog.api.get_observations(**kwargs)
+        if not response["results"]:
             raise LookupError("No observation found")
 
-        return get_obs_fields(observations_results["results"][0])
+        return get_obs_fields(response["results"][0])
 
     async def query_observations(self, ctx, query: Union[CompoundQuery, str]):
         """Query observations and return iterator for any found."""
 
-        kwargs = await self.get_query_args(ctx, query)
-        kwargs["verifiable"] = "any"
+        kwargs, _taxon = await self.get_query_args(ctx, query)
         kwargs["per_page"] = 200
-        observations_results = await self.cog.api.get_observations(**kwargs)
-        if not observations_results["results"]:
+        response = await self.cog.api.get_observations(**kwargs)
+        if not response["results"]:
             raise LookupError("No observations found")
 
-        return [get_obs_fields(result) for result in observations_results["results"]]
+        return (
+            [get_obs_fields(result) for result in response["results"]],
+            response["total_results"],
+            response["per_page"],
+        )
