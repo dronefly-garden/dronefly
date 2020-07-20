@@ -102,6 +102,8 @@ class INatTaxonQuery:
             compound_query = TAXON_QUERY_PARSER.parse(query)
         else:
             compound_query = query
+        if compound_query.ancestor and not compound_query.main:
+            raise LookupError("No taxon terms given to find `in` ancestor taxon.")
         if compound_query.main:
             taxon = await self.maybe_match_taxon_compound(compound_query)
         if compound_query.user:
