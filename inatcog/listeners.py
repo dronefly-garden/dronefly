@@ -4,7 +4,6 @@ import asyncio
 import contextlib
 import re
 import discord
-from pyparsing import ParseException
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
@@ -118,13 +117,10 @@ class Listeners(INatEmbeds, MixinMeta):
                     query = await NaturalCompoundQueryConverter.convert(
                         ctx, mat["query"]
                     )
-                except (LookupError, ParseException):
-                    return
-                if query.controlled_term:
-                    return
-                try:
+                    if query.controlled_term:
+                        return
                     filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-                except (BadArgument, LookupError, ParseException):
+                except (BadArgument, LookupError):
                     return
                 if query.user or query.place:
                     msg = await channel.send(

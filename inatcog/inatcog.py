@@ -10,7 +10,6 @@ import inflect
 from redbot.core import checks, commands, Config
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-from pyparsing import ParseException
 from .api import INatAPI
 from .base_classes import (
     WWW_BASE_URL,
@@ -691,9 +690,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -971,9 +967,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             obs = await self.obs_query.query_single_obs(ctx, query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
         except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1004,9 +997,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1029,9 +1019,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1093,9 +1080,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1119,9 +1103,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-        except ParseException:
-            await ctx.send("I don't understand")
-            return
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(reason)
@@ -1211,9 +1192,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                         query_title += f" by {filtered_taxon.user.login}"
                     if filtered_taxon.place:
                         query_title += f" from {filtered_taxon.place.display_name}"
-                except ParseException:
-                    await ctx.send(embed=sorry())
-                    return
                 except LookupError as err:
                     reason = err.args[0]
                     await ctx.send(embed=sorry(apology=reason))
@@ -1239,9 +1217,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                     )
                     for obs in observations
                 ]
-            except ParseException:
-                await ctx.send(embed=sorry())
-                return
             except LookupError as err:
                 reason = err.args[0]
                 await ctx.send(embed=sorry(apology=reason))

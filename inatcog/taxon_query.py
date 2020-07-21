@@ -1,13 +1,8 @@
 """Module to query iNat taxa."""
-from typing import Union
-from pyparsing import ParseException
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
-from .parsers import TaxonQueryParser
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
-
-TAXON_QUERY_PARSER = TaxonQueryParser()
 
 
 class INatTaxonQuery:
@@ -94,15 +89,11 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, query: Union[CompoundQuery, str]):
+    async def query_taxon(self, ctx, compound_query: CompoundQuery):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
         user = None
-        if isinstance(query, str):
-            compound_query = TAXON_QUERY_PARSER.parse(query)
-        else:
-            compound_query = query
         if compound_query.ancestor and not compound_query.main:
             raise LookupError("No taxon terms given to find `in` ancestor taxon.")
         if compound_query.main:
@@ -134,7 +125,7 @@ class INatTaxonQuery:
                 if filtered_taxon.taxon:
                     taxon = filtered_taxon.taxon
                     taxa[str(taxon.taxon_id)] = taxon
-            except (BadArgument, LookupError, ParseException):
+            except (BadArgument, LookupError):
                 pass
 
         result = taxa.values()
