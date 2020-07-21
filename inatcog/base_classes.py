@@ -112,8 +112,8 @@ class SimpleQuery(NamedTuple):
 class CompoundQuery(NamedTuple):
     """A taxon query that may contain another (ancestor) taxon query."""
 
-    main: str
-    ancestor: str
+    main: SimpleQuery
+    ancestor: SimpleQuery
     user: str
     place: str
     group_by: str

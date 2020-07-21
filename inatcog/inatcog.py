@@ -8,6 +8,7 @@ import asyncio
 import discord
 import inflect
 from redbot.core import checks, commands, Config
+from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from pyparsing import ParseException
 from .api import INatAPI
@@ -918,7 +919,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ctx_member = await ContextMemberConverter.convert(ctx, user)
             member = ctx_member.member
             user = await self.user_table.get_user(member)
-        except (commands.BadArgument, LookupError) as err:
+        except (BadArgument, LookupError) as err:
             await ctx.send(err)
             return
 
@@ -973,7 +974,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except ParseException:
             await ctx.send(embed=sorry())
             return
-        except (commands.BadArgument, LookupError) as err:
+        except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
@@ -1013,13 +1014,30 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await ctx.send(embed=await self.make_related_embed(taxa))
 
+    def check_taxon_query(self, ctx, query):
+        """Check for valid taxon query."""
+        if query.controlled_term or (query.user and query.place):
+            args = ctx.message.content.split(" ", 1)[1]
+            reason = (
+                "I don't understand that query.\nPerhaps you meant one of:\n"
+                f"`{ctx.clean_prefix}obs {args}`\n"
+                f"`{ctx.clean_prefix}search obs {args}`"
+            )
+            raise BadArgument(reason)
+
     @commands.command(aliases=["img"])
-    async def image(self, ctx, *, taxon_query):
+    async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
         """Show default image for taxon query.
 
         `Aliases: [p]img`
 
         See `[p]help taxon` for `taxon_query` format."""
+        try:
+            self.check_taxon_query(ctx, taxon_query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
+
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
         except ParseException:
@@ -1032,8 +1050,30 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
 
+    @commands.command(aliases=["tab"])
+    async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show a table from iNaturalist data matching the query.
+
+        Coming soon."""
+        """
+        The last qualifier indicates the thing to count.
+        Keyword `any` supported for enumerable values (e.g. controlled terms).
+
+        e.g.
+        ```
+        ,tab fish from halifax with sex any
+             -> per controlled term for "sex"
+        ,tab fish from ns, nb, pe, maritimes, northeast
+             -> per place specified
+        ,tab fish by me
+             -> per user (self listed; others react to add)
+        ,tab fish from home
+             -> per place (home listed; others react to add)
+        ```
+        """
+
     @commands.command(aliases=["t"])
-    async def taxon(self, ctx, *, query):
+    async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon best matching the query.
 
         `Aliases: [p]t`
@@ -1056,6 +1096,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
         """
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
@@ -1067,22 +1112,21 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        if filtered_taxon.user and filtered_taxon.place:
-            reason = (
-                "I don't understand that query.\nPerhaps you meant:\n"
-                f"`{ctx.clean_prefix}obs {query}`"
-            )
-            await ctx.send(embed=sorry(apology=reason))
-        else:
-            await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @commands.command()
-    async def tname(self, ctx, *, query):
+    async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon name best matching the query.
 
         See `[p]help taxon` for help with the query.
         ```
         """
+
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
