@@ -1169,7 +1169,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                         ctx, query
                     )
                     if filtered_taxon.taxon:
-                        query_title = format_taxon_name(filtered_taxon.taxon)
+                        query_title = format_taxon_name(
+                            filtered_taxon.taxon, with_term=True
+                        )
                     else:
                         query_title = "any"
                     if filtered_taxon.user:
