@@ -1014,17 +1014,6 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await ctx.send(embed=await self.make_related_embed(taxa))
 
-    def check_taxon_query(self, ctx, query):
-        """Check for valid taxon query."""
-        if query.controlled_term or (query.user and query.place):
-            args = ctx.message.content.split(" ", 1)[1]
-            reason = (
-                "I don't understand that query.\nPerhaps you meant one of:\n"
-                f"`{ctx.clean_prefix}obs {args}`\n"
-                f"`{ctx.clean_prefix}search obs {args}`"
-            )
-            raise BadArgument(reason)
-
     @commands.command(aliases=["img"])
     async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
         """Show default image for taxon query.
