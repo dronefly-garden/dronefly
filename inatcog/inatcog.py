@@ -1217,7 +1217,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                             filtered_taxon.taxon, with_term=True
                         )
                     else:
-                        query_title = "any"
+                        query_title = "Observations"
                     if filtered_taxon.user:
                         query_title += f" by {filtered_taxon.user.login}"
                     if filtered_taxon.place:
