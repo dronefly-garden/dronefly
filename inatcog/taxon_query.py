@@ -1,7 +1,8 @@
 """Module to query iNat taxa."""
 from typing import Union
+from pyparsing import ParseException
 from redbot.core.commands import BadArgument
-from .converters import ContextMemberConverter
+from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .parsers import TaxonQueryParser
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
@@ -120,16 +121,20 @@ class INatTaxonQuery:
 
         return FilteredTaxon(taxon, user, place, compound_query.group_by)
 
-    async def query_taxa(self, query):
+    async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
-        queries = list(map(TAXON_QUERY_PARSER.parse, query.split(",")))
+        queries = query.split(",")
+
         # De-duplicate the query via dict:
         taxa = {}
-        for compound_query in queries:
+        for query_str in queries:
             try:
-                taxon = await self.maybe_match_taxon_compound(compound_query)
-                taxa[str(taxon.taxon_id)] = taxon
-            except LookupError:
+                query = await NaturalCompoundQueryConverter.convert(ctx, query_str)
+                filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
+                if filtered_taxon.taxon:
+                    taxon = filtered_taxon.taxon
+                    taxa[str(taxon.taxon_id)] = taxon
+            except (BadArgument, LookupError, ParseException):
                 pass
 
         result = taxa.values()

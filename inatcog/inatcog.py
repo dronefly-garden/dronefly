@@ -690,7 +690,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxon_query.query_taxa(taxa_list)
+            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except ParseException:
             await ctx.send(embed=sorry())
             return
@@ -1003,7 +1003,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxon_query.query_taxa(taxa_list)
+            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except ParseException:
             await ctx.send(embed=sorry())
             return
