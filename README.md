@@ -266,7 +266,7 @@ Names & syntax of commands and keywords should be intuitive & natural, so that o
 
 To this end:
 
-- The `[p]taxon` command supports a query language implemented with the Python pyparsing package.
+- The `[p]taxon` command supports a query language.
 - Queries can be phrased with English-like structure, like `[p]taxon genus prunella in animals` to match the genus *Prunella* in the taxon *Animalia*. This complex query actually performs two queries: first, with the query after `in` and second, provided that succeeded, the query before `in`, passing the taxon_id matched by the first query as a filter.
 
 ### Don't clutter up conversations with unnecessary output

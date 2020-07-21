@@ -1,10 +1,8 @@
 """Module to handle users."""
 import re
-from typing import AsyncIterator, Optional, Tuple
-from dataclasses import dataclass, field
-from dataclasses_json import config, DataClassJsonMixin
+from typing import AsyncIterator, Tuple
 import discord
-from .api import WWW_BASE_URL, WWW_URL_PAT
+from .base_classes import WWW_URL_PAT, User
 
 # Match user profile link from any partner site.
 PAT_USER_LINK = re.compile(
@@ -13,29 +11,6 @@ PAT_USER_LINK = re.compile(
     r")\b",
     re.I,
 )
-
-
-@dataclass
-class User(DataClassJsonMixin):
-    """A user."""
-
-    user_id: int = field(metadata=config(field_name="id"))
-    name: Optional[str]
-    login: str
-    observations_count: int
-    identifications_count: int
-
-    def display_name(self):
-        """Name to include in displays."""
-        return f"{self.name} ({self.login})" if self.name else self.login
-
-    def profile_url(self):
-        """User profile url."""
-        return f"{WWW_BASE_URL}/people/{self.login}" if self.login else ""
-
-    def profile_link(self):
-        """User profile link in markdown format."""
-        return f"[{self.display_name()}]({self.profile_url()})"
 
 
 class INatUserTable:

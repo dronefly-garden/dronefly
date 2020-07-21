@@ -1,9 +1,7 @@
 """Module to handle users."""
 import re
 from typing import Union
-from dataclasses import dataclass, field
-from dataclasses_json import config, DataClassJsonMixin
-from .api import WWW_BASE_URL, WWW_URL_PAT
+from .base_classes import Place, WWW_URL_PAT
 from .converters import QuotedContextMemberConverter
 
 # Match place link from any partner site.
@@ -15,19 +13,6 @@ PAT_PLACE_LINK = re.compile(
 )
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
-
-
-@dataclass
-class Place(DataClassJsonMixin):
-    """An iNat place."""
-
-    display_name: str
-    place_id: int = field(metadata=config(field_name="id"))
-    url: str = field(init=False)
-
-    def __post_init__(self):
-        """URL for place."""
-        self.url = f"{WWW_BASE_URL}/places/{self.place_id}"
 
 
 class INatPlaceTable:

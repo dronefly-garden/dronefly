@@ -8,33 +8,36 @@ import asyncio
 import discord
 import inflect
 from redbot.core import checks, commands, Config
-from redbot.core.utils.menus import menu, start_adding_reactions, DEFAULT_CONTROLS
-from pyparsing import ParseException
-from .api import INatAPI, WWW_BASE_URL
+from redbot.core.commands import BadArgument
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from .api import INatAPI
+from .base_classes import (
+    WWW_BASE_URL,
+    PAT_OBS_LINK,
+    FilteredTaxon,
+    RANK_EQUIVALENTS,
+    RANK_KEYWORDS,
+    User,
+)
 from .checks import known_inat_user
 from .common import DEQUOTE, grouper
-from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import (
     ContextMemberConverter,
+    NaturalCompoundQueryConverter,
     QuotedContextMemberConverter,
     InheritableBoolConverter,
 )
 from .embeds import make_embed, sorry
 from .last import INatLinkMsg
-from .obs import get_obs_fields, maybe_match_obs, PAT_OBS_LINK
-from .parsers import RANK_EQUIVALENTS, RANK_KEYWORDS
+from .obs import get_obs_fields, maybe_match_obs
+from .obs_query import INatObsQuery
 from .places import INatPlaceTable, PAT_PLACE_LINK, RESERVED_PLACES
 from .projects import INatProjectTable, UserProject, PAT_PROJECT_LINK
 from .listeners import Listeners
 from .search import INatSiteSearch
-from .taxa import (
-    FilteredTaxon,
-    INatTaxaQuery,
-    format_taxon_name,
-    get_taxon,
-    PAT_TAXON_LINK,
-)
-from .users import INatUserTable, PAT_USER_LINK, User
+from .taxa import format_taxon_name, get_taxon, PAT_TAXON_LINK
+from .taxon_query import INatTaxonQuery
+from .users import INatUserTable, PAT_USER_LINK
 
 _SCHEMA_VERSION = 2
 _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
@@ -59,7 +62,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
         self.p = inflect.engine()  # pylint: disable=invalid-name
-        self.taxa_query = INatTaxaQuery(self)
+        self.obs_query = INatObsQuery(self)
+        self.taxon_query = INatTaxonQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
@@ -531,7 +535,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await self.send_embed_for_taxon(ctx, last.obs.taxon)
         elif last.obs.taxon:
             full_record = await get_taxon(self, last.obs.taxon.taxon_id)
-            ancestor = await self.taxa_query.get_taxon_ancestor(
+            ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )
             if ancestor:
@@ -626,7 +630,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
             full_record = await get_taxon(self, last.taxon.taxon_id)
-            ancestor = await self.taxa_query.get_taxon_ancestor(
+            ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )
             if ancestor:
@@ -685,10 +689,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxa_query.query_taxa(taxa_list)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
+            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -914,7 +915,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ctx_member = await ContextMemberConverter.convert(ctx, user)
             member = ctx_member.member
             user = await self.user_table.get_user(member)
-        except (commands.BadArgument, LookupError) as err:
+        except (BadArgument, LookupError) as err:
             await ctx.send(err)
             return
 
@@ -922,88 +923,55 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query):
-        """Show observation summary for link or number.
+    async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
+        """Show observation matching query, link, or number.
 
-        e.g.
+        **query** may contain:
+        - `by [name]` to match the named resgistered user (or `me`)
+        - `from [place]` to match the named place
+        - `with [term] [value]` to matched the controlled term with the
+          given value
+        **Examples:**
         ```
-        [p]obs #
-           -> an embed summarizing the numbered observation
+        [p]obs by benarmstrong
+           -> most recently added observation by benarmstrong
+        [p]obs insecta by benarmstrong
+           -> most recent insecta by benarmstrong
+        [p]obs insecta from canada
+           -> most recent insecta from Canada
+        [p]obs insecta with life larva
+           -> most recent insecta with life stage = larva
         [p]obs https://inaturalist.org/observations/#
-           -> an embed summarizing the observation link (minus the preview,
-              which Discord provides itself)
-        [p]obs insects by kueda
-           -> an embed showing counts of insects by user kueda
-        [p]obs insects from canada
-           -> an embed showing counts of insects from Canada
+           -> display the linked observation
+        [p]obs #
+           -> display the observation for id #
         ```
+        - Use `[p]search obs` to find more than one observation.
+        - See `[p]help taxon` for help specifying optional taxa.
         """
 
-        obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
-        # Note: if the user specified an invalid or deleted id, a url is still
-        # produced (i.e. should 404).
-        if url:
-            await ctx.send(
-                embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
-            )
-            if obs and obs.sounds:
-                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-            return
+        if isinstance(query, str):
+            obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
+            # Note: if the user specified an invalid or deleted id, a url is still
+            # produced (i.e. should 404).
+            if url:
+                await ctx.send(
+                    embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
+                )
+                if obs and obs.sounds:
+                    await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                return
+            else:
+                await ctx.send(embed=sorry(apology="I don't understand"))
+                return
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
-            msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
-            start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
-        except LookupError as err:
+            obs = await self.obs_query.query_single_obs(ctx, query)
+        except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
 
-    @obs.command(name="with")
-    async def obs_with(self, ctx, term_name, value_name, *, taxon_query):
-        """Show first matching observation with term & value for taxon.
-
-        Note: this is an experimental feature. The command may change form or
-        be replaced with a different command before it is finalized."""
-        controlled_terms_dict = await self.api.get_controlled_terms()
-        controlled_terms = [
-            ControlledTerm.from_dict(term, infer_missing=True)
-            for term in controlled_terms_dict["results"]
-        ]
-        try:
-            (term, value) = match_controlled_term(
-                controlled_terms, term_name, value_name
-            )
-        except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
-            return
-
-        try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
-        except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
-            return
-
-        kwargs = {"term_id": term.id, "term_value_id": value.id}
-        kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
-        if filtered_taxon.user:
-            kwargs["user_id"] = filtered_taxon.user.user_id
-        if filtered_taxon.place:
-            kwargs["place_id"] = filtered_taxon.place.place_id
-        observations_results = await self.api.get_observations(**kwargs)
-        if not observations_results["results"]:
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        obs = get_obs_fields(observations_results["results"][0])
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
         await ctx.send(
             embed=await self.make_obs_embed(ctx.guild, obs, url, preview=True)
@@ -1028,10 +996,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         try:
-            taxa = await self.taxa_query.query_taxa(taxa_list)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
+            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1040,17 +1005,20 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=await self.make_related_embed(taxa))
 
     @commands.command(aliases=["img"])
-    async def image(self, ctx, *, taxon_query):
+    async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
         """Show default image for taxon query.
 
         `Aliases: [p]img`
 
         See `[p]help taxon` for `taxon_query` format."""
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, taxon_query)
-        except ParseException:
-            await ctx.send(embed=sorry())
+            self.check_taxon_query(ctx, taxon_query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
             return
+
+        try:
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
@@ -1058,8 +1026,30 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
 
+    @commands.command(aliases=["tab"])
+    async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show a table from iNaturalist data matching the query.
+
+        Coming soon."""
+        """
+        The last qualifier indicates the thing to count.
+        Keyword `any` supported for enumerable values (e.g. controlled terms).
+
+        e.g.
+        ```
+        ,tab fish from halifax with sex any
+             -> per controlled term for "sex"
+        ,tab fish from ns, nb, pe, maritimes, northeast
+             -> per place specified
+        ,tab fish by me
+             -> per user (self listed; others react to add)
+        ,tab fish from home
+             -> per place (home listed; others react to add)
+        ```
+        """
+
     @commands.command(aliases=["t"])
-    async def taxon(self, ctx, *, query):
+    async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon best matching the query.
 
         `Aliases: [p]t`
@@ -1082,28 +1072,23 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
         """
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
-        except ParseException:
-            await ctx.send(embed=sorry())
-            return
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        if filtered_taxon.user and filtered_taxon.place:
-            reason = (
-                "I don't understand that query.\nPerhaps you meant:\n"
-                f"`{ctx.clean_prefix}obs {query}`"
-            )
-            await ctx.send(embed=sorry(apology=reason))
-        else:
-            await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @commands.command()
-    async def tname(self, ctx, *, query):
+    async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon name best matching the query.
 
         See `[p]help taxon` for help with the query.
@@ -1111,10 +1096,13 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """
 
         try:
-            filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
-        except ParseException:
-            await ctx.send("I don't understand")
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
             return
+
+        try:
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(reason)
@@ -1180,7 +1168,9 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         kwargs = {}
         kw_lowered = ""
-        url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
+        if isinstance(query, str):
+            query_title = query
+            url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
         if keyword:
             kw_lowered = keyword.lower()
             if kw_lowered == "inactive":
@@ -1189,44 +1179,48 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 kwargs["is_active"] = "any"
             elif kw_lowered == "obs":
                 try:
-                    filtered_taxon = await self.taxa_query.query_taxon(ctx, query)
-                    kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
+                    kwargs, filtered_taxon = await self.obs_query.get_query_args(
+                        ctx, query
+                    )
+                    if filtered_taxon.taxon:
+                        query_title = format_taxon_name(
+                            filtered_taxon.taxon, with_term=True
+                        )
+                    else:
+                        query_title = "Observations"
                     if filtered_taxon.user:
-                        kwargs["user_id"] = filtered_taxon.user.user_id
+                        query_title += f" by {filtered_taxon.user.login}"
                     if filtered_taxon.place:
-                        kwargs["place_id"] = filtered_taxon.place.place_id
-                    kwargs["verifiable"] = "any"
-                    query = format_taxon_name(filtered_taxon.taxon)
-                except ParseException:
-                    await ctx.send(embed=sorry())
-                    return
+                        query_title += f" from {filtered_taxon.place.display_name}"
                 except LookupError as err:
                     reason = err.args[0]
                     await ctx.send(embed=sorry(apology=reason))
                     return
 
                 url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
-                kwargs["include_new_projects"] = 1
                 kwargs["per_page"] = 200
             else:
                 kwargs["sources"] = kw_lowered
                 url += f"&sources={keyword}"
         if kw_lowered == "obs":
-            response = await self.api.get_observations(**kwargs)
-            raw_results = response["results"]
-            results = [
-                "\n".join(
-                    self.format_obs(
-                        get_obs_fields(result),
-                        with_description=False,
-                        with_link=True,
-                        compact=True,
+            try:
+                (
+                    observations,
+                    total_results,
+                    per_page,
+                ) = await self.obs_query.query_observations(ctx, query)
+                results = [
+                    "\n".join(
+                        self.format_obs(
+                            obs, with_description=False, with_link=True, compact=True,
+                        )
                     )
-                )
-                for result in raw_results
-            ]
-            total_results = response["total_results"]
-            per_page = response["per_page"]
+                    for obs in observations
+                ]
+            except LookupError as err:
+                reason = err.args[0]
+                await ctx.send(embed=sorry(apology=reason))
+                return
             per_embed_page = 5
         else:
             (results, total_results, per_page) = await self.site_search.search(
@@ -1261,7 +1255,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 )
             embeds = [
                 make_embed(
-                    title=f"Search: {query} (page {index} of {pages_len})",
+                    title=f"Search: {query_title} (page {index} of {pages_len})",
                     url=url,
                     description=page,
                 )
@@ -1305,7 +1299,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
-    async def search_obs(self, ctx, *, query):
+    async def search_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Search iNat observations."""
         await self._search(ctx, query, "obs")
 

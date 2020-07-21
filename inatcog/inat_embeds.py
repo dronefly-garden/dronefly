@@ -4,20 +4,19 @@ import re
 from typing import Union
 from discord import File
 import html2markdown
+from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
-from .api import WWW_BASE_URL
 from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
-from .obs import PAT_OBS_LINK
+from .base_classes import WWW_BASE_URL, PAT_OBS_LINK, FilteredTaxon
 from .projects import UserProject, ObserverStats
 from .taxa import (
     format_taxon_name,
     format_taxon_names,
     get_taxon,
     get_taxon_fields,
-    FilteredTaxon,
     format_place_taxon_counts,
     format_user_taxon_counts,
     TAXON_ID_LIFE,
@@ -57,8 +56,21 @@ EMOJI = {
 }
 
 
+# Note: Consider broadening scope of module to INatHelpers to encompass things
+# like check_taxon_query, or else split to own mixin.
 class INatEmbeds(MixinMeta):
     """Provide embeds for iNatCog."""
+
+    def check_taxon_query(self, ctx, query):
+        """Check for valid taxon query."""
+        if query.controlled_term or (query.user and query.place):
+            args = ctx.message.content.split(" ", 1)[1]
+            reason = (
+                "I don't understand that query.\nPerhaps you meant one of:\n"
+                f"`{ctx.clean_prefix}obs {args}`\n"
+                f"`{ctx.clean_prefix}search obs {args}`"
+            )
+            raise BadArgument(reason)
 
     async def make_last_obs_embed(self, ctx, last):
         """Return embed for recent observation link."""
