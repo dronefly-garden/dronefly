@@ -7,10 +7,11 @@ import discord
 from pyparsing import ParseException
 from redbot.core import commands
 from redbot.core.bot import Red
+from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 from .common import LOG
-from .converters import ContextMemberConverter
+from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .base_classes import PAT_OBS_TAXON_LINK, Place
@@ -109,16 +110,23 @@ class Listeners(INatEmbeds, MixinMeta):
         if dot_taxon:
             mat = re.search(DOT_TAXON_PAT, message.content)
             if mat:
+                msg = None
                 ctx = PartialContext(
                     self.bot, guild, channel, message.author, message, "msg dot_taxon"
                 )
                 try:
-                    filtered_taxon = await self.taxon_query.query_taxon(
+                    query = await NaturalCompoundQueryConverter.convert(
                         ctx, mat["query"]
                     )
                 except (LookupError, ParseException):
                     return
-                if filtered_taxon.user or filtered_taxon.place:
+                if query.controlled_term:
+                    return
+                try:
+                    filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+                except (BadArgument, LookupError, ParseException):
+                    return
+                if query.user or query.place:
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(filtered_taxon)
                     )
@@ -126,7 +134,6 @@ class Listeners(INatEmbeds, MixinMeta):
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(filtered_taxon)
                     )
-
                 start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
                 self.bot.dispatch("commandstats_action", ctx)
 
