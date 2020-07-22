@@ -116,7 +116,6 @@ class CompoundQuery(NamedTuple):
     ancestor: SimpleQuery
     user: str
     place: str
-    group_by: str
     controlled_term: str
 
 
@@ -179,8 +178,6 @@ class FilteredTaxon(NamedTuple):
     taxon: Taxon
     user: User
     place: Place
-    group_by: str
-    # location: Location
 
 
 class Obs(NamedTuple):

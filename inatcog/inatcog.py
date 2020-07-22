@@ -484,7 +484,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         inat_user = await self.user_table.get_user(user.member)
-        filtered_taxon = FilteredTaxon(last.obs.taxon, inat_user, None, None)
+        filtered_taxon = FilteredTaxon(last.obs.taxon, inat_user, None)
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @last_obs_taxon.command(name="from")
@@ -499,7 +499,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             place = await self.place_table.get_place(ctx.guild, place, ctx.author)
         except LookupError:
             place = None
-        filtered_taxon = FilteredTaxon(last.obs.taxon, None, place, None)
+        filtered_taxon = FilteredTaxon(last.obs.taxon, None, place)
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @last_obs.command(name="map", aliases=["m"])
@@ -568,7 +568,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         inat_user = await self.user_table.get_user(user.member)
-        filtered_taxon = FilteredTaxon(last.taxon, inat_user, None, None)
+        filtered_taxon = FilteredTaxon(last.taxon, inat_user, None)
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @last_taxon.command(name="from")
@@ -583,7 +583,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             place = await self.place_table.get_place(ctx.guild, place, ctx.author)
         except LookupError:
             place = None
-        filtered_taxon = FilteredTaxon(last.taxon, None, place, None)
+        filtered_taxon = FilteredTaxon(last.taxon, None, place)
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @last_taxon.command(name="map", aliases=["m"])
@@ -923,7 +923,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
-    async def obs(self, ctx, *, query: Union[NaturalCompoundQueryConverter, str]):
+    async def obs(self, ctx, *, query: str):
         """Show observation matching query, link, or number.
 
         **query** may contain:
@@ -950,8 +950,15 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         - See `[p]help taxon` for help specifying optional taxa.
         """
 
-        if isinstance(query, str):
-            obs, url = await maybe_match_obs(self.api, query, id_permitted=True)
+        id_or_link = None
+        if query.isnumeric():
+            id_or_link = query
+        else:
+            mat = re.search(PAT_OBS_LINK, query)
+            if mat and mat["url"]:
+                id_or_link = query
+        if id_or_link:
+            obs, url = await maybe_match_obs(self.api, id_or_link, id_permitted=True)
             # Note: if the user specified an invalid or deleted id, a url is still
             # produced (i.e. should 404).
             if url:
@@ -966,7 +973,8 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 return
 
         try:
-            obs = await self.obs_query.query_single_obs(ctx, query)
+            compound_query = await NaturalCompoundQueryConverter.convert(ctx, query)
+            obs = await self.obs_query.query_single_obs(ctx, compound_query)
         except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))

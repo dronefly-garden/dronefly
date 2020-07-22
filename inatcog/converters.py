@@ -169,7 +169,6 @@ class CompoundQueryConverter(CompoundQuery):
                 ancestor=ancestor,
                 user=" ".join(vals.user),
                 place=" ".join(vals.place),
-                group_by="",
                 controlled_term=vals.controlled_term,
             )
 

@@ -10,7 +10,7 @@ from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
-from .base_classes import WWW_BASE_URL, PAT_OBS_LINK, FilteredTaxon
+from .base_classes import CompoundQuery, WWW_BASE_URL, PAT_OBS_LINK, FilteredTaxon
 from .projects import UserProject, ObserverStats
 from .taxa import (
     format_taxon_name,
@@ -63,6 +63,8 @@ class INatEmbeds(MixinMeta):
 
     def check_taxon_query(self, ctx, query):
         """Check for valid taxon query."""
+        if not isinstance(query, CompoundQuery):
+            return
         if query.controlled_term or (query.user and query.place):
             args = ctx.message.content.split(" ", 1)[1]
             reason = (
@@ -122,31 +124,22 @@ class INatEmbeds(MixinMeta):
         formatted_counts = ""
 
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place, group_by) = arg
+            (taxon, user, place) = arg
         else:
             taxon = arg
             user = None
             place = None
-            group_by = None
 
         title = format_taxon_title(taxon)
         full_title = f"Observations of {title}"
         description = ""
         if place and user:
-            if group_by == "user":
-                full_title = f"Observations of {title} by {user.login}"
-                group_by_param = f"&user_id={user.user_id}"
-                formatted_counts = await format_place_taxon_counts(
-                    self, place, taxon, user.user_id
-                )
-                header = TAXON_PLACES_HEADER
-            else:
-                full_title = f"Observations of {title} from {place.display_name}"
-                group_by_param = f"&place_id={place.place_id}"
-                formatted_counts = await format_user_taxon_counts(
-                    self, user, taxon, place.place_id
-                )
-                header = TAXON_COUNTS_HEADER
+            full_title = f"Observations of {title} from {place.display_name}"
+            group_by_param = f"&place_id={place.place_id}"
+            formatted_counts = await format_user_taxon_counts(
+                self, user, taxon, place.place_id
+            )
+            header = TAXON_COUNTS_HEADER
         elif user:
             formatted_counts = await format_user_taxon_counts(self, user, taxon)
             header = TAXON_COUNTS_HEADER
@@ -383,12 +376,11 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, arg):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place, _group_by) = arg
+            (taxon, user, place) = arg
         else:
             taxon = arg
             user = None
             place = None
-            # group_by = None
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 

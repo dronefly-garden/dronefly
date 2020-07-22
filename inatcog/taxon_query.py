@@ -1,4 +1,5 @@
 """Module to query iNat taxa."""
+from typing import Union
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
@@ -89,28 +90,34 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, compound_query: CompoundQuery):
+    async def query_taxon(self, ctx, query: Union[str, CompoundQuery]):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
         user = None
-        if compound_query.ancestor and not compound_query.main:
-            raise LookupError("No taxon terms given to find `in` ancestor taxon.")
-        if compound_query.main:
-            taxon = await self.maybe_match_taxon_compound(compound_query)
-        if compound_query.user:
-            try:
-                who = await ContextMemberConverter.convert(ctx, compound_query.user)
-            except BadArgument as err:
-                raise LookupError(str(err))
-            user = await self.cog.user_table.get_user(who.member)
+        if isinstance(query, CompoundQuery):
+            if query.ancestor and not query.main:
+                raise LookupError("No taxon terms given to find `in` ancestor taxon.")
+            if query.main:
+                taxon = await self.maybe_match_taxon_compound(query)
+            if query.user:
+                try:
+                    who = await ContextMemberConverter.convert(ctx, query.user)
+                except BadArgument as err:
+                    raise LookupError(str(err))
+                user = await self.cog.user_table.get_user(who.member)
+            if query.place:
+                place = await self.cog.place_table.get_place(
+                    ctx.guild, query.place, ctx.author
+                )
+        else:
+            if query.isnumeric():
+                records = (await self.cog.api.get_taxa(query))["results"]
+                if not records:
+                    raise LookupError("No matching taxon found")
+                taxon = get_taxon_fields(records[0])
 
-        if compound_query.place:
-            place = await self.cog.place_table.get_place(
-                ctx.guild, compound_query.place, ctx.author
-            )
-
-        return FilteredTaxon(taxon, user, place, compound_query.group_by)
+        return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
