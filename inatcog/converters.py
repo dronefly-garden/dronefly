@@ -105,7 +105,10 @@ class CompoundQueryConverter(CompoundQuery):
 
         def detect_terms_phrases_code(terms_and_phrases: list):
             """Detect terms, phrases, and code."""
-            terms = shlex.split(" ".join(list(terms_and_phrases)))
+            ungroup_phrases = re.sub("'", "\\'", " ".join(list(terms_and_phrases)))
+            terms = list(
+                re.sub("\\\\'", "'", term) for term in shlex.split(ungroup_phrases)
+            )
             phrases = [
                 mat[1].split()
                 for phrase in terms_and_phrases
@@ -124,7 +127,10 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--rank", dest="rank", default="")
         parser.add_argument("--with", nargs=2, dest="controlled_term")
 
-        vals = parser.parse_args(shlex.split(argument, posix=False))
+        try:
+            vals = parser.parse_args(shlex.split(argument, posix=False))
+        except ValueError as err:
+            raise BadArgument(err.args[0])
         ranks = []
         if vals.rank:
             parsed_ranks = shlex.shlex(vals.rank)
@@ -149,7 +155,10 @@ class CompoundQueryConverter(CompoundQuery):
             main = None
             ancestor = None
             if vals.main:
-                terms, phrases, code = detect_terms_phrases_code(vals.main)
+                try:
+                    terms, phrases, code = detect_terms_phrases_code(vals.main)
+                except ValueError as err:
+                    raise BadArgument(err.args[0])
                 if terms:
                     main = SimpleQuery(
                         taxon_id=None,
@@ -159,7 +168,10 @@ class CompoundQueryConverter(CompoundQuery):
                         code=code,
                     )
             if vals.ancestor:
-                terms, phrases, code = detect_terms_phrases_code(vals.ancestor)
+                try:
+                    terms, phrases, code = detect_terms_phrases_code(vals.ancestor)
+                except ValueError as err:
+                    raise BadArgument(err.args[0])
                 if terms:
                     ancestor = SimpleQuery(
                         taxon_id=None, terms=terms, phrases=phrases, ranks=[], code=code
@@ -186,7 +198,10 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         mat = re.search(PAT_OBS_LINK, argument)
         if mat and mat["url"]:
             return argument
-        args_normalized = shlex.split(argument, posix=False)
+        try:
+            args_normalized = shlex.split(argument, posix=False)
+        except ValueError as err:
+            raise BadArgument(err.args[0])
         ranks = []
         for arg in args_normalized:
             arg_lowered = arg.lower()
