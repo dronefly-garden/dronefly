@@ -1056,7 +1056,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         ```
         """
 
-    @commands.command(aliases=["t"])
+    @commands.group(aliases=["t"], invoke_without_command=True)
     async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon best matching the query.
 
@@ -1094,6 +1094,30 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             return
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
+
+    @taxon.command()
+    async def bonap(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show info from bonap.net for taxon."""
+        try:
+            self.check_taxon_query(ctx, query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+        except (BadArgument, LookupError) as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
+
+        base_url = "http://bonap.net/MapGallery/County/"
+        maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
+        taxon = filtered_taxon.taxon
+        name = re.sub(r" ", "%20", taxon.name)
+        full_name = format_taxon_name(taxon)
+        if taxon.rank == "genus":
+            await ctx.send(
+                f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
+            )
+        elif taxon.rank == "species":
+            await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
+        else:
+            await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
