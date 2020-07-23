@@ -7,10 +7,6 @@ Welcome to Dronefly's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-.. toctree::
     :maxdepth: 2
     :caption: Developer's Reference:
 
