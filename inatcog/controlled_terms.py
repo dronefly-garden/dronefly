@@ -53,5 +53,7 @@ def match_controlled_term(
         )
         if matched_value:
             return (matched_term, matched_value)
-        raise LookupError("No matching value for controlled term")
-    raise LookupError("No matching controlled term")
+        raise LookupError(
+            f'No value matching "`{value_label}`" for controlled term: `{matched_term.label}`'
+        )
+    raise LookupError(f'No controlled term matching "`{term_label}`"')
