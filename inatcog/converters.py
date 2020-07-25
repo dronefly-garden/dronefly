@@ -93,7 +93,7 @@ class NoExitParser(argparse.ArgumentParser):
     """Handle default error as bad argument, not sys.exit."""
 
     def error(self, message):
-        raise BadArgument() from None
+        raise BadArgument("Query not understood") from None
 
 
 class CompoundQueryConverter(CompoundQuery):
@@ -125,7 +125,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--by", nargs="+", dest="user", default=[])
         parser.add_argument("--from", nargs="+", dest="place", default=[])
         parser.add_argument("--rank", dest="rank", default="")
-        parser.add_argument("--with", nargs=2, dest="controlled_term")
+        parser.add_argument("--with", nargs="+", dest="controlled_term")
 
         try:
             vals = parser.parse_args(shlex.split(argument, posix=False))
@@ -176,12 +176,18 @@ class CompoundQueryConverter(CompoundQuery):
                     ancestor = SimpleQuery(
                         taxon_id=None, terms=terms, phrases=phrases, ranks=[], code=code
                     )
+            if vals.controlled_term:
+                term_name = vals.controlled_term[0]
+                term_value = " ".join(vals.controlled_term[1:])
+                controlled_term = [term_name, term_value]
+            else:
+                controlled_term = None
             return cls(
                 main=main,
                 ancestor=ancestor,
                 user=" ".join(vals.user),
                 place=" ".join(vals.place),
-                controlled_term=vals.controlled_term,
+                controlled_term=controlled_term,
             )
 
         return argument
