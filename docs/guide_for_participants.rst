@@ -30,7 +30,7 @@ Discord server. A permanent standing invitation exists here:
 https://discord.gg/eCD4WvT (opens in #introductions)
 
 Discord Layout and Functions
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Discord will look different depending on platform, but in general, you
 can expect something like this:
