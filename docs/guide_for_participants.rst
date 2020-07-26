@@ -86,7 +86,9 @@ organized by the categories shown. You may have categories or channels
 of particular interest, and others you have no interest in. You can
 collapse categories as shown, or expand them to see all the channels. If
 you collapse the categories, only those channels with new content will
-be shown.\ |image7|
+be shown.
+
+|image7|
 
 If you want to mute a channel, the easiest way is to use the bell icon
 in the upper right corner once you’re in a channel (|image8|).
@@ -108,7 +110,9 @@ you’re using iNaturalist in a browser.
 Pinned messages are posts that have occurred in a channel that
 moderators have decided are either particularly important, or equally as
 likely, particularly funny. You’ll find both useful information and
-humorous items in pinned messages.\ |image10|
+humorous items in pinned messages.
+
+|image10|
 
 For instance, in the #bot-stuff channel, you’ll find information about
 commands you can use with bots as pinned items.
@@ -185,33 +189,35 @@ here:
 
 https://forum.inaturalist.org/t/how-to-use-dronefly-a-discord-chat-bot/9770
 
-Syntax:*,inat -*\ Access the iNaturalist platform. See the help topics
+Syntax: *,inat -*\ Access the iNaturalist platform. See the help topics
 for each subcommand for details.
 
 Commands
 """"""""
 
 *,image* (*,img*) - Show default iNaturalist image for taxon
-query.\ |image15|\ |image16|
+query.
+
+|image15| \ |image16|
 
 Note that you can press the buttons below the image to generate
 reactions with information (shown above the image on the right) as
 follows:
 
-|image17|\ Will indicate the number of observations you’ve made
+|image17| \ Will indicate the number of observations you’ve made
 
-|image18|\ Will indicate the number of observations made by a user you
+|image18| \ Will indicate the number of observations made by a user you
 specify
 
-|image19|\ Will indicate the number of observations from your home place
+|image19| \ Will indicate the number of observations from your home place
 (see\ *,user* below)
 
-|image20|\ Will indicate the number of observations made from a place
+|image20| \ Will indicate the number of observations made from a place
 you specify
 
 |image21|
 
-*,last*- Show info for recently mentioned iNaturalist page. (operators
+*,last* - Show info for recently mentioned iNaturalist page. (operators
 are *obs* or *taxon*). Can be further expanded using *<rank>*, *img*,
 *map* or *taxon*.
 
@@ -278,7 +284,9 @@ Arrow keys allow paging through pages of results. See `Appendix
 C <#_4whij4v6yazk>`__ for icons.
 
 *,taxon* (*,t*) - Show taxon best matching the query. Query may
-contain:|image28|
+contain:
+
+|image28|
 
    - id# of the iNaturalist taxon
 
@@ -300,7 +308,9 @@ contain:|image28|
 
    Note: Dronefly also supports *,species*.
 
-,user - Show user if their iNaturalist ID is known.\ |image29|
+,user - Show user if their iNaturalist ID is known.
+
+|image29|
 
 (*,me* is an alias for ,user me and will show you your own statistics)
 
@@ -483,7 +493,9 @@ fahrenheit (f) Convert Fahrenheit degree to Celsius or Kelvin.
 
 kelvin (k) Convert Kelvin degree to Celsius or Fahrenheit.
 
-kg Convert kilograms to pounds.\ |image37|
+kg Convert kilograms to pounds.
+
+|image37|
 
 km Convert kilometers to miles.
 
@@ -521,7 +533,9 @@ tz Gets the time in any timezone. (e.g.\ *-time tz America/New_York*)
 
 user Shows the current time for user.
 
-*-tweets* - Gets information from Twitter's API\ |image39|
+*-tweets* - Gets information from Twitter's API
+
+|image39|
 
 Tweets subcommands
 """"""""""""""""""
