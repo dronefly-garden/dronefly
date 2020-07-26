@@ -11,3 +11,10 @@ Welcome to Dronefly's documentation!
     :caption: Developer's Reference:
 
     design_goals
+
+.. toctree::
+    :maxdepth: 2
+    :caption: iNaturalist Discord Server user documentation:
+
+    guide_for_participants
+
