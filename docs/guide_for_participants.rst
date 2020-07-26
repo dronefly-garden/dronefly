@@ -18,7 +18,6 @@ Get Discord
 
 Browser URL:
 `https://discordapp.com/ <https://discordapp.com/channels/@me>`__
-:w
 
 Software: https://discordapp.com/download
 
