@@ -1,5 +1,6 @@
 """A cog for using the iNaturalist platform."""
 from abc import ABC
+from datetime import datetime
 from math import ceil
 import re
 from typing import Optional, Union
@@ -894,7 +895,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send("Project abbreviation removed.")
 
     @project.command(name="stats")
-    async def project_stats(self, ctx, project: str, user: str = "me"):
+    async def project_stats(self, ctx, project: str, *, user: str = "me"):
         """Show project stats for the named user.
 
         Observation & species count & rank of the user within the project
@@ -1464,16 +1465,26 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         member = await ContextMemberConverter.convert(ctx, "me")
         await self.user(ctx, who=member)
 
-    @commands.command()
+    @commands.group(invoke_without_command=True)
     @known_inat_user()
-    async def my(self, ctx, project: str):  # pylint: disable=invalid-name
+    async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name
         """Show your observations, species, & ranks for an iNat project."""
-        await self.project_stats(ctx, project, "me")
+        await self.project_stats(ctx, project, user="me")
+
+    @my.command(name="inatyear", invoke_without_command=True)
+    @known_inat_user()
+    async def my_inatyear(self, ctx, year: int = None):
+        """Display the URL for your iNat year graphs.
+
+        Where `year` is a valid year on or after 1950."""
+        await self.user_inatyear(ctx, year, user="me")
 
     @commands.command()
-    async def rank(self, ctx, project: str, user: str):  # pylint: disable=invalid-name
+    async def rank(
+        self, ctx, project: str, *, user: str
+    ):  # pylint: disable=invalid-name
         """Show observations, species, & ranks in an iNat project for a user."""
-        await self.project_stats(ctx, project, user)
+        await self.project_stats(ctx, project, user=user)
 
     @user.command(name="add")
     @checks.admin_or_permissions(manage_roles=True)
@@ -1756,3 +1767,33 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(
                 f"No iNat login ids are known. Add them with `{ctx.clean_prefix}user add`."
             )
+
+    @user.command(name="inatyear")
+    @known_inat_user()
+    async def user_inatyear(self, ctx, year: int = None, *, user: str = "me"):
+        """Display the URL for the user's iNat year graphs.
+
+        Where `year` is a valid year on or after 1950, and `user` is a Discord user
+        whose iNat profile is known to the bot."""
+
+        this_year = datetime.today().year
+        stats_year = this_year if year is None else year
+        # 1950 experimentally determined (as of 2020-07-26) to be the floor year
+        # as 1949 and earlier produces a 404 Error.
+        if stats_year < 1950 or stats_year > this_year:
+            await ctx.send(
+                f"Sorry, iNat does not support stats for that year: `{stats_year}`"
+            )
+            return
+
+        try:
+            ctx_member = await ContextMemberConverter.convert(ctx, user)
+            member = ctx_member.member
+            inat_user = await self.user_table.get_user(member)
+        except (BadArgument, LookupError) as err:
+            await ctx.send(err)
+            return
+
+        await ctx.send(
+            f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}"
+        )
