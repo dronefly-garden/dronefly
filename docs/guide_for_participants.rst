@@ -4,19 +4,21 @@
 iNaturalist Discord Server Guide for Participants
 =================================================
 
-*Table of Contents*
 
 Discord Basics
+--------------
 
 Discord is a proprietary freeware VoIP application and digital
 distribution platform that specializes in text, image, video and audio
 communication between users in a chat channel. Discord runs on Windows,
 macOS, Android, iOS, Linux, and in web browsers.
 
-*Get Discord*
+Get Discord
+^^^^^^^^^^^
 
 Browser URL:
 `https://discordapp.com/ <https://discordapp.com/channels/@me>`__
+:w
 
 Software: https://discordapp.com/download
 
@@ -29,6 +31,7 @@ Discord server. A permanent standing invitation exists here:
 https://discord.gg/eCD4WvT (opens in #introductions)
 
 Discord Layout and Functions
+----------------------------
 
 Discord will look different depending on platform, but in general, you
 can expect something like this:
@@ -123,6 +126,7 @@ their profile (which can be helpful when temporary nickname changes
 occur).
 
 Get Set Up using the #role-menus Channel
+----------------------------------------
 
 The #role-menus channel (under the Important heading) is one of the
 first channels every new user should visit. Configuring details about
@@ -139,6 +143,7 @@ some based on achievement. For instance, talking with people on the
 server will earn you the Naturalist role.
 
 Using the Discord Bots
+----------------------
 
 Access to the Discord bots is one of the great benefits of being on the
 server. Bots are primarily for obtaining information.
@@ -171,7 +176,8 @@ Notes on reading the online bot help:
    typed
 -  If there are [square brackets,] it is an optional input
 
-**Dronefly**
+Dronefly
+^^^^^^^^
 
 (access help using *,help*)
 
@@ -183,7 +189,8 @@ https://forum.inaturalist.org/t/how-to-use-dronefly-a-discord-chat-bot/9770
 Syntax:*,inat -*\ Access the iNaturalist platform. See the help topics
 for each subcommand for details.
 
-*Subcommands*:
+Commands
+""""""""
 
 *,image* (*,img*) - Show default iNaturalist image for taxon
 query.\ |image15|\ |image16|
@@ -253,7 +260,8 @@ taxon ID numbers, common names, or scientific names)
 
 *,search* (*,s*) - Search iNat.
 
-*Subcommands:*
+Search subcommands
+""""""""""""""""""
 
 *inactive* - Search iNat taxa (includes inactive - exact match only)
 
@@ -335,7 +343,8 @@ the “by user” and “from place” conventions.
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
 
-*Custom commands:*
+Custom commands
+"""""""""""""""
 
 *,bhl*-
 `https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles <https://www.biodiversitylibrary.org/search?searchTerm=lygaeus+kalmii#/titles>`__
@@ -459,13 +468,15 @@ taxa of interest after command)
 https://www.xeno-canto.org/species/%7B0:query%7D-%7B1:query%7D?query=ssp:%22%7B2:query%7D%22
 (put bird subspecies of interest after command)
 
-**Dumbo**
+Dumbo
+^^^^^
 
 (access help using *-help*)
 
 *-conv* - Convert a value
 
-*Subcommands*:
+Conv Subcommands
+""""""""""""""""
 
 celsius (c) Convert degree Celsius to Fahrenheit or Kelvin.
 
@@ -498,7 +509,8 @@ tounix Convert a date to a unix timestamp.
 For the list of supported timezones, see here:
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-*Subcommands:*
+Time subcommands
+""""""""""""""""
 
 compare Compare your saved timezone with another user's timezone.
 
@@ -512,7 +524,8 @@ user Shows the current time for user.
 
 *-tweets* - Gets information from Twitter's API\ |image39|
 
-*Subcommands:*
+Tweets subcommands
+""""""""""""""""""
 
 gettweets Display a users tweets as a scrollable message
 
@@ -531,7 +544,8 @@ trends Gets trends for a given location
 Syntax: *-weather <location>* (location must take the form of city,
 Country Code, for example: *-weather New York,US*)
 
-*Subcommands*:
+Weather subcommands
+"""""""""""""""""""
 
 cityid Display weather in a given location
 
@@ -547,7 +561,8 @@ See:https://bulk.openweathermap.org/sample/city.list.json.gz)
 
 Dumbo also uses custom commands:
 
-*Custom commands:*
+Custom commands
+"""""""""""""""
 
 *-abbrev* - https://www.abbreviations.com/%7B0:query%7D
 
@@ -566,7 +581,8 @@ https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx)
 
 *-wiktionary*- https://en.wiktionary.org/wiki/%7B0:query%7D
 
-**Pickerel**
+Pickerel
+^^^^^^^^
 
 (access help using $help)
 
@@ -628,7 +644,8 @@ Follow the rules for communicating with others in the #welcome channel.
 channels. If one is busy with an ongoing discussion, and you want to
 start a new topic, use the other.
 
-*Basic functions*
+Basic functions
+"""""""""""""""
 
 Typing\ *@username* will “ping” the user.
 
@@ -644,10 +661,12 @@ Let a moderator know if you think a file is important enough to be
 pinned.
 
 Participating - #suggestions (under Important)
+----------------------------------------------
 
 Anyone can make a suggestion to improve the server in this channel.
 
 Participating - #inat-questions and #inat-curation (under iNat Stuff)
+---------------------------------------------------------------------
 
 Ask and answer user and curator questions about iNaturalist and how it
 works in these channels. Don’t forget to check pinned messages and use
@@ -656,6 +675,7 @@ before. If you can’t get an answer here, the iNaturalist Forum is
 another good place to post questions: https://forum.inaturalist.org/
 
 Participating - #id-confirmation and #work-party (under Identify)
+-----------------------------------------------------------------
 
 Use the #id-confirmation channel for:
 
@@ -680,8 +700,8 @@ Examples include:
 -  https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281
 -  https://forum.inaturalist.org/t/ways-to-help-out-on-inat-wiki/1983
 
-Participating - |image47|\ General and #vc-general (under Voice
-Channels)
+Participating - |image47|\ General and #vc-general (under Voice Channels)
+-------------------------------------------------------------------------
 
 Voice channels (like |image48|) allow you to talk and listen to other
 iNaturalist Discord Server participants in real time.
@@ -700,6 +720,7 @@ Please don’t forget to mute yourself (|image51|) if someone else is
 presenting.
 
 Appendix A - Notification Settings
+----------------------------------
 
 Suggested starting point for Notification Settings:|image52|
 
@@ -709,6 +730,7 @@ Scroll down a bit further, and you can adjust notification settings for
 each channel (example shown is not a recommendation).
 
 Appendix B - Text Formatting
+----------------------------
 
 |image54|
 
@@ -745,6 +767,7 @@ There are also text commands that you can be put in front of text (e.g.
 */shrug* Oh well!)
 
 Appendix C - Search Result Icons
+--------------------------------
 
 Dronefly search results are accompanied by icons as follows:
 
