@@ -34,12 +34,14 @@ class INatTaxonQuery:
             return ancestor
         return None
 
-    async def maybe_match_taxon(self, query, ancestor_id=None):
+    async def maybe_match_taxon(self, query, ancestor_id=None, home=None):
         """Get taxon and return a match, if any."""
+        kwargs = {}
+        if home:
+            kwargs["preferred_place_id"] = int(home)
         if query.taxon_id:
-            records = (await self.cog.api.get_taxa(query.taxon_id))["results"]
+            records = (await self.cog.api.get_taxa(query.taxon_id, **kwargs))["results"]
         else:
-            kwargs = {}
             kwargs["q"] = " ".join(query.terms)
             if query.ranks:
                 kwargs["rank"] = ",".join(query.ranks)
@@ -57,7 +59,7 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def maybe_match_taxon_compound(self, compound_query):
+    async def maybe_match_taxon_compound(self, compound_query, home=None):
         """Get one or more taxa and return a match, if any.
 
         Currently the grammar supports only one ancestor taxon
@@ -66,7 +68,7 @@ class INatTaxonQuery:
         query_main = compound_query.main
         query_ancestor = compound_query.ancestor
         if query_ancestor:
-            ancestor = await self.maybe_match_taxon(query_ancestor)
+            ancestor = await self.maybe_match_taxon(query_ancestor, home=home)
             if ancestor:
                 if query_main.ranks:
                     max_query_rank_level = max(
@@ -83,10 +85,10 @@ class INatTaxonQuery:
                             )
                         )
                 taxon = await self.maybe_match_taxon(
-                    query_main, ancestor_id=ancestor.taxon_id
+                    query_main, ancestor_id=ancestor.taxon_id, home=home
                 )
         else:
-            taxon = await self.maybe_match_taxon(query_main)
+            taxon = await self.maybe_match_taxon(query_main, home=home)
 
         return taxon
 
@@ -95,11 +97,19 @@ class INatTaxonQuery:
         taxon = None
         place = None
         user = None
+        user_config = self.cog.config.user(ctx.author)
+        home = await user_config.home()
+        if not home:
+            if ctx.guild:
+                guild_config = self.cog.config.guild(ctx.guild)
+                home = await guild_config.home()
+            else:
+                home = await self.cog.config.home()
         if isinstance(query, CompoundQuery):
             if query.ancestor and not query.main:
                 raise LookupError("No taxon terms given to find `in` ancestor taxon.")
             if query.main:
-                taxon = await self.maybe_match_taxon_compound(query)
+                taxon = await self.maybe_match_taxon_compound(query, home=home)
             if query.user:
                 try:
                     who = await ContextMemberConverter.convert(ctx, query.user)
@@ -112,11 +122,13 @@ class INatTaxonQuery:
                 )
         else:
             if query.isnumeric():
-                records = (await self.cog.api.get_taxa(query))["results"]
+                kwargs = {}
+                if home:
+                    kwargs["preferred_place_id"] = int(home)
+                records = (await self.cog.api.get_taxa(query, **kwargs))["results"]
                 if not records:
                     raise LookupError("No matching taxon found")
                 taxon = get_taxon_fields(records[0])
-
         return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, ctx, query):

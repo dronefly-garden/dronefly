@@ -73,7 +73,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         self.reaction_locks = {}
         self.predicate_locks = {}
 
-        self.config.register_global(schema_version=1)
+        self.config.register_global(home=97394, schema_version=1)  # North America
         self.config.register_guild(
             autoobs=False,
             dot_taxon=False,
@@ -82,6 +82,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             inactive_role=None,
             user_projects={},
             places={},
+            home=97394,  # North America
             projects={},
             project_emojis={},
         )
@@ -1343,6 +1344,31 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         `Aliases: [p]sp`
         See `[p]help taxon` for query help."""
         await self.taxon(ctx, query="species " + query)
+
+    @inat_set.command(name="home")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_home(self, ctx, home: str):
+        """Set server default home place (mods)."""
+        config = self.config.guild(ctx.guild)
+        try:
+            place = await self.place_table.get_place(ctx.guild, home, ctx.author)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+        await config.home.set(place.place_id)
+        await ctx.send(f"iNat server default home set:\n{place.url}")
+
+    @inat_show.command(name="home")
+    async def show_home(self, ctx):
+        """Show server default home place."""
+        config = self.config.guild(ctx.guild)
+        home = await config.home()
+        await ctx.send("iNat server default home:")
+        try:
+            place = await self.place_table.get_place(ctx.guild, int(home), ctx.author)
+            await ctx.send(place.url)
+        except LookupError as err:
+            await ctx.send(err)
 
     @inat_set.command(name="user_project")
     @checks.admin_or_permissions(manage_roles=True)
