@@ -1040,7 +1040,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
-        Coming soon."""
+        `Not implemented yet.` Coming soon."""
         """
         The last qualifier indicates the thing to count.
         Keyword `any` supported for enumerable values (e.g. controlled terms).
@@ -1057,6 +1057,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
              -> per place (home listed; others react to add)
         ```
         """
+        await ctx.send_help()
 
     @commands.group(aliases=["t"], invoke_without_command=True)
     async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
