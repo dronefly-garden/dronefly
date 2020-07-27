@@ -87,7 +87,10 @@ class Listeners(INatEmbeds, MixinMeta):
             autoobs = channel_autoobs
 
         if autoobs:
-            obs, url = await maybe_match_obs(self.api, message.content)
+            ctx = PartialContext(
+                self.bot, guild, channel, message.author, message, "msg autoobs"
+            )
+            obs, url = await maybe_match_obs(ctx, self, message.content)
             # Only output if an observation is found
             if obs:
                 await message.channel.send(
@@ -95,9 +98,6 @@ class Listeners(INatEmbeds, MixinMeta):
                 )
                 if obs and obs.sounds:
                     await self.maybe_send_sound_url(channel, obs.sounds[0])
-                ctx = PartialContext(
-                    self.bot, guild, channel, message.author, message, "msg autoobs"
-                )
                 self.bot.dispatch("commandstats_action", ctx)
 
         channel_dot_taxon = await self.config.channel(channel).dot_taxon()

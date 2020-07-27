@@ -960,7 +960,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             if mat and mat["url"]:
                 id_or_link = query
         if id_or_link:
-            obs, url = await maybe_match_obs(self.api, id_or_link, id_permitted=True)
+            obs, url = await maybe_match_obs(ctx, self, id_or_link, id_permitted=True)
             # Note: if the user specified an invalid or deleted id, a url is still
             # produced (i.e. should 404).
             if url:
