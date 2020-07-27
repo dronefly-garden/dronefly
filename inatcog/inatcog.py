@@ -1042,12 +1042,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         `Not implemented yet.` Coming soon."""
         """
-        The last qualifier indicates the thing to count.
-        Keyword `any` supported for enumerable values (e.g. controlled terms).
-
+        • The first part of the query indicates what to tabulate.
+        • The final `from`, `by`, or `with` indicates row contents.
         e.g.
         ```
-        ,tab fish from halifax with sex any
+        ,tab fish from halifax with sex
              -> per controlled term for "sex"
         ,tab fish from ns, nb, pe, maritimes, northeast
              -> per place specified
