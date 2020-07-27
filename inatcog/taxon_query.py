@@ -97,14 +97,7 @@ class INatTaxonQuery:
         taxon = None
         place = None
         user = None
-        user_config = self.cog.config.user(ctx.author)
-        home = await user_config.home()
-        if not home:
-            if ctx.guild:
-                guild_config = self.cog.config.guild(ctx.guild)
-                home = await guild_config.home()
-            else:
-                home = await self.cog.config.home()
+        home = await self.cog.get_home(ctx)
         if isinstance(query, CompoundQuery):
             if query.ancestor and not query.main:
                 raise LookupError("No taxon terms given to find `in` ancestor taxon.")

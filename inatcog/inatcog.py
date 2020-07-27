@@ -1012,7 +1012,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology=reason))
             return
 
-        await ctx.send(embed=await self.make_related_embed(taxa))
+        await ctx.send(embed=await self.make_related_embed(ctx, taxa))
 
     @commands.command(aliases=["img"])
     async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):

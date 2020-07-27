@@ -128,7 +128,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     )
                 else:
                     msg = await channel.send(
-                        embed=await self.make_taxa_embed(filtered_taxon)
+                        embed=await self.make_taxa_embed(ctx, filtered_taxon)
                     )
                 start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
                 self.bot.dispatch("commandstats_action", ctx)

@@ -74,6 +74,18 @@ class INatEmbeds(MixinMeta):
             )
             raise BadArgument(reason)
 
+    async def get_home(self, ctx):
+        """Get configured home place."""
+        user_config = self.config.user(ctx.author)
+        home = await user_config.home()
+        if not home:
+            if ctx.guild:
+                guild_config = self.config.guild(ctx.guild)
+                home = await guild_config.home()
+            else:
+                home = await self.config.home()
+        return home
+
     async def make_last_obs_embed(self, ctx, last):
         """Return embed for recent observation link."""
         if last.obs:
@@ -310,7 +322,7 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_related_embed(self, taxa):
+    async def make_related_embed(self, ctx, taxa):
         """Return embed for related taxa."""
         names = format_taxon_names_for_embed(
             taxa, with_term=True, names_format="**The taxa:** %s"
@@ -329,13 +341,16 @@ class INatEmbeds(MixinMeta):
                 first_taxon_ancestor_ids.index(ancestor_id)
                 for ancestor_id in common_ancestors
             ]
+            home = await self.get_home(ctx)
             if not common_ancestor_indices:
-                taxon = await get_taxon(self, TAXON_ID_LIFE)
+                taxon = await get_taxon(self, TAXON_ID_LIFE, preferred_place_id=home)
             else:
                 common_ancestor_id = first_taxon_ancestor_ids[
                     max(common_ancestor_indices)
                 ]
-                taxon = await get_taxon(self, common_ancestor_id)
+                taxon = await get_taxon(
+                    self, common_ancestor_id, preferred_place_id=home
+                )
 
         description = (
             f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon)}"
@@ -373,7 +388,7 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(self, arg):
+    async def make_taxa_embed(self, ctx, arg):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
             (taxon, user, place) = arg
@@ -394,7 +409,10 @@ class INatEmbeds(MixinMeta):
             return description
 
         async def format_ancestors(description, rec):
-            full_record = (await self.api.get_taxa(rec.taxon_id))["results"][0]
+            home = await self.get_home(ctx)
+            full_record = (await self.api.get_taxa(rec.taxon_id, home=home))["results"][
+                0
+            ]
             ancestors = full_record.get("ancestors")
             if ancestors:
                 ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]
@@ -558,5 +576,5 @@ class INatEmbeds(MixinMeta):
 
     async def send_embed_for_taxon(self, ctx, taxon):
         """Make embed for taxon & send."""
-        msg = await ctx.send(embed=await self.make_taxa_embed(taxon))
+        msg = await ctx.send(embed=await self.make_taxa_embed(ctx, taxon))
         start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
