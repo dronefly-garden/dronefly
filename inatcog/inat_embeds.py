@@ -65,7 +65,7 @@ class INatEmbeds(MixinMeta):
         """Check for valid taxon query."""
         if not isinstance(query, CompoundQuery):
             return
-        if query.controlled_term or (query.user and query.place):
+        if query.controlled_term or (query.user and query.place) or not query.main:
             args = ctx.message.content.split(" ", 1)[1]
             reason = (
                 "I don't understand that query.\nPerhaps you meant one of:\n"
