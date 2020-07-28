@@ -198,7 +198,7 @@ Commands
 *,image* (*,img*) - Show default iNaturalist image for taxon
 query.
 
-|image15| \ |image16|
+|image16| \ |image15| 
 
 Note that you can press the buttons below the image to generate
 reactions with information (shown above the image on the right) as
