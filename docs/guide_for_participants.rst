@@ -10,7 +10,7 @@ This guide has a number of sections aimed at introducing our new
 and existing users to Discord itself, the iNaturalist Discord Server,
 and its bots and channels.
 
-If you already know the :ref:`Discord Basics` is and how to use it, you may
+If you already know the :ref:`Discord Basics` and how to use it, you may
 wish to skip ahead to :ref:`Set Up Your Roles` and then :ref:`Using the
 Discord Bots`, the largest section.
 
