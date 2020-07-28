@@ -347,7 +347,7 @@ example). Spaces are required before and after, although the command can
 be used at the start of a line, if needed. The lookup can also utilize
 the “by user” and “from place” conventions.
 
-|image35|\ |image36|
+|image36| \ |image35|
 
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
