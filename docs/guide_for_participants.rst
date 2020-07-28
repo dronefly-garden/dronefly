@@ -371,134 +371,168 @@ Dronefly Custom Commands
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
 
-*,bhl*-
-`https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles <https://www.biodiversitylibrary.org/search?searchTerm=lygaeus+kalmii#/titles>`__
+``,bhl``
 
-*,bold3* -
-https://v3.boldsystems.org/index.php/Public_SearchTerms?query=%7B0:query}
-(put genus or binomial after command)
+- ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
 
-*,bold4* -
-http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records&query=%7B0:query}
-(see
-http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records
-for support of quotes, exclusions, and bracketed clarifications: [geo],
-[ids], [inst], [researcher], [tax])
+``,bold3``
 
-*,bonap* - http://bonap.net/NAPA/TaxonMaps/Genus/County/%7B0:query} (put
-capitalized plant Genus after command)
+- ``https://v3.boldsystems.org/index.php/Public_SearchTerms?query={0:query}``
+- put genus or binomial after command
 
-*,bonapgen* -
-`http://bonap.net/MapGallery/County/Genus/{0:query}.png <http://bonap.net/MapGallery/County/Genus/lonicera.png>`__
-(put plant genus after command)
+``,bold4``
 
-*,bonapsp* - http://bonap.net/MapGallery/County/%7B0:query%7D%7B1:query}
-(put plant binomial after command)
+- ``http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records&query={0:query}``
+- see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
+  support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
+  [researcher], [tax]
 
-*,bug* - https://www.insectimages.org/search/action.cfm?q=%7B0:query}
-(put search term after command)
+``,bonap``
 
-*,gbif* - https://www.gbif.org/search?q=%7B0:query} (put search term
-after command)
+- ``http://bonap.net/NAPA/TaxonMaps/Genus/County/{0:query}``
+- put capitalized plant Genus after command
 
-*,hostplant* -
-https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&PGenus=%7B0:query}
-(put lepidopteran host plant genus after command)
+``,bonapgen``
 
-*,hostplantsp* -
-https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&PGenus=%7B0:query%7D&PSpecies=%7B1:query}
-(put lepidopteran host plant binomial after command)
+- ``http://bonap.net/MapGallery/County/Genus/{0:query}.png``
+- put plant genus after command
 
-*,hosts* -
-https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus=%7B0:query}
-(put lepidoptera genus after command)
+``,bonapsp``
 
-*,hostsp* -
-https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus=%7B0:query%7D&Species=%7B1:query}
-(put lepidoptera binomial after command)
+- ``http://bonap.net/MapGallery/County/{0:query}%20{1:query}.png``
+- put plant binomial after command
 
-*,ilwild* -
-https://illinoiswildflowers.info/plant_insects/plants/%7B0:query%7D_spp.html
-(put plant genus after command)
+``,bug``
 
-,ilwildsp -
-https://illinoiswildflowers.info/plant_insects/plants/%7B0:query%7D_%7B1:query%7D.html
-(put plant binomial after command)
+- ``https://www.insectimages.org/search/action.cfm?q={0:query}``
+- put search term after command
 
-*,lichen
--*\ https://lichenportal.org/cnalh/taxa/index.php?taxon=%7B0:query%7D&formsubmit=Search+Terms
-(put lichen genus or binomial after command)
+``,gbif``
 
-*,maverick* -
-https://www.inaturalist.org/identifications?category=maverick&user_id=%7B0:query}
-(put iNaturalist username after command)
+- ``https://www.gbif.org/search?q={0:query}``
+- put search term after command
 
-*,miflora* - https://michiganflora.net/genus.aspx?id=%7B0:query} (put
-plant genus after command)
+``,hostplant``
 
-*,millibase* -
-http://www.millibase.org/aphia.php?tName=%7B0:query%7D&p=taxlist (put
-diplopod taxa of interest after command)
+- ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&PGenus={0:query}``
+- put lepidopteran host plant genus after command
 
-*,moobs* -
-https://mushroomobserver.org/observer/observation_search?pattern=%7B0:query}
-(put fungi genus or binomial after command)
+``,hostplantsp``
 
-*,paflora* -
-http://paflora.org/original/sp-page.php?submitted=true&criteria=%7B0:query}
-(put plant binomial after command)
+- ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&PGenus={0:query}&PSpecies={1:query}``
+- put lepidopteran host plant binomial after command
 
-*,pfaf* - https://pfaf.org/user/Plant.aspx?LatinName=%7B0:query} (put
-plant genus or binomial after command)
+``,hosts``
 
-*,powo* - http://www.plantsoftheworldonline.org/?q=%7B0:query} (put
-plant taxa of interest after command)
+- ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus={0:query}``
+- put lepidoptera genus after command
 
-*,rfwo* -
-<https://www.robberfliesoftheworld.com/TaxonPages/TaxonSearch.php?taxonsearch=%7B0:query}>
-(put capitalized robber fly Genus after command)
+``,hostsp``
 
-*,sitetopic
--*\ `https://www.google.com/search?q=site%3A{0:query}+{1:query} <https://www.google.com/search?q=site%3A%7B0:query%7D+%7B1:query%7D+%7B2:query>`__
-(put site in format domain.tld and search term(s) after command)
+- ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus={0:query}&Species={1:query}``
+- put lepidoptera binomial after command
 
-*,smith* -
-https://www.si.edu/search/collection-images?edan_q=%7B0:query%7D&edan_fq=media_usage%3ACC0
-(put search term after command)
+``,ilwild``
 
-*,stats* - https://www.inaturalist.org/stats/%7B0:query%7D/%7B1:query}
-(put year and iNaturalist username after command)
+- ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_spp.html``
+- put plant genus after command
 
-*,tol* - http://tolweb.org/%7B0:query} (put taxon at family level or
-above after command)
+``,ilwildsp``
 
-*,ts* - <https://www.inaturalist.org/taxa/search?q=%7B0:query}> (search
-iNaturalist taxa, whole words only)
+- ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_{1:query}.html``
+- put plant binomial after command
 
-*,wildflower*-
-https://www.wildflower.org/plants/search.php?search_field=%7B0:query%7D&newsearch=true\ (put
-plant genus or binomial after command)
+``,lichen``
 
-*,worms* -
-http://www.marinespecies.org/aphia.php?p=taxlist&action=search&tName=%7B0:query}
-(put marine species taxa of interest after command)
+- ``https://lichenportal.org/cnalh/taxa/index.php?taxon={0:query}&formsubmit=Search+Terms``
+- put lichen genus or binomial after command
 
-*,xc* - https://www.xeno-canto.org/explore?query=%7B0:query} (put bird
-taxa of interest after command)
+``,maverick``
 
-*,xcsp* - https://www.xeno-canto.org/species/%7B0:query%7D-%7B1:query}
-(put bird species of interest after command)
+- ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
+- put iNaturalist username after command
 
-*,xcssp* -
-https://www.xeno-canto.org/species/%7B0:query%7D-%7B1:query%7D?query=ssp:%22%7B2:query%7D%22
-(put bird subspecies of interest after command)
+``,miflora``
+
+- ``https://michiganflora.net/genus.aspx?id={0:query}``
+- put plant genus after command
+
+``,millibase``
+
+- ``http://www.millibase.org/aphia.php?tName={0:query}&p=taxlist``
+- put diplopod taxa of interest after command
+
+``,moobs``
+
+- ``https://mushroomobserver.org/observer/observation_search?pattern={0:query}``
+- put fungi genus or binomial after command
+
+``,paflora``
+
+- ``http://paflora.org/original/sp-page.php?submitted=true&criteria={0:query}``
+- put plant binomial after command
+
+``,pfaf``
+
+- https://pfaf.org/user/Plant.aspx?LatinName={0:query}
+- put plant genus or binomial after command
+
+``,powo``
+
+- ``http://www.plantsoftheworldonline.org/?q={0:query}``
+- put plant taxa of interest after command
+
+``,rfwo``
+
+- ``<https://www.robberfliesoftheworld.com/TaxonPages/TaxonSearch.php?taxonsearch={0:query}>``
+- put capitalized robber fly Genus after command
+
+``,sitetopic``
+
+- ``https://www.google.com/search?q=site%3A{0:query}+{1:query}``
+- put site in format domain.tld and search term(s) after command
+
+``,tol``
+
+- ``http://tolweb.org/{0:query}``
+- put taxon at family level or above after command
+
+``,ts``
+
+- ``<https://www.inaturalist.org/taxa/search?q={0:query}>``
+- search iNaturalist taxa, whole words only
+
+``,wildflower``
+
+- ``https://www.wildflower.org/plants/search.php?search_field={0:query}&newsearch=true``
+- put plant genus or binomial after command
+
+``,worms``
+
+- ``http://www.marinespecies.org/aphia.php?p=taxlist&action=search&tName={0:query}``
+- put marine species taxa of interest after command
+
+``,xc``
+
+- ``https://www.xeno-canto.org/explore?query={0:query}``
+- put bird taxa of interest after command
+
+``,xcsp``
+
+- ``https://www.xeno-canto.org/species/{0:query}-{1:query}``
+- put bird species of interest after command
+
+``,xcssp``
+
+- ``https://www.xeno-canto.org/species/{0:query}-{1:query}?query=ssp:%22{2:query}%22``
+- put bird subspecies of interest after command
 
 Dumbo commands
 --------------
 
-(access help using *-help*)
+(access help using `-help`)
 
-*-conv* - Convert a value
+`-conv` - Convert a value
 
 Conv Subcommands
 ^^^^^^^^^^^^^^^^
