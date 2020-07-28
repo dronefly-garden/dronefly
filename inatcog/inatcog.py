@@ -421,14 +421,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def get_last_obs_from_history(self, ctx):
         """Get last obs from history."""
         msgs = await ctx.history(limit=1000).flatten()
-        inat_link_msg = INatLinkMsg(self.api)
-        return await inat_link_msg.get_last_obs_msg(msgs)
+        inat_link_msg = INatLinkMsg(self)
+        return await inat_link_msg.get_last_obs_msg(ctx, msgs)
 
     async def get_last_taxon_from_history(self, ctx):
         """Get last taxon from history."""
         msgs = await ctx.history(limit=1000).flatten()
-        inat_link_msg = INatLinkMsg(self.api)
-        return await inat_link_msg.get_last_taxon_msg(msgs)
+        inat_link_msg = INatLinkMsg(self)
+        return await inat_link_msg.get_last_taxon_msg(ctx, msgs)
 
     @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
     async def last_obs(self, ctx):
@@ -657,9 +657,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             obs_id = int(mat["obs_id"])
             url = mat["url"]
 
-            results = (await self.api.get_observations(obs_id, include_new_projects=1))[
-                "results"
-            ]
+            home = await self.get_home(ctx)
+            results = (
+                await self.api.get_observations(
+                    obs_id, include_new_projects=1, preferred_place_id=home
+                )
+            )["results"]
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
             if obs and obs.sounds:
@@ -1153,9 +1156,10 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         async def display_selected(result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
+                home = await self.get_home(ctx)
                 results = (
                     await self.api.get_observations(
-                        mat["obs_id"], include_new_projects=1
+                        mat["obs_id"], include_new_projects=1, preferred_place_id=home
                     )
                 )["results"]
                 obs = get_obs_fields(results[0]) if results else None
@@ -1258,7 +1262,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             per_embed_page = 5
         else:
             (results, total_results, per_page) = await self.site_search.search(
-                query, **kwargs
+                ctx, query, **kwargs
             )
             per_embed_page = 10
 

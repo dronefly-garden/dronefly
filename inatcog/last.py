@@ -30,10 +30,10 @@ class TaxonLinkMsg(NamedTuple):
 class INatLinkMsg:
     """Get INat link message from channel history supplemented with info from iNat."""
 
-    def __init__(self, api):
-        self.api = api
+    def __init__(self, cog):
+        self.cog = cog
 
-    async def get_last_obs_msg(self, msgs):
+    async def get_last_obs_msg(self, ctx, msgs):
         """Find recent observation link."""
 
         def match_obs_link(message):
@@ -62,14 +62,17 @@ class INatLinkMsg:
             else:
                 name = found.author.nick or found.author.name
 
-        results = (await self.api.get_observations(obs_id, include_new_projects=1))[
-            "results"
-        ]
+        home = await self.cog.get_home(ctx)
+        results = (
+            await self.cog.api.get_observations(
+                obs_id, include_new_projects=1, preferred_place_id=home
+            )
+        )["results"]
         obs = get_obs_fields(results[0]) if results else None
 
         return ObsLinkMsg(url, obs, ago, name)
 
-    async def get_last_taxon_msg(self, msgs):
+    async def get_last_taxon_msg(self, ctx, msgs):
         """Find recent taxon link."""
 
         def match_taxon_link(message):
@@ -91,7 +94,7 @@ class INatLinkMsg:
         mat = match_taxon_link(found)
         taxon_id = int(mat["taxon_id"])
         url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
-
-        taxon = await get_taxon(self, taxon_id)
+        home = await self.cog.get_home(ctx)
+        taxon = await get_taxon(self.cog, taxon_id, preferred_place_id=home)
 
         return TaxonLinkMsg(url, taxon)

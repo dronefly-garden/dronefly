@@ -66,7 +66,7 @@ class INatSiteSearch:
     def __init__(self, cog):
         self.cog = cog
 
-    async def search(self, query, **kwargs):
+    async def search(self, ctx, query, **kwargs):
         """Search iNat site."""
 
         # Through experimentation on May 25, 2020, I've determined a smaller
@@ -84,7 +84,8 @@ class INatSiteSearch:
             per_page = 100
         else:
             per_page = 30
-        api_kwargs = {"q": query, "per_page": per_page}
+        home = await self.cog.get_home(ctx)
+        api_kwargs = {"q": query, "per_page": per_page, "preferred_place_id": home}
         api_kwargs.update(kwargs)
         search_results = await self.cog.api.get_search_results(**api_kwargs)
         results = [

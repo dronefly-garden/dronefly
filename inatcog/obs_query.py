@@ -43,6 +43,8 @@ class INatObsQuery:
 
         kwargs, _taxon = await self.get_query_args(ctx, query)
         kwargs["per_page"] = 1
+        home = await self.cog.get_home(ctx)
+        kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
             raise LookupError("No observation found")
@@ -54,6 +56,8 @@ class INatObsQuery:
 
         kwargs, _taxon = await self.get_query_args(ctx, query)
         kwargs["per_page"] = 200
+        home = await self.cog.get_home(ctx)
+        kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
             raise LookupError("No observations found")

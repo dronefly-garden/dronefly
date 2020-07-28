@@ -358,7 +358,7 @@ class INatEmbeds(MixinMeta):
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, rec):
+    async def make_image_embed(self, ctx, rec):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
@@ -377,7 +377,10 @@ class INatEmbeds(MixinMeta):
                 # fields that /v1/taxa/# returns). In that case, we retrieve
                 # the full record via taxon_id so the image will be set from
                 # the full-quality original in taxon_photos.
-                full_taxon = await get_taxon(self, rec.taxon_id)
+                home = await self.get_home(ctx)
+                full_taxon = await get_taxon(
+                    self, rec.taxon_id, preferred_place_id=home
+                )
                 image = full_taxon.image
                 attribution = full_taxon.image_attribution
         if image:
@@ -571,7 +574,7 @@ class INatEmbeds(MixinMeta):
 
     async def send_embed_for_taxon_image(self, ctx, taxon):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(taxon))
+        msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon))
         start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
 
     async def send_embed_for_taxon(self, ctx, taxon):
