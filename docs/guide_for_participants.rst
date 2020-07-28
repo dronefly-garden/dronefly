@@ -85,7 +85,7 @@ allows you to take a variety of actions, including:
 Inviting friends and other naturalist professionals to join us (if you
 use this, create from #introductions)
 
-Adjusting your notification settings (see Appendix A)
+Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
 
 Allowing or prohibiting direct messages from other users
 
@@ -296,8 +296,8 @@ Search subcommands
 
 *users* - Search iNat users.
 
-Arrow keys allow paging through pages of results. See `Appendix
-C <#_4whij4v6yazk>`__ for icons.
+Arrow keys allow paging through pages of results. See
+:ref:`Appendix C - Search Result Icons` for icons.
 
 *,taxon* (*,t*) - Show taxon best matching the query. Query may
 contain:
