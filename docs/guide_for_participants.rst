@@ -4,9 +4,23 @@
 iNaturalist Discord Server Guide for Participants
 =================================================
 
+About this guide
+----------------
+This guide has a number of sections aimed at introducing our new
+and existing users to Discord itself, the iNaturalist Discord Server,
+and the bots and channels on that server.
 
+If you already know the :ref:`Discord Basics` is and how to use it, you may
+wish to skip ahead to :ref:`Set Up Your Roles` and then :ref:`Using the
+Discord Bots`, the largest section of this document.
+
+Following that, there are several brief guides to :ref:`Participating` in the
+various channels on the server, and finally, the :ref:`Appendices` cover
+miscellaneous side topics.
+
+==============
 Discord Basics
---------------
+==============
 
 Discord is a proprietary freeware VoIP application and digital
 distribution platform that specializes in text, image, video and audio
@@ -14,7 +28,7 @@ communication between users in a chat channel. Discord runs on Windows,
 macOS, Android, iOS, Linux, and in web browsers.
 
 Get Discord
-^^^^^^^^^^^
+-----------
 
 Browser URL:
 `https://discordapp.com/ <https://discordapp.com/channels/@me>`__
@@ -30,7 +44,7 @@ Discord server. A permanent standing invitation exists here:
 https://discord.gg/eCD4WvT (opens in #introductions)
 
 Discord Layout and Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------
 
 Discord will look different depending on platform, but in general, you
 can expect something like this:
@@ -128,8 +142,9 @@ available.) Right clicking on users in the member list allows you to see
 their profile (which can be helpful when temporary nickname changes
 occur).
 
-Get Set Up using the #role-menus Channel
-----------------------------------------
+=================
+Set Up Your Roles
+=================
 
 The #role-menus channel (under the Important heading) is one of the
 first channels every new user should visit. Configuring details about
@@ -145,8 +160,9 @@ Other roles can only be assigned by moderators (some by request, and
 some based on achievement. For instance, talking with people on the
 server will earn you the Naturalist role.
 
+======================
 Using the Discord Bots
-----------------------
+======================
 
 Access to the Discord bots is one of the great benefits of being on the
 server. Bots are primarily for obtaining information.
@@ -179,8 +195,8 @@ Notes on reading the online bot help:
    typed
 -  If there are [square brackets,] it is an optional input
 
-Dronefly
-^^^^^^^^
+Dronefly Introduction
+---------------------
 
 (access help using *,help*)
 
@@ -192,8 +208,8 @@ https://forum.inaturalist.org/t/how-to-use-dronefly-a-discord-chat-bot/9770
 Syntax: *,inat -*\ Access the iNaturalist platform. See the help topics
 for each subcommand for details.
 
-Commands
-""""""""
+Dronefly Commands
+-----------------
 
 *,image* (*,img*) - Show default iNaturalist image for taxon
 query.
@@ -266,7 +282,7 @@ taxon ID numbers, common names, or scientific names)
 *,search* (*,s*) - Search iNat.
 
 Search subcommands
-""""""""""""""""""
+^^^^^^^^^^^^^^^^^^
 
 *inactive* - Search iNat taxa (includes inactive - exact match only)
 
@@ -349,11 +365,11 @@ the “by user” and “from place” conventions.
 
 |image36| \ |image35|
 
+Dronefly Custom Commands
+------------------------
+
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
-
-Custom commands
-"""""""""""""""
 
 *,bhl*-
 `https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles <https://www.biodiversitylibrary.org/search?searchTerm=lygaeus+kalmii#/titles>`__
@@ -477,15 +493,15 @@ taxa of interest after command)
 https://www.xeno-canto.org/species/%7B0:query%7D-%7B1:query%7D?query=ssp:%22%7B2:query%7D%22
 (put bird subspecies of interest after command)
 
-Dumbo
-^^^^^
+Dumbo commands
+--------------
 
 (access help using *-help*)
 
 *-conv* - Convert a value
 
 Conv Subcommands
-""""""""""""""""
+^^^^^^^^^^^^^^^^
 
 celsius (c) Convert degree Celsius to Fahrenheit or Kelvin.
 
@@ -521,7 +537,7 @@ For the list of supported timezones, see here:
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 Time subcommands
-""""""""""""""""
+^^^^^^^^^^^^^^^^
 
 compare Compare your saved timezone with another user's timezone.
 
@@ -538,7 +554,7 @@ user Shows the current time for user.
 |image39|
 
 Tweets subcommands
-""""""""""""""""""
+^^^^^^^^^^^^^^^^^^
 
 gettweets Display a users tweets as a scrollable message
 
@@ -558,7 +574,7 @@ Syntax: *-weather <location>* (location must take the form of city,
 Country Code, for example: *-weather New York,US*)
 
 Weather subcommands
-"""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^
 
 cityid Display weather in a given location
 
@@ -574,8 +590,8 @@ See:https://bulk.openweathermap.org/sample/city.list.json.gz)
 
 Dumbo also uses custom commands:
 
-Custom commands
-"""""""""""""""
+Dumbo Custom Commands
+---------------------
 
 *-abbrev* - https://www.abbreviations.com/%7B0:query%7D
 
@@ -594,14 +610,14 @@ https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx)
 
 *-wiktionary*- https://en.wiktionary.org/wiki/%7B0:query%7D
 
-Pickerel
-^^^^^^^^
+Pickerel commands
+-----------------
 
 (access help using $help)
 
 Syntax: $play <query>
 
-*Commands:* (Note: Please use in #music channel, listen in |image43|)
+Note: Please use these *Commands* in #music channel, and listen in |image43|
 
 $autoplay - Starts auto play. (DJ role required if enabled)
 
@@ -649,7 +665,12 @@ $stop - Stop playback and clear the queue.
 
 $volume - Set the volume, 1% - 150%.
 
+=============
+Participating
+=============
+
 Participating - #chat (under General)
+-------------------------------------
 
 Follow the rules for communicating with others in the #welcome channel.
 
@@ -657,8 +678,8 @@ Follow the rules for communicating with others in the #welcome channel.
 channels. If one is busy with an ongoing discussion, and you want to
 start a new topic, use the other.
 
-Basic functions
-"""""""""""""""
+Basic chat functions
+^^^^^^^^^^^^^^^^^^^^
 
 Typing\ *@username* will “ping” the user.
 
@@ -731,6 +752,10 @@ screen they’re sharing.
 
 Please don’t forget to mute yourself (|image51|) if someone else is
 presenting.
+
+==========
+Appendices
+==========
 
 Appendix A - Notification Settings
 ----------------------------------
