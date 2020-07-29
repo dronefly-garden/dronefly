@@ -556,7 +556,9 @@ Dumbo commands
 
 (access help using ``-help``)
 
-``-conv`` - Convert a value
+``-conv``
+
+- Convert a value
 
 Conv Subcommands
 ^^^^^^^^^^^^^^^^
@@ -581,15 +583,23 @@ Conv Subcommands
 
 ``tounix`` Convert a date to a unix timestamp.
 
-``-antonym`` - Displays antonyms for a given word.
+``-antonym``
 
-``-define`` - Displays definitions of a given word.
+- Displays antonyms for a given word.
 
-``-synonym`` - Displays synonyms for a given word.
+``-define``
+
+- Displays definitions of a given word.
+
+``-synonym``
+
+- Displays synonyms for a given word.
 
 |image38|
 
-``-time`` - Checks the time.
+``-time``
+
+- Checks the time.
 
 For the list of supported timezones, see here:
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -607,7 +617,9 @@ Time subcommands
 
 ``user`` Shows the current time for user.
 
-``-tweets`` - Gets information from Twitter's API
+``-tweets``
+
+- Gets information from Twitter's API
 
 |image39|
 
@@ -622,14 +634,17 @@ trends Gets trends for a given location
 
 |image40|
 
-``-userinfo`` - Show Discord info about a user.
+``-userinfo``
+
+- Show Discord info about a user.
 
 |image41|
 
-``-weather`` (``-we``) - Display weather for a location
+``-weather`` (``-we``)
 
-Syntax: ``-weather <location>`` (location must take the form of city,
-Country Code, for example: ``-weather New York,US``)
+- Display weather for a location
+- Syntax: ``-weather <location>`` (location must take the form of city,
+  Country Code, for example: ``-weather New York,US``)
 
 Weather subcommands
 ^^^^^^^^^^^^^^^^^^^
@@ -640,11 +655,13 @@ Weather subcommands
 
 ``zip`` Display weather in a given location
 
-See: ``https://bulk.openweathermap.org/sample/city.list.json.gz <https://bulk.openweathermap.org/sample/city.list.json.gz>``__
+See: ``https://bulk.openweathermap.org/sample/city.list.json.gz`` <https://bulk.openweathermap.org/sample/city.list.json.gz>__
 
 |image42|
 
-``-wikipedia`` (``-wiki``) - Get information from Wikipedia.
+``-wikipedia`` (``-wiki``)
+
+- Get information from Wikipedia.
 
 Dumbo also uses custom commands:
 
