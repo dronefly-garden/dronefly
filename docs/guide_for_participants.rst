@@ -172,16 +172,16 @@ Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
 
-`Dronefly <https://github.com/synrg/dronefly/>`__ (,) - Accesses
+`Dronefly <https://github.com/synrg/dronefly/>`__ (``,``) - Accesses
 iNaturalist and other naturalist-related web platforms.
 
-Dumbo (-) - For general purpose admin & info functions, not strictly
+Dumbo (``-``) - For general purpose admin & info functions, not strictly
 nature-related (e.g. Twitter and Wikipedia).
 
-Pickerel ($) - Plays audio (e.g. music) from SoundCloud, Spotify, and
+Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
 YouTube in the Music channel.
 
-(CuckooBee (/ or c.) is the development version of Dronefly, so if
+(CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
 you’re not interested in bot development, you won’t need it. If you
 indicate that you’re interested in helping with bot testing, you may
 occasionally receive an invite to participate in testing features.)
@@ -198,20 +198,18 @@ Notes on reading the online bot help:
 Dronefly Introduction
 ---------------------
 
-(access help using *,help*)
+Access help using ``,help``. See the help topics for each command and
+subcommand for details.
 
 A guide to using the Dronefly bot is available on the iNaturalist Forum
 here:
 
 https://forum.inaturalist.org/t/how-to-use-dronefly-a-discord-chat-bot/9770
 
-Syntax: *,inat -*\ Access the iNaturalist platform. See the help topics
-for each subcommand for details.
-
 Dronefly Commands
 -----------------
 
-*,image* (*,img*) - Show default iNaturalist image for taxon
+``,image`` (``,img``) - Show default iNaturalist image for taxon
 query.
 
 |image16| \ |image15| 
@@ -226,80 +224,80 @@ follows:
 specify
 
 |image19| \ Will indicate the number of observations from your home place
-(see\ *,user* below)
+(see ``,user`` below)
 
 |image20| \ Will indicate the number of observations made from a place
 you specify
 
 |image21|
 
-*,last* - Show info for recently mentioned iNaturalist page. (operators
-are *obs* or *taxon*). Can be further expanded using *<rank>*, *img*,
-*map* or *taxon*.
+``,last`` - Show info for recently mentioned iNaturalist page. Operators
+are ``obs`` or ``taxon``. Can be further expanded using ``<rank>``, ``img``,
+``map`` or ``taxon``.
 
-*,link* - Show summary for iNaturalist link.
+``,link`` - Show summary for iNaturalist link.
 
 |image22|
 
-*,map* - Show iNaturalist range map for a list of one or more taxa
+``,map`` - Show iNaturalist range map for a list of one or more taxa
 (comma delimited)
 
 |image23|
 
-*,obs* - Show observation summary for iNaturalist link or number, or
+``,obs`` - Show observation summary for iNaturalist link or number, or
 taxa.
 
-(supports *by <user>* and *from <place>*)
+(supports ``by <user>`` and ``from <place>``)
 
 |image24|
 
-*,place* - Show a place by number, name, or abbreviation defined with
-*,place add* (operators are\ *add*\ or *remove*)
+``,place`` - Show a place by number, name, or abbreviation defined with
+``,place add`` (operators are ``add`` or ``remove``)
 
-A list of place abbreviations can be generated with *,place list*.
+A list of place abbreviations can be generated with ``,place list``.
 
 |image25|
 
-*,project <query> -* Show iNat project or abbreviation, with <query>
+``,project <query>`` - Show iNat project or abbreviation, with <query>
 containing ID# of the iNat project, words in the iNat project name, or
-abbreviation defined with\ *,project add <abbrev> <project_number>*)
+abbreviation defined with ``,project add <abbrev> <project_number>``)
 
-A list of project abbreviations can be generated with *,project list*.
+A list of project abbreviations can be generated with ``,project list``.
 
-*,project stats* (*,rank*) - Show project stats for the named user.
-(*,rank <project> <user>*)
+``,project stats`` (``,rank``) - Show project stats for the named user.
+(``,rank <project> <user>``)
 
-(*,my* is an alias for\ *,rank <project> me* and will show you your own
-project statistics, e.g.\ *,my 2020*)
+(``,my`` is an alias for ``,rank <project> me`` and will show you your own
+project statistics, e.g. ``,my 2020``)
 
 |image26|
 
-*,related* - Relatedness of a list of taxa (taxa can be iNaturalist
+``,related`` - Relatedness of a list of taxa (taxa can be iNaturalist
 taxon ID numbers, common names, or scientific names)
 
 |image27|
 
-*,search* (*,s*) - Search iNat.
+``,search`` (``,s``) - Search iNat.
 
 Search subcommands
 ^^^^^^^^^^^^^^^^^^
 
-*inactive* - Search iNat taxa (includes inactive - exact match only)
+``inactive`` - Search iNat taxa (includes inactive - exact match only)
 
-*obs*- Search iNat observations.
+``obs`` - Search iNat observations.
 
-*places* - Search iNat places.
+``places`` - Search iNat places.
 
-*projects* - Search iNat projects.
+``projects`` - Search iNat projects.
 
-*taxa* - Search iNat taxa (does not include inactive)
+``taxa`` - Search iNat taxa (does not include inactive)
 
-*users* - Search iNat users.
+``users`` - Search iNat users.
 
 Arrow keys allow paging through pages of results. See
 :ref:`Appendix C - Search Result Icons` for icons.
 
-*,taxon* (*,t*) - Show taxon best matching the query. Query may
+``,taxon`` (``,t``) - Show taxon best matching the query. Query may
 contain:
 
 |image28|
@@ -324,17 +322,17 @@ contain:
 
    Note: Dronefly also supports *,species*.
 
-,user - Show user if their iNaturalist ID is known.
+``,user`` - Show user if their iNaturalist ID is known.
 
 |image29|
 
-(*,me* is an alias for ,user me and will show you your own statistics)
+(``,me`` is an alias for ``,user me`` and will show you your own statistics)
 
-(Compare against *-userinfo*)
+(Compare against ``-userinfo``)
 
-(,user set home <#> - Allows the user to specify a home location. To
+(``,user set home <#>`` - Allows the user to specify a home location. To
 obtain a place number, go to the iNaturalist place page for your
-location (https://www.inaturalist.org/places/\ <place>) and either
+location (``https://www.inaturalist.org/places/<place>``) and either
 append .json to the end of the URL, or click on Embed Place Widget. The
 number for the place will be shown in the URL.
 
@@ -346,22 +344,22 @@ number for the place will be shown in the URL.
 
 |image33|
 
-(,user set known - Allows the user to be known/unknown to instances of
+(``,user set known`` - Allows the user to be known/unknown to instances of
 Dronefly running on, as of the time of this writing, 14 other servers.
 Operators are *True* and *False*.)
 
 |image34|
 
-Type *,help <command>* for more info on a command (e.g.\ *,help taxon*).
-You can also type *,help <category>* for more info on a category
-(e.g.\ *,help inat*).
+Type ``,help <command>`` for more info on a command (e.g. ``,help taxon``).
+You can also type ``,help <category>`` for more info on a category
+(e.g. ``,help iNat``).
 
 An exception to the rule about using the comma prefix for Dronefly is
-the *,dot_taxon*\ command. Surrounding text with periods will trigger
+the ``,dot_taxon`` feature. Surrounding text with periods will trigger
 one lookup per message (which is useful when using AOU codes, for
 example). Spaces are required before and after, although the command can
 be used at the start of a line, if needed. The lookup can also utilize
-the “by user” and “from place” conventions.
+the ``by <user>`` and ``from <place>`` conventions.
 
 |image36| \ |image35|
 
