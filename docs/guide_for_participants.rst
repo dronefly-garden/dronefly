@@ -31,9 +31,9 @@ Get Discord
 -----------
 
 Browser URL:
-`https://discordapp.com/ <https://discordapp.com/channels/@me>`__
+`https://discord.com <https://discord.com>`__
 
-Software: https://discordapp.com/download
+Software: `https://discord.com/download <https://discord.com/download>`__
 
 You can also find the Discord app in the Apple App Store or on Google
 Play.
