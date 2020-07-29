@@ -30,10 +30,9 @@ macOS, Android, iOS, Linux, and in web browsers.
 Get Discord
 -----------
 
-Browser URL:
-`https://discord.com <https://discord.com>`__
+Browser URL: https://discord.com
 
-Software: `https://discord.com/download <https://discord.com/download>`__
+Software: https://discord.com/download
 
 You can also find the Discord app in the Apple App Store or on Google
 Play.
@@ -191,9 +190,9 @@ occasionally receive an invite to participate in testing features.)
 Notes on reading the online bot help:
 
 -  If there is no punctuation, type it exactly as shown (literal)
--  If there are <angle brackets>, it is representative of what should be
+-  If there are ``<angle brackets>``, it is representative of what should be
    typed
--  If there are [square brackets,] it is an optional input
+-  If there are ``[square brackets]``, it is an optional input
 
 Dronefly Introduction
 ---------------------
@@ -209,8 +208,9 @@ https://forum.inaturalist.org/t/how-to-use-dronefly-a-discord-chat-bot/9770
 Dronefly Commands
 -----------------
 
-``,image`` (``,img``) - Show default iNaturalist image for taxon
-query.
+``,image`` (``,img``)
+
+- Show default iNaturalist image for taxon query.
 
 |image16| \ |image15| 
 
@@ -231,53 +231,69 @@ you specify
 
 |image21|
 
-``,last`` - Show info for recently mentioned iNaturalist page. Operators
-are ``obs`` or ``taxon``. Can be further expanded using ``<rank>``, ``img``,
-``map`` or ``taxon``.
+``,last``
 
-``,link`` - Show summary for iNaturalist link.
+- Show info for recently mentioned iNaturalist page. Operators
+  are ``obs`` or ``taxon``. Can be further expanded using ``<rank>``, ``img``,
+  ``map`` or ``taxon``.
+
+``,link``
+
+- Show summary for iNaturalist link.
 
 |image22|
 
-``,map`` - Show iNaturalist range map for a list of one or more taxa
-(comma delimited)
+``,map``
+
+- Show iNaturalist range map for a list of one or more taxa
+  (comma delimited)
 
 |image23|
 
-``,obs`` - Show observation summary for iNaturalist link or number, or
-taxa.
+``,obs``
 
-(supports ``by <user>`` and ``from <place>``)
+- Show observation summary for iNaturalist link or number, or taxa.
+- supports ``by <user>`` and ``from <place>``
 
 |image24|
 
-``,place`` - Show a place by number, name, or abbreviation defined with
-``,place add`` (operators are ``add`` or ``remove``)
+``,place``
+
+- Show a place by number, name, or abbreviation defined with
+- operators are ``add`` or ``remove``
 
 A list of place abbreviations can be generated with ``,place list``.
 
 |image25|
 
-``,project <query>`` - Show iNat project or abbreviation, with <query>
-containing ID# of the iNat project, words in the iNat project name, or
-abbreviation defined with ``,project add <abbrev> <project_number>``)
+``,project <query>``
+
+- Show iNat project or abbreviation, with ``<query>`` containing ID# of the
+  iNat project, words in the iNat project name, or abbreviation defined with
+  ``,project add <abbrev> <project_number>``)
 
 A list of project abbreviations can be generated with ``,project list``.
 
-``,project stats`` (``,rank``) - Show project stats for the named user.
-(``,rank <project> <user>``)
+``,project stats`` (``,rank``)
 
-(``,my`` is an alias for ``,rank <project> me`` and will show you your own
-project statistics, e.g. ``,my 2020``)
+- Show project stats for the named user.
+- ``,rank <project> <user>``
+
+``,my`` is an alias for ``,rank <project> me`` and will show you your own
+project statistics, e.g. ``,my 2020``
 
 |image26|
 
-``,related`` - Relatedness of a list of taxa (taxa can be iNaturalist
-taxon ID numbers, common names, or scientific names)
+``,related``
+
+- Relatedness of a list of taxa (taxa can be iNaturalist
+  taxon ID numbers, common names, or scientific names)
 
 |image27|
 
-``,search`` (``,s``) - Search iNat.
+``,search`` (``,s``)
+
+- Search iNat.
 
 Search subcommands
 ^^^^^^^^^^^^^^^^^^
@@ -294,11 +310,12 @@ Search subcommands
 
 ``users`` - Search iNat users.
 
-Arrow keys allow paging through pages of results. See
+Arrow reactions allow paging through pages of results. See
 :ref:`Appendix C - Search Result Icons` for icons.
 
-``,taxon`` (``,t``) - Show taxon best matching the query. Query may
-contain:
+``,taxon`` (``,t``)
+
+- Show taxon best matching the query. Query may contain:
 
 |image28|
 
@@ -320,21 +337,24 @@ contain:
 
    - taxon in an ancestor taxon
 
-   Note: Dronefly also supports *,species*.
+   Note: Dronefly also supports ``,species`` (``,sp``).
 
-``,user`` - Show user if their iNaturalist ID is known.
+``,user``
+
+- Show user if their iNaturalist ID is known.
 
 |image29|
 
-(``,me`` is an alias for ``,user me`` and will show you your own statistics)
+``,me`` is an alias for ``,user me`` and will show you your own statistics
 
-(Compare against ``-userinfo``)
+Compare against ``-userinfo``
 
-(``,user set home <#>`` - Allows the user to specify a home location. To
-obtain a place number, go to the iNaturalist place page for your
-location (``https://www.inaturalist.org/places/<place>``) and either
-append .json to the end of the URL, or click on Embed Place Widget. The
-number for the place will be shown in the URL.
+``,user set home <#>``
+
+- Allows the user to specify a home location. To obtain a place number, go to
+  the iNaturalist place page for your location (``https://www.inaturalist.org/places/<place>``)
+  and either append .json to the end of the URL, or click on Embed Place
+  Widget. The number for the place will be shown in the URL.
 
 |image30|
 
@@ -344,9 +364,11 @@ number for the place will be shown in the URL.
 
 |image33|
 
-(``,user set known`` - Allows the user to be known/unknown to instances of
-Dronefly running on, as of the time of this writing, 14 other servers.
-Operators are *True* and *False*.)
+``,user set known``
+
+- Allows the user to be known/unknown to instances of Dronefly running on, as
+  of the time of this writing, 14 other servers. Operators are *True* and
+  *False*.
 
 |image34|
 
@@ -626,11 +648,11 @@ Time subcommands
 Tweets subcommands
 ^^^^^^^^^^^^^^^^^^
 
-gettweets Display a users tweets as a scrollable message
+``gettweets`` Display a users tweets as a scrollable message
 
-getuser Get info about the specified user
+``getuser`` Get info about the specified user
 
-trends Gets trends for a given location
+``trends`` Gets trends for a given location
 
 |image40|
 
@@ -655,7 +677,7 @@ Weather subcommands
 
 ``zip`` Display weather in a given location
 
-See: ``https://bulk.openweathermap.org/sample/city.list.json.gz`` <https://bulk.openweathermap.org/sample/city.list.json.gz>__
+See: https://bulk.openweathermap.org/sample/city.list.json.gz
 
 |image42|
 
@@ -663,10 +685,10 @@ See: ``https://bulk.openweathermap.org/sample/city.list.json.gz`` <https://bulk.
 
 - Get information from Wikipedia.
 
-Dumbo also uses custom commands:
-
 Dumbo Custom Commands
 ---------------------
+
+Dumbo also has custom commands:
 
 ``-abbrev``
 
@@ -698,7 +720,7 @@ Dumbo Custom Commands
 Pickerel commands
 -----------------
 
-(access help using ``$help``)
+Access help using ``$help``.
 
 Syntax: ``$play <query>``
 
@@ -810,9 +832,9 @@ start a new topic, use the other.
 Basic chat functions
 ^^^^^^^^^^^^^^^^^^^^
 
-Typing\ *@username* will “ping” the user.
+Typing\ ``@username`` will “ping” the user.
 
-Typing *#channel* will create a link to that channel.
+Typing ``#channel`` will create a link to that channel.
 
 The emoji menu (|image45|) next to each message provides numerous ways
 to react.
