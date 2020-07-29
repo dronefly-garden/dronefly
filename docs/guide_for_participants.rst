@@ -156,7 +156,7 @@ chat).
 
 |image13|
 
-Other roles can only be assigned by moderators (some by request, and
+Other roles can only be assigned by moderators, some by request, and
 some based on achievement. For instance, talking with people on the
 server will earn you the Naturalist role.
 
@@ -369,6 +369,10 @@ Dronefly Custom Commands
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
 
+``,adw``
+
+- ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
+
 ``,bhl``
 
 - ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
@@ -405,10 +409,20 @@ from other nature-related sites:
 - ``https://www.insectimages.org/search/action.cfm?q={0:query}``
 - put search term after command
 
+``,cchelp``
+
+- ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
+- links back to this help
+
 ``,gbif``
 
 - ``https://www.gbif.org/search?q={0:query}``
 - put search term after command
+
+``,gerald``
+
+- ``https://www.inaturalist.org/observations/5890862``
+- everybody's favorite marmot
 
 ``,hostplant``
 
@@ -464,6 +478,18 @@ from other nature-related sites:
 
 - ``https://mushroomobserver.org/observer/observation_search?pattern={0:query}``
 - put fungi genus or binomial after command
+
+``,nasgenus``
+
+- ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&genus={0:query}&species=&comname=&Sortby=1``
+
+``,nasspecies``
+
+- ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&genus={0:query}&species={1:query}&comname=&Sortby=1``
+
+``,nasstate``
+
+- ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
 
 ``,paflora``
 
