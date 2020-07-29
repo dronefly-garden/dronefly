@@ -474,7 +474,7 @@ from other nature-related sites:
 
 ``,pfaf``
 
-- https://pfaf.org/user/Plant.aspx?LatinName={0:query}
+- ``https://pfaf.org/user/Plant.aspx?LatinName={0:query}``
 - put plant genus or binomial after command
 
 ``,powo``
