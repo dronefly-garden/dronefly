@@ -554,42 +554,42 @@ from other nature-related sites:
 Dumbo commands
 --------------
 
-(access help using `-help`)
+(access help using ``-help``)
 
-`-conv` - Convert a value
+``-conv`` - Convert a value
 
 Conv Subcommands
 ^^^^^^^^^^^^^^^^
 
-celsius (c) Convert degree Celsius to Fahrenheit or Kelvin.
+``celsius`` (``c``) Convert degree Celsius to Fahrenheit or Kelvin.
 
-fahrenheit (f) Convert Fahrenheit degree to Celsius or Kelvin.
+``fahrenheit`` (``f``) Convert Fahrenheit degree to Celsius or Kelvin.
 
-kelvin (k) Convert Kelvin degree to Celsius or Fahrenheit.
+``kelvin`` (``k``) Convert Kelvin degree to Celsius or Fahrenheit.
 
-kg Convert kilograms to pounds.
+``kg`` Convert kilograms to pounds.
 
 |image37|
 
-km Convert kilometers to miles.
+``km`` Convert kilometers to miles.
 
-lb Convert pounds to kilograms.
+``lb`` Convert pounds to kilograms.
 
-mi Convert miles to kilometers.
+``mi`` Convert miles to kilometers.
 
-todate Convert a unix timestamp to a readable datetime.
+``todate`` Convert a unix timestamp to a readable datetime.
 
-tounix Convert a date to a unix timestamp.
+``tounix`` Convert a date to a unix timestamp.
 
-*-antonym* - Displays antonyms for a given word.
+``-antonym`` - Displays antonyms for a given word.
 
-*-define* - Displays definitions of a given word.
+``-define`` - Displays definitions of a given word.
 
-*-synonym* - Displays synonyms for a given word.
+``-synonym`` - Displays synonyms for a given word.
 
 |image38|
 
-*-time* - Checks the time.
+``-time`` - Checks the time.
 
 For the list of supported timezones, see here:
 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -597,17 +597,17 @@ https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 Time subcommands
 ^^^^^^^^^^^^^^^^
 
-compare Compare your saved timezone with another user's timezone.
+``compare`` Compare your saved timezone with another user's timezone.
 
-iso Looks up ISO3166 country codes and gives you a supported timezone
+``iso`` Looks up ISO3166 country codes and gives you a supported timezone
 
-me Sets your timezone.
+``me`` Sets your timezone.
 
-tz Gets the time in any timezone. (e.g.\ *-time tz America/New_York*)
+``tz`` Gets the time in any timezone. (e.g.\ *-time tz America/New_York*)
 
-user Shows the current time for user.
+``user`` Shows the current time for user.
 
-*-tweets* - Gets information from Twitter's API
+``-tweets`` - Gets information from Twitter's API
 
 |image39|
 
@@ -622,106 +622,160 @@ trends Gets trends for a given location
 
 |image40|
 
-*-userinfo* - Show Discord info about a user.
+``-userinfo`` - Show Discord info about a user.
 
 |image41|
 
-*-weather (-we)* - Display weather for a location
+``-weather`` (``-we``) - Display weather for a location
 
-Syntax: *-weather <location>* (location must take the form of city,
-Country Code, for example: *-weather New York,US*)
+Syntax: ``-weather <location>`` (location must take the form of city,
+Country Code, for example: ``-weather New York,US``)
 
 Weather subcommands
 ^^^^^^^^^^^^^^^^^^^
 
-cityid Display weather in a given location
+``cityid`` Display weather in a given location
 
-co Display weather in a given location
+``co`` Display weather in a given location
 
-zip Display weather in a given location
+``zip`` Display weather in a given location
 
-See:https://bulk.openweathermap.org/sample/city.list.json.gz)
+See: ``https://bulk.openweathermap.org/sample/city.list.json.gz <https://bulk.openweathermap.org/sample/city.list.json.gz>``__
 
 |image42|
 
-*-wikipedia* (-wiki) - Get information from Wikipedia.
+``-wikipedia`` (``-wiki``) - Get information from Wikipedia.
 
 Dumbo also uses custom commands:
 
 Dumbo Custom Commands
 ---------------------
 
-*-abbrev* - https://www.abbreviations.com/%7B0:query%7D
+``-abbrev``
 
-*-dict* - https://www.merriam-webster.com/dictionary/%7B0:query%7D
+- ``https://www.abbreviations.com/{0:query}``
 
-*-down* - https://downforeveryoneorjustme.com/inaturalist.org (nothing
-entered after)
+``-dict``
 
--radar -
-https://weatherstreet.com/ridge/%7B0:query%7D-%7B1:query%7D-%7B2:query%7D-radar.htm
-(enter capitalized City ST Zip)
+- ``https://www.merriam-webster.com/dictionary/{0:query}``
 
--rloop - https://radar.weather.gov/ridge/lite/N0R/%7B0:query%7D_loop.gif
-(enter 3 character Site ID from
-https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx)
+``-down``
 
-*-wiktionary*- https://en.wiktionary.org/wiki/%7B0:query%7D
+- ``https://downforeveryoneorjustme.com/inaturalist.org``
+- nothing entered after
+
+``-radar``
+
+- ``https://weatherstreet.com/ridge/{0:query}-{1:query}-{2:query}-radar.htm``
+- enter capitalized City ST Zip
+
+``-rloop``
+
+- ``https://radar.weather.gov/ridge/lite/N0R/{0:query}_loop.gif``
+- enter 3 character Site ID from https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx
+
+``-wiktionary``
+
+- ``https://en.wiktionary.org/wiki/{0:query}``
 
 Pickerel commands
 -----------------
 
-(access help using $help)
+(access help using ``$help``)
 
-Syntax: $play <query>
+Syntax: ``$play <query>``
 
 Note: Please use these *Commands* in #music channel, and listen in |image43|
 
-$autoplay - Starts auto play. (DJ role required if enabled)
+``$autoplay``
 
-$bump - Bump a track number to the top of the queue.
+- Starts auto play. (DJ role required if enabled)
 
-$bumpplay - Force play a URL or search for a track.
+``$bump``
 
-$eq - Equalizer management.
+- Bump a track number to the top of the queue.
 
-$genre - Pick a Spotify playlist from a list of categories to star...
+``$bumpplay``
 
-$local - Local playback commands.
+- Force play a URL or search for a track.
 
-$now - Now playing.
+``$eq``
+
+- Equalizer management.
+
+``$genre``
+
+- Pick a Spotify playlist from a list of categories to star...
+
+``$local``
+
+- Local playback commands.
+
+``$now``
+
+- Now playing.
 
 |image44|
 
-$pause - Pause or resume a playing track.
+``$pause``
 
-$percent - Queue percentage.
+- Pause or resume a playing track.
 
-$play - Play a URL or search for a track. (DJ role required if enabled)
+``$percent``
 
-$playlist - Playlist configuration options.
+- Queue percentage.
 
-$prev - Skip to the start of the previously played track.
+``$play``
 
-$queue - List the songs in the queue.
+- Play a URL or search for a track. (DJ role required if enabled)
 
-$remove - Remove a specific track number from the queue.
+``$playlist``
 
-$repeat - Toggle repeat.
+- Playlist configuration options.
 
-$search - Pick a track with a search.
+``$prev``
 
-$seek - Seek ahead or behind on a track by seconds
+- Skip to the start of the previously played track.
 
-$shuffle - Toggle shuffle.
+``$queue``
 
-$sing - Make Red sing one of her songs. (DJ role required if enabled)
+- List the songs in the queue.
 
-$skip - Skip to the next track, or to a given track number.
+``$remove``
 
-$stop - Stop playback and clear the queue.
+- Remove a specific track number from the queue.
 
-$volume - Set the volume, 1% - 150%.
+``$repeat``
+
+- Toggle repeat.
+
+``$search``
+
+- Pick a track with a search.
+
+``$seek``
+
+- Seek ahead or behind on a track by seconds
+
+``$shuffle``
+
+- Toggle shuffle.
+
+``$sing``
+
+- Make Red sing one of her songs. (DJ role required if enabled)
+
+``$skip``
+
+- Skip to the next track, or to a given track number.
+
+``$stop``
+
+- Stop playback and clear the queue.
+
+``$volume``
+
+- Set the volume, 1% - 150%.
 
 =============
 Participating
