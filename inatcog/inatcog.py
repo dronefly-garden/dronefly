@@ -1043,14 +1043,20 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
-        • The first part of the query indicates what to tabulate.
-        • The final `from`, `by`, or `with` indicates row contents.
+        • Only taxa can be tabulated. More kinds of table
+          to be supported in future releases.
+        • The row contents can be `from` or `by`. If both
+          are given, what to tabulate is filtered by the
+          `from` place, and the `by` person is the first row.
         e.g.
         ```
-        ,tab fish by me
-             -> per user (self listed; others react to add)
         ,tab fish from home
              -> per place (home listed; others react to add)
+        ,tab fish by me
+             -> per user (self listed; others react to add)
+        ,tab fish from canada by me
+             -> per user (self listed; others react to add)
+                but only fish from canada are tabulated
         ```
         """
         if query.controlled_term or not query.main:
