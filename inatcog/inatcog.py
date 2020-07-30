@@ -1342,12 +1342,15 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await self._search(ctx, query, "obs")
 
     @commands.command(aliases=["sp"])
-    async def species(self, ctx, *, query):
+    async def species(self, ctx, *, query: str):
         """Show species best matching the query.
 
         `Aliases: [p]sp`
         See `[p]help taxon` for query help."""
-        await self.taxon(ctx, query="species " + query)
+        query_species = await NaturalCompoundQueryConverter.convert(
+            ctx, f"species {query}"
+        )
+        await self.taxon(ctx, query=query_species)
 
     @inat_set.command(name="home")
     @checks.admin_or_permissions(manage_messages=True)
