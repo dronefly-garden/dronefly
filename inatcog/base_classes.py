@@ -119,6 +119,42 @@ class CompoundQuery(NamedTuple):
     controlled_term: str
 
 
+# TODO: this should just be Place, as it is a superset
+class MeansPlace(DataClassJsonMixin):
+    """The place for establishment means."""
+
+    id: int
+    name: str
+    display_name: str
+    admin_level: int
+    ancestor_place_ids: List[int]
+
+
+class Checklist(DataClassJsonMixin):
+    """A checklist."""
+
+    id: int
+    title: str
+
+
+class EstablishmentMeans(DataClassJsonMixin):
+    """The establishment means for a taxon in a place."""
+
+    id: int
+    taxon_id: int
+    establishment_means: str
+    place: MeansPlace
+    list: Checklist
+
+    def url(self):
+        """Establishment means listed taxon url."""
+        return f"{WWW_BASE_URL}/listed_taxa/{self.id}"
+
+    def link(self):
+        """Establishment means listed taxon link in Markdown format."""
+        return f"[{self.list.name}]({self.url()})"
+
+
 class Taxon(NamedTuple):
     """A taxon."""
 
