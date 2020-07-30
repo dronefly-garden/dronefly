@@ -10,7 +10,7 @@ import discord
 import inflect
 from redbot.core import checks, commands, Config
 from redbot.core.commands import BadArgument
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS, start_adding_reactions
 from .api import INatAPI
 from .base_classes import (
     WWW_BASE_URL,
@@ -1043,23 +1043,28 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
-        `Not implemented yet.` Coming soon."""
-        """
         • The first part of the query indicates what to tabulate.
         • The final `from`, `by`, or `with` indicates row contents.
         e.g.
         ```
-        ,tab fish from halifax with sex
-             -> per controlled term for "sex"
-        ,tab fish from ns, nb, pe, maritimes, northeast
-             -> per place specified
         ,tab fish by me
              -> per user (self listed; others react to add)
         ,tab fish from home
              -> per place (home listed; others react to add)
         ```
         """
-        await ctx.send_help()
+        if query.controlled_term or not query.main:
+            await ctx.send(embed=sorry("I can't tabulate that yet."))
+            return
+
+        try:
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
+            start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
 
     @commands.group(aliases=["t"], invoke_without_command=True)
     async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):

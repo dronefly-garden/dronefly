@@ -134,13 +134,7 @@ class INatEmbeds(MixinMeta):
         """Return embed for observation counts from place or by user."""
         group_by_param = ""
         formatted_counts = ""
-
-        if isinstance(arg, FilteredTaxon):
-            (taxon, user, place) = arg
-        else:
-            taxon = arg
-            user = None
-            place = None
+        (taxon, user, place) = arg
 
         title = format_taxon_title(taxon)
         full_title = f"Observations of {title}"
