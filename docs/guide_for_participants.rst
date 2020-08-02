@@ -528,7 +528,7 @@ from other nature-related sites:
 
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
 
-``,needs``
+``,notseen``
 
 - ``https://www.inaturalist.org/observations?hrank=species&place_id={1:query}&unobserved_by_user_id={0:query}&view=species``
 - put iNaturalist login or id# first
