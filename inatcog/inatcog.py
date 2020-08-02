@@ -1091,7 +1091,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         [p]taxon prunella
            -> Prunella (self-heals)
         [p]taxon prunella in animals
-           -> Prunella
+           -> Prunella (Accentors)
         [p]taxon wtsp
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
