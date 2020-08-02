@@ -436,6 +436,11 @@ from other nature-related sites:
 - ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
 - links back to this help
 
+``,cites``
+
+- ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cites_eu&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cites&page=1``
+- put taxon search terms after command
+
 ``,gbif``
 
 - ``https://www.gbif.org/search?q={0:query}``
@@ -445,6 +450,11 @@ from other nature-related sites:
 
 - ``https://www.inaturalist.org/observations/5890862``
 - everybody's favorite marmot
+
+``,gni``
+
+- ``http://gni.globalnames.org/name_strings?search_term={0:query}&commit=Search``
+- put taxon search terms after command
 
 ``,hostplant``
 
@@ -475,6 +485,11 @@ from other nature-related sites:
 
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_{1:query}.html``
 - put plant binomial after command
+
+``,jstorgp``
+
+- ``https://plants.jstor.org/search?filter=name&so=ps_group_by_genus_species+asc&Query={0:query}``
+- put plant genus or binomial after command
 
 ``,lichen``
 
@@ -512,6 +527,12 @@ from other nature-related sites:
 ``,nasstate``
 
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
+
+``,needs``
+
+- ``https://www.inaturalist.org/observations?hrank=species&place_id={1:query}&unobserved_by_user_id={0:query}&view=species``
+- put iNaturalist login or id# first
+- put iNaturalist place id# second
 
 ``,paflora``
 
@@ -572,6 +593,11 @@ from other nature-related sites:
 
 - ``https://www.xeno-canto.org/species/{0:query}-{1:query}?query=ssp:%22{2:query}%22``
 - put bird subspecies of interest after command
+
+``,zoobank``
+
+- ``http://zoobank.org/Search?search_term={0:query}``
+- put search terms after command
 
 Dumbo commands
 --------------
