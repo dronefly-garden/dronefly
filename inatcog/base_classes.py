@@ -140,8 +140,8 @@ class Checklist(DataClassJsonMixin):
 
 
 MEANS_LABEL_DESC = {
-    "native": "Native in",
-    "introduced": "Introduced to",
+    "native": ":eight_spoked_asterisk: Native in",
+    "introduced": ":arrow_up_small: Introduced to",
 }
 
 
