@@ -1156,7 +1156,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         full_taxon = await get_taxon(self, filtered_taxon.taxon.taxon_id)
         for means in full_taxon.listed_taxa:
             if means.place.id == place.place_id:
-                await ctx.send(embed=make_embed(description=means.link()))
+                await ctx.send(embed=make_embed(description=means.description()))
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):

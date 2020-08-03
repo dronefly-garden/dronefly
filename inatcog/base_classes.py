@@ -139,6 +139,12 @@ class Checklist(DataClassJsonMixin):
     title: str
 
 
+MEANS_LABEL_DESC = {
+    "native": "Native in",
+    "introduced": "Introduced to",
+}
+
+
 @dataclass
 class EstablishmentMeans(DataClassJsonMixin):
     """The establishment means for a taxon in a place."""
@@ -156,6 +162,17 @@ class EstablishmentMeans(DataClassJsonMixin):
     def link(self):
         """Establishment means listed taxon link in Markdown format."""
         return f"[{self.list.title}]({self.url()})"
+
+    def description(self):
+        """Establishment means description."""
+        desc = MEANS_LABEL_DESC.get(self.establishment_means)
+        if desc:
+            return f"{desc} {self.place.display_name} ({self.link()})"
+        else:
+            return (
+                f"Establishment means {self.establishment_means} in "
+                f"{self.place.display_name} ({self.link()})"
+            )
 
 
 class Taxon(NamedTuple):
