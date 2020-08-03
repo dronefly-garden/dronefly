@@ -120,6 +120,7 @@ class CompoundQuery(NamedTuple):
 
 
 # TODO: this should just be Place, as it is a superset
+@dataclass
 class MeansPlace(DataClassJsonMixin):
     """The place for establishment means."""
 
@@ -130,6 +131,7 @@ class MeansPlace(DataClassJsonMixin):
     ancestor_place_ids: List[int]
 
 
+@dataclass
 class Checklist(DataClassJsonMixin):
     """A checklist."""
 
@@ -137,6 +139,7 @@ class Checklist(DataClassJsonMixin):
     title: str
 
 
+@dataclass
 class EstablishmentMeans(DataClassJsonMixin):
     """The establishment means for a taxon in a place."""
 
@@ -152,7 +155,7 @@ class EstablishmentMeans(DataClassJsonMixin):
 
     def link(self):
         """Establishment means listed taxon link in Markdown format."""
-        return f"[{self.list.name}]({self.url()})"
+        return f"[{self.list.title}]({self.url()})"
 
 
 class Taxon(NamedTuple):
@@ -170,6 +173,7 @@ class Taxon(NamedTuple):
     observations: int
     ancestor_ranks: list
     active: bool
+    listed_taxa: list
 
 
 @dataclass
@@ -202,6 +206,7 @@ class Place(DataClassJsonMixin):
     display_name: str
     place_id: int = field(metadata=config(field_name="id"))
     url: str = field(init=False)
+    ancestor_place_ids: List[int]
 
     def __post_init__(self):
         """URL for place."""

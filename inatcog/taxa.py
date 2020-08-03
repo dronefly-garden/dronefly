@@ -1,7 +1,14 @@
 """Module to work with iNat taxa."""
 import re
 from typing import NamedTuple, Optional, Union
-from .base_classes import WWW_BASE_URL, RANK_LEVELS, Taxon, User, Place
+from .base_classes import (
+    WWW_BASE_URL,
+    RANK_LEVELS,
+    EstablishmentMeans,
+    Taxon,
+    User,
+    Place,
+)
 
 
 TAXON_ID_LIFE = 48460
@@ -190,7 +197,16 @@ def get_taxon_fields(record):
         if ancestors
         else []
     )
-    return Taxon(
+    listed_taxa_raw = record.get("listed_taxa")
+    if listed_taxa_raw:
+        listed_taxa_iter = [
+            EstablishmentMeans.from_dict(establishment_means)
+            for establishment_means in listed_taxa_raw
+        ]
+        listed_taxa = list(listed_taxa_iter)
+    else:
+        listed_taxa = []
+    taxon = Taxon(
         record["name"],
         taxon_id,
         record.get("preferred_common_name"),
@@ -203,7 +219,9 @@ def get_taxon_fields(record):
         record["observations_count"],
         ancestor_ranks,
         record["is_active"],
+        listed_taxa,
     )
+    return taxon
 
 
 class NameMatch(NamedTuple):

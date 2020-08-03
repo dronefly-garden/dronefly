@@ -1135,6 +1135,29 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         else:
             await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
 
+    @taxon.command(name="means")
+    async def taxon_means(
+        self, ctx, place_query: str, *, query: NaturalCompoundQueryConverter
+    ):
+        """Show establishment means for taxon from the specified place."""
+        try:
+            place = await self.place_table.get_place(ctx.guild, place_query, ctx.author)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+
+        try:
+            self.check_taxon_query(ctx, query)
+            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+        except (BadArgument, LookupError) as err:
+            await ctx.send(embed=sorry(apology=err.args[0]))
+            return
+
+        full_taxon = await get_taxon(self, filtered_taxon.taxon.taxon_id)
+        for means in full_taxon.listed_taxa:
+            if means.place.id == place.place_id:
+                await ctx.send(embed=make_embed(description=means.link()))
+
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon name best matching the query.
