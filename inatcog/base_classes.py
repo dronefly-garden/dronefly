@@ -132,6 +132,16 @@ class MeansPlace(DataClassJsonMixin):
 
 
 @dataclass
+class MeansPlacePartial(DataClassJsonMixin):
+    """The place for partial establishment means."""
+
+    id: int
+    name: str
+    display_name: str
+    ancestry: str
+
+
+@dataclass
 class Checklist(DataClassJsonMixin):
     """A checklist."""
 
@@ -143,6 +153,38 @@ MEANS_LABEL_DESC = {
     "native": ":eight_spoked_asterisk: Native in",
     "introduced": ":arrow_up_small: Introduced to",
 }
+
+
+@dataclass
+class EstablishmentMeansPartial(DataClassJsonMixin):
+    """Partial establishment means for a taxon in a place.
+
+    This form is used for establishment_means as returned
+    on a query with preferred_place_id set.
+    """
+
+    id: int
+    establishment_means: str
+    place: MeansPlacePartial
+
+    def url(self):
+        """Partial establishment means listed taxon url."""
+        return f"{WWW_BASE_URL}/listed_taxa/{self.id}"
+
+    def link(self):
+        """Partial establishment means listed taxon link in Markdown format."""
+        return f"[Checklist]({self.url()})"
+
+    def description(self):
+        """Partial establishment means listed taxon url."""
+        desc = MEANS_LABEL_DESC.get(self.establishment_means)
+        if desc:
+            return f"{desc} {self.place.display_name} ({self.link()})"
+        else:
+            return (
+                f"Establishment means {self.establishment_means} in "
+                f"{self.place.display_name} ({self.link()})"
+            )
 
 
 @dataclass
@@ -191,6 +233,7 @@ class Taxon(NamedTuple):
     ancestor_ranks: list
     active: bool
     listed_taxa: list
+    establishment_means: Optional[EstablishmentMeansPartial]
 
 
 @dataclass

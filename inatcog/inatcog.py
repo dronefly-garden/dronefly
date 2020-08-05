@@ -1145,6 +1145,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except LookupError as err:
             await ctx.send(err)
             return
+        place_id = place.place_id
 
         try:
             self.check_taxon_query(ctx, query)
@@ -1152,10 +1153,17 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except (BadArgument, LookupError) as err:
             await ctx.send(embed=sorry(apology=err.args[0]))
             return
+        taxon = filtered_taxon.taxon
+
+        home = await self.get_home(ctx)
+        home_place_id = int(home)
+        if place_id == home_place_id:
+            establishment_means = taxon.establishment_means
+            place_id = establishment_means.place.id
 
         full_taxon = await get_taxon(self, filtered_taxon.taxon.taxon_id)
         for means in full_taxon.listed_taxa:
-            if means.place.id == place.place_id:
+            if means.place.id == place_id:
                 await ctx.send(embed=make_embed(description=means.description()))
 
     @commands.command()

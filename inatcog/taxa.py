@@ -5,6 +5,7 @@ from .base_classes import (
     WWW_BASE_URL,
     RANK_LEVELS,
     EstablishmentMeans,
+    EstablishmentMeansPartial,
     Taxon,
     User,
     Place,
@@ -206,6 +207,13 @@ def get_taxon_fields(record):
         listed_taxa = list(listed_taxa_iter)
     else:
         listed_taxa = []
+    establishment_means_raw = record.get("establishment_means")
+    if establishment_means_raw:
+        establishment_means = EstablishmentMeansPartial.from_dict(
+            establishment_means_raw
+        )
+    else:
+        establishment_means = None
     taxon = Taxon(
         record["name"],
         taxon_id,
@@ -220,6 +228,7 @@ def get_taxon_fields(record):
         ancestor_ranks,
         record["is_active"],
         listed_taxa,
+        establishment_means,
     )
     return taxon
 
