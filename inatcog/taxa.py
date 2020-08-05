@@ -10,6 +10,7 @@ from .base_classes import (
     User,
     Place,
 )
+from .common import LOG
 
 
 TAXON_ID_LIFE = 48460
@@ -152,6 +153,27 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
     return full_name
 
 
+async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
+    """Get the preferred establishment means for the taxon."""
+    try:
+        establishment_means = taxon.establishment_means
+        LOG.info(repr(establishment_means))
+        place_id = establishment_means.place.id
+        home = await bot.get_home(ctx)
+        full_taxon = (
+            taxon
+            if taxon.listed_taxa
+            else await get_taxon(bot, taxon.taxon_id, preferred_place_id=int(home))
+        )
+    except (AttributeError, LookupError):
+        return None
+
+    find_means = (
+        means for means in full_taxon.listed_taxa if means.place.id == place_id
+    )
+    return next(find_means, None)
+
+
 def get_taxon_fields(record):
     """Get Taxon from a JSON record.
 
@@ -165,6 +187,19 @@ def get_taxon_fields(record):
     Taxon
         A Taxon object from the JSON record.
     """
+
+    def make_means(means):
+        try:
+            return EstablishmentMeans.from_dict(means)
+        except KeyError:
+            pass
+
+    def make_means_partial(means):
+        try:
+            return EstablishmentMeansPartial.from_dict(means)
+        except KeyError:
+            pass
+
     thumbnail = None
     photo = record.get("default_photo")
     if photo:
@@ -200,18 +235,12 @@ def get_taxon_fields(record):
     )
     listed_taxa_raw = record.get("listed_taxa")
     if listed_taxa_raw:
-        listed_taxa_iter = [
-            EstablishmentMeans.from_dict(establishment_means)
-            for establishment_means in listed_taxa_raw
-        ]
-        listed_taxa = list(listed_taxa_iter)
+        listed_taxa = [make_means(means) for means in listed_taxa_raw]
     else:
         listed_taxa = []
     establishment_means_raw = record.get("establishment_means")
     if establishment_means_raw:
-        establishment_means = EstablishmentMeansPartial.from_dict(
-            establishment_means_raw
-        )
+        establishment_means = make_means_partial(establishment_means_raw)
     else:
         establishment_means = None
     taxon = Taxon(

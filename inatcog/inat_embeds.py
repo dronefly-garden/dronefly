@@ -10,13 +10,20 @@ from .common import LOG
 from .embeds import format_items_for_embed, make_embed
 from .interfaces import MixinMeta
 from .maps import INatMapURL
-from .base_classes import CompoundQuery, WWW_BASE_URL, PAT_OBS_LINK, FilteredTaxon
+from .base_classes import (
+    CompoundQuery,
+    MEANS_LABEL_DESC,
+    WWW_BASE_URL,
+    PAT_OBS_LINK,
+    FilteredTaxon,
+)
 from .projects import UserProject, ObserverStats
 from .taxa import (
     format_taxon_name,
     format_taxon_names,
     get_taxon,
     get_taxon_fields,
+    get_taxon_preferred_establishment_means,
     format_place_taxon_counts,
     format_user_taxon_counts,
     TAXON_ID_LIFE,
@@ -405,12 +412,7 @@ class INatEmbeds(MixinMeta):
             )
             return description
 
-        async def format_ancestors(description, rec):
-            home = await self.get_home(ctx)
-            full_record = (await self.api.get_taxa(rec.taxon_id, home=home))["results"][
-                0
-            ]
-            ancestors = full_record.get("ancestors")
+        async def format_ancestors(description, ancestors):
             if ancestors:
                 ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]
                 description += " in: " + format_taxon_names(ancestors, hierarchy=True)
@@ -420,7 +422,19 @@ class INatEmbeds(MixinMeta):
 
         title = format_taxon_title(taxon)
         description = await format_description(taxon)
-        description = await format_ancestors(description, taxon)
+
+        home = await self.get_home(ctx)
+        full_record = (
+            await self.api.get_taxa(taxon.taxon_id, preferred_place_id=home)
+        )["results"][0]
+        full_taxon = get_taxon_fields(full_record)
+        means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
+        if means and MEANS_LABEL_DESC.get(means.establishment_means):
+            description += f"\n{means.description()}"
+
+        ancestors = full_record.get("ancestors")
+        description = await format_ancestors(description, ancestors)
+
         if place:
             formatted_counts = await format_place_taxon_counts(self, place, taxon)
             if formatted_counts:
