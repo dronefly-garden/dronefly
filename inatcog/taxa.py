@@ -10,7 +10,6 @@ from .base_classes import (
     User,
     Place,
 )
-from .common import LOG
 
 
 TAXON_ID_LIFE = 48460
@@ -157,7 +156,6 @@ async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
     """Get the preferred establishment means for the taxon."""
     try:
         establishment_means = taxon.establishment_means
-        LOG.info(repr(establishment_means))
         place_id = establishment_means.place.id
         home = await bot.get_home(ctx)
         full_taxon = (
@@ -171,7 +169,7 @@ async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
     find_means = (
         means for means in full_taxon.listed_taxa if means.place.id == place_id
     )
-    return next(find_means, None)
+    return next(find_means, establishment_means)
 
 
 def get_taxon_fields(record):
