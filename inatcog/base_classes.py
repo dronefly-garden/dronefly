@@ -150,8 +150,8 @@ class Checklist(DataClassJsonMixin):
 
 
 MEANS_LABEL_DESC = {
-    "native": "Native in",
-    "introduced": "Introduced to",
+    "native": "native in",
+    "introduced": "introduced to",
 }
 
 MEANS_LABEL_EMOJI = {
