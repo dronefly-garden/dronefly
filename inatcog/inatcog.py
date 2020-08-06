@@ -1154,17 +1154,23 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology=err.args[0]))
             return
         taxon = filtered_taxon.taxon
-
-        home = await self.get_home(ctx)
-        home_place_id = int(home)
-        if place_id == home_place_id:
-            establishment_means = taxon.establishment_means
-            place_id = establishment_means.place.id
-
-        full_taxon = await get_taxon(self, filtered_taxon.taxon.taxon_id)
-        for means in full_taxon.listed_taxa:
-            if means.place.id == place_id:
-                await ctx.send(embed=make_embed(description=means.description()))
+        title = format_taxon_name(taxon, with_term=True)
+        url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
+        full_taxon = await get_taxon(self, taxon.taxon_id, preferred_place_id=place_id)
+        description = f"Establishment means unknown in: {place.display_name}"
+        try:
+            place_id = full_taxon.establishment_means.place.id
+            find_means = (
+                means for means in full_taxon.listed_taxa if means.place.id == place_id
+            )
+            means = next(find_means, full_taxon.establishment_means)
+            if means:
+                description = (
+                    f"{means.emoji()}{means.description()} ({means.list_link()})"
+                )
+        except AttributeError:
+            pass
+        await ctx.send(embed=make_embed(title=title, url=url, description=description))
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):

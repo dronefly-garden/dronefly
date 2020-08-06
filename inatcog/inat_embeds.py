@@ -430,7 +430,7 @@ class INatEmbeds(MixinMeta):
         full_taxon = get_taxon_fields(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
-            description += f"\n{means.description()}"
+            description += f" {means.emoji()}{means.link()}"
 
         ancestors = full_record.get("ancestors")
         description = await format_ancestors(description, ancestors)

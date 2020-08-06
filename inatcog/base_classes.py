@@ -150,8 +150,13 @@ class Checklist(DataClassJsonMixin):
 
 
 MEANS_LABEL_DESC = {
-    "native": ":eight_spoked_asterisk: Native in",
-    "introduced": ":arrow_up_small: Introduced to",
+    "native": "Native in",
+    "introduced": "Introduced to",
+}
+
+MEANS_LABEL_EMOJI = {
+    "native": ":eight_spoked_asterisk:",
+    "introduced": ":arrow_up_small:",
 }
 
 
@@ -171,7 +176,7 @@ class EstablishmentMeansPartial(DataClassJsonMixin):
         """Partial establishment means listed taxon url."""
         return f"{WWW_BASE_URL}/listed_taxa/{self.id}"
 
-    def link(self):
+    def list_link(self):
         """Partial establishment means listed taxon link in Markdown format."""
         return f"[Checklist]({self.url()})"
 
@@ -179,12 +184,24 @@ class EstablishmentMeansPartial(DataClassJsonMixin):
         """Partial establishment means listed taxon url."""
         desc = MEANS_LABEL_DESC.get(self.establishment_means)
         if desc:
-            return f"{desc} {self.place.display_name} ({self.link()})"
+            return f"{desc} {self.place.display_name}"
         else:
             return (
                 f"Establishment means {self.establishment_means} in "
-                f"{self.place.display_name} ({self.link()})"
+                f"{self.place.display_name}"
             )
+
+    def emoji(self):
+        """Partial establishment means listed taxon emoji."""
+        try:
+            emoji = MEANS_LABEL_EMOJI[self.establishment_means] + "\u202f"
+        except KeyError:
+            emoji = ""
+        return emoji
+
+    def link(self):
+        """Partial establishment means listed taxon url."""
+        return f"[{self.description()}]({self.url()})"
 
 
 @dataclass
@@ -201,7 +218,7 @@ class EstablishmentMeans(DataClassJsonMixin):
         """Establishment means listed taxon url."""
         return f"{WWW_BASE_URL}/listed_taxa/{self.id}"
 
-    def link(self):
+    def list_link(self):
         """Establishment means listed taxon link in Markdown format."""
         return f"[{self.list.title}]({self.url()})"
 
@@ -209,12 +226,24 @@ class EstablishmentMeans(DataClassJsonMixin):
         """Establishment means description."""
         desc = MEANS_LABEL_DESC.get(self.establishment_means)
         if desc:
-            return f"{desc} {self.place.display_name} ({self.link()})"
+            return f"{desc} {self.place.display_name}"
         else:
             return (
                 f"Establishment means {self.establishment_means} in "
-                f"{self.place.display_name} ({self.link()})"
+                f"{self.place.display_name}"
             )
+
+    def emoji(self):
+        """Establishment means listed taxon emoji."""
+        try:
+            emoji = MEANS_LABEL_EMOJI[self.establishment_means] + "\u202f"
+        except KeyError:
+            emoji = ""
+        return emoji
+
+    def link(self):
+        """Establishment means listed taxon url."""
+        return f"[{self.description()}]({self.url()})"
 
 
 class Taxon(NamedTuple):
