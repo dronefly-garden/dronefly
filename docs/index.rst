@@ -17,3 +17,22 @@ Welcome to Dronefly's documentation!
     :caption: Developer's Reference:
 
     development_plan
+
+.. toctree::
+   :maxdepth: 2
+   :caption: INatCog API documentation:
+
+   source/inatcog/modules.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: EBirdCog API documentation:
+
+   source/ebirdcog/modules.rst
+
+Indices and tables
+==================
+ 
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
