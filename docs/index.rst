@@ -3,7 +3,7 @@ Welcome to Dronefly's documentation!
 
 .. toctree::
     :maxdepth: 2
-    :caption: iNaturalist Discord Server documentation:
+    :caption: iNaturalist Discord Server:
 
     guide_for_participants
 
@@ -15,7 +15,7 @@ Welcome to Dronefly's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Dronefly cogs API documentation:
+   :caption: Dronefly cogs API:
 
    source/modules.rst
 
