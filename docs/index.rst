@@ -15,15 +15,9 @@ Welcome to Dronefly's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: INatCog API documentation:
+   :caption: Dronefly cogs API documentation:
 
-   source/inatcog/modules.rst
-
-.. toctree::
-   :maxdepth: 2
-   :caption: EBirdCog API documentation:
-
-   source/ebirdcog/modules.rst
+   source/modules.rst
 
 Indices and tables
 ==================
