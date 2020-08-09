@@ -16,6 +16,7 @@ from .base_classes import (
     WWW_BASE_URL,
     PAT_OBS_LINK,
     FilteredTaxon,
+    TaxonSummary,
 )
 from .projects import UserProject, ObserverStats
 from .taxa import (
@@ -169,7 +170,9 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def format_obs(self, obs, with_description=True, with_link=False, compact=False):
+    async def format_obs(
+        self, obs, with_description=True, with_link=False, compact=False
+    ):
         """Format an observation title & description."""
 
         def format_count(label, count):
@@ -187,11 +190,15 @@ class INatEmbeds(MixinMeta):
                 title += format_count("comment", obs.comments_count)
             return title
 
-        def format_summary(user, obs):
+        def format_summary(user, obs, taxon_summary):
+            summary = ""
+            if taxon_summary:
+                means = taxon_summary.listed_taxon
+                summary = f" {means.emoji()}{means.link()}\n"
             if compact:
-                summary = "by " + user.login
+                summary += "by " + user.login
             else:
-                summary = "Observed by " + user.profile_link()
+                summary += "Observed by " + user.profile_link()
             if obs.obs_on:
                 if compact:
                     summary += " on " + re.sub(SHORT_DATE_PAT, r"\1", obs.obs_on)
@@ -218,7 +225,7 @@ class INatEmbeds(MixinMeta):
                 summary += description + "\n"
             return summary
 
-        def format_community_id(title, summary, obs):
+        def format_community_id(title, summary, obs, taxon_summary):
             idents_count = ""
             if obs.idents_count:
                 idents_count = (
@@ -230,8 +237,13 @@ class INatEmbeds(MixinMeta):
                 obs.community_taxon
                 and obs.community_taxon.taxon_id != obs.taxon.taxon_id
             ):
+                if taxon_summary:
+                    means = taxon_summary.listed_taxon
+                    means_link = f"\n{means.emoji()}{means.link()}"
+                else:
+                    means_link = ""
                 summary = (
-                    f"{format_taxon_name(obs.community_taxon)} {idents_count}\n\n"
+                    f"{format_taxon_name(obs.community_taxon)} {idents_count}{means_link}\n\n"
                     + summary
                 )
             else:
@@ -245,11 +257,36 @@ class INatEmbeds(MixinMeta):
                 title += format_count("sound", len(obs.sounds))
             return title
 
+        async def get_taxon_summary(obs, **kwargs):
+            taxon_summary_raw = await self.api.get_obs_taxon_summary(
+                obs.obs_id, **kwargs
+            )
+            taxon_summary = TaxonSummary.from_dict(taxon_summary_raw)
+            LOG.info(repr(taxon_summary))
+            try:
+                if MEANS_LABEL_DESC.get(taxon_summary.listed_taxon.establishment_means):
+                    return taxon_summary
+            except AttributeError:
+                pass
+            return None
+
         taxon = obs.taxon
         user = obs.user
         title = format_title(taxon, obs)
-        summary = format_summary(user, obs)
-        title, summary = format_community_id(title, summary, obs)
+        taxon_summary = None
+        community_taxon_summary = None
+        if not compact:
+            taxon_summary = await get_taxon_summary(obs)
+            if (
+                obs.community_taxon
+                and obs.community_taxon.taxon_id != obs.taxon.taxon_id
+            ):
+                community_taxon_summary = await get_taxon_summary(obs, community=1)
+
+        summary = format_summary(user, obs, taxon_summary)
+        title, summary = format_community_id(
+            title, summary, obs, community_taxon_summary
+        )
         title = format_media_counts(title, obs)
         if with_link:
             link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
@@ -305,7 +342,7 @@ class INatEmbeds(MixinMeta):
                 embed.title = title
                 embed.url = url
             else:
-                embed.title, summary = self.format_obs(obs)
+                embed.title, summary = await self.format_obs(obs)
                 if error:
                     summary += "\n" + error
                 embed.description = summary

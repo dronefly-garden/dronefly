@@ -72,6 +72,17 @@ class INatAPI:
 
         return None
 
+    async def get_obs_taxon_summary(self, obs_id=int, **kwargs):
+        """Get an observation's taxon summary."""
+
+        endpoint = f"/v1/observations/{obs_id}/taxon_summary"
+
+        async with self.session.get(
+            f"{API_BASE_URL}{endpoint}", params=kwargs
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+
     async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):
         """Query API for places matching place ID or params."""
 

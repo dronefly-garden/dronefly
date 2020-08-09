@@ -132,13 +132,11 @@ class MeansPlace(DataClassJsonMixin):
 
 
 @dataclass
-class MeansPlacePartial(DataClassJsonMixin):
-    """The place for partial establishment means."""
+class PlacePartial(DataClassJsonMixin):
+    """Minimal place info."""
 
     id: int
-    name: str
-    display_name: str
-    ancestry: str
+    display_name: str = None
 
 
 @dataclass
@@ -170,7 +168,7 @@ class EstablishmentMeansPartial(DataClassJsonMixin):
 
     id: int
     establishment_means: str
-    place: MeansPlacePartial
+    place: PlacePartial
 
     def url(self):
         """Partial establishment means listed taxon url."""
@@ -263,6 +261,76 @@ class Taxon(NamedTuple):
     active: bool
     listed_taxa: list
     establishment_means: Optional[EstablishmentMeansPartial]
+
+
+@dataclass
+class ListedTaxon(DataClassJsonMixin):
+    """Listed taxon for an observation."""
+
+    id: int
+    establishment_means: str
+    list_id: int
+    taxon_id: int
+    place: Optional[PlacePartial] = None
+
+    def description(self):
+        """Listed taxon description."""
+        desc = MEANS_LABEL_DESC.get(self.establishment_means)
+        if desc:
+            return f"{desc} {self.place.display_name}"
+        else:
+            return (
+                f"Establishment means {self.establishment_means} in "
+                f"{self.place.display_name}"
+            )
+
+    def emoji(self):
+        """Listed taxon emoji."""
+        try:
+            emoji = MEANS_LABEL_EMOJI[self.establishment_means] + "\u202f"
+        except KeyError:
+            emoji = ""
+        return emoji
+
+    def link(self):
+        """Listed taxon link."""
+        return f"[{self.description()}]({self.url()})"
+
+    def url(self):
+        """Listed taxon url."""
+        return f"{WWW_BASE_URL}/listed_taxa/{self.id}"
+
+
+@dataclass
+class ConservationStatus(DataClassJsonMixin):
+    """Conservation status for an observation."""
+
+    id: int
+    authority: str
+    iucn_status_code: str
+    place: PlacePartial
+    status: str
+    status_name: str
+    taxon_id: int
+    url: str
+
+    def description(self):
+        """Description of conservation status."""
+        return f"Conservation Status: {self.status_name} ({self.status}) in {self.place.name}"
+
+    def link(self):
+        """Link to conservation status authority."""
+        return f"[{self.authority}]({self.url})"
+
+
+@dataclass
+class TaxonSummary(DataClassJsonMixin):
+    """Taxon summary for an observation."""
+
+    conservation_status: Optional[ConservationStatus] = None
+    listed_taxon: Optional[ListedTaxon] = None
+    # Not currently in use:
+    # wikipedia_summary: str = ""
 
 
 @dataclass

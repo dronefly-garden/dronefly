@@ -1297,7 +1297,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 ) = await self.obs_query.query_observations(ctx, query)
                 results = [
                     "\n".join(
-                        self.format_obs(
+                        await self.format_obs(
                             obs, with_description=False, with_link=True, compact=True,
                         )
                     )
