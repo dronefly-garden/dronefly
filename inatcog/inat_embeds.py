@@ -194,7 +194,11 @@ class INatEmbeds(MixinMeta):
             summary = ""
             if taxon_summary:
                 means = taxon_summary.listed_taxon
-                summary = f" {means.emoji()}{means.link()}\n"
+                status = taxon_summary.conservation_status
+                if status:
+                    summary += f"{status.description()} ({status.link()})\n"
+                if means:
+                    summary += f"{means.emoji()}{means.link()}\n"
             if compact:
                 summary += "by " + user.login
             else:
@@ -239,12 +243,16 @@ class INatEmbeds(MixinMeta):
             ):
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
-                    means_link = f"\n{means.emoji()}{means.link()}"
+                    status = taxon_summary.conservation_status
+                    if status:
+                        status_link = f"\n{status.description()} ({status.link()})"
+                    if means:
+                        means_link = f"\n{means.emoji()}{means.link()}"
                 else:
                     means_link = ""
                 summary = (
-                    f"{format_taxon_name(obs.community_taxon)} {idents_count}{means_link}\n\n"
-                    + summary
+                    f"{format_taxon_name(obs.community_taxon)} "
+                    f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
                 title += " " + idents_count
@@ -262,12 +270,15 @@ class INatEmbeds(MixinMeta):
                 obs.obs_id, **kwargs
             )
             taxon_summary = TaxonSummary.from_dict(taxon_summary_raw)
-            LOG.info(repr(taxon_summary))
-            try:
-                if MEANS_LABEL_DESC.get(taxon_summary.listed_taxon.establishment_means):
-                    return taxon_summary
-            except AttributeError:
-                pass
+            means = None
+            status = None
+            if taxon_summary:
+                listed = taxon_summary.listed_taxon
+                if listed:
+                    means = listed.establishment_means
+                status = taxon_summary.conservation_status
+            if means or status:
+                return taxon_summary
             return None
 
         taxon = obs.taxon

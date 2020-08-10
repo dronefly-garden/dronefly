@@ -316,7 +316,10 @@ class ConservationStatus(DataClassJsonMixin):
 
     def description(self):
         """Description of conservation status."""
-        return f"Conservation Status: {self.status_name} ({self.status}) in {self.place.name}"
+        return (
+            f"Conservation Status: {self.status_name} ({self.status}) "
+            f"in {self.place.display_name}"
+        )
 
     def link(self):
         """Link to conservation status authority."""
