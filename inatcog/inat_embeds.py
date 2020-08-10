@@ -254,6 +254,7 @@ class INatEmbeds(MixinMeta):
                         means_link = f"\n{means.emoji()}{means.link()}"
                 else:
                     means_link = ""
+                    status_link = ""
                 summary = (
                     f"{format_taxon_name(obs.community_taxon)} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
