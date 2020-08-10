@@ -244,25 +244,6 @@ class EstablishmentMeans(DataClassJsonMixin):
         return f"[{self.description()}]({self.url()})"
 
 
-class Taxon(NamedTuple):
-    """A taxon."""
-
-    name: str
-    taxon_id: int
-    common: Optional[str]
-    term: str
-    thumbnail: Optional[str]
-    image: Optional[str]
-    image_attribution: Optional[str]
-    rank: str
-    ancestor_ids: list
-    observations: int
-    ancestor_ranks: list
-    active: bool
-    listed_taxa: list
-    establishment_means: Optional[EstablishmentMeansPartial]
-
-
 @dataclass
 class ListedTaxon(DataClassJsonMixin):
     """Listed taxon for an observation."""
@@ -305,25 +286,51 @@ class ListedTaxon(DataClassJsonMixin):
 class ConservationStatus(DataClassJsonMixin):
     """Conservation status for an observation."""
 
-    id: int
     authority: str
-    iucn_status_code: str
-    place: PlacePartial
     status: str
-    status_name: str
-    taxon_id: int
-    url: str
+    url: Optional[str] = ""
+    place: Optional[PlacePartial] = None
+    status_name: Optional[str] = ""
+
+    def status_description(self):
+        """Return a reasonable description of status giving various possible inputs."""
+        if self.status == "ex":
+            return "extinct"
+        if self.status_name:
+            return f"{self.status_name} ({self.status})"
+        return self.status
 
     def description(self):
         """Description of conservation status."""
-        return (
-            f"Conservation Status: {self.status_name} ({self.status}) "
-            f"in {self.place.display_name}"
-        )
+        if self.place:
+            return f"{self.status_description()} in {self.place.display_name}"
+        return self.status_description()
 
     def link(self):
         """Link to conservation status authority."""
-        return f"[{self.authority}]({self.url})"
+        if self.url:
+            return f"[{self.authority}]({self.url})"
+        return self.authority
+
+
+class Taxon(NamedTuple):
+    """A taxon."""
+
+    name: str
+    taxon_id: int
+    common: Optional[str]
+    term: str
+    thumbnail: Optional[str]
+    image: Optional[str]
+    image_attribution: Optional[str]
+    rank: str
+    ancestor_ids: list
+    observations: int
+    ancestor_ranks: list
+    active: bool
+    listed_taxa: list
+    establishment_means: Optional[EstablishmentMeansPartial]
+    conservation_status: Optional[ConservationStatus]
 
 
 @dataclass

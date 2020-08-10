@@ -196,7 +196,7 @@ class INatEmbeds(MixinMeta):
                 means = taxon_summary.listed_taxon
                 status = taxon_summary.conservation_status
                 if status:
-                    summary += f"{status.description()} ({status.link()})\n"
+                    summary += f"Conservation Status: {status.description()} ({status.link()})\n"
                 if means:
                     summary += f"{means.emoji()}{means.link()}\n"
             if compact:
@@ -245,6 +245,10 @@ class INatEmbeds(MixinMeta):
                     means = taxon_summary.listed_taxon
                     status = taxon_summary.conservation_status
                     if status:
+                        status_link = (
+                            f"\nConservation Status: {status.description()} "
+                            f"({status.link()})"
+                        )
                         status_link = f"\n{status.description()} ({status.link()})"
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
@@ -479,6 +483,9 @@ class INatEmbeds(MixinMeta):
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
             description += f" {means.emoji()}{means.link()}"
+        status = full_taxon.conservation_status
+        if status:
+            description += f" [{status.description()}]({status.url})"
 
         ancestors = full_record.get("ancestors")
         description = await format_ancestors(description, ancestors)

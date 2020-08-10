@@ -4,12 +4,14 @@ from typing import NamedTuple, Optional, Union
 from .base_classes import (
     WWW_BASE_URL,
     RANK_LEVELS,
+    ConservationStatus,
     EstablishmentMeans,
     EstablishmentMeansPartial,
     Taxon,
     User,
     Place,
 )
+from .common import LOG
 
 
 TAXON_ID_LIFE = 48460
@@ -241,6 +243,12 @@ def get_taxon_fields(record):
         establishment_means = make_means_partial(establishment_means_raw)
     else:
         establishment_means = None
+    conservation_status_raw = record.get("conservation_status")
+    if conservation_status_raw:
+        LOG.info(conservation_status_raw)
+        conservation_status = ConservationStatus.from_dict(conservation_status_raw)
+    else:
+        conservation_status = None
     taxon = Taxon(
         record["name"],
         taxon_id,
@@ -256,6 +264,7 @@ def get_taxon_fields(record):
         record["is_active"],
         listed_taxa,
         establishment_means,
+        conservation_status,
     )
     return taxon
 
