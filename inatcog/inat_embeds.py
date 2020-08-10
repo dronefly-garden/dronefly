@@ -395,15 +395,17 @@ class INatEmbeds(MixinMeta):
                 first_taxon_ancestor_ids.index(ancestor_id)
                 for ancestor_id in common_ancestors
             ]
-            home = await self.get_home(ctx)
+            preferred_place_id = await self.get_home(ctx)
             if not common_ancestor_indices:
-                taxon = await get_taxon(self, TAXON_ID_LIFE, preferred_place_id=home)
+                taxon = await get_taxon(
+                    self, TAXON_ID_LIFE, preferred_place_id=preferred_place_id
+                )
             else:
                 common_ancestor_id = first_taxon_ancestor_ids[
                     max(common_ancestor_indices)
                 ]
                 taxon = await get_taxon(
-                    self, common_ancestor_id, preferred_place_id=home
+                    self, common_ancestor_id, preferred_place_id=preferred_place_id
                 )
 
         description = (
@@ -431,9 +433,9 @@ class INatEmbeds(MixinMeta):
                 # fields that /v1/taxa/# returns). In that case, we retrieve
                 # the full record via taxon_id so the image will be set from
                 # the full-quality original in taxon_photos.
-                home = await self.get_home(ctx)
+                preferred_place_id = await self.get_home(ctx)
                 full_taxon = await get_taxon(
-                    self, rec.taxon_id, preferred_place_id=home
+                    self, rec.taxon_id, preferred_place_id=preferred_place_id
                 )
                 image = full_taxon.image
                 attribution = full_taxon.image_attribution
@@ -476,9 +478,13 @@ class INatEmbeds(MixinMeta):
         title = format_taxon_title(taxon)
         description = await format_description(taxon)
 
-        home = await self.get_home(ctx)
+        preferred_place_id = await self.get_home(ctx)
+        if place:
+            preferred_place_id = place.place_id
         full_record = (
-            await self.api.get_taxa(taxon.taxon_id, preferred_place_id=home)
+            await self.api.get_taxa(
+                taxon.taxon_id, preferred_place_id=preferred_place_id
+            )
         )["results"][0]
         full_taxon = get_taxon_fields(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
