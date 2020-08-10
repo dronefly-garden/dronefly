@@ -559,7 +559,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology="Nothing found"))
             return
 
-        await self.send_embed_for_taxon(ctx, last.taxon)
+        await self.send_embed_for_taxon(ctx, last.taxon, include_ancestors=False)
 
     @last_taxon.command(name="by")
     async def last_taxon_by(self, ctx, user: QuotedContextMemberConverter):
@@ -571,7 +571,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         inat_user = await self.user_table.get_user(user.member)
         filtered_taxon = FilteredTaxon(last.taxon, inat_user, None)
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, filtered_taxon, include_ancestors=False)
 
     @last_taxon.command(name="from")
     async def last_taxon_from(self, ctx, place: str):
@@ -586,7 +586,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         except LookupError:
             place = None
         filtered_taxon = FilteredTaxon(last.taxon, None, place)
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, filtered_taxon, include_ancestors=False)
 
     @last_taxon.command(name="map", aliases=["m"])
     async def last_taxon_map(self, ctx):

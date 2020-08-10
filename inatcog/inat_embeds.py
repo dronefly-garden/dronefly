@@ -447,7 +447,7 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(self, ctx, arg):
+    async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
             (taxon, user, place) = arg
@@ -494,8 +494,9 @@ class INatEmbeds(MixinMeta):
         if status:
             description += f" [{status.description()}]({status.url})"
 
-        ancestors = full_record.get("ancestors")
-        description = await format_ancestors(description, ancestors)
+        if include_ancestors:
+            ancestors = full_record.get("ancestors")
+            description = await format_ancestors(description, ancestors)
 
         if place:
             formatted_counts = await format_place_taxon_counts(self, place, taxon)
@@ -647,7 +648,11 @@ class INatEmbeds(MixinMeta):
         msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon))
         start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
 
-    async def send_embed_for_taxon(self, ctx, taxon):
+    async def send_embed_for_taxon(self, ctx, taxon, include_ancestors=True):
         """Make embed for taxon & send."""
-        msg = await ctx.send(embed=await self.make_taxa_embed(ctx, taxon))
+        msg = await ctx.send(
+            embed=await self.make_taxa_embed(
+                ctx, taxon, include_ancestors=include_ancestors
+            )
+        )
         start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
