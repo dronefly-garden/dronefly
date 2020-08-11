@@ -148,11 +148,13 @@ class Checklist(DataClassJsonMixin):
 
 
 MEANS_LABEL_DESC = {
+    "endemic": "endemic to",
     "native": "native in",
     "introduced": "introduced to",
 }
 
 MEANS_LABEL_EMOJI = {
+    "endemic": ":star:",
     "native": ":eight_spoked_asterisk:",
     "introduced": ":arrow_up_small:",
 }
