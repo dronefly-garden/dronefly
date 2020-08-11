@@ -458,13 +458,28 @@ class INatEmbeds(MixinMeta):
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
-        async def format_description(rec):
+        async def format_description(rec, status, means_fmtd):
             obs_cnt = rec.observations
             url = f"{WWW_BASE_URL}/observations?taxon_id={rec.taxon_id}&verifiable=any"
             obs_fmt = "[%d](%s)" % (obs_cnt, url)
+            if status:
+                # inflect statuses with single digits in them correctly
+                first_word = re.sub(
+                    r"[0-9]",
+                    " {0} ".format(p.number_to_words(r"\1")),
+                    status.description(),
+                ).split()[0]
+                article = p.a(first_word).split()[0]
+                descriptor = (
+                    f"{article} [{status.description()}]({status.url}) {rec.rank}"
+                )
+            else:
+                descriptor = p.a(rec.rank)
             description = (
-                f"is {p.a(rec.rank)} with {obs_fmt} {p.plural('observation', obs_cnt)}"
+                f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
             )
+            if means_fmtd:
+                description += f" {means_fmtd}"
             return description
 
         async def format_ancestors(description, ancestors):
@@ -476,7 +491,6 @@ class INatEmbeds(MixinMeta):
             return description
 
         title = format_taxon_title(taxon)
-        description = await format_description(taxon)
 
         preferred_place_id = await self.get_home(ctx)
         if place:
@@ -488,11 +502,12 @@ class INatEmbeds(MixinMeta):
         )["results"][0]
         full_taxon = get_taxon_fields(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
+        means_fmtd = ""
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
-            description += f" {means.emoji()}{means.link()}"
+            means_fmtd = f"{means.emoji()}{means.link()}"
         status = full_taxon.conservation_status
-        if status:
-            description += f" [{status.description()}]({status.url})"
+
+        description = await format_description(taxon, status, means_fmtd)
 
         if include_ancestors:
             ancestors = full_record.get("ancestors")
