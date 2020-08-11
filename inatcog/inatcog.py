@@ -442,7 +442,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         if last.obs.sounds:
             await self.maybe_send_sound_url(ctx.channel, last.obs.sounds[0])
 
-    @last_obs.command(name="img", aliases=["image"])
+    @last_obs.command(name="img", aliases=["image", "photo"])
     async def last_obs_img(self, ctx, number=None):
         """Show image for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
@@ -1017,7 +1017,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
 
-    @commands.command(aliases=["img"])
+    @commands.command(aliases=["img", "photo"])
     async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
         """Show default image for taxon query.
 
