@@ -445,10 +445,7 @@ class INatEmbeds(MixinMeta):
                     photos = (entry.get("photo") for entry in taxon_photos_raw)
                     (image, attribution) = next(
                         (
-                            (
-                                photo.get("original_url"),
-                                photo.get("image_attribution", ""),
-                            )
+                            (photo.get("original_url"), photo.get("attribution", ""),)
                             for i, photo in enumerate(photos, 1)
                             if i == index
                         ),
