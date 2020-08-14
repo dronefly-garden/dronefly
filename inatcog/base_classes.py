@@ -127,7 +127,6 @@ class MeansPlace(DataClassJsonMixin):
     id: int
     name: str
     display_name: str
-    admin_level: int
     ancestor_place_ids: List[int]
 
 
