@@ -414,36 +414,54 @@ class INatEmbeds(MixinMeta):
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, ctx, rec):
+    async def make_image_embed(self, ctx, rec, index=1):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
         title = format_taxon_title(rec)
         image = None
+        attribution = None
 
         embed.title = title
         if rec.thumbnail:
-            if rec.image:
+            if rec.image and index == 1:
                 image = rec.image
                 attribution = rec.image_attribution
             else:
-                # A taxon record may have a thumbnail but no image if the image
-                # is externally hosted (e.g. Flickr) and the record was created
-                # from /v1/taxa/autocomplete (i.e. only has a subset of the
-                # fields that /v1/taxa/# returns). In that case, we retrieve
-                # the full record via taxon_id so the image will be set from
-                # the full-quality original in taxon_photos.
-                preferred_place_id = await self.get_home(ctx)
-                full_taxon = await get_taxon(
-                    self, rec.taxon_id, preferred_place_id=preferred_place_id
-                )
-                image = full_taxon.image
-                attribution = full_taxon.image_attribution
+                # - A taxon record may have a thumbnail but no image if the image
+                #   is externally hosted (e.g. Flickr) and the record was created
+                #   from /v1/taxa/autocomplete (i.e. only has a subset of the
+                #   fields that /v1/taxa/# returns).
+                # - Or the user may have requested other than the default image.
+                # - In either case, we retrieve the full record via taxon_id so
+                #   the image will be set from the full-quality original in
+                #   taxon_photos.
+                response = await self.api.get_taxa(rec.taxon_id)
+                try:
+                    taxon_photos_raw = response["results"][0]["taxon_photos"]
+                except (TypeError, KeyError, IndexError):
+                    taxon_photos_raw = None
+                if taxon_photos_raw:
+                    photos = (entry.get("photo") for entry in taxon_photos_raw)
+                    (image, attribution) = next(
+                        (
+                            (
+                                photo.get("original_url"),
+                                photo.get("image_attribution", ""),
+                            )
+                            for i, photo in enumerate(photos, 1)
+                            if i == index
+                        ),
+                        (None, None),
+                    )
         if image:
             embed.set_image(url=image)
             embed.set_footer(text=attribution)
         else:
-            embed.description = "This taxon has no default photo!"
+            if index == 1:
+                embed.description = "This taxon has no default photo."
+            else:
+                embed.description = f"This taxon does not have an image number {index}."
 
         return embed
 
@@ -658,9 +676,9 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def send_embed_for_taxon_image(self, ctx, taxon):
+    async def send_embed_for_taxon_image(self, ctx, taxon, index=1):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon))
+        msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon, index))
         start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
 
     async def send_embed_for_taxon(self, ctx, taxon, include_ancestors=True):

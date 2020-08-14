@@ -469,11 +469,11 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             await ctx.send(embed=sorry(apology="Nothing found"))
 
     @last_obs_taxon.command(name="img", aliases=["image"])
-    async def last_obs_taxon_image(self, ctx):
+    async def last_obs_taxon_image(self, ctx, number=1):
         """Show default taxon image for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await self.send_embed_for_taxon_image(ctx, last.obs.taxon)
+            await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
@@ -599,14 +599,14 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         await ctx.send(embed=await self.make_map_embed([last.taxon]))
 
     @last_taxon.command(name="image", aliases=["img"])
-    async def last_taxon_image(self, ctx):
+    async def last_taxon_image(self, ctx, number=1):
         """Show image for recently mentioned taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
             await ctx.send(embed=sorry(apology="Nothing found"))
             return
 
-        await self.send_embed_for_taxon_image(ctx, last.taxon)
+        await self.send_embed_for_taxon_image(ctx, last.taxon, number)
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_taxon_rank(self, ctx):
