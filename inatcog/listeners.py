@@ -53,6 +53,7 @@ class PartialContext(NamedTuple):
     author: discord.User
     message: Union[discord.Message, PartialMessage] = None
     command: str = ""
+    assume_yes: bool = True
 
 
 class Listeners(INatEmbeds, MixinMeta):
