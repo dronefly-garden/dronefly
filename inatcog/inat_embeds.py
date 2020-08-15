@@ -521,6 +521,13 @@ class INatEmbeds(MixinMeta):
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
             means_fmtd = f"{means.emoji()}{means.link()}"
         status = full_taxon.conservation_status
+        # Workaround for neither conservation_status record has both status_name and url:
+        # - /v1/taxa/autocomplete result has 'threatened' as status_name for
+        #   status 't' polar bear, but no URL
+        # - /v1/taxa/# for polar bear has the URL, but no status_name 'threatened'
+        # - therefore, our grubby hack is to put them together here
+        if not status.status_name and taxon.conservation_status.status_name:
+            status.status_name = taxon.conservation_status.status_name
 
         description = await format_description(taxon, status, means_fmtd)
 
