@@ -1265,9 +1265,12 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
                 kwargs["is_active"] = "any"
             elif kw_lowered == "obs":
                 try:
-                    kwargs, filtered_taxon = await self.obs_query.get_query_args(
-                        ctx, query
-                    )
+                    (
+                        kwargs,
+                        filtered_taxon,
+                        _term,
+                        _value,
+                    ) = await self.obs_query.get_query_args(ctx, query)
                     if filtered_taxon.taxon:
                         query_title = format_taxon_name(
                             filtered_taxon.taxon, with_term=True

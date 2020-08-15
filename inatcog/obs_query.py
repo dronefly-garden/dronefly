@@ -3,6 +3,7 @@ from typing import Union
 from .base_classes import CompoundQuery
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
+from .taxa import format_taxon_name
 
 
 class INatObsQuery:
@@ -11,9 +12,27 @@ class INatObsQuery:
     def __init__(self, cog):
         self.cog = cog
 
+    def format_query_args(self, filtered_taxon, term, value):
+        """Format query into a human-readable string"""
+        message = ""
+        if filtered_taxon.taxon:
+            message += " of " + format_taxon_name(filtered_taxon.taxon, with_term=True)
+        if filtered_taxon.place:
+            message += " from " + filtered_taxon.place.display_name
+        if filtered_taxon.user:
+            message += " by " + filtered_taxon.user.display_name()
+        if term:
+            if value:
+                message += f" with {term.label} {value.label}"
+            else:
+                message += f" with {term.label}"
+        return message
+
     async def get_query_args(self, ctx, query: Union[CompoundQuery, str]):
         """Get arguments for observation query from query string."""
         kwargs = {}
+        term = None
+        value = None
         filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
         if filtered_taxon:
             if filtered_taxon.taxon:
@@ -36,31 +55,41 @@ class INatObsQuery:
             kwargs["term_value_id"] = value.id
         kwargs["verifiable"] = "any"
         kwargs["include_new_projects"] = 1
-        return kwargs, filtered_taxon
+        return kwargs, filtered_taxon, term, value
 
     async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
         """Query observations and return first if found."""
 
-        kwargs, _taxon = await self.get_query_args(ctx, query)
+        kwargs, filtered_taxon, term, value = await self.get_query_args(ctx, query)
         kwargs["per_page"] = 1
         home = await self.cog.get_home(ctx)
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
-            raise LookupError("No observation found")
+            if isinstance(query, CompoundQuery):
+                raise LookupError(
+                    f"No observation found {self.format_query_args(filtered_taxon, term, value)}"
+                )
+            else:
+                raise LookupError("No observation found")
 
         return get_obs_fields(response["results"][0])
 
     async def query_observations(self, ctx, query: Union[CompoundQuery, str]):
         """Query observations and return iterator for any found."""
 
-        kwargs, _taxon = await self.get_query_args(ctx, query)
+        kwargs, filtered_taxon, term, value = await self.get_query_args(ctx, query)
         kwargs["per_page"] = 200
         home = await self.cog.get_home(ctx)
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
-            raise LookupError("No observations found")
+            if isinstance(query, CompoundQuery):
+                raise LookupError(
+                    f"No observations found {self.format_query_args(filtered_taxon, term, value)}"
+                )
+            else:
+                raise LookupError("No observations found")
 
         return (
             [get_obs_fields(result) for result in response["results"]],
