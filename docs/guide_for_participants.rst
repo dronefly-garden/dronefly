@@ -431,6 +431,11 @@ from other nature-related sites:
 - ``https://www.insectimages.org/search/action.cfm?q={0:query}``
 - put search term after command
 
+``,bugguide``
+
+- ``https://bugguide.net/index.php?q=search&keys={0:query}&search=Search``
+- put search term after command
+
 ``,cchelp``
 
 - ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
