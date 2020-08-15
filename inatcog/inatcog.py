@@ -1352,13 +1352,26 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
             ]
             await menu(ctx, embeds, controls)
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await ctx.send(
+                embed=sorry(
+                    apology=(
+                        "Nothing matches that query. "
+                        "Check for mistakes in spelling or syntax.\n"
+                        f"Type `{ctx.clean_prefix}help search` for help."
+                    )
+                )
+            )
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     async def search(self, ctx, *, query):
         """Search iNat.
 
         `Aliases: [p]s`
+
+        The main command searches for any active taxa, places, projects, or
+        users matching the query (i.e. like the Search box on the website).
+        Use one of the following subcommands to only match one kind of
+        result.
         """
         await self._search(ctx, query, None)
 
