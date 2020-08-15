@@ -526,8 +526,11 @@ class INatEmbeds(MixinMeta):
         #   status 't' polar bear, but no URL
         # - /v1/taxa/# for polar bear has the URL, but no status_name 'threatened'
         # - therefore, our grubby hack is to put them together here
-        if not status.status_name and taxon.conservation_status.status_name:
-            status.status_name = taxon.conservation_status.status_name
+        try:
+            if not status.status_name and taxon.conservation_status.status_name:
+                status.status_name = taxon.conservation_status.status_name
+        except AttributeError:
+            pass
 
         description = await format_description(taxon, status, means_fmtd)
 
