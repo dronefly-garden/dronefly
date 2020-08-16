@@ -70,9 +70,9 @@ case, we’ll focus on the iNaturalist Discord server, but there’s also
 Dronefly (related to bot development) where you can find some of the
 same participants.
 
-Allows you to add other servers
+The plus sign allows you to add other servers.
 
-Allows you to look for other servers
+The magnifying glass allows you to look for other servers.
 
 |image5|
 
