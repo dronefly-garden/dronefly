@@ -440,20 +440,9 @@ Arrow reactions allow paging through pages of results. See
 
 Compare against ``-userinfo``
 
-``,user set home <#>``
+``,user set home <place #>``
 
-- Allows the user to specify a home location. To obtain a place number, go to
-  the iNaturalist place page for your location (``https://www.inaturalist.org/places/<place>``)
-  and either append .json to the end of the URL, or click on Embed Place
-  Widget. The number for the place will be shown in the URL.
-
-|image30|
-
-↓
-
-|image31|\ →\ |image32|
-
-|image33|
+- Allows the user to specify a home location. To obtain a place number, use ``,s place <place>``
 
 ``,user set known``
 
