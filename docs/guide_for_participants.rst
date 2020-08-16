@@ -82,17 +82,17 @@ allows you to take a variety of actions, including:
 
 |image6|
 
-Inviting friends and other naturalist professionals to join us (if you
+Invite People - Inviting friends and other naturalist professionals to join us (if you
 use this, create from #introductions)
 
-Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
+Notification Settings - Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
 
-Allowing or prohibiting direct messages from other users
+Privacy Settings - Allowing or prohibiting direct messages from other users
 
-Changing your nickname (for instance, to add your location to your
+Change Nickname - Changing your nickname (for instance, to add your location to your
 nickname, e.g. michaelpirrello \|\| Pennsylvania)
 
-Leaving (Hopefully you’ll never want to, but sometimes life gets in the
+Leave Server - Leaving (Hopefully you’ll never want to, but sometimes life gets in the
 way.)
 
 Beneath the iNaturalist header bar is the channel list. Channels are
