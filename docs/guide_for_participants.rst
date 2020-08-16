@@ -395,6 +395,10 @@ from other nature-related sites:
 
 - ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
 
+``,antwiki``
+
+- ``https://antwiki.org/wiki/{0:query}_{1:query}``
+
 ``,bhl``
 
 - ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
@@ -411,21 +415,6 @@ from other nature-related sites:
   support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
   [researcher], [tax]
 
-``,bonap``
-
-- ``http://bonap.net/NAPA/TaxonMaps/Genus/County/{0:query}``
-- put capitalized plant Genus after command
-
-``,bonapgen``
-
-- ``http://bonap.net/MapGallery/County/Genus/{0:query}.png``
-- put plant genus after command
-
-``,bonapsp``
-
-- ``http://bonap.net/MapGallery/County/{0:query}%20{1:query}.png``
-- put plant binomial after command
-
 ``,bug``
 
 - ``https://www.insectimages.org/search/action.cfm?q={0:query}``
@@ -441,10 +430,22 @@ from other nature-related sites:
 - ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
 - links back to this help
 
+``,cicada``
+
+- ``https://cse.google.com/cse?q={0:query}&cx=partner-pub-8561311701230022%3A50ncgfv7bjm&siteurl=www.cicadamania.com``
+
 ``,cites``
 
 - ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cites_eu&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cites&page=1``
 - put taxon search terms after command
+
+``,cms``
+
+- ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cms&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cms&page=1``
+
+``,diptera``
+
+- ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
 
 ``,gbif``
 
