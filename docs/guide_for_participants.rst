@@ -394,14 +394,17 @@ from other nature-related sites:
 ``,adw``
 
 - ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
+- put search term after command
 
 ``,antwiki``
 
 - ``https://antwiki.org/wiki/{0:query}_{1:query}``
+- put ant binomial after command
 
 ``,bhl``
 
 - ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
+- put search term after command
 
 ``,bold3``
 
@@ -525,14 +528,17 @@ from other nature-related sites:
 ``,nasgenus``
 
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&genus={0:query}&species=&comname=&Sortby=1``
+- put genus after command
 
 ``,nasspecies``
 
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&genus={0:query}&species={1:query}&comname=&Sortby=1``
+- put species after command
 
 ``,nasstate``
 
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
+- put US state after command
 
 ``,notseen``
 
@@ -569,11 +575,6 @@ from other nature-related sites:
 
 - ``http://tolweb.org/{0:query}``
 - put taxon at family level or above after command
-
-``,ts``
-
-- ``<https://www.inaturalist.org/taxa/search?q={0:query}>``
-- search iNaturalist taxa, whole words only
 
 ``,wildflower``
 
