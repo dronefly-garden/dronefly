@@ -1199,6 +1199,6 @@ Dronefly search results are accompanied by icons as follows:
 .. |image66| image:: ./Pictures/YouTube.JPG
    :width: 5.026in
    :height: 1.487in
-.. |image67| image:: ./Pictures/search place.JPG
+.. |image67| image:: ./Pictures/searchplace.JPG
    :width: 1.823in
    :height: 1.757in
