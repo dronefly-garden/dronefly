@@ -337,7 +337,7 @@ Arrow reactions allow paging through pages of results. See
 
    - taxon in an ancestor taxon
 
-   Note: Dronefly also supports ``,species`` (``,sp``).
+   Note: Dronefly also supports ``,species`` (``,sp`` or ``,t sp``).
 
 ``,user``
 
