@@ -180,6 +180,7 @@ Typing\ ``@username`` will “ping” the user.
 Typing ``#channel`` will create a link to that channel.
 
 Typing a URL will create a preview embed beneath the URL.
+|image66|
 
 The emoji menu (|image45|) next to each message provides numerous ways
 to react.
@@ -443,6 +444,8 @@ Compare against ``-userinfo``
 ``,user set home <place #>``
 
 - Allows the user to specify a home location. To obtain a place number, use ``,s place <place>``
+
+|image67|
 
 ``,user set known``
 
@@ -1192,3 +1195,9 @@ Dronefly search results are accompanied by icons as follows:
 .. |image65| image:: ./Pictures/10000201000000240000002471171A76353C85E1.png
    :width: 0.3075in
    :height: 0.3075in
+.. |image66| image:: ./Pictures/YouTube.JPG
+   :width: 2.513in
+   :height: 0.7433in
+   .. |image67| image:: ./Pictures/search place.JPG
+   :width: 1.823in
+   :height: 1.757in
