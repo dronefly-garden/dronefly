@@ -67,7 +67,7 @@ calls with them.
 
 Each of the servers (a.k.a. guilds) you belong to are shown. In this
 case, we’ll focus on the iNaturalist Discord server, but there’s also
-Dronefly (related to bot development) where you can find many of the
+Dronefly (related to bot development) where you can find some of the
 same participants.
 
 Allows you to add other servers
@@ -178,6 +178,8 @@ Basic chat functions
 Typing\ ``@username`` will “ping” the user.
 
 Typing ``#channel`` will create a link to that channel.
+
+Typing a URL will create a preview embed beneath the URL.
 
 The emoji menu (|image45|) next to each message provides numerous ways
 to react.
