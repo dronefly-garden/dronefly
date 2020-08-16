@@ -10,13 +10,14 @@ This guide has a number of sections aimed at introducing our new
 and existing users to Discord itself, the iNaturalist Discord Server,
 and its bots and channels.
 
-If you already know the :ref:`Discord Basics` and how to use it, you may
-wish to skip ahead to :ref:`Set Up Your Roles` and then :ref:`Using the
-Discord Bots`, the largest section.
+If you already know the :ref:`Discord Basics` and how to use Discord, you may
+wish to skip ahead to :ref:`Set Up Your Roles` and then the sections introducing you
+to :ref:`Participating` in the various channels on the server.
 
-Following that, there are several brief sections introducing you to
-:ref:`Participating` in the various channels on the server, and finally, the
-:ref:`Appendices` cover miscellaneous side topics.
+Once you're comfortable with all that, :ref:`Using the Discord Bots` addresses using 
+Dronefly and Dumbo, and is the largest and most technical section of the Guide.
+
+Finally, :ref:`Appendices` covers miscellaneous topics.
 
 ==============
 Discord Basics
