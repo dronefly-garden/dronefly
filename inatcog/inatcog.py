@@ -1574,7 +1574,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
         """Display the URL for your iNat year graphs.
 
         Where `year` is a valid year on or after 1950."""
-        await self.user_inatyear(ctx, year, user="me")
+        await self.user_inatyear(ctx, user="me", year=year)
 
     @commands.command()
     async def rank(
@@ -1867,7 +1867,7 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
     @user.command(name="inatyear")
     @known_inat_user()
-    async def user_inatyear(self, ctx, year: int = None, *, user: str = "me"):
+    async def user_inatyear(self, ctx, user: str = "me", year: int = None):
         """Display the URL for the user's iNat year graphs.
 
         Where `year` is a valid year on or after 1950, and `user` is a Discord user
