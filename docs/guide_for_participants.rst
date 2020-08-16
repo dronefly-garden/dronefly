@@ -240,6 +240,7 @@ you specify
 ``,link``
 
 - Show summary for iNaturalist link.
+- If autoobs is turned on, put angle brackets around the URL, e.g. ``,link <https://inaturalist.ala.org.au/observations/56605848>`` to avoid getting the image displayed twice.
 
 |image22|
 
