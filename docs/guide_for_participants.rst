@@ -10,13 +10,14 @@ This guide has a number of sections aimed at introducing our new
 and existing users to Discord itself, the iNaturalist Discord Server,
 and its bots and channels.
 
-If you already know the :ref:`Discord Basics` and how to use it, you may
-wish to skip ahead to :ref:`Set Up Your Roles` and then :ref:`Using the
-Discord Bots`, the largest section.
+If you already know the :ref:`Discord Basics` and how to use Discord, you may
+wish to skip ahead to :ref:`Set Up Your Roles` and then the sections introducing you
+to :ref:`Participating` in the various channels on the server.
 
-Following that, there are several brief sections introducing you to
-:ref:`Participating` in the various channels on the server, and finally, the
-:ref:`Appendices` cover miscellaneous side topics.
+Once you're comfortable with all that, :ref:`Using the Discord Bots` addresses using 
+Dronefly and Dumbo, and is the largest and most technical section of the Guide.
+
+Finally, :ref:`Appendices` covers miscellaneous topics.
 
 ==============
 Discord Basics
@@ -81,17 +82,17 @@ allows you to take a variety of actions, including:
 
 |image6|
 
-Inviting friends and other naturalist professionals to join us (if you
+Invite People - Inviting friends and other naturalist professionals to join us (if you
 use this, create from #introductions)
 
-Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
+Notification Settings - Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
 
-Allowing or prohibiting direct messages from other users
+Privacy Settings - Allowing or prohibiting direct messages from other users
 
-Changing your nickname (for instance, to add your location to your
+Change Nickname - Changing your nickname (for instance, to add your location to your
 nickname, e.g. michaelpirrello \|\| Pennsylvania)
 
-Leaving (Hopefully you’ll never want to, but sometimes life gets in the
+Leave Server - Leaving (Hopefully you’ll never want to, but sometimes life gets in the
 way.)
 
 Beneath the iNaturalist header bar is the channel list. Channels are
