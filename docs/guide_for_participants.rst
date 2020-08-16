@@ -857,9 +857,9 @@ Participating
 Participating - #chat (under General)
 -------------------------------------
 
-Follow the rules for communicating with others in the #welcome channel.
+Follow the rules in the #welcome channel for communicating with others.
 
-#chat and #chat-2-electric-bugaloo are both general nature-oriented chat
+#chat and #chat-2-eclectic-beluga are both general nature-oriented chat
 channels. If one is busy with an ongoing discussion, and you want to
 start a new topic, use the other.
 
