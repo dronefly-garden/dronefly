@@ -971,7 +971,7 @@ the text: [STRIKEOUT:stuff]
 Preceding and following text with \|\| (e.g. \||stuff||) will hide the
 text until readers click it.
 
-Preceding and following text with \` (e.g. \`stuff`) will quote text
+Preceding and following text with |backtick| (e.g. \`stuff`) will quote text
 (good for displaying command text when you don’t want it to execute).
 
 A double quote function is also available from the formatting menu, that
@@ -1202,3 +1202,4 @@ Dronefly search results are accompanied by icons as follows:
 .. |image67| image:: ./Pictures/searchplace.JPG
    :width: 1.823in
    :height: 1.757in
+.. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
