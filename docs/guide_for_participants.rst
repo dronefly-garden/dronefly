@@ -180,6 +180,7 @@ Typing\ ``@username`` will “ping” the user.
 Typing ``#channel`` will create a link to that channel.
 
 Typing a URL will create a preview embed beneath the URL.
+
 |image66|
 
 The emoji menu (|image45|) next to each message provides numerous ways
