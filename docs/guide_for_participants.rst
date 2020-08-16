@@ -159,6 +159,94 @@ Other roles can only be assigned by moderators, some by request, and
 some based on achievement. For instance, talking with people on the
 server will earn you the Naturalist role.
 
+=============
+Participating
+=============
+
+Participating - #chat (under General)
+-------------------------------------
+
+Follow the rules in the #welcome channel for communicating with others.
+
+#chat and #chat-2-eclectic-beluga are both general nature-oriented chat
+channels. If one is busy with an ongoing discussion, and you want to
+start a new topic, use the other.
+
+Basic chat functions
+^^^^^^^^^^^^^^^^^^^^
+
+Typing\ ``@username`` will “ping” the user.
+
+Typing ``#channel`` will create a link to that channel.
+
+The emoji menu (|image45|) next to each message provides numerous ways
+to react.
+
+|image46|\ on the left of the message bar allows for uploading files and
+images to the chat.
+
+Let a moderator know if you think a file is important enough to be
+pinned.
+
+Participating - #suggestions (under Important)
+----------------------------------------------
+
+Anyone can make a suggestion to improve the server in this channel.
+
+Participating - #inat-questions and #inat-curation (under iNat Stuff)
+---------------------------------------------------------------------
+
+Ask and answer user and curator questions about iNaturalist and how it
+works in these channels. Don’t forget to check pinned messages and use
+the search function to see if your question has been asked/answered
+before. If you can’t get an answer here, the iNaturalist Forum is
+another good place to post questions: https://forum.inaturalist.org/
+
+Participating - #id-confirmation and #work-party (under Identify)
+-----------------------------------------------------------------
+
+Use the #id-confirmation channel for:
+
+-  Posting an observation where you’ve made an ID and are looking for a
+   confirmation.
+-  Posting an observation where you’re looking for a more specific
+   identification (or, post in a taxa-specific channel - both are
+   appropriate)
+
+Use the #work-party channel for:
+
+Posting tasks for the general good of iNaturalist that server
+participants can help with.
+
+Examples include:
+
+-  Posting Unknowns that need coarse ID’s
+-  Correcting misidentifications (where a misidentification is firmly
+   embedded with many confirmations, you can also ping the @work-party
+   role)
+-  https://forum.inaturalist.org/t/state-of-matter-life-clean-up/3556
+-  https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281
+-  https://forum.inaturalist.org/t/ways-to-help-out-on-inat-wiki/1983
+
+Participating - |image47|\ General and #vc-general (under Voice Channels)
+-------------------------------------------------------------------------
+
+Voice channels (like |image48|) allow you to talk and listen to other
+iNaturalist Discord Server participants in real time.
+Presentations/Entertainment may take place here as well. #vc-general is
+used for text chat in support of the General voice channel (e.g. sharing
+pictures as you talk.)
+
+The Go Live! Feature (|image49|) allows for screen sharing (only in the
+Discord software, not available in the browser version). Once a
+presenter goes live, you will need to select “Join Stream” to see the
+screen they’re sharing.
+
+|image50|
+
+Please don’t forget to mute yourself (|image51|) if someone else is
+presenting.
+
 ======================
 Using the Discord Bots
 ======================
@@ -849,94 +937,6 @@ Note: Please use these *Commands* in #music channel, and listen in |image43|
 ``$volume``
 
 - Set the volume, 1% - 150%.
-
-=============
-Participating
-=============
-
-Participating - #chat (under General)
--------------------------------------
-
-Follow the rules in the #welcome channel for communicating with others.
-
-#chat and #chat-2-eclectic-beluga are both general nature-oriented chat
-channels. If one is busy with an ongoing discussion, and you want to
-start a new topic, use the other.
-
-Basic chat functions
-^^^^^^^^^^^^^^^^^^^^
-
-Typing\ ``@username`` will “ping” the user.
-
-Typing ``#channel`` will create a link to that channel.
-
-The emoji menu (|image45|) next to each message provides numerous ways
-to react.
-
-|image46|\ on the left of the message bar allows for uploading files and
-images to the chat.
-
-Let a moderator know if you think a file is important enough to be
-pinned.
-
-Participating - #suggestions (under Important)
-----------------------------------------------
-
-Anyone can make a suggestion to improve the server in this channel.
-
-Participating - #inat-questions and #inat-curation (under iNat Stuff)
----------------------------------------------------------------------
-
-Ask and answer user and curator questions about iNaturalist and how it
-works in these channels. Don’t forget to check pinned messages and use
-the search function to see if your question has been asked/answered
-before. If you can’t get an answer here, the iNaturalist Forum is
-another good place to post questions: https://forum.inaturalist.org/
-
-Participating - #id-confirmation and #work-party (under Identify)
------------------------------------------------------------------
-
-Use the #id-confirmation channel for:
-
--  Posting an observation where you’ve made an ID and are looking for a
-   confirmation.
--  Posting an observation where you’re looking for a more specific
-   identification (or, post in a taxa-specific channel - both are
-   appropriate)
-
-Use the #work-party channel for:
-
-Posting tasks for the general good of iNaturalist that server
-participants can help with.
-
-Examples include:
-
--  Posting Unknowns that need coarse ID’s
--  Correcting misidentifications (where a misidentification is firmly
-   embedded with many confirmations, you can also ping the @work-party
-   role)
--  https://forum.inaturalist.org/t/state-of-matter-life-clean-up/3556
--  https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281
--  https://forum.inaturalist.org/t/ways-to-help-out-on-inat-wiki/1983
-
-Participating - |image47|\ General and #vc-general (under Voice Channels)
--------------------------------------------------------------------------
-
-Voice channels (like |image48|) allow you to talk and listen to other
-iNaturalist Discord Server participants in real time.
-Presentations/Entertainment may take place here as well. #vc-general is
-used for text chat in support of the General voice channel (e.g. sharing
-pictures as you talk.)
-
-The Go Live! Feature (|image49|) allows for screen sharing (only in the
-Discord software, not available in the browser version). Once a
-presenter goes live, you will need to select “Join Stream” to see the
-screen they’re sharing.
-
-|image50|
-
-Please don’t forget to mute yourself (|image51|) if someone else is
-presenting.
 
 ==========
 Appendices
