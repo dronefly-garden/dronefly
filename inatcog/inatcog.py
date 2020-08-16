@@ -1368,48 +1368,120 @@ class INatCog(Listeners, commands.Cog, name="iNat", metaclass=CompositeMetaClass
 
         `Aliases: [p]s`
 
-        The main command searches for any active taxa, places, projects, or
-        users matching the query (i.e. like the Search box on the website).
-        Use one of the following subcommands to only match one kind of
-        result.
+        • The results are similar to entering a query in the `Search`
+          textbox on the website, matching taxa, places, projects, or users.
+        • Use one of the subcommands listed below to only match one kind of
+          result, up to 100 results instead of 30.
+        • Use the arrow reaction buttons to see more pages.
+        • Press a lettered reaction button to display the result in more
+          detail.
+        • See subcommand help topics for more information on each kind
+          of result, e.g. `[p]help search taxa` describes taxa results,
+          whether from `[p] search` or `[p]search taxa`.
         """
         await self._search(ctx, query, None)
 
     @search.command(name="places", aliases=["place"])
     async def search_places(self, ctx, *, query):
-        """Search iNat places."""
+        """Search iNat places.
+
+        `Aliases: [p]search place, [p]s place`
+
+        • The results are similar to entering a query in the website's `Search`
+          textbox, then clicking the `Places` tab.
+        • Place matches are indicated with the :round_pushpin: emoji to
+          distinguish places from other kinds of `[p]search` result.
+        """
         await self._search(ctx, query, "places")
 
     @search.command(name="projects", aliases=["project"])
     async def search_projects(self, ctx, *, query):
-        """Search iNat projects."""
+        """Search iNat projects.
+
+        `Aliases: [p]search project, [p]s project`
+
+        • The results are similar to entering a query into the website's `Search`
+          textbox, then clicking the `Projects` tab.
+        • Project matches are indicated with the :briefcase: emoji to
+          distinguish projects from other kinds of `[p]search` result.
+        """
         await self._search(ctx, query, "projects")
 
     @search.command(name="taxa", aliases=["taxon"])
     async def search_taxa(self, ctx, *, query):
-        """Search iNat taxa."""
+        """Search iNat taxa.
+
+        `Aliases: [p]search taxon, [p]s taxon`
+
+        • The results are similar to entering a query into the website's `Search`
+          textbox, then clicking the `Taxa` tab.
+        • Taxa matches are indicated with :green_circle: emoji to distinguish
+          taxa from other kinds of `[p]search` result.
+        • *Note: If you need `in` to find a matching taxon within another taxon,
+          or want to list user/place stats with `from` or `by`, use `[p]taxon`.*
+        """
         await self._search(ctx, query, "taxa")
 
     @search.command(name="inactive")
     async def search_inactive(self, ctx, *, query):
-        """Search iNat taxa (includes inactive)."""
+        """Search iNat taxa (includes inactive).
+
+        `Aliases: [p]s inactive`
+
+        • The results are similar to entering a query into
+          `More > Taxa Info > Search` textbox on the website,
+          then clicking `Show active and inactive taxa`.
+        • This subcommand can be used instead of `[p]search taxa` if you need
+          to see more pages of results (up to 500 results instead of 100).
+        • *Note: just as on the website, the search engine ranks the results
+          differently from `[p]search taxa`, so you may find the order in
+          which they are listed differs from that command.*
+        """
         await self._search(ctx, query, "inactive")
 
     @search.command(name="users", aliases=["user", "person", "people"])
     async def search_users(self, ctx, *, query):
-        """Search iNat users."""
+        """Search iNat users.
+
+        `Aliases: [p]search user, [p]s user` (also `person` or `people`)
+
+        • The results are similar to typing a query into the website's `Search`
+          textbox, then clicking the `Users` tab.
+        • User matches are indicated with :bust_in_silhouette: emoji to
+          distinguish users from other kinds of `[p]search` result.
+
+        • *Note: only iNat login IDs and names can be searched with this command.
+        To find an iNat login ID for a registered Discord user, use the
+        `[p]user` command instead. See `[p]help user` for more information.*
+        """
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
     async def search_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Search iNat observations."""
+        """Search iNat observations.
+
+        `Aliases: [p]s obs`
+
+        • Command operation is similar to `[p]obs`, except multiple results are
+          returned; see `[p]help obs` for more details and examples.
+        • The mechanic for selecting observations is slightly different from
+          the main command and other subcommands:
+
+        **1.** Use the lettered reaction buttons to select an observation.
+        **2.** Use :white_check_mark: reaction on the selected observation to
+          keep it or :x: reaction to dismiss it.
+        **3.** Continue to select more observations if you wish. Once every
+          observation is either kept or dismissed, then you can react with
+          :x: on the search display to dismiss it.
+        """
         await self._search(ctx, query, "obs")
 
     @commands.command(aliases=["sp"])
     async def species(self, ctx, *, query: str):
         """Show species best matching the query.
 
-        `Aliases: [p]sp`
+        `Aliases: [p]sp, [p]t sp`
+
         See `[p]help taxon` for query help."""
         query_species = await NaturalCompoundQueryConverter.convert(
             ctx, f"species {query}"
