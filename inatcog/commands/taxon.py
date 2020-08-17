@@ -197,3 +197,29 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
+
+    @commands.command()
+    async def map(self, ctx, *, taxa_list):
+        """Show range map for a list of one or more taxa.
+
+        **Examples:**
+        ```
+        [p]map polar bear
+        [p]map 24255,24267
+        [p]map boreal chorus frog,western chorus frog
+        ```
+        See `[p]help taxon` for help specifying taxa.
+        """
+
+        if not taxa_list:
+            await ctx.send_help()
+            return
+
+        try:
+            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
+        except LookupError as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
+
+        await ctx.send(embed=await self.make_map_embed(taxa))

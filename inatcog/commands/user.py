@@ -374,3 +374,60 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await ctx.send(
             f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}"
         )
+
+    @commands.command()
+    async def iuser(self, ctx, *, login: str):
+        """Show iNat user matching login.
+
+        Examples:
+
+        `[p]iuser kueda`
+        """
+        if not ctx.guild:
+            return
+
+        found = None
+        response = await self.api.get_users(login, refresh_cache=True)
+        if response and response["results"]:
+            found = next(
+                (
+                    result
+                    for result in response["results"]
+                    if login in (str(result["id"]), result["login"])
+                ),
+                None,
+            )
+        if not found:
+            await ctx.send(embed=sorry(apology="Not found"))
+            return
+
+        inat_user = User.from_dict(found)
+        await ctx.send(inat_user.profile_url())
+
+    @commands.command()
+    @known_inat_user()
+    async def me(self, ctx):  # pylint: disable=invalid-name
+        """Show your iNat info & stats for this server."""
+        member = await ContextMemberConverter.convert(ctx, "me")
+        await self.user(ctx, who=member)
+
+    @commands.group(invoke_without_command=True)
+    @known_inat_user()
+    async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name
+        """Show your observations, species, & ranks for an iNat project."""
+        await (self.bot.get_command("project stats")(ctx, project, user="me"))
+
+    @my.command(name="inatyear", invoke_without_command=True)
+    @known_inat_user()
+    async def my_inatyear(self, ctx, year: int = None):
+        """Display the URL for your iNat year graphs.
+
+        Where `year` is a valid year on or after 1950."""
+        await self.user_inatyear(ctx, user="me", year=year)
+
+    @commands.command()
+    async def rank(
+        self, ctx, project: str, *, user: str
+    ):  # pylint: disable=invalid-name
+        """Show observations, species, & ranks in an iNat project for a user."""
+        await (self.bot.get_command("project stats")(ctx, project, user=user))

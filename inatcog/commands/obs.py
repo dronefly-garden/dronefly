@@ -11,7 +11,8 @@ from inatcog.converters import NaturalCompoundQueryConverter
 from inatcog.embeds import sorry
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
-from inatcog.obs import maybe_match_obs
+from inatcog.obs import get_obs_fields, maybe_match_obs
+from inatcog.taxa import PAT_TAXON_LINK
 
 
 class CommandsObs(INatEmbeds, MixinMeta):
@@ -114,3 +115,37 @@ class CommandsObs(INatEmbeds, MixinMeta):
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return
+
+    @commands.command()
+    async def link(self, ctx, *, query):
+        """Show summary for iNaturalist link.
+
+        e.g.
+        ```
+        [p]link https://inaturalist.org/observations/#
+           -> an embed summarizing the observation link
+        ```
+        """
+        mat = re.search(PAT_OBS_LINK, query)
+        if mat:
+            obs_id = int(mat["obs_id"])
+            url = mat["url"]
+
+            home = await self.get_home(ctx)
+            results = (
+                await self.api.get_observations(
+                    obs_id, include_new_projects=1, preferred_place_id=home
+                )
+            )["results"]
+            obs = get_obs_fields(results[0]) if results else None
+            await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
+            if obs and obs.sounds:
+                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+            return
+
+        mat = re.search(PAT_TAXON_LINK, query)
+        if mat:
+            await (self.bot.get_command("taxon")(ctx, query=mat["taxon_id"]))
+            return
+
+        await ctx.send(embed=sorry())

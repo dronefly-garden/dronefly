@@ -5,25 +5,19 @@ import asyncio
 import inflect
 from redbot.core import commands, Config
 from .api import INatAPI
-from .base_classes import PAT_OBS_LINK, User
-from .checks import known_inat_user
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
 from .commands.obs import CommandsObs
 from .commands.place import CommandsPlace
 from .commands.project import CommandsProject
 from .commands.search import CommandsSearch
-from .commands.user import CommandsUser
 from .commands.taxon import CommandsTaxon
-from .converters import ContextMemberConverter
-from .embeds import sorry
-from .obs import get_obs_fields
+from .commands.user import CommandsUser
 from .obs_query import INatObsQuery
 from .places import INatPlaceTable
 from .projects import INatProjectTable
 from .listeners import Listeners
 from .search import INatSiteSearch
-from .taxa import PAT_TAXON_LINK
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
@@ -129,120 +123,3 @@ class INatCog(
             if self._init_task:
                 self._init_task.cancel()
             self._cleaned_up = True
-
-    @commands.command()
-    async def link(self, ctx, *, query):
-        """Show summary for iNaturalist link.
-
-        e.g.
-        ```
-        [p]link https://inaturalist.org/observations/#
-           -> an embed summarizing the observation link
-        ```
-        """
-        mat = re.search(PAT_OBS_LINK, query)
-        if mat:
-            obs_id = int(mat["obs_id"])
-            url = mat["url"]
-
-            home = await self.get_home(ctx)
-            results = (
-                await self.api.get_observations(
-                    obs_id, include_new_projects=1, preferred_place_id=home
-                )
-            )["results"]
-            obs = get_obs_fields(results[0]) if results else None
-            await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
-            if obs and obs.sounds:
-                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-            return
-
-        mat = re.search(PAT_TAXON_LINK, query)
-        if mat:
-            await self.taxon(ctx, query=mat["taxon_id"])
-            return
-
-        await ctx.send(embed=sorry())
-
-    @commands.command()
-    async def map(self, ctx, *, taxa_list):
-        """Show range map for a list of one or more taxa.
-
-        **Examples:**
-        ```
-        [p]map polar bear
-        [p]map 24255,24267
-        [p]map boreal chorus frog,western chorus frog
-        ```
-        See `[p]help taxon` for help specifying taxa.
-        """
-
-        if not taxa_list:
-            await ctx.send_help()
-            return
-
-        try:
-            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
-            return
-
-        await ctx.send(embed=await self.make_map_embed(taxa))
-
-    @commands.command()
-    async def iuser(self, ctx, *, login: str):
-        """Show iNat user matching login.
-
-        Examples:
-
-        `[p]iuser kueda`
-        """
-        if not ctx.guild:
-            return
-
-        found = None
-        response = await self.api.get_users(login, refresh_cache=True)
-        if response and response["results"]:
-            found = next(
-                (
-                    result
-                    for result in response["results"]
-                    if login in (str(result["id"]), result["login"])
-                ),
-                None,
-            )
-        if not found:
-            await ctx.send(embed=sorry(apology="Not found"))
-            return
-
-        inat_user = User.from_dict(found)
-        await ctx.send(inat_user.profile_url())
-
-    @commands.command()
-    @known_inat_user()
-    async def me(self, ctx):  # pylint: disable=invalid-name
-        """Show your iNat info & stats for this server."""
-        member = await ContextMemberConverter.convert(ctx, "me")
-        await self.user(ctx, who=member)
-
-    @commands.group(invoke_without_command=True)
-    @known_inat_user()
-    async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name
-        """Show your observations, species, & ranks for an iNat project."""
-        await self.project_stats(ctx, project, user="me")
-
-    @my.command(name="inatyear", invoke_without_command=True)
-    @known_inat_user()
-    async def my_inatyear(self, ctx, year: int = None):
-        """Display the URL for your iNat year graphs.
-
-        Where `year` is a valid year on or after 1950."""
-        await self.user_inatyear(ctx, user="me", year=year)
-
-    @commands.command()
-    async def rank(
-        self, ctx, project: str, *, user: str
-    ):  # pylint: disable=invalid-name
-        """Show observations, species, & ranks in an iNat project for a user."""
-        await self.project_stats(ctx, project, user=user)
