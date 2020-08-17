@@ -8,6 +8,7 @@ from redbot.core.bot import Red
 from .api import INatAPI
 from .obs_query import INatObsQuery
 from .places import INatPlaceTable
+from .projects import INatProjectTable
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
@@ -29,5 +30,6 @@ class MixinMeta(ABC):
         self.predicate_locks: dict
         self.obs_query: INatObsQuery
         self.place_table: INatPlaceTable
+        self.project_table: INatProjectTable
         self.taxon_query: INatTaxonQuery
         self._ready_event: Event
