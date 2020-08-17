@@ -34,4 +34,5 @@ class MixinMeta(ABC):
         self.project_table: INatProjectTable
         self.site_search: INatSiteSearch
         self.taxon_query: INatTaxonQuery
+        self.user_cache_init: dict
         self._ready_event: Event
