@@ -153,8 +153,8 @@ MEANS_LABEL_DESC = {
 }
 
 MEANS_LABEL_EMOJI = {
-    "endemic": ":star:",
-    "native": ":eight_spoked_asterisk:",
+    "endemic": ":sparkle:",
+    "native": ":green_square:",
     "introduced": ":arrow_up_small:",
 }
 
