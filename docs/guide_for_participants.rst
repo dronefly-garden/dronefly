@@ -593,7 +593,7 @@ from other nature-related sites:
 ``,maverick``
 
 - ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
-- put iNaturalist username after command
+- put iNaturalist username after command (case sensitive)
 
 ``,miflora``
 
