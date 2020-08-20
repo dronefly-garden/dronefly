@@ -133,7 +133,7 @@ class INatEmbeds(MixinMeta):
             except OSError:
                 sound_io = None
         if sound_io:
-            filename = response.url.name.replace(".m4a", ".mp3")
+            filename = response.url.name
             embed = make_embed()
             embed.set_footer(text=sound.attribution)
             await channel.send(embed=embed, file=File(sound_io, filename=filename))
