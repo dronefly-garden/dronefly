@@ -1,5 +1,4 @@
 """Module to query iNat observations."""
-from typing import Union
 from .base_classes import CompoundQuery
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
@@ -28,7 +27,7 @@ class INatObsQuery:
                 message += f" with {term.label}"
         return message
 
-    async def get_query_args(self, ctx, query: Union[CompoundQuery, str]):
+    async def get_query_args(self, ctx, query: CompoundQuery):
         """Get arguments for observation query from query string."""
         kwargs = {}
         term = None
@@ -57,7 +56,7 @@ class INatObsQuery:
         kwargs["include_new_projects"] = 1
         return kwargs, filtered_taxon, term, value
 
-    async def query_single_obs(self, ctx, query: Union[CompoundQuery, str]):
+    async def query_single_obs(self, ctx, query: CompoundQuery):
         """Query observations and return first if found."""
 
         kwargs, filtered_taxon, term, value = await self.get_query_args(ctx, query)
@@ -75,7 +74,7 @@ class INatObsQuery:
 
         return get_obs_fields(response["results"][0])
 
-    async def query_observations(self, ctx, query: Union[CompoundQuery, str]):
+    async def query_observations(self, ctx, query: CompoundQuery):
         """Query observations and return iterator for any found."""
 
         kwargs, filtered_taxon, term, value = await self.get_query_args(ctx, query)

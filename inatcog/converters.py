@@ -103,8 +103,8 @@ class CompoundQueryConverter(CompoundQuery):
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
-        def detect_terms_phrases_code(terms_and_phrases: list):
-            """Detect terms, phrases, and code."""
+        def detect_terms_phrases_code_id(terms_and_phrases: list):
+            """Detect terms, phrases, code, and id."""
             ungroup_phrases = re.sub("'", "\\'", " ".join(list(terms_and_phrases)))
             terms = list(
                 re.sub("\\\\'", "'", term) for term in shlex.split(ungroup_phrases)
@@ -115,9 +115,13 @@ class CompoundQueryConverter(CompoundQuery):
                 if (mat := re.match(r'^"(.*)"$', phrase))
             ]
             code = None
-            if not phrases and len(terms) == 1 and len(terms[0]) == 4:
-                code = terms[0].upper()
-            return terms, phrases, code
+            id = None
+            if not phrases and len(terms) == 1:
+                if terms[0].isnumeric():
+                    id = terms[0]
+                elif len(terms[0]) == 4:
+                    code = terms[0].upper()
+            return terms, phrases, code, id
 
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
         parser.add_argument("--of", nargs="+", dest="main", default=[])
@@ -156,25 +160,35 @@ class CompoundQueryConverter(CompoundQuery):
             ancestor = None
             if vals.main:
                 try:
-                    terms, phrases, code = detect_terms_phrases_code(vals.main)
+                    terms, phrases, code, id = detect_terms_phrases_code_id(vals.main)
                 except ValueError as err:
                     raise BadArgument(err.args[0])
+                if vals.ancestor and id:
+                    raise BadArgument(
+                        "Taxon IDs are unique. Retry without `in <taxon2>`."
+                    )
                 if terms:
                     main = SimpleQuery(
-                        taxon_id=None,
+                        taxon_id=id,
                         terms=terms,
                         phrases=phrases,
                         ranks=ranks,
                         code=code,
                     )
             if vals.ancestor:
+                if not vals.main:
+                    raise BadArgument(
+                        "Missing `<taxon1>` for `<taxon1> in <taxon2>` search."
+                    )
                 try:
-                    terms, phrases, code = detect_terms_phrases_code(vals.ancestor)
+                    terms, phrases, code, id = detect_terms_phrases_code_id(
+                        vals.ancestor
+                    )
                 except ValueError as err:
                     raise BadArgument(err.args[0])
                 if terms:
                     ancestor = SimpleQuery(
-                        taxon_id=None, terms=terms, phrases=phrases, ranks=[], code=code
+                        taxon_id=id, terms=terms, phrases=phrases, ranks=[], code=code
                     )
             if vals.controlled_term:
                 term_name = vals.controlled_term[0]
@@ -199,8 +213,6 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
     @classmethod
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
-        if argument.isnumeric():
-            return argument
         mat = re.search(PAT_OBS_LINK, argument)
         if mat and mat["url"]:
             return argument

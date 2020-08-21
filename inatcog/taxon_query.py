@@ -1,5 +1,4 @@
 """Module to query iNat taxa."""
-from typing import Union
 from redbot.core.commands import BadArgument
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
@@ -98,15 +97,13 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, query: Union[str, CompoundQuery]):
+    async def query_taxon(self, ctx, query: CompoundQuery):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
         user = None
         preferred_place_id = await self.cog.get_home(ctx)
         if isinstance(query, CompoundQuery):
-            if query.ancestor and not query.main:
-                raise LookupError("No taxon terms given to find `in` ancestor taxon.")
             if query.place:
                 place = await self.cog.place_table.get_place(
                     ctx.guild, query.place, ctx.author
@@ -123,15 +120,6 @@ class INatTaxonQuery:
                 except BadArgument as err:
                     raise LookupError(str(err))
                 user = await self.cog.user_table.get_user(who.member)
-        else:
-            if query.isnumeric():
-                kwargs = {}
-                if preferred_place_id:
-                    kwargs["preferred_place_id"] = int(preferred_place_id)
-                records = (await self.cog.api.get_taxa(query, **kwargs))["results"]
-                if not records:
-                    raise LookupError("No matching taxon found")
-                taxon = get_taxon_fields(records[0])
         return FilteredTaxon(taxon, user, place)
 
     async def query_taxa(self, ctx, query):
