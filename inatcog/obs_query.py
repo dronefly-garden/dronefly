@@ -65,12 +65,9 @@ class INatObsQuery:
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
-            if isinstance(query, CompoundQuery):
-                raise LookupError(
-                    f"No observation found {self.format_query_args(filtered_taxon, term, value)}"
-                )
-            else:
-                raise LookupError("No observation found")
+            raise LookupError(
+                f"No observation found {self.format_query_args(filtered_taxon, term, value)}"
+            )
 
         return get_obs_fields(response["results"][0])
 
@@ -83,12 +80,9 @@ class INatObsQuery:
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
-            if isinstance(query, CompoundQuery):
-                raise LookupError(
-                    f"No observations found {self.format_query_args(filtered_taxon, term, value)}"
-                )
-            else:
-                raise LookupError("No observations found")
+            raise LookupError(
+                f"No observations found {self.format_query_args(filtered_taxon, term, value)}"
+            )
 
         return (
             [get_obs_fields(result) for result in response["results"]],
