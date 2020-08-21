@@ -140,15 +140,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await ctx.send(filtered_taxon.taxon.name)
 
     @commands.command(aliases=["sp"])
-    async def species(self, ctx, *, query: str):
+    async def species(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show species best matching the query.
 
         `Aliases: [p]sp, [p]t sp`
 
         See `[p]help taxon` for query help."""
-        query_species = await NaturalCompoundQueryConverter.convert(
-            ctx, f"species {query}"
-        )
+        query_species = query
+        query_species.main.ranks.append("species")
         await self.taxon(ctx, query=query_species)
 
     @commands.command()

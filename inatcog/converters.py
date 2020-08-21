@@ -163,10 +163,15 @@ class CompoundQueryConverter(CompoundQuery):
                     terms, phrases, code, id = detect_terms_phrases_code_id(vals.main)
                 except ValueError as err:
                     raise BadArgument(err.args[0])
-                if vals.ancestor and id:
-                    raise BadArgument(
-                        "Taxon IDs are unique. Retry without `in <taxon2>`."
-                    )
+                if id:
+                    if ranks:
+                        raise BadArgument(
+                            "Taxon IDs are unique. Retry without any ranks: `sp`, `genus`, etc."
+                        )
+                    if vals.ancestor:
+                        raise BadArgument(
+                            "Taxon IDs are unique. Retry without `in <taxon2>`."
+                        )
                 if terms:
                     main = SimpleQuery(
                         taxon_id=id,
