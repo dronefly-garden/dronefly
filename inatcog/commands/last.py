@@ -1,9 +1,15 @@
 """Module for last command group."""
-
 from redbot.core import commands
+from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import FilteredTaxon, RANK_EQUIVALENTS, RANK_KEYWORDS
-from inatcog.converters import QuotedContextMemberConverter
+from inatcog.base_classes import (
+    CompoundQuery,
+    SimpleQuery,
+    Taxon,
+    RANK_EQUIVALENTS,
+    RANK_KEYWORDS,
+)
+from inatcog.converters import NaturalCompoundQueryConverter
 from inatcog.embeds import sorry
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -59,12 +65,37 @@ class CommandsLast(INatEmbeds, MixinMeta):
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
+    async def query_from_last_taxon(self, ctx, taxon: Taxon, query: CompoundQuery):
+        """Query constructed from last taxon and arguments."""
+        taxon_id = taxon.taxon_id
+        if query.main:
+            raise BadArgument("Taxon search terms can't be used here.")
+        if query.controlled_term:
+            raise BadArgument("A `with` filter can't be used here.")
+        last_query = CompoundQuery(
+            main=SimpleQuery(taxon_id, [], [], [], ""),
+            ancestor=None,
+            user=query.user,
+            place=query.place,
+            controlled_term="",
+        )
+        return await self.taxon_query.query_taxon(ctx, last_query)
+
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_obs_taxon(self, ctx):
+    async def last_obs_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
         """Show taxon for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
+        taxon = None
         if last and last.obs and last.obs.taxon:
-            await self.send_embed_for_taxon(ctx, last.obs.taxon)
+            taxon = last.obs.taxon
+            if query:
+                try:
+                    taxon = await self.query_from_last_taxon(ctx, taxon, query)
+                except (BadArgument, LookupError) as err:
+                    await ctx.send(embed=sorry(apology=err.args[0]))
+                    return
+        if taxon:
+            await self.send_embed_for_taxon(ctx, taxon)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
 
@@ -76,33 +107,6 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
         else:
             await ctx.send(embed=sorry(apology="Nothing found"))
-
-    @last_obs_taxon.command(name="by")
-    async def last_obs_taxon_by(self, ctx, user: QuotedContextMemberConverter):
-        """Show taxon for recently mentioned observation with counts for a user."""
-        last = await self.get_last_obs_from_history(ctx)
-        if not (last and last.obs and last.obs.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        inat_user = await self.user_table.get_user(user.member)
-        filtered_taxon = FilteredTaxon(last.obs.taxon, inat_user, None)
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
-
-    @last_obs_taxon.command(name="from")
-    async def last_obs_taxon_from(self, ctx, place: str):
-        """Show taxon for recently mentioned observation with counts for a place."""
-        last = await self.get_last_obs_from_history(ctx)
-        if not (last and last.obs and last.obs.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        try:
-            place = await self.place_table.get_place(ctx.guild, place, ctx.author)
-        except LookupError:
-            place = None
-        filtered_taxon = FilteredTaxon(last.obs.taxon, None, place)
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
 
     @last_obs.command(name="map", aliases=["m"])
     async def last_obs_map(self, ctx):
@@ -152,41 +156,22 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await ctx.send(embed=sorry(apology="The last observation has no taxon."))
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_taxon(self, ctx):
+    async def last_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
         """Show recently mentioned iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
-        if not (last and last.taxon):
+        taxon = None
+        if last and last.taxon:
+            taxon = last.taxon
+            if query:
+                try:
+                    taxon = await self.query_from_last_taxon(ctx, taxon, query)
+                except (BadArgument, LookupError) as err:
+                    await ctx.send(embed=sorry(apology=err.args[0]))
+                    return
+        if taxon:
+            await self.send_embed_for_taxon(ctx, taxon, include_ancestors=False)
+        else:
             await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        await self.send_embed_for_taxon(ctx, last.taxon, include_ancestors=False)
-
-    @last_taxon.command(name="by")
-    async def last_taxon_by(self, ctx, user: QuotedContextMemberConverter):
-        """Show recently mentioned taxon with observation counts for a user."""
-        last = await self.get_last_taxon_from_history(ctx)
-        if not (last and last.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        inat_user = await self.user_table.get_user(user.member)
-        filtered_taxon = FilteredTaxon(last.taxon, inat_user, None)
-        await self.send_embed_for_taxon(ctx, filtered_taxon, include_ancestors=False)
-
-    @last_taxon.command(name="from")
-    async def last_taxon_from(self, ctx, place: str):
-        """Show recently mentioned taxon with observation counts for a place."""
-        last = await self.get_last_taxon_from_history(ctx)
-        if not (last and last.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
-            return
-
-        try:
-            place = await self.place_table.get_place(ctx.guild, place, ctx.author)
-        except LookupError:
-            place = None
-        filtered_taxon = FilteredTaxon(last.taxon, None, place)
-        await self.send_embed_for_taxon(ctx, filtered_taxon, include_ancestors=False)
 
     @last_taxon.command(name="map", aliases=["m"])
     async def last_taxon_map(self, ctx):
