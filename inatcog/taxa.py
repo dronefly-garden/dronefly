@@ -19,6 +19,8 @@ TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
 TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
 TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")
+TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
+TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
 TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
 
@@ -453,7 +455,11 @@ async def format_place_taxon_counts(
 
 
 async def format_user_taxon_counts(
-    cog, user: Union[User, str], taxon, place_id: int = None
+    cog,
+    user: Union[User, str],
+    taxon: Taxon,
+    place_id: int = None,
+    unobserved: bool = False,
 ):
     """Format user observation & species counts for taxon."""
     taxon_id = taxon.taxon_id
@@ -463,8 +469,20 @@ async def format_user_taxon_counts(
     else:
         user_id = user.user_id
         login = user.login
-    obs_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
-    species_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
+    if unobserved:
+        obs_opt = {
+            "taxon_id": taxon_id,
+            "unobserved_by_user_id": user_id,
+            "per_page": 0,
+        }
+        species_opt = {
+            "taxon_id": taxon_id,
+            "unobserved_by_user_id": user_id,
+            "per_page": 0,
+        }
+    else:
+        obs_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
+        species_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
     if place_id:
         obs_opt["place_id"] = place_id
         species_opt["place_id"] = place_id
@@ -473,10 +491,11 @@ async def format_user_taxon_counts(
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = (
-            WWW_BASE_URL
-            + f"/observations?taxon_id={taxon_id}&user_id={user_id}&verifiable=any"
-        )
+        url = WWW_BASE_URL + f"/observations?taxon_id={taxon_id}&verifiable=any"
+        if unobserved:
+            url += f"&unobserved_by_user_id={user_id}"
+        else:
+            url += f"&user_id={user_id}"
         if place_id:
             url += f"&place_id={place_id}"
         if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:

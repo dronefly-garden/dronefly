@@ -92,12 +92,17 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • The row contents can be `from` or `by`. If both
           are given, what to tabulate is filtered by the
           `from` place, and the `by` person is the first row.
+        • The `not by` qualifier counts observations / species
+          unobserved by each user in the table. It may be combined
+          with `from`, but not `by`.
         e.g.
         ```
         ,tab fish from home
              -> per place (home listed; others react to add)
         ,tab fish by me
              -> per user (self listed; others react to add)
+        ,tab fish not by me
+             -> per unobserved by (self listed; others react to add)
         ,tab fish from canada by me
              -> per user (self listed; others react to add)
                 but only fish from canada are tabulated
@@ -111,7 +116,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
             start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
-        except LookupError as err:
+        except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
             return

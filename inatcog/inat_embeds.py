@@ -30,6 +30,7 @@ from .taxa import (
     TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
     TAXON_PLACES_HEADER,
+    TAXON_NOTBY_HEADER,
 )
 
 SHORT_DATE_PAT = re.compile(
@@ -142,24 +143,39 @@ class INatEmbeds(MixinMeta):
         """Return embed for observation counts from place or by user."""
         group_by_param = ""
         formatted_counts = ""
-        (taxon, user, place) = arg
+        (taxon, user, place, unobserved_by) = arg
 
         title = format_taxon_title(taxon)
         full_title = f"Observations of {title}"
         description = ""
-        if place and user:
-            full_title = f"Observations of {title} from {place.display_name}"
-            group_by_param = f"&place_id={place.place_id}"
-            formatted_counts = await format_user_taxon_counts(
-                self, user, taxon, place.place_id
-            )
-            header = TAXON_COUNTS_HEADER
-        elif user:
-            formatted_counts = await format_user_taxon_counts(self, user, taxon)
-            header = TAXON_COUNTS_HEADER
+        if user:
+            if place:
+                full_title = f"Observations of {title} from {place.display_name}"
+                group_by_param = f"&place_id={place.place_id}"
+                formatted_counts = await format_user_taxon_counts(
+                    self, user, taxon, place.place_id
+                )
+                header = TAXON_COUNTS_HEADER
+            elif unobserved_by:
+                raise BadArgument("I can't tabulate that yet.")
+            else:
+                formatted_counts = await format_user_taxon_counts(self, user, taxon)
+                header = TAXON_COUNTS_HEADER
         elif place:
-            formatted_counts = await format_place_taxon_counts(self, place, taxon)
-            header = TAXON_PLACES_HEADER
+            full_title = f"Observations of {title} from {place.display_name}"
+            if unobserved_by:
+                formatted_counts = await format_user_taxon_counts(
+                    self, unobserved_by, taxon, place.place_id, unobserved=True,
+                )
+                header = TAXON_NOTBY_HEADER
+            else:
+                formatted_counts = await format_place_taxon_counts(self, place, taxon)
+                header = TAXON_PLACES_HEADER
+        elif unobserved_by:
+            formatted_counts = await format_user_taxon_counts(
+                self, unobserved_by, taxon, None, unobserved=True,
+            )
+            header = TAXON_NOTBY_HEADER
         if formatted_counts:
             description = f"\n{header}\n{formatted_counts}"
 
@@ -465,11 +481,12 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place) = arg
+            (taxon, user, place, _unobserved_by) = arg  # noqa: F841
         else:
             taxon = arg
             user = None
             place = None
+            _unobserved_by = None  # noqa: F841
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 

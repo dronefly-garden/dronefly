@@ -117,6 +117,7 @@ class CompoundQuery(NamedTuple):
     user: str
     place: str
     controlled_term: str
+    unobserved_by: str
 
 
 # TODO: this should just be Place, as it is a superset
@@ -387,6 +388,7 @@ class FilteredTaxon(NamedTuple):
     taxon: Taxon
     user: User
     place: Place
+    unobserved_by: User
 
 
 class Obs(NamedTuple):

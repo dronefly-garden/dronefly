@@ -20,6 +20,8 @@ class INatObsQuery:
             message += " from " + filtered_taxon.place.display_name
         if filtered_taxon.user:
             message += " by " + filtered_taxon.user.display_name()
+        if filtered_taxon.unobserved_by:
+            message += " unobserved by " + filtered_taxon.user.display_name()
         if term:
             if value:
                 message += f" with {term.label} {value.label}"
@@ -40,6 +42,8 @@ class INatObsQuery:
                 kwargs["user_id"] = filtered_taxon.user.user_id
             if filtered_taxon.place:
                 kwargs["place_id"] = filtered_taxon.place.place_id
+            if filtered_taxon.unobserved_by:
+                kwargs["unobserved_by_user_id"] = filtered_taxon.unobserved_by.user_id
         if query.controlled_term:
             query_term, query_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()

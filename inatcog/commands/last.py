@@ -78,6 +78,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             user=query.user,
             place=query.place,
             controlled_term="",
+            unobserved_by=query.unobserved_by,
         )
         return await self.taxon_query.query_taxon(ctx, last_query)
 

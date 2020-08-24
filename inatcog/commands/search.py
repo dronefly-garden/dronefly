@@ -114,6 +114,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         query_title = "Observations"
                     if filtered_taxon.user:
                         query_title += f" by {filtered_taxon.user.login}"
+                    if filtered_taxon.unobserved_by:
+                        query_title += (
+                            f" unobserved by {filtered_taxon.unobserved_by.login}"
+                        )
                     if filtered_taxon.place:
                         query_title += f" from {filtered_taxon.place.display_name}"
                 except LookupError as err:
