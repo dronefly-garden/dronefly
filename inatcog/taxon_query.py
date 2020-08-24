@@ -122,7 +122,7 @@ class INatTaxonQuery:
             user = await self.cog.user_table.get_user(who.member)
         if query.unobserved_by:
             try:
-                who = await ContextMemberConverter.convert(ctx, query.user)
+                who = await ContextMemberConverter.convert(ctx, query.unobserved_by)
             except BadArgument as err:
                 raise LookupError(str(err))
             unobserved_by = await self.cog.user_table.get_user(who.member)
