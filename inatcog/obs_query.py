@@ -21,7 +21,7 @@ class INatObsQuery:
         if filtered_taxon.user:
             message += " by " + filtered_taxon.user.display_name()
         if filtered_taxon.unobserved_by:
-            message += " unobserved by " + filtered_taxon.user.display_name()
+            message += " unobserved by " + filtered_taxon.unobserved_by.display_name()
         if term:
             if value:
                 message += f" with {term.label} {value.label}"
