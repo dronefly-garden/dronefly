@@ -162,9 +162,9 @@ class INatEmbeds(MixinMeta):
                 formatted_counts = await format_user_taxon_counts(self, user, taxon)
                 header = TAXON_COUNTS_HEADER
         elif place:
-            full_title = f"Observations of {title} from {place.display_name}"
-            group_by_param = f"&place_id={place.place_id}"
             if unobserved_by:
+                full_title = f"Observations of {title} from {place.display_name}"
+                group_by_param = f"&place_id={place.place_id}"
                 formatted_counts = await format_user_taxon_counts(
                     self, unobserved_by, taxon, place.place_id, unobserved=True,
                 )
