@@ -22,6 +22,8 @@ from .taxa import (
     PAT_TAXON_LINK,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
+    TAXON_NOTBY_HEADER,
+    TAXON_NOTBY_HEADER_PAT,
     TAXON_PLACES_HEADER,
     TAXON_PLACES_HEADER_PAT,
 )
@@ -161,7 +163,10 @@ class Listeners(INatEmbeds, MixinMeta):
             return (taxon_id, place_id, user_id)
 
         async def maybe_update_member(
-            msg: discord.Message, member: discord.Member, action: str
+            msg: discord.Message,
+            member: discord.Member,
+            action: str,
+            unobserved: bool = False,
         ):
             try:
                 inat_user = await self.user_table.get_user(member)
@@ -171,7 +176,9 @@ class Listeners(INatEmbeds, MixinMeta):
 
             taxon = await get_taxon(self, taxon_id)
             # Observed by count add/remove for taxon:
-            await edit_totals_locked(msg, taxon, inat_user, action, counts_pat)
+            await edit_totals_locked(
+                msg, taxon, inat_user, action, counts_pat, unobserved
+            )
 
         async def maybe_update_place(
             msg: discord.Message,
@@ -264,7 +271,7 @@ class Listeners(INatEmbeds, MixinMeta):
             return response
 
         async def maybe_update_member_by_name(
-            msg: discord.Message, user: discord.Member
+            msg: discord.Message, user: discord.Member, unobserved: bool = False
         ):
             """Prompt for a member by name and update the embed if provided & valid."""
             try:
@@ -287,7 +294,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     await error_msg.delete()
                     return
 
-                await maybe_update_member(msg, who.member, "toggle")
+                await maybe_update_member(msg, who.member, "toggle", unobserved)
 
         async def maybe_update_place_by_name(
             msg: discord.Message, user: discord.Member
@@ -316,12 +323,15 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 await maybe_update_place(msg, place, "toggle")
 
-        async def update_totals(description, taxon, inat_user, action, counts_pat):
+        async def update_totals(
+            description, taxon, inat_user, action, counts_pat, unobserved: bool = False
+        ):
             """Update the totals for the embed."""
-            # Add/remove always results in a change to totals, so remove:
-            description = re.sub(
-                r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
-            )
+            if not unobserved:
+                # Add/remove always results in a change to totals, so remove:
+                description = re.sub(
+                    r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
+                )
 
             matches = re.findall(
                 r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
@@ -329,30 +339,40 @@ class Listeners(INatEmbeds, MixinMeta):
             if action == "remove":
                 # Remove the header if last one and the user's count:
                 if len(matches) == 1:
-                    description = re.sub(TAXON_COUNTS_HEADER_PAT, "", description)
+                    if unobserved:
+                        description = re.sub(TAXON_NOTBY_HEADER_PAT, "", description)
+                    else:
+                        description = re.sub(TAXON_COUNTS_HEADER_PAT, "", description)
                 description = re.sub(counts_pat + r".*?((?=\n)|$)", "", description)
             else:
                 # Add the header if first one and the user's count:
                 if not matches:
-                    description += "\n" + TAXON_COUNTS_HEADER
+                    if unobserved:
+                        # not currently possible (new :hash: reaction starts 'by' embed)
+                        description += "\n" + TAXON_NOTBY_HEADER
+                    else:
+                        description += "\n" + TAXON_COUNTS_HEADER
                 formatted_counts = await format_user_taxon_counts(
-                    self, inat_user, taxon, place_id
+                    self, inat_user, taxon, place_id, unobserved
                 )
                 description += "\n" + formatted_counts
 
-            matches = re.findall(
-                r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
-            )
-            # Total added only if more than one user:
-            if len(matches) > 1:
-                formatted_counts = await format_user_taxon_counts(
-                    self, ",".join(matches), taxon, place_id
+            if not unobserved:
+                matches = re.findall(
+                    r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
                 )
-                description += f"\n{formatted_counts}"
-                return description
+                # Total added only if more than one user:
+                if len(matches) > 1:
+                    formatted_counts = await format_user_taxon_counts(
+                        self, ",".join(matches), taxon, place_id
+                    )
+                    description += f"\n{formatted_counts}"
+                    return description
             return description
 
-        async def edit_totals_locked(msg, taxon, inat_user, action, counts_pat):
+        async def edit_totals_locked(
+            msg, taxon, inat_user, action, counts_pat, unobserved: bool = True
+        ):
             """Update totals for message locked."""
             if msg.id not in self.reaction_locks:
                 self.reaction_locks[msg.id] = asyncio.Lock()
@@ -372,9 +392,9 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
                     embed.description = await update_totals(
-                        description, taxon, inat_user, action, counts_pat
+                        description, taxon, inat_user, action, counts_pat, unobserved
                     )
-                    if re.search(r"\*total\*", embed.description):
+                    if not unobserved and re.search(r"\*total\*", embed.description):
                         embed.set_footer(
                             text="User counts may not add up to "
                             "the total if they changed since they were added. "
@@ -478,17 +498,23 @@ class Listeners(INatEmbeds, MixinMeta):
 
         description = embed.description or ""
         has_users = re.search(TAXON_COUNTS_HEADER_PAT, description)
+        has_not_by_users = re.search(TAXON_NOTBY_HEADER_PAT, description)
         has_places = re.search(TAXON_PLACES_HEADER_PAT, description)
 
         try:
             if has_places is None:
+                unobserved = True if has_not_by_users else False
                 if str(emoji) == "#️⃣":  # Add/remove counts for self
-                    await maybe_update_member(message, member, action)
+                    await maybe_update_member(
+                        message, member, action, unobserved=unobserved
+                    )
                     dispatch_commandstats(message, "react self")
                 elif str(emoji) == "📝":  # Toggle counts by name
-                    await maybe_update_member_by_name(message, member)
+                    await maybe_update_member_by_name(
+                        message, member, unobserved=unobserved
+                    )
                     dispatch_commandstats(message, "react user")
-            if has_users is None:
+            if has_users is None and has_not_by_users is None:
                 if str(emoji) == "🏠":
                     await maybe_update_place(message, member, action)
                     dispatch_commandstats(message, "react home")
