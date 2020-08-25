@@ -723,17 +723,9 @@ Conv Subcommands
 
 ``tounix`` Convert a date to a unix timestamp.
 
-``-antonym``
-
-- Displays antonyms for a given word.
-
 ``-define``
 
 - Displays definitions of a given word.
-
-``-synonym``
-
-- Displays synonyms for a given word.
 
 |image38|
 
