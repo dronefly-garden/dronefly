@@ -15,7 +15,7 @@ these enthusiastic contributors in discussion, planning, testing, documentation,
 and moral support.
 
 - **[Michael Pirrello](https://www.inaturalist.org/people/michaelpirrello)**
-    - The [iNaturalist Discord Guide for Participants](https://docs.google.com/document/d/19CuWFXnBdVjJqjhncQn1du5xyHmEsGwaxKUYpO0E8sM/edit?usp=sharing)
+    - The [iNaturalist Discord Guide for Participants](https://dronefly.readthedocs.io/en/latest/guide_for_participants.html)
       includes quite a bit of material on how to use Dronefly on the iNaturalist
       Discord server. Michael is the primary author & regularly updates the
       document with new Dronefly developments.
