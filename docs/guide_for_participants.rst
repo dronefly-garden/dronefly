@@ -651,11 +651,6 @@ from other nature-related sites:
 - ``<https://www.robberfliesoftheworld.com/TaxonPages/TaxonSearch.php?taxonsearch={0:query}>``
 - put capitalized robber fly Genus after command
 
-``,sitetopic``
-
-- ``https://www.google.com/search?q=site%3A{0:query}+{1:query}``
-- put site in format domain.tld and search term(s) after command
-
 ``,tol``
 
 - ``http://tolweb.org/{0:query}``
@@ -822,6 +817,11 @@ Dumbo also has custom commands:
 
 - ``https://radar.weather.gov/ridge/lite/N0R/{0:query}_loop.gif``
 - enter 3 character Site ID from https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx
+
+``-sitetopic``
+
+- ``https://www.google.com/search?q=site%3A{0:query}+{1:query}``
+- put site in format domain.tld and search term(s) after command
 
 ``-wiktionary``
 
