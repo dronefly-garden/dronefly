@@ -14,6 +14,10 @@ MAX_EMBED_AUTHOR_LEN = 256
 MAX_EMBED_LEN = 6000
 
 
+class NoRoomInDisplay(Exception):
+    """Size of embed exceeded."""
+
+
 @make_decorator
 def format_items_for_embed(function, max_len=MAX_EMBED_NAME_LEN):
     """Format items as delimited list not exceeding Discord length limits."""

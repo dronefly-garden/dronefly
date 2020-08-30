@@ -14,6 +14,7 @@ from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .inat_embeds import INatEmbeds
 from .interfaces import MixinMeta
 from .base_classes import PAT_OBS_TAXON_LINK, Place
+from .embeds import MAX_EMBED_DESCRIPTION_LEN, NoRoomInDisplay
 from .obs import maybe_match_obs
 from .taxa import (
     get_taxon,
@@ -391,9 +392,14 @@ class Listeners(INatEmbeds, MixinMeta):
                     action = "remove" if mat else "add"
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
-                    embed.description = await update_totals(
+                    description = await update_totals(
                         description, taxon, inat_user, action, counts_pat, unobserved
                     )
+                    if description.len > MAX_EMBED_DESCRIPTION_LEN:
+                        raise NoRoomInDisplay(
+                            "No more room for additional users in this display."
+                        )
+                    embed.description = description
                     if not unobserved and re.search(r"\*total\*", embed.description):
                         embed.set_footer(
                             text="User counts may not add up to "
@@ -475,9 +481,14 @@ class Listeners(INatEmbeds, MixinMeta):
                     action = "remove" if mat else "add"
 
                 if (mat and (action == "remove")) or (not mat and (action == "add")):
-                    embed.description = await update_place_totals(
+                    description = await update_place_totals(
                         description, taxon, place, action, place_counts_pat
                     )
+                    if len(description) > MAX_EMBED_DESCRIPTION_LEN:
+                        raise NoRoomInDisplay(
+                            "No more room for additional places in this display."
+                        )
+                    embed.description = description
                     if re.search(r"\*total\*", embed.description):
                         embed.set_footer(
                             text="Non-overlapping place counts may not add up to "
@@ -521,6 +532,13 @@ class Listeners(INatEmbeds, MixinMeta):
                 elif str(emoji) == "📍":
                     await maybe_update_place_by_name(message, member)
                     dispatch_commandstats(message, "react place")
+        except NoRoomInDisplay as err:
+            if message.id not in self.predicate_locks:
+                self.predicate_locks[message.id] = asyncio.Lock()
+            async with self.predicate_locks[message.id]:
+                error_message = await message.channel.send(err.args[0])
+                await asyncio.sleep(15)
+                await error_message.delete()
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
