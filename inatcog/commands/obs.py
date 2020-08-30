@@ -1,14 +1,15 @@
 """Module for obs command group."""
 
 import re
+from typing import Optional
 
 from redbot.core import commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 
 from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
-from inatcog.converters import NaturalCompoundQueryConverter
-from inatcog.embeds import sorry
+from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
+from inatcog.embeds import make_embed, sorry
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields, maybe_match_obs
@@ -83,7 +84,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         if obs and obs.sounds:
             await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
 
-    @commands.command(aliases=["tab"])
+    @commands.group(invoke_without_command=True, aliases=["tab"])
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
@@ -116,6 +117,39 @@ class CommandsObs(INatEmbeds, MixinMeta):
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
             start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+        except (BadArgument, LookupError) as err:
+            reason = err.args[0]
+            await ctx.send(embed=sorry(apology=reason))
+            return
+
+    @tabulate.command()
+    async def maverick(self, ctx, *, query: Optional[NaturalCompoundQueryConverter]):
+        """Show maverick identifications."""
+        if query and (
+            query.place
+            or query.controlled_term
+            or query.main
+            or query.unobserved_by
+            or query.per
+        ):
+            await ctx.send(embed=sorry("I can't tabulate that yet."))
+            return
+        try:
+            query_user = None
+            if query and query.user:
+                query_user = query.user
+            else:
+                query_me = await NaturalCompoundQueryConverter.convert(ctx, "by me")
+                query_user = query_me.user
+            who = await ContextMemberConverter.convert(ctx, query_user)
+            user = await self.user_table.get_user(who.member)
+            embed = make_embed()
+            embed.title = f"Maverick identifications by {user.display_name()}"
+            embed.url = (
+                "https://www.inaturalist.org/identifications?category=maverick"
+                f"&user_id={user.user_id}"
+            )
+            await ctx.send(embed=embed)
         except (BadArgument, LookupError) as err:
             reason = err.args[0]
             await ctx.send(embed=sorry(apology=reason))
