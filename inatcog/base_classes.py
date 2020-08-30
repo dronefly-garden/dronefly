@@ -129,7 +129,6 @@ class MeansPlace(DataClassJsonMixin):
     id: int
     name: str
     display_name: str
-    ancestor_place_ids: List[int]
 
 
 @dataclass
@@ -376,7 +375,6 @@ class Place(DataClassJsonMixin):
     display_name: str
     place_id: int = field(metadata=config(field_name="id"))
     url: str = field(init=False)
-    ancestor_place_ids: List[int]
 
     def __post_init__(self):
         """URL for place."""
