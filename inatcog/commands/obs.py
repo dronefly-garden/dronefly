@@ -124,7 +124,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @tabulate.command()
     async def maverick(self, ctx, *, query: Optional[NaturalCompoundQueryConverter]):
-        """Show maverick identifications."""
+        """Show maverick identifications.
+
+        • By default, if your iNat login is known, your own maverick
+          identifications are displayed.
+        • The `by` qualifier can be used to display mavericks for
+          another known user.
+        """
         if query and (
             query.place
             or query.controlled_term
