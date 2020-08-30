@@ -395,7 +395,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     description = await update_totals(
                         description, taxon, inat_user, action, counts_pat, unobserved
                     )
-                    if description.len > MAX_EMBED_DESCRIPTION_LEN:
+                    if len(description) > MAX_EMBED_DESCRIPTION_LEN:
                         raise NoRoomInDisplay(
                             "No more room for additional users in this display."
                         )
