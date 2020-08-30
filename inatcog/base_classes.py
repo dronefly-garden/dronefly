@@ -118,6 +118,7 @@ class CompoundQuery(NamedTuple):
     place: str
     controlled_term: str
     unobserved_by: str
+    per: str
 
 
 # TODO: this should just be Place, as it is a superset

@@ -131,6 +131,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--from", nargs="+", dest="place", default=[])
         parser.add_argument("--rank", dest="rank", default="")
         parser.add_argument("--with", nargs="+", dest="controlled_term")
+        parser.add_argument("--per", nargs="+", dest="per", default=[])
 
         try:
             vals = parser.parse_args(shlex.split(argument, posix=False))
@@ -157,6 +158,7 @@ class CompoundQueryConverter(CompoundQuery):
             or vals.rank
             or vals.controlled_term
             or vals.unobserved_by
+            or vals.per
         ):
             main = None
             ancestor = None
@@ -210,6 +212,7 @@ class CompoundQueryConverter(CompoundQuery):
                 place=" ".join(vals.place),
                 controlled_term=controlled_term,
                 unobserved_by=" ".join(vals.unobserved_by),
+                per=" ".join(vals.per),
             )
 
         return argument
