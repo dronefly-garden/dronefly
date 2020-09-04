@@ -813,19 +813,20 @@ Tweets subcommands
 ``-weather`` (``-we``)
 
 - Display weather for a location
-- Syntax: ``-weather <location>`` (location must take the form of city,
-  Country Code, for example: ``-weather New York,US``)
+- Syntax: ``-weather <location>``
+- Location can take the form of city or zip, but may require adding Country Code if the match is incorrect. For example: ``-weather Hatfield`` matches Hatfield, GB so ``-weather Hatfield,US`` can be used to obtain a match with Hatfield, PA. To obtain weather for Hatfield, MA, use ``-weather 01038,us`` ) as ``-weather 01038`` alone will match to Viterbo, IT).
 
 Weather subcommands
 ^^^^^^^^^^^^^^^^^^^
+ 
+``cityid`` Display weather in a given location using a numerical cityid
+(See: http://bulk.openweathermap.org/sample/city.list.json.gz [File will need to be unzipped using 7-Zip or similar, resulting .json file can be opened in a browser and searched.])
 
-``cityid`` Display weather in a given location
+``co`` Display weather in a given location using numerical lat long inputs (e.g. ``-we co 43 -88``
 
-``co`` Display weather in a given location
+|image72|
 
-``zip`` Display weather in a given location
-
-See: https://bulk.openweathermap.org/sample/city.list.json.gz
+``zip`` Display weather in a given location using postal code
 
 |image42|
 
@@ -1250,4 +1251,7 @@ Dronefly search results are accompanied by icons as follows:
 .. |image71| image:: ./Pictures/bonapkey.jpg
    :width: 4.76in
    :height: 1.54in
+.. |image72| image:: ./Pictures/frenchweather.jpg
+   :width: 3.65in
+   :height: 2.36in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
