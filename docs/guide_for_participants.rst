@@ -444,7 +444,7 @@ Tabulate subcommands
 
    - initial letters of scientific or common names
    
-   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>` for birds
+   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>`__, for birds
    
 ..
 
