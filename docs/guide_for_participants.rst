@@ -808,7 +808,7 @@ Tweets subcommands
 
 - Show Discord info about a user.
 
-|image41|
+|image72|
 
 ``-weather`` (``-we``)
 
@@ -824,7 +824,7 @@ Weather subcommands
 
 ``co`` Display weather in a given location using numerical lat long inputs (e.g. ``-we co 43 -88``
 
-|image72|
+|image41|
 
 ``zip`` Display weather in a given location using postal code
 
