@@ -442,23 +442,21 @@ Tabulate subcommands
 
    - id# of the iNaturalist taxon
 
-..
-
    - initial letters of scientific or common names
-
-   - double-quotes around exact words in the name
-
+   
+   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>` for birds
+   
 ..
 
-   - rank keywords filter by ranks (sp, family, etc.)
+- Additionally...
 
-   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>`__ for birds
+   - double-quotes can be used around exact words in the name
 
-..
+   - rank keywords will filter by rank (species, family, etc.)
+   
+     Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
 
-   - taxon in an ancestor taxon
-
-   Note: Dronefly also supports ``,species`` (``,sp`` or ``,t sp``).
+   - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
    
 Taxon subcommands
 ^^^^^^^^^^^^^^^^^^
@@ -466,6 +464,12 @@ Taxon subcommands
 ``bonap`` - Show info from bonap.net for taxon.
 
 ``means`` - Show establishment means for taxon from the specified place.
+
+- Dronefly uses a retrigger to supply a visual key related to ``,t bonap``.
+
+``,bonapkey`` will provide the following graphic:
+
+|image71|
 
 ``,user``
 
@@ -1243,4 +1247,7 @@ Dronefly search results are accompanied by icons as follows:
 .. |image70| image:: ./Pictures/inatyear.jpg
    :width: 4.26in
    :height: 3.70in
+.. |image71| image:: ./Pictures/bonapkey.jpg
+   :width: 4.76in
+   :height: 1.54in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
