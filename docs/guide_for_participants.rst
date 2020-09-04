@@ -1203,6 +1203,6 @@ Dronefly search results are accompanied by icons as follows:
    :width: 1.823in
    :height: 1.757in
 .. |image68| image:: ./Pictures/Disconnect.jpg
-   :width: 0.14in
-   :height: 0.12in
+   :width: 0.28in
+   :height: 0.24in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
