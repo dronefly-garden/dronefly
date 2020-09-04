@@ -252,6 +252,8 @@ screen they’re sharing.
 Please don’t forget to mute yourself (|image51|) if someone else is
 presenting.
 
+Click the Disconnect icon (|image68|) to leave a voice chat
+
 ======================
 Using the Discord Bots
 ======================
@@ -534,6 +536,11 @@ from other nature-related sites:
 ``,diptera``
 
 - ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
+
+``,fishbase``
+
+- ``https://www.fishbase.de/summary/{0:query}-{1:query}.html``
+- put binomial after command
 
 ``,gbif``
 
@@ -1195,4 +1202,7 @@ Dronefly search results are accompanied by icons as follows:
 .. |image67| image:: ./Pictures/searchplace.JPG
    :width: 1.823in
    :height: 1.757in
+.. |image68| image:: ./Pictures/Disconnect.jpg
+   :width: 0.14in
+   :height: 0.12in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
