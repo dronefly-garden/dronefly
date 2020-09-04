@@ -344,6 +344,17 @@ you specify
 - Show iNaturalist range map for a list of one or more taxa
   (comma delimited)
 
+``,my`` 
+
+- Show your observations, species, & ranks for an iNat project., e.g. ``,my 2020``
+
+My subcommands
+^^^^^^^^^^^^^^^^^^
+
+|image70|
+
+``inatyear`` - Display the URL for your iNat year graphs.
+
 |image23|
 
 ``,obs``
@@ -374,9 +385,6 @@ A list of project abbreviations can be generated with ``,project list``.
 
 - Show project stats for the named user.
 - ``,rank <project> <user>``
-
-``,my`` is an alias for ``,rank <project> me`` and will show you your own
-project statistics, e.g. ``,my 2020``
 
 |image26|
 
@@ -409,11 +417,28 @@ Search subcommands
 Arrow reactions allow paging through pages of results. See
 :ref:`Appendix C - Search Result Icons` for icons.
 
+|image69|
+
+``,tabulate`` (``,tab``)
+
+- Show a table from iNaturalist data matching the query.
+
+- Only taxa can be tabulated. More kinds of table to be supported in future releases.
+
+- The row contents can be ``from`` or ``by``. If both are given, what to tabulate is filtered by the from place, and the by person is the first row.
+
+- The ``not by`` qualifier counts observations / species unobserved by each user in the table. It may be combined with ``from``, but not ``by``.
+
+Tabulate subcommands
+^^^^^^^^^^^^^^^^^^
+
+``maverick`` - Show maverick identifications.
+
+|image28|
+
 ``,taxon`` (``,t``)
 
 - Show taxon best matching the query. Query may contain:
-
-|image28|
 
    - id# of the iNaturalist taxon
 
@@ -434,6 +459,13 @@ Arrow reactions allow paging through pages of results. See
    - taxon in an ancestor taxon
 
    Note: Dronefly also supports ``,species`` (``,sp`` or ``,t sp``).
+   
+Taxon subcommands
+^^^^^^^^^^^^^^^^^^
+
+``bonap`` - Show info from bonap.net for taxon.
+
+``means`` - Show establishment means for taxon from the specified place.
 
 ``,user``
 
@@ -1205,4 +1237,10 @@ Dronefly search results are accompanied by icons as follows:
 .. |image68| image:: ./Pictures/Disconnect.jpg
    :width: 0.28in
    :height: 0.24in
+.. |image69| image:: ./Pictures/tab.jpg
+   :width: 4.95in
+   :height: 1.96in
+.. |image70| image:: ./Pictures/inatyear.jpg
+   :width: 4.26in
+   :height: 3.70in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
