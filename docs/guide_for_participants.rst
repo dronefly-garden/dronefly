@@ -814,7 +814,7 @@ Tweets subcommands
 
 - Display weather for a location
 - Syntax: ``-weather <location>``
-- Location can take the form of city or zip, but may require adding Country Code if the match is incorrect. For example: ``-weather Hatfield`` matches Hatfield, GB so ``-weather Hatfield,US`` can be used to obtain a match with Hatfield, PA. To obtain weather for Hatfield, MA, use ``-weather 01038,us`` ) as ``-weather 01038`` alone will match to Viterbo, IT).
+- Location can take the form of city or zip, but may require adding Country Code if the match is incorrect. For example: ``-weather Hatfield`` matches Hatfield, GB so ``-weather Hatfield,US`` can be used to obtain a match with Hatfield, PA. To obtain weather for Hatfield, MA, use ``-weather 01038,us`` (as ``-weather 01038`` alone will match to Viterbo, IT).
 
 Weather subcommands
 ^^^^^^^^^^^^^^^^^^^
