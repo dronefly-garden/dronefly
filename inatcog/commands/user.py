@@ -69,9 +69,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
         """Add user as an iNat user (mods only).
 
         `discord_user`
-        - Discord username or nickname
-        - enclose in double-quotes if it contains blanks
-        - for this reason, a mention is easier
+        - Discord user mention, ID, username, or nickname.
+        - Username and nickname must be enclosed in double quotes
+          if they contain blanks, so a mention or ID is easier.
+        - Turn on `Developer Mode` in your Discord user settings
+          to enable `Copy ID` when right-clicking/long-pressing
+          a user's PFP. Depending on your platform, the setting
+          is in `Behavior` or `Appearance > Advanced`.
 
         `inat_user`
         - iNat login id or iNat user profile URL
