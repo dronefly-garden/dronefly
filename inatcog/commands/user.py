@@ -66,7 +66,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @user.command(name="add")
     @checks.admin_or_permissions(manage_roles=True)
     async def user_add(self, ctx, discord_user: discord.User, inat_user):
-        """Add user as an iNat user (mods only)."""
+        """Add user as an iNat user (mods only).
+
+        `discord_user`
+        - Discord username or nickname
+        - enclose in double-quotes if it contains blanks
+        - for this reason, a mention is easier
+
+        `inat_user`
+        - iNat login id or iNat user profile URL
+        """
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
@@ -119,7 +128,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @user.command(name="remove")
     @checks.admin_or_permissions(manage_roles=True)
     async def user_remove(self, ctx, discord_user: discord.User):
-        """Remove user as an iNat user (mods only)."""
+        """Remove user as an iNat user (mods only).
+
+        `discord_user`
+        - Discord username or nickname
+        - enclose in double-quotes if it contains blanks
+        - for this reason, a mention is easier
+        """
         config = self.config.user(discord_user)
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
