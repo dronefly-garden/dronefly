@@ -2,7 +2,7 @@
 
 import re
 
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import WWW_BASE_URL
@@ -17,6 +17,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
     @commands.group(aliases=["t"], invoke_without_command=True)
+    @checks.bot_has_permissions(embed_links=True)
     async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon best matching the query.
 
