@@ -139,19 +139,20 @@ class CommandsLast(INatEmbeds, MixinMeta):
             return
 
         rank_keyword = RANK_EQUIVALENTS.get(rank) or rank
-        if last.obs.taxon.rank == rank_keyword:
-            await self.send_embed_for_taxon(ctx, last.obs.taxon)
-        elif last.obs.taxon:
-            full_record = await get_taxon(self, last.obs.taxon.taxon_id)
-            ancestor = await self.taxon_query.get_taxon_ancestor(
-                full_record, rank_keyword
-            )
-            if ancestor:
-                await self.send_embed_for_taxon(ctx, ancestor)
+        if last.obs.taxon:
+            if last.obs.taxon.rank == rank_keyword:
+                await self.send_embed_for_taxon(ctx, last.obs.taxon)
             else:
-                await apologize(
-                    ctx, f"The last observation has no {rank_keyword} ancestor."
+                full_record = await get_taxon(self, last.obs.taxon.taxon_id)
+                ancestor = await self.taxon_query.get_taxon_ancestor(
+                    full_record, rank_keyword
                 )
+                if ancestor:
+                    await self.send_embed_for_taxon(ctx, ancestor)
+                else:
+                    await apologize(
+                        ctx, f"The last observation has no {rank_keyword} ancestor."
+                    )
         else:
             await apologize(ctx, "The last observation has no taxon.")
 
