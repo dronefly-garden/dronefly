@@ -509,5 +509,5 @@ async def format_user_taxon_counts(
 
 async def get_taxon(cog, taxon_id, **kwargs):
     """Get taxon by id."""
-    taxon_record = (await cog.api.get_taxa(taxon_id, **kwargs))["results"][0]
-    return get_taxon_fields(taxon_record)
+    results = (await cog.api.get_taxa(taxon_id, **kwargs))["results"]
+    return get_taxon_fields(results[0]) if results else None
