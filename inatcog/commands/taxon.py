@@ -7,7 +7,7 @@ from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters import NaturalCompoundQueryConverter
-from inatcog.embeds import make_embed, sorry
+from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.taxa import format_taxon_name, get_taxon
@@ -43,14 +43,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await ctx.send(embed=sorry(apology=err.args[0]))
+            await apologize(ctx, err.args[0])
             return
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
@@ -62,7 +61,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             self.check_taxon_query(ctx, query)
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except (BadArgument, LookupError) as err:
-            await ctx.send(embed=sorry(apology=err.args[0]))
+            await apologize(ctx, err.args[0])
             return
 
         base_url = "http://bonap.net/MapGallery/County/"
@@ -95,7 +94,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             self.check_taxon_query(ctx, query)
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
         except (BadArgument, LookupError) as err:
-            await ctx.send(embed=sorry(apology=err.args[0]))
+            await apologize(ctx, err.args[0])
             return
         taxon = filtered_taxon.taxon
         title = format_taxon_name(taxon, with_term=True)
@@ -127,7 +126,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await ctx.send(embed=sorry(apology=err.args[0]))
+            await apologize(ctx, err.args[0])
             return
 
         try:
@@ -169,8 +168,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
@@ -185,14 +183,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, taxon_query)
         except BadArgument as err:
-            await ctx.send(embed=sorry(apology=err.args[0]))
+            await apologize(ctx, err.args[0])
             return
 
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
         except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
@@ -217,8 +214,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         await ctx.send(embed=await self.make_map_embed(taxa))

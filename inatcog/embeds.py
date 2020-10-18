@@ -1,4 +1,5 @@
 """Module to make embeds."""
+import asyncio
 from functools import wraps
 import discord
 from .common import make_decorator
@@ -18,6 +19,13 @@ class NoRoomInDisplay(Exception):
     """Size of embed exceeded."""
 
 
+async def apologize(ctx, apology="I don't understand"):
+    """Send an apology and remove the message after a while."""
+    msg = await ctx.send(embed=sorry(apology=apology, title="Sorry"))
+    await asyncio.sleep(30)
+    await msg.delete()
+
+
 @make_decorator
 def format_items_for_embed(function, max_len=MAX_EMBED_NAME_LEN):
     """Format items as delimited list not exceeding Discord length limits."""
@@ -35,6 +43,6 @@ def make_embed(**kwargs):
     return discord.Embed(color=EMBED_COLOR, **kwargs)
 
 
-def sorry(apology="I don't understand"):
+def sorry(apology="I don't understand", title="Sorry"):
     """Notify user their request could not be satisfied."""
-    return make_embed(title="Sorry", description=apology)
+    return make_embed(title=title, description=apology)
