@@ -10,7 +10,7 @@ from inatcog.base_classes import (
     RANK_KEYWORDS,
 )
 from inatcog.converters import NaturalCompoundQueryConverter
-from inatcog.embeds import sorry
+from inatcog.embeds import apologize
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.last import INatLinkMsg
@@ -41,7 +41,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         """Show recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
             return
 
         await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
@@ -63,7 +63,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 )
             )
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     async def query_from_last_taxon(self, ctx, taxon: Taxon, query: CompoundQuery):
         """Query constructed from last taxon and arguments."""
@@ -94,12 +94,12 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 try:
                     taxon = await self.query_from_last_taxon(ctx, taxon, query)
                 except (BadArgument, LookupError) as err:
-                    await ctx.send(embed=sorry(apology=err.args[0]))
+                    await apologize(ctx, err.args[0])
                     return
         if taxon:
             await self.send_embed_for_taxon(ctx, taxon)
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     @last_obs_taxon.command(name="img", aliases=["image"])
     async def last_obs_taxon_image(self, ctx, number=1):
@@ -108,7 +108,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last and last.obs and last.obs.taxon:
             await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     @last_obs.command(name="map", aliases=["m"])
     async def last_obs_map(self, ctx):
@@ -117,7 +117,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last and last.obs and last.obs.taxon:
             await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_obs_rank(self, ctx):
@@ -130,7 +130,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         """
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
             return
 
         rank = ctx.invoked_with
@@ -149,13 +149,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if ancestor:
                 await self.send_embed_for_taxon(ctx, ancestor)
             else:
-                await ctx.send(
-                    embed=sorry(
-                        apology=f"The last observation has no {rank_keyword} ancestor."
-                    )
+                await apologize(
+                    ctx, f"The last observation has no {rank_keyword} ancestor."
                 )
         else:
-            await ctx.send(embed=sorry(apology="The last observation has no taxon."))
+            await apologize(ctx, "The last observation has no taxon.")
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
     async def last_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
@@ -168,19 +166,19 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 try:
                     taxon = await self.query_from_last_taxon(ctx, taxon, query)
                 except (BadArgument, LookupError) as err:
-                    await ctx.send(embed=sorry(apology=err.args[0]))
+                    await apologize(ctx, err.args[0])
                     return
         if taxon:
             await self.send_embed_for_taxon(ctx, taxon, include_ancestors=False)
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     @last_taxon.command(name="map", aliases=["m"])
     async def last_taxon_map(self, ctx):
         """Show map for recently mentioned taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
             return
 
         await ctx.send(embed=await self.make_map_embed([last.taxon]))
@@ -190,7 +188,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         """Show image for recently mentioned taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
             return
 
         await self.send_embed_for_taxon_image(ctx, last.taxon, number)
@@ -211,7 +209,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
             return
 
         rank_keyword = RANK_EQUIVALENTS.get(rank) or rank
@@ -225,6 +223,4 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if ancestor:
                 await self.send_embed_for_taxon(ctx, ancestor)
             else:
-                await ctx.send(
-                    embed=sorry(apology=f"The last taxon has no {rank} ancestor.")
-                )
+                await apologize(ctx, f"The last taxon has no {rank} ancestor.")
