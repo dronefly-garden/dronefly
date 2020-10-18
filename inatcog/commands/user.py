@@ -12,7 +12,7 @@ from inatcog.base_classes import User
 from inatcog.checks import known_inat_user
 from inatcog.common import DEQUOTE, grouper
 from inatcog.converters import ContextMemberConverter, QuotedContextMemberConverter
-from inatcog.embeds import make_embed, sorry
+from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.projects import UserProject
@@ -56,8 +56,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         try:
             user = await self.user_table.get_user(member, refresh_cache=True)
         except LookupError as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         embed = await self.make_user_embed(ctx, member, user)
@@ -377,8 +376,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # 1950 experimentally determined (as of 2020-07-26) to be the floor year
         # as 1949 and earlier produces a 404 Error.
         if stats_year < 1950 or stats_year > this_year:
-            await ctx.send(
-                f"Sorry, iNat does not support stats for that year: `{stats_year}`"
+            await apologize(
+                ctx,
+                f"Sorry, iNat does not support stats for that year: `{stats_year}`",
             )
             return
 
@@ -417,7 +417,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 None,
             )
         if not found:
-            await ctx.send(embed=sorry(apology="Not found"))
+            await apologize(ctx, "Not found")
             return
 
         inat_user = User.from_dict(found)

@@ -8,7 +8,7 @@ from inatcog.base_classes import WWW_BASE_URL
 from inatcog.checks import known_inat_user
 from inatcog.common import grouper
 from inatcog.converters import ContextMemberConverter
-from inatcog.embeds import make_embed, sorry
+from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.places import RESERVED_PLACES
@@ -94,7 +94,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send(embed=sorry(apology="Nothing found"))
+            await apologize(ctx, "Nothing found")
 
     @known_inat_user()
     @project.command(name="remove")

@@ -18,7 +18,7 @@ from inatcog.base_classes import (
     PAT_OBS_LINK,
     WWW_BASE_URL,
 )
-from inatcog.embeds import make_embed, sorry
+from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields
@@ -53,7 +53,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     await menu(ctx, [embed], controls)
                     return
                 else:
-                    await ctx.send(embed=sorry(apology="Not found"))
+                    await apologize(ctx, "Not found")
                     return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
@@ -121,8 +121,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     if filtered_taxon.place:
                         query_title += f" from {filtered_taxon.place.display_name}"
                 except LookupError as err:
-                    reason = err.args[0]
-                    await ctx.send(embed=sorry(apology=reason))
+                    await apologize(ctx, err.args[0])
                     return
 
                 url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
@@ -146,8 +145,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     for obs in observations
                 ]
             except LookupError as err:
-                reason = err.args[0]
-                await ctx.send(embed=sorry(apology=reason))
+                await apologize(ctx, err.args[0])
                 return
             per_embed_page = 5
         else:
@@ -191,14 +189,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ]
             await menu(ctx, embeds, controls)
         else:
-            await ctx.send(
-                embed=sorry(
-                    apology=(
-                        "Nothing matches that query. "
-                        "Check for mistakes in spelling or syntax.\n"
-                        f"Type `{ctx.clean_prefix}help search` for help."
-                    )
-                )
+            await apologize(
+                ctx,
+                "Nothing matches that query. "
+                "Check for mistakes in spelling or syntax.\n"
+                f"Type `{ctx.clean_prefix}help search` for help.",
             )
 
     @commands.group(aliases=["s"], invoke_without_command=True)
