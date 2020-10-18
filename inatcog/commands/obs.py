@@ -9,7 +9,7 @@ from redbot.core.utils.menus import start_adding_reactions
 
 from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
-from inatcog.embeds import make_embed, sorry
+from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields, maybe_match_obs
@@ -66,15 +66,14 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                 return
             else:
-                await ctx.send(embed=sorry(apology="I don't understand"))
+                await apologize(ctx, "I don't understand")
                 return
 
         try:
             compound_query = await NaturalCompoundQueryConverter.convert(ctx, query)
             obs = await self.obs_query.query_single_obs(ctx, compound_query)
         except (BadArgument, LookupError) as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
@@ -110,7 +109,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         ```
         """
         if query.controlled_term or not query.main:
-            await ctx.send(embed=sorry("I can't tabulate that yet."))
+            await apologize(ctx, "I can't tabulate that yet.")
             return
 
         try:
@@ -118,8 +117,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
             start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
         except (BadArgument, LookupError) as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
     @tabulate.command()
@@ -138,7 +136,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             or query.unobserved_by
             or query.per
         ):
-            await ctx.send(embed=sorry("I can't tabulate that yet."))
+            await apologize(ctx, "I can't tabulate that yet.")
             return
         try:
             query_user = None
@@ -157,8 +155,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             )
             await ctx.send(embed=embed)
         except (BadArgument, LookupError) as err:
-            reason = err.args[0]
-            await ctx.send(embed=sorry(apology=reason))
+            await apologize(ctx, err.args[0])
             return
 
     @commands.command()
@@ -194,4 +191,4 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await (self.bot.get_command("taxon")(ctx, query=query))
             return
 
-        await ctx.send(embed=sorry())
+        await apologize(ctx)
