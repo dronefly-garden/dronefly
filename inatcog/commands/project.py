@@ -1,6 +1,6 @@
 """Module for project command group."""
 
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
@@ -59,6 +59,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         await ctx.send("Project abbreviation added.")
 
     @project.command(name="list")
+    @checks.bot_has_permissions(embed_links=True)
     async def project_list(self, ctx):
         """List projects with abbreviations on this server."""
         if not ctx.guild:
@@ -116,6 +117,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         await ctx.send("Project abbreviation removed.")
 
     @project.command(name="stats")
+    @checks.bot_has_permissions(embed_links=True)
     async def project_stats(self, ctx, project: str, *, user: str = "me"):
         """Show project stats for the named user.
 
