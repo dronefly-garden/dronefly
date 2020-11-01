@@ -57,6 +57,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_set.command(name="inactive_role")
     @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
     async def set_inactive_role(self, ctx, inactive_role: Optional[discord.Role]):
         """Set server Inactive role."""
         if ctx.author.bot or ctx.guild is None:
@@ -84,6 +85,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_set.command(name="active_role")
     @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
     async def set_active_role(self, ctx, active_role: Optional[discord.Role]):
         """Set server Active role."""
         if ctx.author.bot or ctx.guild is None:
