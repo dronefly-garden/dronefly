@@ -23,6 +23,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
     """Mixin providing user command group."""
 
     @commands.group(invoke_without_command=True, aliases=["who"])
+    @checks.bot_has_permissions(embed_links=True)
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known.
 
@@ -277,6 +278,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
     async def user_list(self, ctx, with_role: str = None):
         """List members with known iNat ids (mods only)."""
         if not ctx.guild:
@@ -365,6 +367,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="inatyear")
     @known_inat_user()
+    @checks.bot_has_permissions(embed_links=True)
     async def user_inatyear(self, ctx, user: str = "me", year: int = None):
         """Display the URL for the user's iNat year graphs.
 
@@ -425,6 +428,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @commands.command()
     @known_inat_user()
+    @checks.bot_has_permissions(embed_links=True)
     async def me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
         member = await ContextMemberConverter.convert(ctx, "me")
@@ -432,6 +436,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True)
     @known_inat_user()
+    @checks.bot_has_permissions(embed_links=True)
     async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name
         """Show your observations, species, & ranks for an iNat project."""
         await (self.bot.get_command("project stats")(ctx, project, user="me"))
@@ -445,6 +450,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await self.user_inatyear(ctx, user="me", year=year)
 
     @commands.command()
+    @checks.bot_has_permissions(embed_links=True)
     async def rank(
         self, ctx, project: str, *, user: str
     ):  # pylint: disable=invalid-name
