@@ -140,6 +140,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await ctx.send(filtered_taxon.taxon.name)
 
     @commands.command(aliases=["sp"])
+    @checks.bot_has_permissions(embed_links=True)
     async def species(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show species best matching the query.
 
@@ -151,6 +152,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await self.taxon(ctx, query=query_species)
 
     @commands.command()
+    @checks.bot_has_permissions(embed_links=True)
     async def related(self, ctx, *, taxa_list):
         """Relatedness of a list of taxa.
 
@@ -175,6 +177,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
 
     @commands.command(aliases=["img", "photo"])
+    @checks.bot_has_permissions(embed_links=True)
     async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
         """Show default image for taxon query.
 
@@ -196,6 +199,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
 
     @commands.command()
+    @checks.bot_has_permissions(embed_links=True)
     async def map(self, ctx, *, taxa_list):
         """Show range map for a list of one or more taxa.
 

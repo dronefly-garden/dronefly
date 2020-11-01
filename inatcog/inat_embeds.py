@@ -2,7 +2,7 @@
 from io import BytesIO
 import re
 from typing import Union
-from discord import File
+from discord import DMChannel, File
 import html2markdown
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
@@ -128,6 +128,11 @@ class INatEmbeds(MixinMeta):
 
     async def maybe_send_sound_url(self, channel, sound):
         """Given a URL to a sound, send it if it can be retrieved."""
+        if (
+            not isinstance(channel, DMChannel)
+            and not channel.permissions_for(channel.guild.me).attach_files
+        ):
+            return
         async with self.api.session.get(sound.url) as response:
             try:
                 sound_io = BytesIO(await response.read())

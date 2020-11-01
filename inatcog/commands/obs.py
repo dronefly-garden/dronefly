@@ -3,7 +3,7 @@
 import re
 from typing import Optional
 
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 
@@ -20,6 +20,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     """Mixin providing obs command group."""
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
+    @checks.bot_has_permissions(embed_links=True)
     async def obs(self, ctx, *, query: str):
         """Show observation matching query, link, or number.
 
@@ -84,6 +85,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
+    @checks.bot_has_permissions(embed_links=True)
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
@@ -159,6 +161,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     @commands.command()
+    @checks.bot_has_permissions(embed_links=True)
     async def link(self, ctx, *, query):
         """Show summary for iNaturalist link.
 
