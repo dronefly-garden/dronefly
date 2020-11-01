@@ -1,6 +1,6 @@
 """Module for place command group."""
 
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import WWW_BASE_URL
@@ -57,6 +57,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         await ctx.send("Place abbreviation added.")
 
     @place.command(name="list")
+    @checks.bot_has_permissions(embed_links=True)
     async def place_list(self, ctx):
         """List places with abbreviations on this server."""
         if not ctx.guild:
