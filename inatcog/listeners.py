@@ -71,6 +71,10 @@ class Listeners(INatEmbeds, MixinMeta):
 
         guild = message.guild
         channel = message.channel
+
+        # Autoobs and dot_taxon features both need embed_links:
+        if not channel.permissions_for(guild.me).embed_links:
+            return
         guild_config = self.config.guild(guild)
 
         # - on_message_without_command only ignores bot prefixes for this instance
