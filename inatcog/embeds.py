@@ -21,7 +21,10 @@ class NoRoomInDisplay(Exception):
 
 async def apologize(ctx, apology="I don't understand"):
     """Send an apology and remove the message after a while."""
-    msg = await ctx.send(embed=sorry(apology=apology, title="Sorry"))
+    if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).embed_links:
+        msg = await ctx.send(embed=sorry(apology=apology, title="Sorry"))
+    else:
+        msg = await ctx.send(f"Sorry: {apology}")
     await asyncio.sleep(30)
     await msg.delete()
 
