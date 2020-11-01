@@ -1,5 +1,5 @@
 """Module for last command group."""
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import (
@@ -21,6 +21,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
     """Mixin providing last command group."""
 
     @commands.group()
+    @checks.bot_has_permissions(embed_links=True)
     async def last(self, ctx):
         """Show info for recently mentioned iNat page."""
 
