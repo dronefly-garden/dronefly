@@ -5,7 +5,7 @@ import re
 from typing import Optional
 import urllib.parse
 
-from redbot.core import commands
+from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.common import grouper
 from inatcog.converters import NaturalCompoundQueryConverter
@@ -197,6 +197,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             )
 
     @commands.group(aliases=["s"], invoke_without_command=True)
+    @checks.bot_has_permissions(embed_links=True)
     async def search(self, ctx, *, query):
         """Search iNat.
 
