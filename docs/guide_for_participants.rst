@@ -490,7 +490,7 @@ Compare against ``-userinfo``
 ``,user set known``
 
 - Allows the user to be known/unknown to instances of Dronefly running on, as
-  of the time of this writing, 19 other servers. Operators are *True* and
+  of the time of this writing, 23 other servers. Operators are *True* and
   *False*.
 
 |image34|
