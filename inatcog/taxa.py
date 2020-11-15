@@ -473,11 +473,13 @@ async def format_user_taxon_counts(
         obs_opt = {
             "taxon_id": taxon_id,
             "unobserved_by_user_id": user_id,
+            "lrank": "species",
             "per_page": 0,
         }
         species_opt = {
             "taxon_id": taxon_id,
             "unobserved_by_user_id": user_id,
+            "lrank": "species",
             "per_page": 0,
         }
     else:
@@ -493,7 +495,7 @@ async def format_user_taxon_counts(
         species_count = species["total_results"]
         url = WWW_BASE_URL + f"/observations?taxon_id={taxon_id}&verifiable=any"
         if unobserved:
-            url += f"&unobserved_by_user_id={user_id}"
+            url += f"&unobserved_by_user_id={user_id}&lrank=species"
         else:
             url += f"&user_id={user_id}"
         if place_id:

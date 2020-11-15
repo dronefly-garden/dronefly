@@ -44,6 +44,7 @@ class INatObsQuery:
                 kwargs["place_id"] = filtered_taxon.place.place_id
             if filtered_taxon.unobserved_by:
                 kwargs["unobserved_by_user_id"] = filtered_taxon.unobserved_by.user_id
+                kwargs["lrank"] = "species"
         if query.controlled_term:
             query_term, query_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()
