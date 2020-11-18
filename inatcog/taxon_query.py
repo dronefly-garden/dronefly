@@ -1,5 +1,7 @@
 """Module to query iNat taxa."""
+import re
 from redbot.core.commands import BadArgument
+from .common import DEQUOTE
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
@@ -116,13 +118,17 @@ class INatTaxonQuery:
             )
         if query.user:
             try:
-                who = await ContextMemberConverter.convert(ctx, query.user)
+                who = await ContextMemberConverter.convert(
+                    ctx, re.sub(DEQUOTE, r"\1", query.user)
+                )
             except BadArgument as err:
                 raise LookupError(str(err))
             user = await self.cog.user_table.get_user(who.member)
         if query.unobserved_by:
             try:
-                who = await ContextMemberConverter.convert(ctx, query.unobserved_by)
+                who = await ContextMemberConverter.convert(
+                    ctx, re.sub(DEQUOTE, r"\1", query.unobserved_by)
+                )
             except BadArgument as err:
                 raise LookupError(str(err))
             unobserved_by = await self.cog.user_table.get_user(who.member)
