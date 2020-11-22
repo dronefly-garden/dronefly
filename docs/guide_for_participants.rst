@@ -529,6 +529,16 @@ from other nature-related sites:
 - ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
 - put search term after command
 
+``,bio``
+
+- ``https://``
+- put search term after command
+
+``,birdcast``
+
+- ``https://``
+- put search term after command
+
 ``,bold3``
 
 - ``https://v3.boldsystems.org/index.php/Public_SearchTerms?query={0:query}``
@@ -540,6 +550,16 @@ from other nature-related sites:
 - see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
   support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
   [researcher], [tax]
+
+``,botanary``
+
+- ``https://``
+- put search term after command
+
+``,botdict``
+
+- ``https://``
+- put search term after command
 
 ``,bug``
 
@@ -569,14 +589,29 @@ from other nature-related sites:
 
 - ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cms&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cms&page=1``
 
+``,cvcleanup``
+
+- ``https://``
+- put search term after command
+
 ``,diptera``
 
 - ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
+
+``,faves``
+
+- ``https://``
+- put search term after command
 
 ``,fishbase``
 
 - ``https://www.fishbase.de/summary/{0:query}-{1:query}.html``
 - put binomial after command
+
+``,forumtags``
+
+- ``https://``
+- put search term after command
 
 ``,gbif``
 
@@ -613,6 +648,11 @@ from other nature-related sites:
 - ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus={0:query}&Species={1:query}``
 - put lepidoptera binomial after command
 
+``,idsheatmap``
+
+- ``https://``
+- put search term after command
+
 ``,ilwild``
 
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_spp.html``
@@ -648,6 +688,11 @@ from other nature-related sites:
 - ``http://www.millibase.org/aphia.php?tName={0:query}&p=taxlist``
 - put diplopod taxa of interest after command
 
+``,mobot``
+
+- ``https://``
+- put search term after command
+
 ``,moobs``
 
 - ``https://mushroomobserver.org/observer/observation_search?pattern={0:query}``
@@ -668,11 +713,15 @@ from other nature-related sites:
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
 - put US state after command
 
-``,notseen``
+``,observers``
 
-- ``https://www.inaturalist.org/observations?hrank=species&place_id={1:query}&unobserved_by_user_id={0:query}&view=species``
-- put iNaturalist login or id# first
-- put iNaturalist place id# second
+- ``https://``
+- put search term after command
+
+``,obsheatmap``
+
+- ``https://``
+- put search term after command
 
 ``,paflora``
 
@@ -689,6 +738,11 @@ from other nature-related sites:
 - ``http://www.plantsoftheworldonline.org/?q={0:query}``
 - put plant taxa of interest after command
 
+``,research``
+
+- ``https://``
+- put search term after command
+
 ``,rfwo``
 
 - ``<https://www.robberfliesoftheworld.com/TaxonPages/TaxonSearch.php?taxonsearch={0:query}>``
@@ -698,6 +752,16 @@ from other nature-related sites:
 
 - ``http://tolweb.org/{0:query}``
 - put taxon at family level or above after command
+
+``,topids``
+
+- ``https://``
+- put search term after command
+
+``,topobs``
+
+- ``https://``
+- put search term after command
 
 ``,wildflower``
 
@@ -842,6 +906,11 @@ Dumbo also has custom commands:
 ``-abbrev``
 
 - ``https://www.abbreviations.com/{0:query}``
+
+``-cchelp``
+
+- ``https://``
+- put search term after command
 
 ``-dict``
 
