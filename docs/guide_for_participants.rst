@@ -681,6 +681,11 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/lists/{0:query}``
 - put iNaturalist username after command (returns specified user's lists)
 
+``,mapsymbols``
+
+- ``https://www.inaturalist.org/pages/help#mapsymbols``
+- nothing entered after (provides link to iNaturalist Help section on map symbols)
+
 ``,maverick``
 
 - ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
