@@ -519,6 +519,11 @@ from other nature-related sites:
 - ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
 - put search term after command
 
+``,aesglossary``
+
+- ``https://www.amentsoc.org/insects/glossary/terms/{0:query}``
+- put search term after command
+
 ``,antwiki``
 
 - ``https://antwiki.org/wiki/{0:query}_{1:query}``
