@@ -531,13 +531,13 @@ from other nature-related sites:
 
 ``,bio``
 
-- ``https://``
+- ``https://www.biologyonline.com/search/{0:query}``
 - put search term after command
 
 ``,birdcast``
 
-- ``https://``
-- put search term after command
+- ``https://s3.amazonaws.com/is-birdcast-predicted/current/day{1}.jpg?{message.id}``
+- put 1, 2, or 3 after command (shows image of 1-, 2- or 3-day bird migration forecast map)
 
 ``,bold3``
 
@@ -553,13 +553,13 @@ from other nature-related sites:
 
 ``,botanary``
 
-- ``https://``
-- put search term after command
+- ``https://davesgarden.com/guides/botanary/search.php?search_text={0:query}``
+- put botanical term being searched after command
 
 ``,botdict``
 
-- ``https://``
-- put search term after command
+- ``http://www.botanydictionary.org/{0:query}.html``
+- put botanical term being searched after command
 
 ``,bug``
 
@@ -574,11 +574,12 @@ from other nature-related sites:
 ``,cchelp``
 
 - ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
-- links back to this help
+- nothing entered after (provides link to this section of the Participant's Guide)
 
 ``,cicada``
 
 - ``https://cse.google.com/cse?q={0:query}&cx=partner-pub-8561311701230022%3A50ncgfv7bjm&siteurl=www.cicadamania.com``
+- put cicada-related search term after command (returns Google search of cicadamania.com)
 
 ``,cites``
 
@@ -588,20 +589,22 @@ from other nature-related sites:
 ``,cms``
 
 - ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cms&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cms&page=1``
+- put taxon search terms after command
 
 ``,cvcleanup``
 
-- ``https://``
-- put search term after command
+- ``https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281``
+- nothing entered after (provides link to Computer Vision Clean-up Wiki on iNaturalist Forum)
 
 ``,diptera``
 
 - ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
+- put search term after command (searches diptera.info)
 
 ``,faves``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/faves/{0:query}``
+- put iNaturalist username after command (returns specified user's favorited observations)
 
 ``,fishbase``
 
@@ -610,8 +613,8 @@ from other nature-related sites:
 
 ``,forumtags``
 
-- ``https://``
-- put search term after command
+- ``https://forum.inaturalist.org/tags``
+- nothing entered after (provides link to Tags page on iNaturalist Forum)
 
 ``,gbif``
 
@@ -626,7 +629,7 @@ from other nature-related sites:
 ``,gni``
 
 - ``http://gni.globalnames.org/name_strings?search_term={0:query}&commit=Search``
-- put taxon search terms after command
+- put taxon search terms after command (great for when you know the species but not the genus, for example)
 
 ``,hostplant``
 
@@ -650,8 +653,8 @@ from other nature-related sites:
 
 ``,idsheatmap``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/observations/map?ident_user_id={0:query}#2/0/0``
+- put iNaturalist username after command (returns heatmap of specified user's identifications)
 
 ``,ilwild``
 
@@ -673,10 +676,15 @@ from other nature-related sites:
 - ``https://lichenportal.org/cnalh/taxa/index.php?taxon={0:query}&formsubmit=Search+Terms``
 - put lichen genus or binomial after command
 
+``,lists``
+
+- ``https://www.inaturalist.org/lists/{0:query}``
+- put iNaturalist username after command (returns specified user's lists)
+
 ``,maverick``
 
 - ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
-- put iNaturalist username after command (case sensitive)
+- put iNaturalist username after command (case sensitive) (returns specified user's Maverick identifications)
 
 ``,miflora``
 
@@ -690,13 +698,13 @@ from other nature-related sites:
 
 ``,mobot``
 
-- ``https://``
-- put search term after command
+- ``http://www.mobot.org/mobot/latindict/keyDetail.aspx?keyWord={0:query}``
+- put botanical latin search term after command
 
 ``,moobs``
 
 - ``https://mushroomobserver.org/observer/observation_search?pattern={0:query}``
-- put fungi genus or binomial after command
+- put fungal genus or binomial after command
 
 ``,nasgenus``
 
@@ -715,13 +723,13 @@ from other nature-related sites:
 
 ``,observers``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/observations?place_id={0:query}&subview=table&view=observers``
+- put iNaturalist Place ID number after command
 
 ``,obsheatmap``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/observations/map?user_id={0:query}#2/0/0``
+- put iNaturalist username after command (returns heatmap of specified user's observations)
 
 ``,paflora``
 
@@ -740,8 +748,8 @@ from other nature-related sites:
 
 ``,research``
 
-- ``https://``
-- put search term after command
+- ``https://forum.inaturalist.org/t/opportunities-to-assist-researchers-wiki/16615``
+- nothing entered after (provides link to Opportunities to Assist Researchers Wiki on iNaturalist Forum)
 
 ``,rfwo``
 
@@ -755,13 +763,13 @@ from other nature-related sites:
 
 ``,topids``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=identifiers``
+- put iNaturalist Taxon ID number after command
 
 ``,topobs``
 
-- ``https://``
-- put search term after command
+- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
+- put iNaturalist Taxon ID number after command
 
 ``,wildflower``
 
@@ -906,30 +914,32 @@ Dumbo also has custom commands:
 ``-abbrev``
 
 - ``https://www.abbreviations.com/{0:query}``
+- put abbreviation being searched after command
 
 ``-cchelp``
 
-- ``https://``
-- put search term after command
+- ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dumbo-custom-commands>``
+- nothing entered after (provides link to this section of the Participant's Guide)
 
 ``-dict``
 
 - ``https://www.merriam-webster.com/dictionary/{0:query}``
+- put word being searched after command
 
 ``-down``
 
 - ``https://downforeveryoneorjustme.com/inaturalist.org``
-- nothing entered after
+- nothing entered after (used to determine if iNaturalist web site is working or not)
 
 ``-radar``
 
 - ``https://weatherstreet.com/ridge/{0:query}-{1:query}-{2:query}-radar.htm``
-- enter capitalized City ST Zip
+- enter capitalized City ST Zip (to obtain radar image)
 
 ``-rloop``
 
 - ``https://radar.weather.gov/ridge/lite/N0R/{0:query}_loop.gif``
-- enter 3 character Site ID from https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx
+- enter 3 character Site ID from https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx (to obtain GIF of radar loop)
 
 ``-sitetopic``
 
@@ -939,6 +949,7 @@ Dumbo also has custom commands:
 ``-wiktionary``
 
 - ``https://en.wiktionary.org/wiki/{0:query}``
+- put word being searched after command
 
 Pickerel commands
 -----------------
