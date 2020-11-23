@@ -701,6 +701,11 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
 - put iNaturalist username after command (case sensitive) (returns specified user's Maverick identifications)
 
+``,meglossary``
+
+- ``https://www.mushroomexpert.com/glossary.html#{0:query}``
+- put search terms after command
+
 ``,miflora``
 
 - ``https://michiganflora.net/genus.aspx?id={0:query}``
