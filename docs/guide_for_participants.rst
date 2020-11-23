@@ -596,6 +596,11 @@ from other nature-related sites:
 - ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cms&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cms&page=1``
 - put taxon search terms after command
 
+``,crustacea``
+
+- ``https://research.nhm.org/glossary/define.html?term={0:query}``
+- put crustacea-related search terms after command
+
 ``,cvcleanup``
 
 - ``https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281``
