@@ -524,6 +524,11 @@ from other nature-related sites:
 - ``https://www.amentsoc.org/insects/glossary/terms/{0:query}``
 - put search term after command
 
+``,algae``
+
+- ``https://www.algaebase.org/search/glossary/``
+- nothing entered after (provides link to Algaebase glossary)
+
 ``,antwiki``
 
 - ``https://antwiki.org/wiki/{0:query}_{1:query}``
