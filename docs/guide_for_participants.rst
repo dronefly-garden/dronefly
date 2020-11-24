@@ -710,7 +710,7 @@ from other nature-related sites:
 
 - Retrigger
 - nothing entered after (displays image of iNaturalist map key)
-|mapkey.png|
+|image73|
 
 ``,maverick``
 
@@ -1380,4 +1380,7 @@ Dronefly search results are accompanied by icons as follows:
 .. |image72| image:: ./Pictures/frenchweather.jpg
    :width: 3.65in
    :height: 2.36in
+.. |image73| image:: ./Pictures/mapkey.png
+   :width: 1.92in
+   :height: 3.67in
 .. |backtick| unicode:: 0x60 .. Workaround vscode syntax highlighting glitch
