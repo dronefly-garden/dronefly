@@ -801,6 +801,11 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
 - put iNaturalist Taxon ID number after command
 
+``,vireo``
+
+- ``http://vireo.ansp.org/bird_academy/bird_glossary.html#{0:query}``
+- put ornithological search terms after command
+
 ``,wildflower``
 
 - ``https://www.wildflower.org/plants/search.php?search_field={0:query}&newsearch=true``
