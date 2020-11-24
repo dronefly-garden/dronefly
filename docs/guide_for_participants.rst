@@ -561,6 +561,11 @@ from other nature-related sites:
   support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
   [researcher], [tax]
 
+``,bonapkey``
+
+- Retrigger
+- nothing entered after (displays image of BONAP key)
+
 ``,botanary``
 
 - ``https://davesgarden.com/guides/botanary/search.php?search_text={0:query}``
@@ -701,10 +706,10 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/lists/{0:query}``
 - put iNaturalist username after command (returns specified user's lists)
 
-``,mapsymbols``
+``,mapkey``
 
-- ``https://www.inaturalist.org/pages/help#mapsymbols``
-- nothing entered after (provides link to iNaturalist Help section on map symbols)
+- Retrigger
+- nothing entered after (displays image of iNaturalist map key)
 
 ``,maverick``
 
