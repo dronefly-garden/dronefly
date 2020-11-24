@@ -751,6 +751,11 @@ from other nature-related sites:
 - ``https://nas.er.usgs.gov/queries/SpeciesList.aspx?group=&state={0:query}&Sortby=1``
 - put US state after command
 
+``,natureserve``
+
+- ``http://explorer.natureserve.org/servlet/NatureServe?searchName={0:query}``
+- put binomial after command
+
 ``,observers``
 
 - ``https://www.inaturalist.org/observations?place_id={0:query}&subview=table&view=observers``
