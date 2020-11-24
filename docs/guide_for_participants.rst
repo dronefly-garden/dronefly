@@ -710,6 +710,7 @@ from other nature-related sites:
 
 - Retrigger
 - nothing entered after (displays image of iNaturalist map key)
+|mapkey.png|
 
 ``,maverick``
 
