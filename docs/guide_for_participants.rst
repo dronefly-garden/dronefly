@@ -626,6 +626,11 @@ from other nature-related sites:
 - ``https://www.fishbase.de/summary/{0:query}-{1:query}.html``
 - put binomial after command
 
+``,fishbaseglossary``
+
+- ``https://www.fishbase.de/glossary/Glossary.php?q={0:query}``
+- put search terms after command
+
 ``,forumtags``
 
 - ``https://forum.inaturalist.org/tags``
