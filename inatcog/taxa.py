@@ -409,10 +409,9 @@ def match_taxon(query, records):
 
 
 async def format_place_taxon_counts(
-    cog, place: Union[Place, str], taxon: Taxon, user_id: int = None
+    cog, place: Union[Place, str], taxon: Taxon = None, user_id: int = None,
 ):
     """Format user observation & species counts for taxon."""
-    taxon_id = taxon.taxon_id
     if isinstance(place, str):
         place_id = place
         name = "*total*"
@@ -420,17 +419,19 @@ async def format_place_taxon_counts(
         place_id = place.place_id
         name = place.display_name
     obs_opt = {
-        "taxon_id": taxon_id,
         "place_id": place_id,
         "per_page": 0,
         "verifiable": "true",
     }
     species_opt = {
-        "taxon_id": taxon_id,
         "place_id": place_id,
         "per_page": 0,
         "verifiable": "true",
     }
+    if taxon:
+        taxon_id = taxon.taxon_id
+        obs_opt["taxon_id"] = taxon_id
+        species_opt["taxon_id"] = taxon_id
     if user_id:
         obs_opt["user_id"] = user_id
         species_opt["user_id"] = user_id
@@ -439,13 +440,12 @@ async def format_place_taxon_counts(
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = (
-            WWW_BASE_URL
-            + f"/observations?taxon_id={taxon_id}&place_id={place_id}&verifiable=true"
-        )
+        url = WWW_BASE_URL + f"/observations?place_id={place_id}&verifiable=true"
+        if taxon:
+            url += "&taxon_id={taxon_id}"
         if user_id:
             url += f"&user_id={user_id}"
-        if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+        if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {name}"
         else:
             link = f"[{observations_count} ({species_count})]({url}) {name}"
@@ -457,12 +457,11 @@ async def format_place_taxon_counts(
 async def format_user_taxon_counts(
     cog,
     user: Union[User, str],
-    taxon: Taxon,
+    taxon: Taxon = None,
     place_id: int = None,
     unobserved: bool = False,
 ):
     """Format user observation & species counts for taxon."""
-    taxon_id = taxon.taxon_id
     if isinstance(user, str):
         user_id = user
         login = "*total*"
@@ -471,20 +470,22 @@ async def format_user_taxon_counts(
         login = user.login
     if unobserved:
         obs_opt = {
-            "taxon_id": taxon_id,
             "unobserved_by_user_id": user_id,
             "lrank": "species",
             "per_page": 0,
         }
         species_opt = {
-            "taxon_id": taxon_id,
             "unobserved_by_user_id": user_id,
             "lrank": "species",
             "per_page": 0,
         }
     else:
-        obs_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
-        species_opt = {"taxon_id": taxon_id, "user_id": user_id, "per_page": 0}
+        obs_opt = {"user_id": user_id, "per_page": 0}
+        species_opt = {"user_id": user_id, "per_page": 0}
+    if taxon:
+        taxon_id = taxon.taxon_id
+        obs_opt["taxon_id"] = taxon_id
+        species_opt["taxon_id"] = taxon_id
     if place_id:
         obs_opt["place_id"] = place_id
         species_opt["place_id"] = place_id
@@ -493,14 +494,16 @@ async def format_user_taxon_counts(
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = WWW_BASE_URL + f"/observations?taxon_id={taxon_id}&verifiable=any"
+        url = WWW_BASE_URL + "/observations?verifiable=any"
+        if taxon:
+            url += f"&taxon_id={taxon_id}"
         if unobserved:
             url += f"&unobserved_by_user_id={user_id}&lrank=species"
         else:
             url += f"&user_id={user_id}"
         if place_id:
             url += f"&place_id={place_id}"
-        if RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+        if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {login}"
         else:
             link = f"[{observations_count} ({species_count})]({url}) {login}"

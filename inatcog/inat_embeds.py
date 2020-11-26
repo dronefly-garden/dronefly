@@ -2,6 +2,7 @@
 from io import BytesIO
 import re
 from typing import Union
+import urllib.parse
 from discord import DMChannel, File
 import html2markdown
 from redbot.core.commands import BadArgument
@@ -146,17 +147,20 @@ class INatEmbeds(MixinMeta):
 
     async def make_obs_counts_embed(self, arg):
         """Return embed for observation counts from place or by user."""
-        group_by_param = ""
+        title_params = {}
         formatted_counts = ""
         (taxon, user, place, unobserved_by) = arg
 
-        title = format_taxon_title(taxon)
-        full_title = f"Observations of {title}"
+        if taxon:
+            title = format_taxon_title(taxon)
+            full_title = f"Observations of {title}"
+        else:
+            full_title = "Observations"
         description = ""
         if user:
             if place:
-                full_title = f"Observations of {title} from {place.display_name}"
-                group_by_param = f"&place_id={place.place_id}"
+                full_title += f" from {place.display_name}"
+                title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
                     self, user, taxon, place.place_id
                 )
@@ -169,7 +173,7 @@ class INatEmbeds(MixinMeta):
         elif place:
             if unobserved_by:
                 full_title = f"Observations of {title} from {place.display_name}"
-                group_by_param = f"&place_id={place.place_id}"
+                title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
                     self, unobserved_by, taxon, place.place_id, unobserved=True,
                 )
@@ -185,11 +189,12 @@ class INatEmbeds(MixinMeta):
         if formatted_counts:
             description = f"\n{header}\n{formatted_counts}"
 
-        embed = make_embed(
-            url=f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}{group_by_param}",
-            title=full_title,
-            description=description,
-        )
+        url = f"{WWW_BASE_URL}/observations"
+        if taxon:
+            title_params["taxon_id"] = taxon.taxon_id
+        if title_params:
+            url += "?" + urllib.parse.urlencode(title_params)
+        embed = make_embed(url=url, title=full_title, description=description,)
         return embed
 
     async def format_obs(

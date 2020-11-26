@@ -89,11 +89,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
-        • Only taxa can be tabulated. More kinds of table
+        • Only observations can be tabulated. More kinds of table
           to be supported in future releases.
         • The row contents can be `from` or `by`. If both
           are given, what to tabulate is filtered by the
           `from` place, and the `by` person is the first row.
+        • If no taxon is specified, all observations are searched.
         • The `not by` qualifier counts observations / species
           unobserved by each user in the table. It may be combined
           with `from`, but not `by`.
@@ -110,7 +111,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 but only fish from canada are tabulated
         ```
         """
-        if query.controlled_term or not query.main:
+        if query.controlled_term:
             await apologize(ctx, "I can't tabulate that yet.")
             return
 
