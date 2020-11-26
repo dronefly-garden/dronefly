@@ -676,6 +676,11 @@ from other nature-related sites:
 - ``https://www.nhm.ac.uk/our-science/data/hostplants/search/list.dsml?searchPageURL=index.dsml&Genus={0:query}&Species={1:query}``
 - put lepidoptera binomial after command
 
+``,idaids``
+
+- ``https://idtools.net/idAids/searchResults.cfm?searchString={0:query}&searchType=1``
+- put insect genus or binomial after command
+
 ``,idsheatmap``
 
 - ``https://www.inaturalist.org/observations/map?ident_user_id={0:query}#2/0/0``
