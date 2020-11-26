@@ -814,7 +814,7 @@ from other nature-related sites:
 
 ``,unknowns``
 
-- ``https://www.inaturalist.org/observations/identify?reviewed=any&quality_grade=any&user_id={0:query}&lrank=kingdom&without_taxon_id=47170,48222,1,67333,47126``
+- ``https://www.inaturalist.org/observations/identify?reviewed=any&quality_grade=any&user_id={0:query}&lrank=kingdom&without_taxon_id=47170,48222,1,67333,47126,131236,47686``
 - put iNaturalist username after command
 
 ``,vireo``
