@@ -812,6 +812,11 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
 - put iNaturalist Taxon ID number after command
 
+``,unknowns``
+
+- ``https://www.inaturalist.org/observations/identify?reviewed=any&quality_grade=any&user_id={0:query}&lrank=kingdom&without_taxon_id=47170,48222,1,67333,47126``
+- put iNaturalist username after command
+
 ``,vireo``
 
 - ``http://vireo.ansp.org/bird_academy/bird_glossary.html#{0:query}``
