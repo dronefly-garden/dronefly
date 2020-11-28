@@ -696,6 +696,11 @@ from other nature-related sites:
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_{1:query}.html``
 - put plant binomial after command
 
+``,inatsearch``
+
+- ``https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63``
+- nothing entered after (provides link to How to use iNaturalist's Search URLs Wiki on iNaturalist Forum)
+
 ``,jstorgp``
 
 - ``https://plants.jstor.org/search?filter=name&so=ps_group_by_genus_species+asc&Query={0:query}``
