@@ -544,6 +544,11 @@ from other nature-related sites:
 - ``https://www.biologyonline.com/search/{0:query}``
 - put search term after command
 
+``,biorxiv``
+
+- ``https://www.biorxiv.org/search/{0:query}``
+- put search term after command
+
 ``,birdcast``
 
 - ``https://s3.amazonaws.com/is-birdcast-predicted/current/day{1}.jpg?{message.id}``
@@ -620,6 +625,16 @@ from other nature-related sites:
 
 - ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
 - put search term after command (searches diptera.info)
+
+``,doaja``
+
+- ``https://doaj.org/search/articles?ref=homepage-box&source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%7D``
+- put search terms after command
+
+``,doajj``
+
+- ``https://doaj.org/search/journals?source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%2C%22size%22%3A50%2C%22sort%22%3A%5B%7B%22created_date%22%3A%7B%22order%22%3A%22desc%22%7D%7D%5D%7D``
+- put search terms after command
 
 ``,faves``
 
@@ -751,6 +766,11 @@ from other nature-related sites:
 
 - ``https://mushroomobserver.org/observer/observation_search?pattern={0:query}``
 - put fungal genus or binomial after command
+
+``,msphere``
+
+- ``https://msphere.asm.org/search/{0:query}``
+- put search terms after command
 
 ``,nasgenus``
 
