@@ -442,7 +442,7 @@ async def format_place_taxon_counts(
         species_count = species["total_results"]
         url = WWW_BASE_URL + f"/observations?place_id={place_id}&verifiable=true"
         if taxon:
-            url += "&taxon_id={taxon_id}"
+            url += f"&taxon_id={taxon_id}"
         if user_id:
             url += f"&user_id={user_id}"
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
