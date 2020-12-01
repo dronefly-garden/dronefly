@@ -887,6 +887,10 @@ Dumbo commands
 
 (access help using ``-help``)
 
+``-calc``
+
+- Do math (e.g. ``-calc 2+2``)
+
 ``-conv``
 
 - Convert a value
