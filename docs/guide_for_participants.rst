@@ -1045,6 +1045,11 @@ Dumbo also has custom commands:
 - ``https://www.google.com/search?q=site%3A{0:query}+{1:query}``
 - put site in format domain.tld and search term(s) after command
 
+``-thesaurus``
+
+- ``https://www.thesaurus.com/browse/{0:query}?s=t``
+- put word being searched after command
+
 ``-wiktionary``
 
 - ``https://en.wiktionary.org/wiki/{0:query}``
