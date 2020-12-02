@@ -891,6 +891,20 @@ Dumbo commands
 
 - Do math (e.g. ``-calc 2+2``)
 
+Calc Actions
+^^^^^^^^^^^^^^
+Operators: `+` (add), - (subtract), * (multiply), / (divide), ^ (exponent), % (modulus), and parentheses: ( and )
+
+Constants: pi and e
+
+Functions: sin(), cos(), tan(), exp(), abs(), trunc(), round(), sgn(), log(), ln(), log2()
+
+Random choice: {rand:cat~dog~mouse}
+
+Random integer: {range:1-6}
+
+Random floating point: {rangef:1.1-3.3}
+
 ``-conv``
 
 - Convert a value
