@@ -714,7 +714,7 @@ class INatEmbeds(MixinMeta):
     async def send_embed_for_taxon_image(self, ctx, taxon, index=1):
         """Make embed for taxon image & send."""
         msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon, index))
-        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍", "🇹"])
 
     async def send_embed_for_taxon(self, ctx, taxon, include_ancestors=True):
         """Make embed for taxon & send."""
@@ -723,4 +723,4 @@ class INatEmbeds(MixinMeta):
                 ctx, taxon, include_ancestors=include_ancestors
             )
         )
-        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍", "🇹"])

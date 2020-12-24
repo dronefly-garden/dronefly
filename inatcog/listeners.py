@@ -18,7 +18,9 @@ from .embeds import MAX_EMBED_DESCRIPTION_LEN, NoRoomInDisplay
 from .obs import maybe_match_obs
 from .taxa import (
     get_taxon,
+    get_taxon_fields,
     format_place_taxon_counts,
+    format_taxon_names,
     format_user_taxon_counts,
     PAT_TAXON_LINK,
     TAXON_COUNTS_HEADER,
@@ -32,6 +34,9 @@ from .taxa import (
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.
 DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
+HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
+TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
+NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
 
 
 class PartialAuthor(NamedTuple):
@@ -130,6 +135,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
                 except (BadArgument, LookupError):
                     return
+                reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
                 if query.user or query.place:
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(filtered_taxon)
@@ -138,7 +144,8 @@ class Listeners(INatEmbeds, MixinMeta):
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(ctx, filtered_taxon)
                     )
-                start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+                    reaction_emojis.append("🇹")
+                start_adding_reactions(msg, reaction_emojis)
                 self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
@@ -517,7 +524,34 @@ class Listeners(INatEmbeds, MixinMeta):
         has_places = re.search(TAXON_PLACES_HEADER_PAT, description)
 
         try:
-            if has_places is None:
+            if str(emoji) == "🇹":
+                embeds = message.embeds
+                embed = embeds[0]
+                description = embed.description or ""
+                new_description = re.sub(TAXONOMY_PAT, "", description)
+                if new_description == description:
+                    response = await self.api.get_taxa(taxon_id, refresh_cache=False)
+                    full_taxon_raw = response["results"][0]
+                    if full_taxon_raw:
+                        ancestors_raw = full_taxon_raw["ancestors"]
+                        if not ancestors_raw:
+                            return
+                        ancestors = [
+                            get_taxon_fields(ancestor) for ancestor in ancestors_raw
+                        ]
+                        formatted_names = format_taxon_names(ancestors, hierarchy=True)
+                        hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
+                        new_description = re.sub(
+                            NO_TAXONOMY_PAT,
+                            " in:\n" + hierarchy + r"\1",
+                            description,
+                            1,
+                        )
+                    else:
+                        return
+                embed.description = new_description
+                await message.edit(embed=embed)
+            elif has_places is None:
                 unobserved = True if has_not_by_users else False
                 if str(emoji) == "#️⃣":  # Add/remove counts for self
                     await maybe_update_member(
