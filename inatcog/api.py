@@ -16,12 +16,11 @@ class INatAPI:
         self.users_cache = {}
         self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
+        self.taxa_cache = {}
 
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
 
-        # Select endpoint based on call signature:
-        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
         endpoint = "/".join(("/v1/controlled_terms", *args))
 
         async with self.session.get(
@@ -30,14 +29,60 @@ class INatAPI:
             if response.status == 200:
                 return await response.json()
 
-    async def get_taxa(self, *args, **kwargs):
-        """Query API for taxa matching parameters."""
+    # refresh_cache: Boolean
+    # - Unlike places and projects which change infrequently, we usually want the
+    #   latest, uncached taxon record.
+    async def get_taxa(self, *args, refresh_cache=True, **kwargs):
+        """Query API for taxa matching parameters.
+
+        Parameters
+        ----------
+        *args
+            - If first positional argument is given, it is passed through
+              as-is, appended to the /v1/taxa endpoint.
+            - If it's a number, the resulting record will be cached.
+
+        refresh_cache: bool
+            - Unlike places and projects which change infrequently, we
+              usually want the latest, uncached taxon record, as changes
+              are frequently made at the website (e.g. observations count).
+            - Specify refresh_cache=True when the latest data from the site
+              is not needed, e.g. to show names of ancestors for an existing
+              taxon display.
+
+        **kwargs
+            - All kwargs are passed as params on the API call.
+            - If kwargs["q"] is present, the /v1/taxa/autocomplete endpoint
+              is selected, as that gives the best results, most closely
+              matching the iNat web taxon lookup experience.
+        """
 
         # Select endpoint based on call signature:
         # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
         endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
         id_arg = f"/{args[0]}" if args else ""
 
+        # Cache lookup by id#, as those should be stable.
+        # - note: we could support splitting a list of id#s and caching each
+        #   one, but currently we don't make use of that call, so only cache
+        #   when a single ID is specified
+        if args and (isinstance(args[0], int) or args[0].isnumeric()):
+            taxon_id = int(args[0])
+            if refresh_cache or taxon_id not in self.taxa_cache:
+                # Rate-limit these so they can be retrieved in a loop without tripping
+                # iNat API's rate-limiting.
+                time_since_request = time() - self.request_time
+                if time_since_request < 1.0:
+                    await asyncio.sleep(1.0 - time_since_request)
+                async with self.session.get(
+                    f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs,
+                ) as response:
+                    if response.status == 200:
+                        self.taxa_cache[taxon_id] = await response.json()
+                        self.request_time = time()
+            return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
+
+        # Skip the cache for text queries which are not stable.
         async with self.session.get(
             f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
         ) as response:
