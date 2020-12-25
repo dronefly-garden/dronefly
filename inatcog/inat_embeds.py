@@ -711,16 +711,24 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def send_embed_for_taxon_image(self, ctx, taxon, index=1):
+    async def send_embed_for_taxon_image(self, ctx, filtered_taxon, index=1):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(ctx, taxon, index))
-        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍", "🇹"])
+        msg = await ctx.send(
+            embed=await self.make_image_embed(ctx, filtered_taxon, index)
+        )
+        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
+        if len(filtered_taxon.taxon.ancestor_ids) > 2:
+            reaction_emojis.append("🇹")
+        start_adding_reactions(msg, reaction_emojis)
 
-    async def send_embed_for_taxon(self, ctx, taxon, include_ancestors=True):
+    async def send_embed_for_taxon(self, ctx, filtered_taxon, include_ancestors=True):
         """Make embed for taxon & send."""
         msg = await ctx.send(
             embed=await self.make_taxa_embed(
-                ctx, taxon, include_ancestors=include_ancestors
+                ctx, filtered_taxon, include_ancestors=include_ancestors
             )
         )
-        start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍", "🇹"])
+        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
+        if len(filtered_taxon.taxon.ancestor_ids) > 2:
+            reaction_emojis.append("🇹")
+        start_adding_reactions(msg, reaction_emojis)

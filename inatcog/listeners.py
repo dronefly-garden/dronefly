@@ -144,7 +144,8 @@ class Listeners(INatEmbeds, MixinMeta):
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(ctx, filtered_taxon)
                     )
-                    reaction_emojis.append("🇹")
+                    if len(filtered_taxon.taxon.ancestor_ids) > 2:
+                        reaction_emojis.append("🇹")
                 start_adding_reactions(msg, reaction_emojis)
                 self.bot.dispatch("commandstats_action", ctx)
 
