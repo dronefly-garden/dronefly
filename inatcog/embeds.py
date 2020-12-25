@@ -1,5 +1,6 @@
 """Module to make embeds."""
 import asyncio
+import contextlib
 from functools import wraps
 import discord
 from .common import make_decorator
@@ -26,7 +27,8 @@ async def apologize(ctx, apology="I don't understand"):
     else:
         msg = await ctx.send(f"Sorry: {apology}")
     await asyncio.sleep(30)
-    await msg.delete()
+    with contextlib.suppress(discord.HTTPException):
+        await msg.delete()
 
 
 @make_decorator

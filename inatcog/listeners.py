@@ -303,7 +303,8 @@ class Listeners(INatEmbeds, MixinMeta):
                 except discord.ext.commands.errors.BadArgument as error:
                     error_msg = await msg.channel.send(error)
                     await asyncio.sleep(15)
-                    await error_msg.delete()
+                    with contextlib.suppress(discord.HTTPException):
+                        await error_msg.delete()
                     return
 
                 await maybe_update_member(msg, who.member, "toggle", unobserved)
@@ -330,7 +331,8 @@ class Listeners(INatEmbeds, MixinMeta):
                 except LookupError as error:
                     error_msg = await msg.channel.send(error)
                     await asyncio.sleep(15)
-                    await error_msg.delete()
+                    with contextlib.suppress(discord.HTTPException):
+                        await error_msg.delete()
                     return
 
                 await maybe_update_place(msg, place, "toggle")
@@ -576,7 +578,8 @@ class Listeners(INatEmbeds, MixinMeta):
             async with self.predicate_locks[message.id]:
                 error_message = await message.channel.send(err.args[0])
                 await asyncio.sleep(15)
-                await error_message.delete()
+                with contextlib.suppress(discord.HTTPException):
+                    await error_message.delete()
         except Exception:
             LOG.error(
                 "Exception handling %s %s reaction by %s on %s",
