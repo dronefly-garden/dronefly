@@ -717,7 +717,11 @@ class INatEmbeds(MixinMeta):
             embed=await self.make_image_embed(ctx, filtered_taxon, index)
         )
         reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
-        if len(filtered_taxon.taxon.ancestor_ids) > 2:
+        if isinstance(filtered_taxon, FilteredTaxon):
+            (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
+        else:
+            taxon = filtered_taxon
+        if len(taxon.ancestor_ids) > 2:
             reaction_emojis.append("🇹")
         start_adding_reactions(msg, reaction_emojis)
 
@@ -729,6 +733,10 @@ class INatEmbeds(MixinMeta):
             )
         )
         reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
-        if len(filtered_taxon.taxon.ancestor_ids) > 2:
+        if isinstance(filtered_taxon, FilteredTaxon):
+            (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
+        else:
+            taxon = filtered_taxon
+        if len(taxon.ancestor_ids) > 2:
             reaction_emojis.append("🇹")
         start_adding_reactions(msg, reaction_emojis)
