@@ -533,7 +533,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     response = await self.api.get_taxa(taxon_id, refresh_cache=False)
                     full_taxon_raw = response["results"][0]
                     if full_taxon_raw:
-                        ancestors_raw = full_taxon_raw["ancestors"]
+                        ancestors_raw = full_taxon_raw.get("ancestors")
                         if not ancestors_raw:
                             return
                         ancestors = [
