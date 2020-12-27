@@ -641,6 +641,11 @@ from other nature-related sites:
 - ``https://www.inaturalist.org/faves/{0:query}``
 - put iNaturalist username after command (returns specified user's favorited observations)
 
+``,feather``
+
+- ``https://www.fws.gov/lab/featheratlas/search.php``
+- nothing entered after (provides link to US FWS Feather Atlas)
+
 ``,fishbase``
 
 - ``https://www.fishbase.de/summary/{0:query}-{1:query}.html``
