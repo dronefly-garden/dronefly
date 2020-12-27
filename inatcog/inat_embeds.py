@@ -52,9 +52,12 @@ from .taxa import (
     TAXON_NOTBY_HEADER_PAT,
 )
 
+HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
+NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
 SHORT_DATE_PAT = re.compile(
     r"(^.*\d{1,2}:\d{2}(:\d{2})?(\s+(am|pm))?)(.*$)", flags=re.I
 )
+TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
 
 @format_items_for_embed
@@ -765,21 +768,19 @@ class INatEmbeds(MixinMeta):
         )
         self.add_taxon_reaction_emojis(msg, filtered_taxon)
 
-    def get_ids(self, embed):
-        """Match taxon_id & optional place_id/user_id."""
+    def get_inat_url_ids(self, url):
+        """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
         taxon_id = None
         place_id = None
         inat_user_id = None
-        url = embed.url
-        if url:
-            mat = re.match(PAT_TAXON_LINK, url)
-            if not mat:
-                mat = re.match(PAT_OBS_TAXON_LINK, url)
-                if mat:
-                    place_id = mat["place_id"]
-                    inat_user_id = mat["user_id"]
+        mat = re.match(PAT_TAXON_LINK, url)
+        if not mat:
+            mat = re.match(PAT_OBS_TAXON_LINK, url)
             if mat:
-                taxon_id = mat["taxon_id"]
+                place_id = mat["place_id"]
+                inat_user_id = mat["user_id"]
+        if mat:
+            taxon_id = mat["taxon_id"]
         return (taxon_id, place_id, inat_user_id)
 
     async def maybe_update_member(
@@ -959,6 +960,30 @@ class INatEmbeds(MixinMeta):
             await self.maybe_update_place(
                 msg, place, "toggle", taxon_id, inat_user_id, user
             )
+
+    async def maybe_update_taxonomy(self, message, taxon_id):
+        """Update taxonomy in taxon embed, if applicable."""
+        embeds = message.embeds
+        embed = embeds[0]
+        description = embed.description or ""
+        new_description = re.sub(TAXONOMY_PAT, "", description)
+        if new_description == description:
+            response = await self.api.get_taxa(taxon_id, refresh_cache=False)
+            full_taxon_raw = response["results"][0]
+            if full_taxon_raw:
+                ancestors_raw = full_taxon_raw.get("ancestors")
+                if not ancestors_raw:
+                    return
+                ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors_raw]
+                formatted_names = format_taxon_names(ancestors, hierarchy=True)
+                hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
+                new_description = re.sub(
+                    NO_TAXONOMY_PAT, " in:\n" + hierarchy + r"\1", description, 1,
+                )
+            else:
+                return
+        embed.description = new_description
+        await message.edit(embed=embed)
 
     async def update_totals(
         self,
