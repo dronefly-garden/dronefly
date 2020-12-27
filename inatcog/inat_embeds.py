@@ -17,6 +17,7 @@ from .base_classes import (
     WWW_BASE_URL,
     PAT_OBS_LINK,
     FilteredTaxon,
+    Taxon,
     TaxonSummary,
 )
 from .projects import UserProject, ObserverStats
@@ -711,11 +712,15 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def send_embed_for_taxon_image(self, ctx, filtered_taxon, index=1):
-        """Make embed for taxon image & send."""
-        msg = await ctx.send(
-            embed=await self.make_image_embed(ctx, filtered_taxon, index)
-        )
+    def add_obs_reaction_emojis(self, msg):
+        """Add obs embed reaction emojis."""
+        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
+        start_adding_reactions(msg, reaction_emojis)
+
+    def add_taxon_reaction_emojis(
+        self, msg, filtered_taxon: Union[FilteredTaxon, Taxon]
+    ):
+        """Add taxon embed reaction emojis."""
         reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
         if isinstance(filtered_taxon, FilteredTaxon):
             (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
@@ -725,6 +730,15 @@ class INatEmbeds(MixinMeta):
             reaction_emojis.append("🇹")
         start_adding_reactions(msg, reaction_emojis)
 
+    async def send_embed_for_taxon_image(
+        self, ctx, filtered_taxon: Union[FilteredTaxon, Taxon], index=1
+    ):
+        """Make embed for taxon image & send."""
+        msg = await ctx.send(
+            embed=await self.make_image_embed(ctx, filtered_taxon, index)
+        )
+        self.add_taxon_reaction_emojis(msg, filtered_taxon)
+
     async def send_embed_for_taxon(self, ctx, filtered_taxon, include_ancestors=True):
         """Make embed for taxon & send."""
         msg = await ctx.send(
@@ -732,11 +746,4 @@ class INatEmbeds(MixinMeta):
                 ctx, filtered_taxon, include_ancestors=include_ancestors
             )
         )
-        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
-        if isinstance(filtered_taxon, FilteredTaxon):
-            (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
-        else:
-            taxon = filtered_taxon
-        if len(taxon.ancestor_ids) > 2:
-            reaction_emojis.append("🇹")
-        start_adding_reactions(msg, reaction_emojis)
+        self.add_taxon_reaction_emojis(msg, filtered_taxon)

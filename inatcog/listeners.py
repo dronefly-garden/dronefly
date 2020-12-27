@@ -7,7 +7,6 @@ import discord
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
-from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 from .common import LOG
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
@@ -135,18 +134,16 @@ class Listeners(INatEmbeds, MixinMeta):
                     filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
                 except (BadArgument, LookupError):
                     return
-                reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
                 if query.user or query.place:
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(filtered_taxon)
                     )
+                    self.add_obs_reaction_emojis(msg)
                 else:
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(ctx, filtered_taxon)
                     )
-                    if len(filtered_taxon.taxon.ancestor_ids) > 2:
-                        reaction_emojis.append("🇹")
-                start_adding_reactions(msg, reaction_emojis)
+                    self.add_taxon_reaction_emojis(msg, filtered_taxon)
                 self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(

@@ -5,7 +5,6 @@ from typing import Optional
 
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
-from redbot.core.utils.menus import start_adding_reactions
 
 from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
@@ -118,7 +117,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
-            start_adding_reactions(msg, ["#️⃣", "📝", "🏠", "📍"])
+            self.add_obs_reaction_emojis(msg)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
