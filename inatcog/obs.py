@@ -108,7 +108,7 @@ def get_obs_fields(obs):
     )
 
 
-async def maybe_match_obs(ctx, cog, content, id_permitted=False):
+async def maybe_match_obs(cog, ctx, content, id_permitted=False):
     """Maybe retrieve an observation from content."""
     mat = re.search(PAT_OBS_LINK, content)
     obs = url = obs_id = None
