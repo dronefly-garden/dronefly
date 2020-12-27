@@ -1073,7 +1073,7 @@ class INatEmbeds(MixinMeta):
         # Add/remove always results in a change to totals, so remove:
         description = re.sub(r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description)
 
-        matches = re.findall(r"\n\[[0-9 \(\)]+\]\(.*?\) (.*?)(\n|$)", description)
+        matches = re.findall(r"\n\[[0-9 \(\)]+\]\(.*?\) (.*?)(?=\n|$)", description)
         if action == "remove":
             # Remove the header if last one and the place's count:
             if len(matches) == 1:
@@ -1089,8 +1089,7 @@ class INatEmbeds(MixinMeta):
             description += "\n" + formatted_counts
 
         matches = re.findall(
-            r"\n\[[0-9 \(\)]+\]\(.*?&place_id=(?P<place_id>\d+?)&.*?\) .*?(?:(?=\n|$))",
-            description,
+            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)", description,
         )
         # Total added only if more than one place:
         if len(matches) > 1:
