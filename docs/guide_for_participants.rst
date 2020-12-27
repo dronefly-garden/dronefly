@@ -757,6 +757,12 @@ from other nature-related sites:
 - ``http://www.millibase.org/aphia.php?tName={0:query}&p=taxlist``
 - put diplopod taxa of interest after command
 
+
+``,mnwildflower``
+
+- ``https://www.minnesotawildflowers.info/search?kw={0:query}``
+- put plant taxa of interest after command
+
 ``,mobot``
 
 - ``http://www.mobot.org/mobot/latindict/keyDetail.aspx?keyWord={0:query}``
@@ -796,6 +802,11 @@ from other nature-related sites:
 
 - ``http://explorer.natureserve.org/servlet/NatureServe?searchName={0:query}``
 - put binomial after command
+
+``,nucleotide``
+
+- ``https://www.ncbi.nlm.nih.gov/nuccore/?term={0:query}``
+- put taxa of interest after command
 
 ``,observers``
 
