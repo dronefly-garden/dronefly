@@ -191,9 +191,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ```
         • behaves like  `[p]taxon rwbl`
         ```
-        Check out these .lace bugs by me. , please.
+        Check out these .lacebugs by me. , please.
         ```
-        • behaves like `[p]obs lace bugs by me`
+        • behaves like `[p]tab lacebugs by me`
         """
         await ctx.send_help()
 
