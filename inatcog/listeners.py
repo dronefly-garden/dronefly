@@ -10,7 +10,7 @@ from redbot.core.commands import BadArgument
 from .common import LOG
 from .converters import NaturalCompoundQueryConverter
 from .embeds import NoRoomInDisplay
-from .inat_embeds import INatEmbeds
+from .inat_embeds import INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
 from .taxa import (
@@ -171,12 +171,12 @@ class Listeners(INatEmbeds, MixinMeta):
         has_places = re.search(TAXON_PLACES_HEADER_PAT, description)
 
         try:
-            if str(emoji) == "🇹":
+            if str(emoji) == REACTION_EMOJI["taxonomy"]:
                 await self.maybe_update_taxonomy(message, taxon_id)
                 dispatch_commandstats(message, "react taxonomy")
             elif has_places is None:
                 unobserved = True if has_not_by_users else False
-                if str(emoji) == "#️⃣":  # Add/remove counts for self
+                if str(emoji) == REACTION_EMOJI["self"]:
                     await self.maybe_update_member(
                         message,
                         member,
@@ -186,7 +186,7 @@ class Listeners(INatEmbeds, MixinMeta):
                         unobserved=unobserved,
                     )
                     dispatch_commandstats(message, "react self")
-                elif str(emoji) == "📝":  # Toggle counts by name
+                elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member
                     )
@@ -200,12 +200,12 @@ class Listeners(INatEmbeds, MixinMeta):
                     )
                     dispatch_commandstats(message, "react user")
             if has_users is None and has_not_by_users is None:
-                if str(emoji) == "🏠":
+                if str(emoji) == REACTION_EMOJI["home"]:
                     await self.maybe_update_place(
                         message, member, action, taxon_id, inat_user_id, member
                     )
                     dispatch_commandstats(message, "react home")
-                elif str(emoji) == "📍":
+                elif str(emoji) == REACTION_EMOJI["place"]:
                     await self.maybe_update_place_by_name(
                         message, taxon_id, inat_user_id, member
                     )

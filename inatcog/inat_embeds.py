@@ -59,6 +59,21 @@ SHORT_DATE_PAT = re.compile(
 )
 TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
+REACTION_EMOJI = {
+    "self": "#️⃣",
+    "user": "📝",
+    "home": "🏠",
+    "place": "📍",
+    "taxonomy": "🇹",
+}
+TAXON_REACTION_EMOJIS = list(
+    map(REACTION_EMOJI.get, ["self", "user", "home", "place", "taxonomy"])
+)
+NO_PARENT_TAXON_REACTION_EMOJIS = list(
+    map(REACTION_EMOJI.get, ["self", "user", "home", "place"])
+)
+OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
+
 
 @format_items_for_embed
 def format_taxon_names_for_embed(*args, **kwargs):
@@ -734,20 +749,20 @@ class INatEmbeds(MixinMeta):
 
     def add_obs_reaction_emojis(self, msg):
         """Add obs embed reaction emojis."""
-        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
-        start_adding_reactions(msg, reaction_emojis)
+        start_adding_reactions(msg, OBS_REACTION_EMOJIS)
 
     def add_taxon_reaction_emojis(
         self, msg, filtered_taxon: Union[FilteredTaxon, Taxon]
     ):
         """Add taxon embed reaction emojis."""
-        reaction_emojis = ["#️⃣", "📝", "🏠", "📍"]
         if isinstance(filtered_taxon, FilteredTaxon):
             (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
         else:
             taxon = filtered_taxon
         if len(taxon.ancestor_ids) > 2:
-            reaction_emojis.append("🇹")
+            reaction_emojis = TAXON_REACTION_EMOJIS
+        else:
+            reaction_emojis = NO_PARENT_TAXON_REACTION_EMOJIS
         start_adding_reactions(msg, reaction_emojis)
 
     async def send_embed_for_taxon_image(
