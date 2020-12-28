@@ -5,7 +5,7 @@ import contextlib
 from io import BytesIO
 import re
 from typing import Union
-import urllib.parse
+from urllib.parse import urlencode
 import discord
 from discord import DMChannel, File
 import html2markdown
@@ -73,6 +73,51 @@ NO_PARENT_TAXON_REACTION_EMOJIS = list(
     map(REACTION_EMOJI.get, ["self", "user", "home", "place"])
 )
 OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
+
+
+class INatEmbed(discord.Embed):
+    """Base class for INat embeds."""
+
+    @classmethod
+    def from_discord_embed(cls, embed: discord.Embed):
+        """Create an inat embed from discord.Embed argument."""
+        return cls.from_dict(embed.to_dict())
+
+    def has_users(self):
+        """Embed has a user counts table."""
+        return bool(re.search(TAXON_COUNTS_HEADER_PAT, self.description or ""))
+
+    def has_not_by_users(self):
+        """Embed has a not by user counts table."""
+        return bool(re.search(TAXON_NOTBY_HEADER_PAT, self.description or ""))
+
+    def has_places(self):
+        """Embed has a place counts table."""
+        return bool(re.search(TAXON_PLACES_HEADER_PAT, self.description or ""))
+
+    def place_id(self):
+        """Return place_id from embed url, if present."""
+        if self.url:
+            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+            if mat:
+                return int(mat["place_id"])
+        return None
+
+    def taxon_id(self):
+        """Return taxon_id from embed url, if present."""
+        if self.url:
+            mat = re.match(PAT_TAXON_LINK, self.url)
+            if mat:
+                return int(mat["taxon_id"])
+        return None
+
+    def user_id(self):
+        """Return user_id from embed url, if present."""
+        if self.url:
+            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+            if mat:
+                return int(mat["user_id"])
+        return None
 
 
 @format_items_for_embed
@@ -229,7 +274,7 @@ class INatEmbeds(MixinMeta):
         if taxon:
             title_params["taxon_id"] = taxon.taxon_id
         if title_params:
-            url += "?" + urllib.parse.urlencode(title_params)
+            url += "?" + urlencode(title_params)
         embed = make_embed(url=url, title=full_title, description=description,)
         return embed
 
@@ -799,13 +844,7 @@ class INatEmbeds(MixinMeta):
         return (taxon_id, place_id, inat_user_id)
 
     async def maybe_update_member(
-        self,
-        msg: discord.Message,
-        member: discord.Member,
-        action: str,
-        taxon_id,
-        place_id,
-        unobserved: bool = False,
+        self, msg: discord.Message, member: discord.Member, action: str
     ):
         """Add or remove member count in the embed if valid."""
         try:
@@ -814,20 +853,17 @@ class INatEmbeds(MixinMeta):
         except LookupError:
             return
 
-        taxon = await get_taxon(self, taxon_id)
+        inat_embed = msg.embeds[0]
+        taxon = await get_taxon(self, inat_embed.taxon_id())
         # Observed by count add/remove for taxon:
-        await self.edit_totals_locked(
-            msg, taxon, inat_user, action, place_id, counts_pat, unobserved
-        )
+        await self.edit_totals_locked(msg, taxon, inat_user, action, counts_pat)
 
     async def maybe_update_place(
         self,
         msg: discord.Message,
-        place_or_member: Union[Place, discord.Member],
-        action: str,
-        taxon_id: int,
-        inat_user_id: int,
         user: discord.Member,
+        action: str,
+        place: Place = None,
     ):
         """Add or remove place count in the embed if valid."""
         try:
@@ -835,25 +871,27 @@ class INatEmbeds(MixinMeta):
         except LookupError:
             return
 
-        if isinstance(place_or_member, discord.Member):
+        update_place = None
+        if place is None:
             config = self.config.user(user)
             home = await config.home()
             if not home:
                 return
 
             try:
-                place = await self.place_table.get_place(msg.guild, home, user)
+                update_place = await self.place_table.get_place(msg.guild, home, user)
             except LookupError:
                 return
         else:
-            place = place_or_member
+            update_place = place
 
+        inat_embed = msg.embeds[0]
         place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
-            place.display_name
+            update_place.display_name
         )
-        taxon = await get_taxon(self, taxon_id)
+        taxon = await get_taxon(self, inat_embed.taxon_id())
         await self.edit_place_totals_locked(
-            msg, taxon, place, action, inat_user_id, place_counts_pat
+            msg, taxon, update_place, action, place_counts_pat
         )
 
     async def query_locked(self, msg, user, prompt, timeout):
@@ -912,13 +950,7 @@ class INatEmbeds(MixinMeta):
         return response
 
     async def maybe_update_member_by_name(
-        self,
-        ctx,
-        msg: discord.Message,
-        user: discord.Member,
-        taxon_id: int,
-        place_id: int,
-        unobserved: bool = False,
+        self, ctx, msg: discord.Message, user: discord.Member
     ):
         """Prompt for a member by name and update the embed if provided & valid."""
         try:
@@ -941,16 +973,10 @@ class INatEmbeds(MixinMeta):
                     await error_msg.delete()
                 return
 
-            await self.maybe_update_member(
-                msg, who.member, "toggle", taxon_id, place_id, unobserved
-            )
+            await self.maybe_update_member(msg, who.member, "toggle")
 
     async def maybe_update_place_by_name(
-        self,
-        msg: discord.Message,
-        taxon_id: int,
-        inat_user_id: int,
-        user: discord.Member,
+        self, msg: discord.Message, user: discord.Member
     ):
         """Prompt user for place by name and update the embed if provided & valid."""
         try:
@@ -972,18 +998,18 @@ class INatEmbeds(MixinMeta):
                     await error_msg.delete()
                 return
 
-            await self.maybe_update_place(
-                msg, place, "toggle", taxon_id, inat_user_id, user
-            )
+            await self.maybe_update_place(msg, user, "toggle", place)
 
-    async def maybe_update_taxonomy(self, message, taxon_id):
+    async def maybe_update_taxonomy(self, message):
         """Update taxonomy in taxon embed, if applicable."""
         embeds = message.embeds
-        embed = embeds[0]
-        description = embed.description or ""
+        inat_embed = embeds[0]
+        description = inat_embed.description or ""
         new_description = re.sub(TAXONOMY_PAT, "", description)
         if new_description == description:
-            response = await self.api.get_taxa(taxon_id, refresh_cache=False)
+            response = await self.api.get_taxa(
+                inat_embed.taxon_id(), refresh_cache=False
+            )
             full_taxon_raw = response["results"][0]
             if full_taxon_raw:
                 ancestors_raw = full_taxon_raw.get("ancestors")
@@ -997,20 +1023,15 @@ class INatEmbeds(MixinMeta):
                 )
             else:
                 return
-        embed.description = new_description
-        await message.edit(embed=embed)
+        inat_embed.description = new_description
+        await message.edit(embed=inat_embed)
 
     async def update_totals(
-        self,
-        description,
-        taxon,
-        inat_user,
-        action,
-        place_id,
-        counts_pat,
-        unobserved: bool = False,
+        self, description, taxon, inat_user, action, inat_embed, counts_pat,
     ):
         """Update the totals for the embed."""
+        unobserved = inat_embed.has_not_by_users()
+        place_id = inat_embed.place_id()
         if not unobserved:
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
@@ -1055,14 +1076,7 @@ class INatEmbeds(MixinMeta):
         return description
 
     async def edit_totals_locked(
-        self,
-        msg,
-        taxon,
-        inat_user,
-        action,
-        place_id,
-        counts_pat,
-        unobserved: bool = True,
+        self, msg, taxon, inat_user, action, counts_pat,
     ):
         """Update totals for message locked."""
         if msg.id not in self.reaction_locks:
@@ -1075,39 +1089,35 @@ class INatEmbeds(MixinMeta):
             except discord.errors.NotFound:
                 return  # message has been deleted, nothing left to do
             embeds = msg.embeds
-            embed = embeds[0]
-            description = embed.description or ""
+            inat_embed = INatEmbed.from_discord_embed(embeds[0])
+            description = inat_embed.description or ""
             mat = re.search(counts_pat, description)
             if action == "toggle":
                 action = "remove" if mat else "add"
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
                 description = await self.update_totals(
-                    description,
-                    taxon,
-                    inat_user,
-                    action,
-                    place_id,
-                    counts_pat,
-                    unobserved,
+                    description, taxon, inat_user, action, inat_embed, counts_pat,
                 )
                 if len(description) > MAX_EMBED_DESCRIPTION_LEN:
                     raise NoRoomInDisplay(
                         "No more room for additional users in this display."
                     )
-                embed.description = description
-                if not unobserved and re.search(r"\*total\*", embed.description):
-                    embed.set_footer(
+                inat_embed.description = description
+                if not inat_embed.has_not_by_users() and re.search(
+                    r"\*total\*", inat_embed.description
+                ):
+                    inat_embed.set_footer(
                         text="User counts may not add up to "
                         "the total if they changed since they were added. "
                         "Remove, then add them again to update their counts."
                     )
                 else:
-                    embed.set_footer(text="")
-                await msg.edit(embed=embed)
+                    inat_embed.set_footer(text="")
+                await msg.edit(embed=inat_embed)
 
     async def update_place_totals(
-        self, description, taxon, place, action, inat_user_id, place_counts_pat
+        self, description, taxon, place, action, inat_embed, place_counts_pat
     ):
         """Update the place totals for the embed."""
         # Add/remove always results in a change to totals, so remove:
@@ -1124,7 +1134,7 @@ class INatEmbeds(MixinMeta):
             if not matches:
                 description += "\n" + TAXON_PLACES_HEADER
             formatted_counts = await format_place_taxon_counts(
-                self, place, taxon, inat_user_id
+                self, place, taxon, inat_embed.user_id()
             )
             description += "\n" + formatted_counts
 
@@ -1134,14 +1144,14 @@ class INatEmbeds(MixinMeta):
         # Total added only if more than one place:
         if len(matches) > 1:
             formatted_counts = await format_place_taxon_counts(
-                self, ",".join(matches), taxon, inat_user_id
+                self, ",".join(matches), taxon, inat_embed.user_id()
             )
             description += f"\n{formatted_counts}"
             return description
         return description
 
     async def edit_place_totals_locked(
-        self, msg, taxon, place, action, inat_user_id, place_counts_pat
+        self, msg, taxon, place, action, place_counts_pat
     ):
         """Update place totals for message locked."""
         if msg.id not in self.reaction_locks:
@@ -1154,27 +1164,27 @@ class INatEmbeds(MixinMeta):
             except discord.errors.NotFound:
                 return  # message has been deleted, nothing left to do
             embeds = msg.embeds
-            embed = embeds[0]
-            description = embed.description or ""
+            inat_embed = INatEmbed.from_discord_embed(embeds[0])
+            description = inat_embed.description or ""
             mat = re.search(place_counts_pat, description)
             if action == "toggle":
                 action = "remove" if mat else "add"
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
                 description = await self.update_place_totals(
-                    description, taxon, place, action, inat_user_id, place_counts_pat
+                    description, taxon, place, action, inat_embed, place_counts_pat
                 )
                 if len(description) > MAX_EMBED_DESCRIPTION_LEN:
                     raise NoRoomInDisplay(
                         "No more room for additional places in this display."
                     )
-                embed.description = description
-                if re.search(r"\*total\*", embed.description):
-                    embed.set_footer(
+                inat_embed.description = description
+                if re.search(r"\*total\*", inat_embed.description):
+                    inat_embed.set_footer(
                         text="Non-overlapping place counts may not add up to "
                         "the total if they changed since they were added. "
                         "Remove, then add them again to update their counts."
                     )
                 else:
-                    embed.set_footer(text="")
-                await msg.edit(embed=embed)
+                    inat_embed.set_footer(text="")
+                await msg.edit(embed=inat_embed)

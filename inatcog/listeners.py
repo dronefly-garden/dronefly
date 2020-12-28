@@ -2,6 +2,7 @@
 from typing import NamedTuple, Union
 import asyncio
 import contextlib
+from copy import copy
 import re
 import discord
 from redbot.core import commands
@@ -10,14 +11,9 @@ from redbot.core.commands import BadArgument
 from .common import LOG
 from .converters import NaturalCompoundQueryConverter
 from .embeds import NoRoomInDisplay
-from .inat_embeds import INatEmbeds, REACTION_EMOJI
+from .inat_embeds import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
-from .taxa import (
-    TAXON_COUNTS_HEADER_PAT,
-    TAXON_NOTBY_HEADER_PAT,
-    TAXON_PLACES_HEADER_PAT,
-)
 
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.
@@ -154,61 +150,34 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             self.bot.dispatch("commandstats_action", ctx)
 
-        embeds = message.embeds
-        if not embeds:
+        if not message.embeds:
             return
-        embed = embeds[0]
-        if embed.url:
-            taxon_id, place_id, inat_user_id = self.get_inat_url_ids(embed.url)
-        else:
+        inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
+        if not inat_embed.taxon_id():
             return
-        if not taxon_id:
-            return
-
-        description = embed.description or ""
-        has_users = re.search(TAXON_COUNTS_HEADER_PAT, description)
-        has_not_by_users = re.search(TAXON_NOTBY_HEADER_PAT, description)
-        has_places = re.search(TAXON_PLACES_HEADER_PAT, description)
+        msg = copy(message)
+        msg.embeds[0] = inat_embed
 
         try:
             if str(emoji) == REACTION_EMOJI["taxonomy"]:
-                await self.maybe_update_taxonomy(message, taxon_id)
+                await self.maybe_update_taxonomy(msg)
                 dispatch_commandstats(message, "react taxonomy")
-            elif has_places is None:
-                unobserved = True if has_not_by_users else False
+            elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
-                    await self.maybe_update_member(
-                        message,
-                        member,
-                        action,
-                        taxon_id,
-                        place_id,
-                        unobserved=unobserved,
-                    )
+                    await self.maybe_update_member(msg, member, action)
                     dispatch_commandstats(message, "react self")
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member
                     )
-                    await self.maybe_update_member_by_name(
-                        ctx,
-                        msg=message,
-                        user=member,
-                        taxon_id=taxon_id,
-                        place_id=place_id,
-                        unobserved=unobserved,
-                    )
+                    await self.maybe_update_member_by_name(ctx, msg=msg, user=member)
                     dispatch_commandstats(message, "react user")
-            if has_users is None and has_not_by_users is None:
+            if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:
-                    await self.maybe_update_place(
-                        message, member, action, taxon_id, inat_user_id, member
-                    )
+                    await self.maybe_update_place(msg, member, action)
                     dispatch_commandstats(message, "react home")
                 elif str(emoji) == REACTION_EMOJI["place"]:
-                    await self.maybe_update_place_by_name(
-                        message, taxon_id, inat_user_id, member
-                    )
+                    await self.maybe_update_place_by_name(msg, member)
                     dispatch_commandstats(message, "react place")
         except NoRoomInDisplay as err:
             if message.id not in self.predicate_locks:
