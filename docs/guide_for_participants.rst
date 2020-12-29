@@ -1056,16 +1056,6 @@ Dumbo also has custom commands:
 - ``https://downforeveryoneorjustme.com/inaturalist.org``
 - nothing entered after (used to determine if iNaturalist web site is working or not)
 
-``-radar``
-
-- ``https://weatherstreet.com/ridge/{0:query}-{1:query}-{2:query}-radar.htm``
-- enter capitalized City ST Zip (to obtain radar image)
-
-``-rloop``
-
-- ``https://radar.weather.gov/ridge/lite/N0R/{0:query}_loop.gif``
-- enter 3 character Site ID from https://www.roc.noaa.gov/WSR88D/Program/SiteID.aspx (to obtain GIF of radar loop)
-
 ``-sitetopic``
 
 - ``https://www.google.com/search?q=site%3A{0:query}+{1:query}``
