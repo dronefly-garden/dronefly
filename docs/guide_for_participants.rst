@@ -621,6 +621,11 @@ from other nature-related sites:
 - ``https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281``
 - nothing entered after (provides link to Computer Vision Clean-up Wiki on iNaturalist Forum)
 
+``,daves``
+
+- ``https://davesgarden.com/sitewidesearch.php?q={0:query}``
+- put plant-related search terms after command
+
 ``,diptera``
 
 - ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
