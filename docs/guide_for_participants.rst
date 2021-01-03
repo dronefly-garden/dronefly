@@ -430,7 +430,7 @@ Arrow reactions allow paging through pages of results. See
 - The ``not by`` qualifier counts observations / species unobserved by each user in the table. It may be combined with ``from``, but not ``by``.
 
 Tabulate subcommands
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 ``maverick`` - Show maverick identifications.
 
@@ -440,23 +440,23 @@ Tabulate subcommands
 
 - Show taxon best matching the query. Query may contain:
 
-   - id# of the iNaturalist taxon
+  - id# of the iNaturalist taxon
 
-   - initial letters of scientific or common names
+  - initial letters of scientific or common names
    
-   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>`__, for birds
+  - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>`__, for birds
    
 ..
 
 - Additionally...
 
-   - double-quotes can be used around exact words in the name
+  - double-quotes can be used around exact words in the name
 
-   - rank keywords will filter by rank (species, family, etc.)
+  - rank keywords will filter by rank (species, family, etc.)
    
-     Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
+    Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
 
-   - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
+  - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
    
 Taxon subcommands
 ^^^^^^^^^^^^^^^^^^
