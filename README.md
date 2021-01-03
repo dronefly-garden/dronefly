@@ -256,7 +256,7 @@ An example command to verify the alias works:
 > **White-barred x White-wedged Piculet** \
 > · 07:10, 15 Sep: 1 at Ipeúna--Mata do vira-folha
 
-*Tip: See https://github.com/synrg/dronefly/issues/2#issuecomment-526963273 for advice on scheduled execution of an **ebird** subcommand, such as to alert channel users to new observations of hybrids found in the region.*
+*Tip: For scheduling execution of the hybrids command, use a scheduled command execution cog. We recommend `fifo` by Bobloy from the https://github.com/bobloy/Fox-V3 repository.*
 
 ## TODO
 
