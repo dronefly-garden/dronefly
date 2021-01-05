@@ -422,11 +422,8 @@ Arrow reactions allow paging through pages of results. See
 ``,tabulate`` (``,tab``)
 
 - Show a table from iNaturalist data matching the query.
-
 - Only taxa can be tabulated. More kinds of table to be supported in future releases.
-
 - The row contents can be ``from`` or ``by``. If both are given, what to tabulate is filtered by the from place, and the by person is the first row.
-
 - The ``not by`` qualifier counts observations / species unobserved by each user in the table. It may be combined with ``from``, but not ``by``.
 
 Tabulate subcommands
@@ -439,24 +436,17 @@ Tabulate subcommands
 ``,taxon`` (``,t``)
 
 - Show taxon best matching the query. Query may contain:
-
   - id# of the iNaturalist taxon
-
   - initial letters of scientific or common names
-   
   - `AOU 4-letter code <https://www.birdpop.org/pages/birdSpeciesCodes.php>`__, for birds
    
 ..
 
 - Additionally...
-
-  - double-quotes can be used around exact words in the name
-
-  - rank keywords will filter by rank (species, family, etc.)
-   
-    Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
-
-  - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
+    - double-quotes can be used around exact words in the name
+    - rank keywords will filter by rank (species, family, etc.)
+      - Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
+    - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
    
 Taxon subcommands
 ^^^^^^^^^^^^^^^^^^
@@ -745,6 +735,7 @@ from other nature-related sites:
 
 - Retrigger
 - nothing entered after (displays image of iNaturalist map key)
+
 |image73|
 
 ``,maverick``
@@ -929,7 +920,8 @@ Dumbo commands
 
 Calc Actions
 ^^^^^^^^^^^^^^
-Operators: `+` (add), - (subtract), * (multiply), / (divide), ^ (exponent), % (modulus), and parentheses: ( and )
+Operators: ``+`` (add), ``-`` (subtract), ``*`` (multiply), ``/`` (divide),
+``^`` (exponent), ``%`` (modulus), and parentheses: ``(`` and ``)``
 
 Constants: pi and e
 
@@ -1245,7 +1237,6 @@ Dronefly search results are accompanied by icons as follows:
 |image63| Observation is favorited
 |image64| Observation has identification
 |image65| Observation has comment
-\         
 ========= ====================================
 
 .. |image1| image:: ./Pictures/100000000000077A000004076AFB08886503F74E.jpg
