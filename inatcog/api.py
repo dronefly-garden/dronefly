@@ -96,11 +96,16 @@ class INatAPI:
         endpoint = "/v1/observations"
         id_arg = f"/{args[0]}" if args else ""
 
+        time_since_request = time() - self.request_time
+        if time_since_request < 1.0:
+            await asyncio.sleep(1.0 - time_since_request)
         async with self.session.get(
-            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
+            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs,
         ) as response:
             if response.status == 200:
-                return await response.json()
+                response_json = await response.json()
+                self.request_time = time()
+                return response_json
 
     async def get_observation_bounds(self, taxon_ids):
         """Get the bounds for the specified observations."""
