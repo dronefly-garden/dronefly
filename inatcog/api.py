@@ -3,6 +3,7 @@ from time import time
 from typing import Union
 import asyncio
 import aiohttp
+from .common import LOG
 from .base_classes import API_BASE_URL
 
 
@@ -17,6 +18,20 @@ class INatAPI:
         self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
         self.taxa_cache = {}
+
+    async def get_rate_limited(self, full_url, **kwargs):
+        """Query API, respecting 60 requests per minute rate limit."""
+        LOG.info(full_url)
+        LOG.info(kwargs)
+        time_since_request = time() - self.request_time
+        if time_since_request < 1.0:
+            await asyncio.sleep(1.0 - time_since_request)
+        async with self.session.get(full_url, params=kwargs) as response:
+            if response.status == 200:
+                response_json = await response.json()
+                self.request_time = time()
+                return response_json
+        return None
 
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
@@ -90,22 +105,22 @@ class INatAPI:
                 return await response.json()
 
     async def get_observations(self, *args, **kwargs):
-        """Query API for observations matching parameters."""
+        """Query API for observations.
 
-        # Select endpoint based on call signature:
+        Parameters
+        ----------
+        *args
+            - If first positional argument is given, it is passed through
+              as-is, appended to the /v1/observations endpoint.
+
+        **kwargs
+            - All kwargs are passed as params on the API call.
+        """
+
         endpoint = "/v1/observations"
         id_arg = f"/{args[0]}" if args else ""
-
-        time_since_request = time() - self.request_time
-        if time_since_request < 1.0:
-            await asyncio.sleep(1.0 - time_since_request)
-        async with self.session.get(
-            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs,
-        ) as response:
-            if response.status == 200:
-                response_json = await response.json()
-                self.request_time = time()
-                return response_json
+        full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
+        return await self.get_rate_limited(full_url, **kwargs)
 
     async def get_observation_bounds(self, taxon_ids):
         """Get the bounds for the specified observations."""
