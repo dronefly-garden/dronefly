@@ -99,7 +99,7 @@ class INatEmbed(discord.Embed):
         """Return place_id from embed url, if present."""
         if self.url:
             mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-            if mat:
+            if mat and mat["place_id"]:
                 return int(mat["place_id"])
         return None
 
@@ -107,7 +107,9 @@ class INatEmbed(discord.Embed):
         """Return taxon_id from embed url, if present."""
         if self.url:
             mat = re.match(PAT_TAXON_LINK, self.url)
-            if mat:
+            if not mat:
+                mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+            if mat and mat["taxon_id"]:
                 return int(mat["taxon_id"])
         return None
 
@@ -115,7 +117,7 @@ class INatEmbed(discord.Embed):
         """Return user_id from embed url, if present."""
         if self.url:
             mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-            if mat:
+            if mat and mat["user_id"]:
                 return int(mat["user_id"])
         return None
 
