@@ -3,5 +3,5 @@ dataclasses-json
 ebird-api
 html2markdown
 inflect
-timeago==1.0.10
+timeago
 asyncio-throttle
