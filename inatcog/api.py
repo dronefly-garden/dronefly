@@ -2,6 +2,7 @@
 from time import time
 from typing import Union
 import asyncio
+from asyncio_throttle import Throttler
 import aiohttp
 from .common import LOG
 from .base_classes import API_BASE_URL
@@ -18,31 +19,23 @@ class INatAPI:
         self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
         self.taxa_cache = {}
+        self.api_v1_throttler = Throttler(rate_limit=60, period=60)
 
-    async def get_rate_limited(self, full_url, **kwargs):
+    async def _get_rate_limited(self, full_url, **kwargs):
         """Query API, respecting 60 requests per minute rate limit."""
-        LOG.info(full_url)
-        LOG.info(kwargs)
-        time_since_request = time() - self.request_time
-        if time_since_request < 1.0:
-            await asyncio.sleep(1.0 - time_since_request)
-        async with self.session.get(full_url, params=kwargs) as response:
-            if response.status == 200:
-                response_json = await response.json()
-                self.request_time = time()
-                return response_json
+        LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
+        async with self.api_v1_throttler:
+            async with self.session.get(full_url, params=kwargs) as response:
+                if response.status == 200:
+                    return await response.json()
         return None
 
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
 
         endpoint = "/".join(("/v1/controlled_terms", *args))
-
-        async with self.session.get(
-            f"{API_BASE_URL}{endpoint}", params=kwargs
-        ) as response:
-            if response.status == 200:
-                return await response.json()
+        full_url = f"{API_BASE_URL}{endpoint}"
+        return await self._get_rate_limited(full_url, **kwargs)
 
     # refresh_cache: Boolean
     # - Unlike places and projects which change infrequently, we usually want the
@@ -76,6 +69,7 @@ class INatAPI:
         # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
         endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
         id_arg = f"/{args[0]}" if args else ""
+        full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
 
         # Cache lookup by id#, as those should be stable.
         # - note: we could support splitting a list of id#s and caching each
@@ -84,25 +78,13 @@ class INatAPI:
         if args and (isinstance(args[0], int) or args[0].isnumeric()):
             taxon_id = int(args[0])
             if refresh_cache or taxon_id not in self.taxa_cache:
-                # Rate-limit these so they can be retrieved in a loop without tripping
-                # iNat API's rate-limiting.
-                time_since_request = time() - self.request_time
-                if time_since_request < 1.0:
-                    await asyncio.sleep(1.0 - time_since_request)
-                async with self.session.get(
-                    f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs,
-                ) as response:
-                    if response.status == 200:
-                        self.taxa_cache[taxon_id] = await response.json()
-                        self.request_time = time()
+                taxon = await self._get_rate_limited(full_url, **kwargs)
+                if taxon:
+                    self.taxa_cache[taxon_id] = taxon
             return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
 
         # Skip the cache for text queries which are not stable.
-        async with self.session.get(
-            f"{API_BASE_URL}{endpoint}{id_arg}", params=kwargs
-        ) as response:
-            if response.status == 200:
-                return await response.json()
+        return await self._get_rate_limited(full_url, **kwargs)
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
@@ -120,7 +102,7 @@ class INatAPI:
         endpoint = "/v1/observations"
         id_arg = f"/{args[0]}" if args else ""
         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
-        return await self.get_rate_limited(full_url, **kwargs)
+        return await self._get_rate_limited(full_url, **kwargs)
 
     async def get_observation_bounds(self, taxon_ids):
         """Get the bounds for the specified observations."""
@@ -132,7 +114,7 @@ class INatAPI:
         }
 
         result = await self.get_observations(**kwargs)
-        if "total_bounds" in result:
+        if result and "total_bounds" in result:
             return result["total_bounds"]
 
         return None
@@ -141,42 +123,29 @@ class INatAPI:
         """Get an observation's taxon summary."""
 
         endpoint = f"/v1/observations/{obs_id}/taxon_summary"
-
-        async with self.session.get(
-            f"{API_BASE_URL}{endpoint}", params=kwargs
-        ) as response:
-            if response.status == 200:
-                return await response.json()
+        full_url = f"{API_BASE_URL}{endpoint}"
+        return await self._get_rate_limited(full_url, **kwargs)
 
     async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):
         """Query API for places matching place ID or params."""
 
         # Select endpoint based on call signature:
         request = f"/v1/places/{query}"
+        full_url = f"{API_BASE_URL}{request}"
 
         # Cache lookup by id#, as those should be stable.
         if isinstance(query, int) or query.isnumeric():
             place_id = int(query)
             if refresh_cache or place_id not in self.places_cache:
-                # Rate-limit these so they can be retrieved in a loop without tripping
-                # iNat API's rate-limiting.
-                time_since_request = time() - self.request_time
-                if time_since_request < 1.0:
-                    await asyncio.sleep(1.0 - time_since_request)
-                async with self.session.get(f"{API_BASE_URL}{request}") as response:
-                    if response.status == 200:
-                        self.places_cache[place_id] = await response.json()
-                        self.request_time = time()
+                place = await self._get_rate_limited(full_url, **kwargs)
+                if place:
+                    self.places_cache[place_id] = place
             return (
                 self.places_cache[place_id] if place_id in self.places_cache else None
             )
 
         # Skip the cache for text queries which are not stable.
-        async with self.session.get(
-            f"{API_BASE_URL}{request}", params=kwargs
-        ) as response:
-            if response.status == 200:
-                return await response.json()
+        return await self._get_rate_limited(full_url, **kwargs)
 
     async def get_projects(
         self, query: Union[str, int, list], refresh_cache=False, **kwargs
