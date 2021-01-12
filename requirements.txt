@@ -4,4 +4,4 @@ ebird-api
 html2markdown
 inflect
 timeago
-asyncio-throttle
+aiolimiter

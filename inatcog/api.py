@@ -2,7 +2,7 @@
 from time import time
 from typing import Union
 import asyncio
-from asyncio_throttle import Throttler
+from aiolimiter import AsyncLimiter
 import aiohttp
 from .common import LOG
 from .base_classes import API_BASE_URL
@@ -19,12 +19,12 @@ class INatAPI:
         self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
         self.taxa_cache = {}
-        self.api_v1_throttler = Throttler(rate_limit=60, period=60)
+        self.api_v1_limiter = AsyncLimiter(60, 60)
 
     async def _get_rate_limited(self, full_url, **kwargs):
         """Query API, respecting 60 requests per minute rate limit."""
         LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
-        async with self.api_v1_throttler:
+        async with self.api_v1_limiter:
             async with self.session.get(full_url, params=kwargs) as response:
                 if response.status == 200:
                     return await response.json()
