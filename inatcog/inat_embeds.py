@@ -508,14 +508,20 @@ class INatEmbeds(MixinMeta):
             preferred_place_id = await self.get_home(ctx)
             if not common_ancestor_indices:
                 taxon = await get_taxon(
-                    self, TAXON_ID_LIFE, preferred_place_id=preferred_place_id
+                    self,
+                    TAXON_ID_LIFE,
+                    preferred_place_id=preferred_place_id,
+                    refresh_cache=False,
                 )
             else:
                 common_ancestor_id = first_taxon_ancestor_ids[
                     max(common_ancestor_indices)
                 ]
                 taxon = await get_taxon(
-                    self, common_ancestor_id, preferred_place_id=preferred_place_id
+                    self,
+                    common_ancestor_id,
+                    preferred_place_id=preferred_place_id,
+                    refresh_cache=False,
                 )
 
         description = (
@@ -856,7 +862,7 @@ class INatEmbeds(MixinMeta):
             return
 
         inat_embed = msg.embeds[0]
-        taxon = await get_taxon(self, inat_embed.taxon_id())
+        taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
         # Observed by count add/remove for taxon:
         await self.edit_totals_locked(msg, taxon, inat_user, action, counts_pat)
 
@@ -891,7 +897,7 @@ class INatEmbeds(MixinMeta):
         place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
             update_place.display_name
         )
-        taxon = await get_taxon(self, inat_embed.taxon_id())
+        taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
         await self.edit_place_totals_locked(
             msg, taxon, update_place, action, place_counts_pat
         )
