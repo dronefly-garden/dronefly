@@ -18,6 +18,14 @@ class INatAPI:
         self.users_login_cache = {}
         self.session = aiohttp.ClientSession()
         self.taxa_cache = {}
+        # api_v1_limiter:
+        # ---------------
+        # - Allow a burst of 60 calls (max_rate) for 60 seconds (time_period)
+        #   before enforcing a rate limit of 60 requests per minute.
+        # - This honours "try to keep it to 60 requests per minute or lower":
+        #   - https://api.inaturalist.org/v1/docs/
+        # - Since the iNat API doesn't throttle until 100 requests per minute,
+        #   this should ensure we never get throttled.
         self.api_v1_limiter = AsyncLimiter(60, 60)
 
     async def _get_rate_limited(self, full_url, **kwargs):
