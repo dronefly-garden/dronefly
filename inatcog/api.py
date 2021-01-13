@@ -20,8 +20,9 @@ class INatAPI:
         self.taxa_cache = {}
         # api_v1_limiter:
         # ---------------
-        # - Allow a burst of 60 calls (max_rate) for 60 seconds (time_period)
-        #   before enforcing a rate limit of 60 requests per minute.
+        # - Allow a burst of 60 requests (i.e. equal to max_rate) in the initial
+        #   seconds of the 60 second time_period before enforcing a rate limit of
+        #   60 requests per minute (max_rate).
         # - This honours "try to keep it to 60 requests per minute or lower":
         #   - https://api.inaturalist.org/v1/docs/
         # - Since the iNat API doesn't throttle until 100 requests per minute,
