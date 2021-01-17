@@ -36,6 +36,11 @@ class INatAPI:
             async with self.session.get(full_url, params=kwargs) as response:
                 if response.status == 200:
                     return await response.json()
+                else:
+                    json = await response.json()
+                    msg = f"{json.get('error')} ({json.get('status')})"
+                    raise LookupError(f"Lookup failed: {msg}")
+
         return None
 
     async def get_controlled_terms(self, *args, **kwargs):
