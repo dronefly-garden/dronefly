@@ -38,8 +38,9 @@ class INatAPI:
                     return await response.json()
                 else:
                     json = await response.json()
-                    msg = f"{json.get('error')} ({json.get('status')})"
-                    raise LookupError(f"Lookup failed: {msg}")
+                    msg = f"Lookup failed: {json.get('error')} ({json.get('status')})"
+                    LOG.error(msg)
+                    raise LookupError(msg)
 
         return None
 
