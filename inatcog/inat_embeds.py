@@ -59,6 +59,14 @@ SHORT_DATE_PAT = re.compile(
 )
 TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
+PLACE_ID_PAT = re.compile(
+    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]place_id=(?P<place_id>\d+).*?\)"
+)
+UNOBSERVED_BY_USER_ID_PAT = re.compile(
+    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]unobserved_by_user_id=(?P<unobserved_by_user_id>\d+).*?\)",
+)
+USER_ID_PAT = re.compile(r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]user_id=(?P<user_id>\d+).*?\)")
+
 REACTION_EMOJI = {
     "self": "#️⃣",
     "user": "📝",
@@ -83,6 +91,17 @@ class INatEmbed(discord.Embed):
         """Create an inat embed from discord.Embed argument."""
         return cls.from_dict(embed.to_dict())
 
+    def inat_content_as_dict(self):
+        """Return iNat content from embed as dict."""
+        content = dict()
+        content["listed_not_by_user_ids"] = self.listed_not_by_user_ids()
+        content["listed_place_ids"] = self.listed_place_ids()
+        content["listed_user_ids"] = self.listed_user_ids()
+        content["place_id"] = self.place_id()
+        content["taxon_id"] = self.taxon_id()
+        content["user_id"] = self.user_id()
+        return content
+
     def has_users(self):
         """Embed has a user counts table."""
         return bool(re.search(TAXON_COUNTS_HEADER_PAT, self.description or ""))
@@ -93,33 +112,60 @@ class INatEmbed(discord.Embed):
 
     def has_places(self):
         """Embed has a place counts table."""
+        # prevent misdetect as 'not by' (unobserved_by_user_id=# can have a place filter applied)
         return bool(re.search(TAXON_PLACES_HEADER_PAT, self.description or ""))
+
+    def listed_not_by_user_ids(self):
+        """Return listed users, if present."""
+        if not self.has_not_by_users():
+            return None
+
+        return [
+            int(id) for id in re.findall(UNOBSERVED_BY_USER_ID_PAT, self.description)
+        ]
+
+    def listed_place_ids(self):
+        """Return listed places, if present."""
+        if not self.has_places():
+            return None
+
+        return [int(id) for id in re.findall(PLACE_ID_PAT, self.description)]
+
+    def listed_user_ids(self):
+        """Return listed users, if present."""
+        if not self.has_users():
+            return None
+
+        return [int(id) for id in re.findall(USER_ID_PAT, self.description)]
 
     def place_id(self):
         """Return place_id from embed url, if present."""
-        if self.url:
-            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-            if mat and mat["place_id"]:
-                return int(mat["place_id"])
-        return None
+        if not self.url:
+            return None
+
+        mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+        if mat and mat["place_id"]:
+            return int(mat["place_id"])
 
     def taxon_id(self):
         """Return taxon_id from embed url, if present."""
-        if self.url:
-            mat = re.match(PAT_TAXON_LINK, self.url)
-            if not mat:
-                mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-            if mat and mat["taxon_id"]:
-                return int(mat["taxon_id"])
-        return None
+        if not self.url:
+            return None
+
+        mat = re.match(PAT_TAXON_LINK, self.url)
+        if not mat:
+            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+        if mat and mat["taxon_id"]:
+            return int(mat["taxon_id"])
 
     def user_id(self):
         """Return user_id from embed url, if present."""
-        if self.url:
-            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-            if mat and mat["user_id"]:
-                return int(mat["user_id"])
-        return None
+        if not self.url:
+            return None
+
+        mat = re.match(PAT_OBS_TAXON_LINK, self.url)
+        if mat and mat["user_id"]:
+            return int(mat["user_id"])
 
 
 @format_items_for_embed

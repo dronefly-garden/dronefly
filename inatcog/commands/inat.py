@@ -1,6 +1,7 @@
 """Module for inat command group."""
 
 import asyncio
+import pprint
 from typing import Optional, Union
 import discord
 from redbot.core import checks, commands
@@ -8,7 +9,7 @@ from redbot.core import checks, commands
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters import InheritableBoolConverter
 from inatcog.embeds import make_embed
-from inatcog.inat_embeds import INatEmbeds
+from inatcog.inat_embeds import INatEmbeds, INatEmbed
 from inatcog.interfaces import MixinMeta
 
 
@@ -250,6 +251,26 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat.group(name="show")
     async def inat_show(self, ctx):
         """Show iNat settings."""
+
+    @inat.command(name="inspect")
+    async def inat_inspect(self, ctx, message_id: int):
+        """Inspect a message and show any iNat embed contents."""
+        try:
+            message = await ctx.channel.fetch_message(message_id)
+        except discord.errors.NotFound:
+            await ctx.send(f"Message not found: {message_id}")
+            return
+
+        if not message.embeds:
+            await ctx.send(f"Message has no embed: {message.jump_url}")
+            return
+
+        inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
+        embed = make_embed(
+            title=f"Message id: {message.id}",
+            description=f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```",
+        )
+        await ctx.send(message.jump_url, embed=embed)
 
     @inat_show.command(name="autoobs")
     async def show_autoobs(self, ctx):
