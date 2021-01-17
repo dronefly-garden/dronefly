@@ -5,7 +5,7 @@ import contextlib
 from io import BytesIO
 import re
 from typing import Union
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode, urlsplit
 import discord
 from discord import DMChannel, File
 import html2markdown
@@ -17,6 +17,7 @@ from .base_classes import (
     MEANS_LABEL_DESC,
     WWW_BASE_URL,
     PAT_OBS_LINK,
+    PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
     Place,
     FilteredTaxon,
@@ -139,33 +140,45 @@ class INatEmbed(discord.Embed):
         return [int(id) for id in re.findall(USER_ID_PAT, self.description)]
 
     def place_id(self):
-        """Return place_id from embed url, if present."""
+        """Return place_id(s) from embed url, if present."""
         if not self.url:
             return None
 
-        mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-        if mat and mat["place_id"]:
-            return int(mat["place_id"])
+        mat = re.match(PAT_OBS_QUERY, self.url)
+        if not mat:
+            return None
+        url = urlsplit(mat["url"])
+        params = parse_qs(url.query)
+        return params.get("place_id")
 
     def taxon_id(self):
-        """Return taxon_id from embed url, if present."""
+        """Return taxon_id(s) from embed url, if present."""
         if not self.url:
             return None
 
+        # Could be direct link to /taxa/# record
         mat = re.match(PAT_TAXON_LINK, self.url)
-        if not mat:
-            mat = re.match(PAT_OBS_TAXON_LINK, self.url)
         if mat and mat["taxon_id"]:
             return int(mat["taxon_id"])
+        # Otherwise, match from /observations query
+        mat = re.match(PAT_OBS_QUERY, self.url)
+        if not mat:
+            return None
+        url = urlsplit(mat["url"])
+        params = parse_qs(url.query)
+        return params.get("taxon_id")
 
     def user_id(self):
-        """Return user_id from embed url, if present."""
+        """Return user_id(s) from embed url, if present."""
         if not self.url:
             return None
 
-        mat = re.match(PAT_OBS_TAXON_LINK, self.url)
-        if mat and mat["user_id"]:
-            return int(mat["user_id"])
+        mat = re.match(PAT_OBS_QUERY, self.url)
+        if not mat:
+            return None
+        url = urlsplit(mat["url"])
+        params = parse_qs(url.query)
+        return params.get("user_id")
 
 
 @format_items_for_embed

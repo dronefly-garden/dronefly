@@ -36,6 +36,11 @@ PAT_OBS_TAXON_LINK = re.compile(
     re.I,
 )
 
+QUERY_PAT = r"\??(?:&?[^=&]*=[^=&]*)*"
+PAT_OBS_QUERY = re.compile(
+    r"(?P<url>" + WWW_URL_PAT + r"/observations" + QUERY_PAT + ")"
+)
+
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
 RANK_LEVELS = {
