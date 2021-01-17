@@ -149,7 +149,8 @@ class INatEmbed(discord.Embed):
             return None
         url = urlsplit(mat["url"])
         params = parse_qs(url.query)
-        return params.get("place_id")
+        place_id = params.get("place_id")
+        return int(place_id[0]) if place_id else None
 
     def taxon_id(self):
         """Return taxon_id(s) from embed url, if present."""
@@ -166,7 +167,8 @@ class INatEmbed(discord.Embed):
             return None
         url = urlsplit(mat["url"])
         params = parse_qs(url.query)
-        return params.get("taxon_id")
+        taxon_id = params.get("taxon_id")
+        return int(taxon_id[0]) if taxon_id else None
 
     def user_id(self):
         """Return user_id(s) from embed url, if present."""
@@ -178,7 +180,8 @@ class INatEmbed(discord.Embed):
             return None
         url = urlsplit(mat["url"])
         params = parse_qs(url.query)
-        return params.get("user_id")
+        user_id = params.get("user_id")
+        return int(user_id[0]) if user_id else None
 
 
 @format_items_for_embed
