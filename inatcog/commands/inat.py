@@ -266,10 +266,17 @@ class CommandsInat(INatEmbeds, MixinMeta):
             return
 
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
-        embed = make_embed(
-            title=f"Message id: {message.id}",
-            description=f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```",
-        )
+        inat_content = pprint.pformat(inat_embed.inat_content_as_dict())
+        embed_description = inat_embed.description
+        embed_dict = inat_embed.to_dict()
+        del embed_dict["description"]
+        embed_content = pprint.pformat(embed_dict)
+        description = (
+            "**inat_content:**\n```py\n{0}\n```\n"
+            "**description:**\n```md\n{1}\n```\n"
+            "**embed:**```py\n{2}\n```"
+        ).format(inat_content, embed_description, embed_content,)
+        embed = make_embed(title=f"Message id: {message.id}", description=description,)
         thumbnail = inat_embed.thumbnail
         image = inat_embed.image
         if thumbnail and thumbnail.url:
