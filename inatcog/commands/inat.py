@@ -271,20 +271,19 @@ class CommandsInat(INatEmbeds, MixinMeta):
             f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```"
         )
         inat_inspect_embed = make_embed(
-            title=f"iNat objects (id: {message.id})", description=inat_inspect
+            title="iNat object ids", description=inat_inspect
         )
 
         embed_description = f"```md\n{inat_embed.description}\n```"
         description_embed = make_embed(
-            title=f"Formatted description (id: {message.id})",
-            description=embed_description,
+            title="Markdown formatted content", description=embed_description,
         )
 
         embed_dict = inat_embed.to_dict()
         del embed_dict["description"]
         attributes_inspect = f"```py\n{pprint.pformat(embed_dict)}\n```"
         attributes_embed = make_embed(
-            title=f"Embed attributes (id: {message.id}", description=attributes_inspect
+            title="Embed attributes", description=attributes_inspect
         )
 
         embeds = [inat_embed, description_embed, inat_inspect_embed, attributes_embed]
