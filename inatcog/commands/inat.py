@@ -5,6 +5,7 @@ import pprint
 from typing import Optional, Union
 import discord
 from redbot.core import checks, commands
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters import InheritableBoolConverter
@@ -266,24 +267,33 @@ class CommandsInat(INatEmbeds, MixinMeta):
             return
 
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
-        inat_content = pprint.pformat(inat_embed.inat_content_as_dict())
-        embed_description = inat_embed.description
-        embed_dict = inat_embed.to_dict()
-        del embed_dict["description"]
-        embed_content = pprint.pformat(embed_dict)
-        description = (
-            "**inat_content:**\n```py\n{0}\n```\n"
-            "**description:**\n```md\n{1}\n```\n"
-            "**embed:**```py\n{2}\n```"
-        ).format(inat_content, embed_description, embed_content,)
-        embed = make_embed(title=f"Message id: {message.id}", description=description,)
+        inat_inspect = (
+            f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```"
+        )
+        inat_inspect_embed = make_embed(
+            title=f"iNat objects (id: {message.id})", description=inat_inspect
+        )
         thumbnail = inat_embed.thumbnail
         image = inat_embed.image
         if thumbnail and thumbnail.url:
-            embed.set_thumbnail(url=thumbnail.proxy_url)
+            inat_inspect_embed.set_thumbnail(url=thumbnail.proxy_url)
         if image and image.url:
-            embed.set_image(url=image.proxy_url)
-        await ctx.send(message.jump_url, embed=embed)
+            inat_inspect_embed.set_image(url=image.proxy_url)
+
+        embed_description = f"```md\n{inat_embed.description}\n```"
+        description_embed = make_embed(
+            title=f"Formatted description (id: {message.id})",
+            description=embed_description,
+        )
+
+        embed_dict = inat_embed.to_dict()
+        del embed_dict["description"]
+        attributes_inspect = f"```py\n{pprint.pformat(embed_dict)}\n```"
+        attributes_embed = make_embed(
+            title=f"Embed attributes (id: {message.id}", description=attributes_inspect
+        )
+        embeds = [inat_embed, description_embed, inat_inspect_embed, attributes_embed]
+        await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat_show.command(name="autoobs")
     async def show_autoobs(self, ctx):
