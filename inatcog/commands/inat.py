@@ -273,12 +273,6 @@ class CommandsInat(INatEmbeds, MixinMeta):
         inat_inspect_embed = make_embed(
             title=f"iNat objects (id: {message.id})", description=inat_inspect
         )
-        thumbnail = inat_embed.thumbnail
-        image = inat_embed.image
-        if thumbnail and thumbnail.url:
-            inat_inspect_embed.set_thumbnail(url=thumbnail.proxy_url)
-        if image and image.url:
-            inat_inspect_embed.set_image(url=image.proxy_url)
 
         embed_description = f"```md\n{inat_embed.description}\n```"
         description_embed = make_embed(
@@ -292,7 +286,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         attributes_embed = make_embed(
             title=f"Embed attributes (id: {message.id}", description=attributes_inspect
         )
+
         embeds = [inat_embed, description_embed, inat_inspect_embed, attributes_embed]
+
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
     @inat_show.command(name="autoobs")
