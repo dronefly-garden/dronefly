@@ -270,6 +270,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
             title=f"Message id: {message.id}",
             description=f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```",
         )
+        thumbnail = inat_embed.thumbnail
+        image = inat_embed.image
+        if thumbnail and thumbnail.url:
+            embed.set_thumbnail(url=thumbnail.proxy_url)
+        if image and image.url:
+            embed.set_image(url=image.proxy_url)
         await ctx.send(message.jump_url, embed=embed)
 
     @inat_show.command(name="autoobs")
