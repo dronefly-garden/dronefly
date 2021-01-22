@@ -25,6 +25,10 @@ and moral support.
     - Suggestions for & testing of new features. See mentions in
       [issues](https://github.com/synrg/dronefly/search?q=mws&type=Issues).
 
+- **[contiontises](https://www.inaturalist.org/people/coniontises)**
+    - Dronefly profile picture artwork, used both on the iNaturalist
+      [Dronefly profile](https://www.inaturalist.org/people/dronefly) and on
+      Dronefly bot on Discord.
 - **[upupa-epops](https://www.inaturalist.org/people/upupa-epops)**
     - Relied on for input & testing when developing new features, as well as starting
       to file some issues.
