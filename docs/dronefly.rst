@@ -33,15 +33,18 @@ https://discord.gg/jWUq7Dg if:
 Dronefly cog repository
 -----------------------
 
-Dronefly is both the bot itself, based on `Red Discord
-Bot<https://github.com/Cog-Creators/Red-DiscordBot>`__ and also the name of
-the approved repository for the bot at GitHub, providing the components that
-interact with sites of interest to its users, such as iNaturalist. While some
-users, and particularly developers, may have an interest in the repository,
-most users will just want to use the bot on Discord. You don't need to
+Dronefly bot is based on `Red Discord
+Bot<https://github.com/Cog-Creators/Red-DiscordBot>`__ but it is also the
+name of the approved by Red cog repository for the bot on GitHub. The latter
+provides the components that interact with sites of interest to its users,
+such as iNaturalist.
+
+While some developers and some users may have an interest in the repository,
+most will find it simplest to just use the bot on Discord. You don't need to
 download anything from this site to do that.
 
-If you do want to install the cogs, see the Installation instructions below.
+If you do want to run your own bot with the cogs from Dronefly repository on
+it, see the Installation instructions below.
 
 User Guide - iNaturalist (inatcog)
 ----------------------------------
