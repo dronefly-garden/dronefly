@@ -3,6 +3,12 @@ Welcome to Dronefly's documentation!
 
 .. toctree::
     :maxdepth: 2
+    :caption: Dronefly:
+
+    dronefly
+
+.. toctree::
+    :maxdepth: 2
     :caption: iNaturalist Discord Server:
 
     guide_for_participants

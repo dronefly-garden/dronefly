@@ -1,8 +1,34 @@
 [![Red cogs](https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg)](https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
 
-# dronefly
-Dronefly is a [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) Cog collection for naturalists, providing access to the iNaturalist &amp; eBird platforms.
+# Dronefly bot
+
+Dronefly is a bot for naturalists that gives users access to
+[iNaturalist](https://www.inaturalist.org) on [Discord](https://discord.com)
+chat.
+
+Dronefly was made by and for members of the iNaturalist Discord server. You
+are welcome to join our community using this invite link:
+https://discord.gg/uskv2yx
+
+Join the Dronefly support Discord server with this invite
+https://discord.gg/jWUq7Dg if:
+
+- you own a Discord server and want Dronefly on it
+- you already use Dronefly and need support
+- you want to be involved with Dronefly development
+
+## Dronefly cog repository
+
+Dronefly is both the bot itself, based on [Red Discord
+Bot](https://github.com/Cog-Creators/Red-DiscordBot) and also the name of this
+approved repository for the bot, providing the components that interact with
+sites of interest to its users, such as iNaturalist. While some users, and
+particularly developers, may have an interest in the repository, most users
+will just want to use the bot on Discord. You don't need to download anything
+from this site to do that.
+
+If you do want to install the cogs, see the Installation instructions below.
 
 ## Cogs:
 

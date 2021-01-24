@@ -1,0 +1,54 @@
+.. Dronefly
+
+========
+Dronefly
+========
+
+Overview
+--------
+
+.. image:: https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg
+   :target: https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop
+   :alt: Red-DiscordBot cogs
+
+.. image:: https://img.shields.io/badge/discord-py-blue.svg
+   :target: https://github.com/Rapptz/discord.py
+   :alt: discord.py
+
+
+Dronefly is a bot for naturalists that gives users access to `iNaturalist
+<https://www.inaturalist.org>`__ on `Discord <https://discord.com>`__ chat.
+
+Dronefly was made by and for members of the iNaturalist Discord server. You
+are welcome to join our community using this invite link:
+https://discord.gg/uskv2yx
+
+Join the Dronefly support Discord server with this invite
+https://discord.gg/jWUq7Dg if:
+
+- you own a Discord server and want Dronefly on it
+- you already use Dronefly and need support
+- you want to be involved with Dronefly development
+
+Dronefly cog repository
+-----------------------
+
+Dronefly is both the bot itself, based on `Red Discord
+Bot<https://github.com/Cog-Creators/Red-DiscordBot>`__ and also the name of
+the approved repository for the bot at GitHub, providing the components that
+interact with sites of interest to its users, such as iNaturalist. While some
+users, and particularly developers, may have an interest in the repository,
+most users will just want to use the bot on Discord. You don't need to
+download anything from this site to do that.
+
+If you do want to install the cogs, see the Installation instructions below.
+
+User Guide - iNaturalist (inatcog)
+----------------------------------
+
+TODO: migrate Guide for Participant material here.
+
+Server Owner Guide
+------------------
+
+TODO: migrate GitHub wiki material here.
