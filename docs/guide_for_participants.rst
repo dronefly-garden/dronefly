@@ -631,6 +631,11 @@ from other nature-related sites:
 - ``https://doaj.org/search/journals?source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%2C%22size%22%3A50%2C%22sort%22%3A%5B%7B%22created_date%22%3A%7B%22order%22%3A%22desc%22%7D%7D%5D%7D``
 - put search terms after command
 
+``,faunaeu``
+
+- ``https://fauna-eu.org/cdm_dataportal/search/results/taxon?ws=portal%2Ftaxon%2Ffind&query={0:query}&form_build_id=form-XcnY0EAtNC8G2bBQ_fzx-LyrLViJpJwpyb0_OAtXIZo&form_id=cdm_dataportal_search_taxon_form&search[doTaxaByCommonNames]=&search[doSynonyms]=&search[doTaxa]=1&search[pageSize]=25&search[pageNumber]=0``
+- put fauna taxon search terms after command
+
 ``,faves``
 
 - ``https://www.inaturalist.org/faves/{0:query}``
