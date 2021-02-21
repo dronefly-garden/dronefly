@@ -44,7 +44,7 @@ class INatAPI:
                         msg = f"{json.get('error')} ({json.get('status')})"
                     except aiohttp.ContentTypeError:
                         data = await response.text()
-                        document = BeautifulSoup(data)
+                        document = BeautifulSoup(data, "html.parser")
                         # Only use the body, if present
                         if document.body:
                             text = document.body.find().text
