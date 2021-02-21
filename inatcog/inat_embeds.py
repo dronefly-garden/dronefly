@@ -867,14 +867,14 @@ class INatEmbeds(MixinMeta):
         start_adding_reactions(msg, OBS_REACTION_EMOJIS)
 
     def add_taxon_reaction_emojis(
-        self, msg, filtered_taxon: Union[FilteredTaxon, Taxon]
+        self, msg, filtered_taxon: Union[FilteredTaxon, Taxon], taxonomy=True
     ):
         """Add taxon embed reaction emojis."""
         if isinstance(filtered_taxon, FilteredTaxon):
             (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
         else:
             taxon = filtered_taxon
-        if len(taxon.ancestor_ids) > 2:
+        if taxonomy and len(taxon.ancestor_ids) > 2:
             reaction_emojis = TAXON_REACTION_EMOJIS
         else:
             reaction_emojis = NO_PARENT_TAXON_REACTION_EMOJIS
@@ -887,7 +887,13 @@ class INatEmbeds(MixinMeta):
         msg = await ctx.send(
             embed=await self.make_image_embed(ctx, filtered_taxon, index)
         )
-        self.add_taxon_reaction_emojis(msg, filtered_taxon)
+        # TODO: drop taxonomy=False when #139 is fixed
+        # - This workaround omits Taxonomy reaction to make it less likely a
+        #   user will break the display; they can use `,last t` to get the taxon
+        #   display with taxonomy instead, if they need it.
+        # - Note: a tester may still manually add the :regional_indicator_t:
+        #   reaction to test the feature in its current, broken state.
+        self.add_taxon_reaction_emojis(msg, filtered_taxon, taxonomy=False)
 
     async def send_embed_for_taxon(self, ctx, filtered_taxon, include_ancestors=True):
         """Make embed for taxon & send."""
