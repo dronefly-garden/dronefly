@@ -2,6 +2,8 @@
 from time import time
 from typing import Union
 from aiolimiter import AsyncLimiter
+from bs4 import BeautifulSoup
+import html2markdown
 import aiohttp
 from .common import LOG
 from .base_classes import API_BASE_URL
@@ -37,10 +39,24 @@ class INatAPI:
                 if response.status == 200:
                     return await response.json()
                 else:
-                    json = await response.json()
-                    msg = f"Lookup failed: {json.get('error')} ({json.get('status')})"
-                    LOG.error(msg)
-                    raise LookupError(msg)
+                    try:
+                        json = await response.json()
+                        msg = f"{json.get('error')} ({json.get('status')})"
+                    except aiohttp.ContentTypeError:
+                        data = await response.text()
+                        document = BeautifulSoup(data)
+                        # Only use the body, if present
+                        if document.body:
+                            text = document.body.find().text
+                        else:
+                            text = document
+                        # Treat as much as we can as markdown
+                        markdown = html2markdown.convert(text)
+                        # Punt the rest back to bs4 to drop unhandled tags
+                        msg = BeautifulSoup(markdown, "html.parser").text
+                    lookup_failed_msg = f"Lookup failed: {msg}"
+                    LOG.error(lookup_failed_msg)
+                    raise LookupError(lookup_failed_msg)
 
         return None
 
