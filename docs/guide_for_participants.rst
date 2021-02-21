@@ -273,7 +273,10 @@ Dumbo (``-``) - For general purpose admin & info functions, not strictly
 nature-related (e.g. Twitter and Wikipedia).
 
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
-YouTube in the Music channel.
+YouTube in voice channels.
+
+Rythm (``!``) - Plays audio (e.g. music) from  SoundCloud, Twitch, YouTube 
+and more in voice channels. 
 
 (CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
 you’re not interested in bot development, you won’t need it. If you
