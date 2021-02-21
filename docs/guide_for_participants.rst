@@ -261,7 +261,7 @@ Using the Discord Bots
 Access to the Discord bots is one of the great benefits of being on the
 server. Bots are primarily for obtaining information.
 
-There are several bots, which are instances of `Red Discord
+There are several bots, most of which are instances of `Red Discord
 Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
@@ -273,7 +273,10 @@ Dumbo (``-``) - For general purpose admin & info functions, not strictly
 nature-related (e.g. Twitter and Wikipedia).
 
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
-YouTube in the Music channel.
+YouTube in voice channels.
+
+Rythm (``!``) - Plays audio (e.g. music) from  SoundCloud, Twitch, YouTube 
+and more in voice channels. 
 
 (CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
 you’re not interested in bot development, you won’t need it. If you
@@ -630,6 +633,11 @@ from other nature-related sites:
 
 - ``https://doaj.org/search/journals?source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%2C%22size%22%3A50%2C%22sort%22%3A%5B%7B%22created_date%22%3A%7B%22order%22%3A%22desc%22%7D%7D%5D%7D``
 - put search terms after command
+
+``,faunaeu``
+
+- ``https://fauna-eu.org/cdm_dataportal/search/results/taxon?ws=portal%2Ftaxon%2Ffind&query={0:query}&form_build_id=form-XcnY0EAtNC8G2bBQ_fzx-LyrLViJpJwpyb0_OAtXIZo&form_id=cdm_dataportal_search_taxon_form&search[doTaxaByCommonNames]=&search[doSynonyms]=&search[doTaxa]=1&search[pageSize]=25&search[pageNumber]=0``
+- put fauna taxon search terms after command
 
 ``,faves``
 
@@ -1080,7 +1088,7 @@ Access help using ``$help``.
 
 Syntax: ``$play <query>``
 
-Note: Please use these *Commands* in #music channel, and listen in |image43|
+Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
 ``$autoplay``
 
@@ -1171,6 +1179,151 @@ Note: Please use these *Commands* in #music channel, and listen in |image43|
 ``$volume``
 
 - Set the volume, 1% - 150%.
+
+Rythm commands
+-----------------
+
+Access help using ``!help``.
+
+Syntax: ``!play <query>``
+
+Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
+
+``!aliases``
+
+- List command aliases.
+
+``!clear``
+
+- Clears the queue.
+
+``!disconnect``
+
+- Disconnect the bot from the voice channel it is in.
+
+``!donate``
+
+- Info about donating to support Rythm!
+
+``!forward``
+
+- Forwards by a certain amount in the current track.
+
+``!info``
+
+- Info about Rythm!
+
+``!invite``
+
+- Links!
+
+``!join``
+
+- Summons the bot to your voice channel.
+
+``!leavecleanup``
+
+- Removes absent user's songs from the Queue.
+
+``!loop``
+
+- Loop the currently playing song.
+
+``!loopqueue``
+
+- Loops the whole queue.
+
+``!lyrics``
+
+- Gets the lyrics of the current playing song
+
+``!move``
+
+- Moves a certain song to the first position in the queue or to a chosen position
+
+``!np``
+
+- Shows what song the bot is currently playing.
+
+``!pause``
+
+- Pauses the currently playing track.
+
+``!ping``
+
+- Checks the bot's response time to Discord.
+
+``!play``
+
+- Plays a song with the given name or url.
+
+``!playskip``
+
+- Adds a song to the top of the queue then skips to it.
+
+``!playtop``
+
+- Like the play command, but queues from the top.
+
+``!queue``
+
+- View the queue. To view different pages, type the command with the specified page number after it (`queue 2`).
+
+``!remove``
+
+- Removes a certain entry from the queue.
+
+``!removedupes``
+
+- Removes duplicate songs from the queue.
+
+``!replay``
+
+- Reset the progress of the current song
+
+``!resume``
+
+- Resume paused music.
+
+``!rewind``
+
+- Rewinds by a certain amount in the current track.
+
+``!search``
+
+- Searches YouTube for results of a URL.
+
+``!seek``
+
+- Seeks to a certain point in the current track.
+
+``!settings``
+
+- Change Rythm's settings.
+
+``!shuffle``
+
+- Shuffles the queue.
+
+``!skip``
+
+- Skips the currently playing song.
+
+``!skipto``
+
+- Skips to a certain position in the queue.
+
+``!soundcloud``
+
+- Searches Soundcloud for a song
+
+``!stats``
+
+- Shows the stats of the bot.
+
+``!volume``
+
+- Check or change the current volume.
 
 ==========
 Appendices
