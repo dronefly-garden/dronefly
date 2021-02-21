@@ -1088,7 +1088,7 @@ Access help using ``$help``.
 
 Syntax: ``$play <query>``
 
-Note: Please use these *Commands* in #music channel, and listen in |image43|
+Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
 ``$autoplay``
 
@@ -1179,6 +1179,139 @@ Note: Please use these *Commands* in #music channel, and listen in |image43|
 ``$volume``
 
 - Set the volume, 1% - 150%.
+
+Rythm commands
+-----------------
+
+Access help using ``!help``.
+
+Syntax: ``!play <query>``
+
+Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
+
+``!clear``
+
+- Clears the queue.
+
+``!disconnect``
+
+- Disconnect the bot from the voice channel it is in.
+
+``!donate``
+
+- Info about donating to support Rythm!
+
+``!forward``
+
+- Forwards by a certain amount in the current track.
+
+``!info``
+
+- Info about Rythm!
+
+``!invite``
+
+- Links!
+
+``!join``
+
+- Summons the bot to your voice channel.
+
+``!leavecleanup``
+
+- Removes absent user's songs from the Queue.
+
+``!loop``
+
+- Loop the currently playing song.
+
+``!loopqueue``
+
+- Loops the whole queue.
+
+``!lyrics``
+
+- Gets the lyrics of the current playing song
+
+``!move``
+
+- Moves a certain song to the first position in the queue or to a chosen position
+
+``!np``
+
+- Shows what song the bot is currently playing.
+
+``!pause``
+
+- Pauses the currently playing track.
+
+``!play``
+
+- Plays a song with the given name or url.
+
+``!playskip``
+
+- Adds a song to the top of the queue then skips to it.
+
+``!playtop``
+
+- Like the play command, but queues from the top.
+
+``!queue``
+
+- View the queue. To view different pages, type the command with the specified page number after it (`queue 2`).
+
+``!remove``
+
+- Removes a certain entry from the queue.
+
+``!removedupes``
+
+- Removes duplicate songs from the queue.
+
+``!replay``
+
+- Reset the progress of the current song
+
+``!resume``
+
+- Resume paused music.
+
+``!rewind``
+
+- Rewinds by a certain amount in the current track.
+
+``!search``
+
+- Searches YouTube for results of a URL.
+
+``!seek``
+
+- Seeks to a certain point in the current track.
+
+``!shuffle``
+
+- Shuffles the queue.
+
+``!skip``
+
+- Skips the currently playing song.
+
+``!skipto``
+
+- Skips to a certain position in the queue.
+
+``!soundcloud``
+
+- Searches soundcloud for a song
+
+``!stats``
+
+- Shows the stats of the bot.
+
+``!volume``
+
+- Check or change the current volume.
 
 ==========
 Appendices
