@@ -1189,6 +1189,10 @@ Syntax: ``!play <query>``
 
 Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
+``!aliases``
+
+- List command aliases.
+
 ``!clear``
 
 - Clears the queue.
@@ -1245,6 +1249,10 @@ Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
 - Pauses the currently playing track.
 
+``!ping``
+
+- Checks the bot's response time to Discord.
+
 ``!play``
 
 - Plays a song with the given name or url.
@@ -1289,6 +1297,10 @@ Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
 - Seeks to a certain point in the current track.
 
+``!settings``
+
+- Change Rythm's settings.
+
 ``!shuffle``
 
 - Shuffles the queue.
@@ -1303,7 +1315,7 @@ Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 
 ``!soundcloud``
 
-- Searches soundcloud for a song
+- Searches Soundcloud for a song
 
 ``!stats``
 
