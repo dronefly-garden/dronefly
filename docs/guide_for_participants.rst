@@ -882,6 +882,11 @@ from other nature-related sites:
 - ``http://vireo.ansp.org/bird_academy/bird_glossary.html#{0:query}``
 - put ornithological search terms after command
 
+``,waterway``
+
+- ``https://mywaterway.epa.gov/community/{0:query}/overview``
+- put zip code after command
+
 ``,wildflower``
 
 - ``https://www.wildflower.org/plants/search.php?search_field={0:query}&newsearch=true``
