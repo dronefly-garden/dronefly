@@ -719,6 +719,11 @@ from other nature-related sites:
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_{1:query}.html``
 - put plant binomial after command
 
+``,inatpapers``
+
+- ``https://forum.inaturalist.org/t/published-papers-that-use-inaturalist-data-wiki/2859``
+- nothing entered after (provides link to Published papers that use iNaturalist data Wiki on iNaturalist Forum)
+
 ``,inatsearch``
 
 - ``https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63``
