@@ -285,7 +285,7 @@ nature-related (e.g. Twitter and Wikipedia).
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
 YouTube in voice channels.
 
-Rythm (``!``) - Plays audio (e.g. music) from SoundCloud, Twitch, YouTube 
+`Rythm <https://rythm.fm/>`_ (``!``) - Plays audio (e.g. music) from SoundCloud, Twitch, YouTube 
 and more in voice channels. 
 
 (CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
