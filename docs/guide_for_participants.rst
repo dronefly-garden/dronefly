@@ -35,7 +35,7 @@ Browser URL: https://discord.com
 
 Software: https://discord.com/download
 
-(Note: If you want to participate in Voice Chats, use the software not the browser.)
+(Note: If you want to participate in Voice Chats, you'll need the software not the browser.)
 
 You can also find the Discord app in the Apple App Store or on Google
 Play.
@@ -174,7 +174,7 @@ Participating - #chat (under General)
 -------------------------------------
 
 Follow the rules in the #welcome channel for communicating with others.
-The iNaturalist Discord is a `Community Server <https://support.discord.com/hc/en-us/articles/360035969312-Community-Server-Guidelines>` and follows Discord rules.
+The iNaturalist Discord is a `Community Server <https://support.discord.com/hc/en-us/articles/360035969312-Community-Server-Guidelines>`__ and follows Discord rules.
 
 #chat and #chat-2-eclectic-beluga are both general nature-oriented chat
 channels. If one is busy with an ongoing discussion, and you want to
