@@ -35,6 +35,8 @@ Browser URL: https://discord.com
 
 Software: https://discord.com/download
 
+(Note: If you want to participate in Voice Chats, you'll need the software not the browser.)
+
 You can also find the Discord app in the Apple App Store or on Google
 Play.
 
@@ -89,8 +91,9 @@ Notification Settings - Adjusting your notification settings (see :ref:`Appendix
 
 Privacy Settings - Allowing or prohibiting direct messages from other users
 
-Change Nickname - Changing your nickname (for instance, to add your location to your
-nickname, e.g. michaelpirrello \|\| Pennsylvania)
+Change Nickname - Changing your nickname (For instance, to add your location to your
+nickname, e.g. michaelpirrello \|\| Pennsylvania. It's helpful to use your iNaturalist 
+user name to begin with, at least until people get to know you.)
 
 Leave Server - Leaving (Hopefully you’ll never want to, but sometimes life gets in the
 way.)
@@ -111,7 +114,8 @@ in the upper right corner once you’re in a channel (|image8|).
 
 When you first join the server, visit the #introductions channel (under
 the Important heading), where the Dronefly bot (and hopefully some
-active users) will welcome you.
+active users) will welcome you. Read #announcements for important updates
+from server mods/admins.
 
 If you want to participate in the server’s iNaturalist projects, or use
 the Dronefly bot, post your profile (https://www.inaturalist.org/people/
@@ -137,10 +141,10 @@ Other pinned items may be...less useful.
 
 The member list button (|image12|) at the upper right toggles the member
 list visibility on and off (good if you need more screen space, or if
-you need to contact an Admin or a Moderator and want to know who is
-available.) Right clicking on users in the member list allows you to see
-their profile (which can be helpful when temporary nickname changes
-occur).
+you need to contact an Admin or Moderator (server) or Curator or Staff (iNat)
+and want to know who isavailable.) Right clicking on users in the member list
+allows you to see their profile (which can be helpful when temporary nickname
+changes occur).
 
 =================
 Set Up Your Roles
@@ -150,9 +154,11 @@ The #role-menus channel (under the Important heading) is one of the
 first channels every new user should visit. Configuring details about
 your appearance on the server and the roles you want is as easy as
 pressing some buttons. Roles primarily allow you to be notified when
-someone is seeking information on a topic you’re interested in, or
+someone is seeking information on a topic you’re interested in, or when
 something is happening you may want to participate in (e.g. a voice
-chat).
+chat), but can also be used to choose the color of your nickname in the
+member list, which pronouns you use, a bioblitz team, and opting in to
+some channels.
 
 |image13|
 
@@ -168,6 +174,7 @@ Participating - #chat (under General)
 -------------------------------------
 
 Follow the rules in the #welcome channel for communicating with others.
+The iNaturalist Discord is a `Community Server <https://support.discord.com/hc/en-us/articles/360035969312-Community-Server-Guidelines>`_ and follows Discord rules.
 
 #chat and #chat-2-eclectic-beluga are both general nature-oriented chat
 channels. If one is busy with an ongoing discussion, and you want to
@@ -193,7 +200,7 @@ images to the chat.
 Let a moderator know if you think a file is important enough to be
 pinned.
 
-Participating - #suggestions (under Important)
+Participating - #suggestions-and-meta (under Important)
 ----------------------------------------------
 
 Anyone can make a suggestion to improve the server in this channel.
@@ -201,11 +208,14 @@ Anyone can make a suggestion to improve the server in this channel.
 Participating - #inat-questions and #inat-curation (under iNat Stuff)
 ---------------------------------------------------------------------
 
-Ask and answer user and curator questions about iNaturalist and how it
-works in these channels. Don’t forget to check pinned messages and use
-the search function to see if your question has been asked/answered
-before. If you can’t get an answer here, the iNaturalist Forum is
-another good place to post questions: https://forum.inaturalist.org/
+Ask and answer questions about iNaturalist and how it works in these
+channels. Don’t forget to check pinned messages and use the search
+function to see if your question has been asked/answered before. If you
+can’t get an answer here, the iNaturalist Forum is another good place
+to post questions: https://forum.inaturalist.org/
+
+#progress-and-yearlist is for discussing significant iNat milestones.
+(Please use #bot-commands for status checks.)
 
 Participating - #id-confirmation and #work-party (under Identify)
 -----------------------------------------------------------------
@@ -240,7 +250,7 @@ Voice channels (like |image48|) allow you to talk and listen to other
 iNaturalist Discord Server participants in real time.
 Presentations/Entertainment may take place here as well. #vc-general is
 used for text chat in support of the General voice channel (e.g. sharing
-pictures as you talk.)
+pictures as you talk. Other voice channels are similarly paired.)
 
 The Go Live! Feature (|image49|) allows for screen sharing (only in the
 Discord software, not available in the browser version). Once a
@@ -275,7 +285,7 @@ nature-related (e.g. Twitter and Wikipedia).
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
 YouTube in voice channels.
 
-Rythm (``!``) - Plays audio (e.g. music) from  SoundCloud, Twitch, YouTube 
+`Rythm <https://rythm.fm/>`_ (``!``) - Plays audio (e.g. music) from SoundCloud, Twitch, YouTube 
 and more in voice channels. 
 
 (CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
@@ -719,6 +729,11 @@ from other nature-related sites:
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_{1:query}.html``
 - put plant binomial after command
 
+``,inatpapers``
+
+- ``https://forum.inaturalist.org/t/published-papers-that-use-inaturalist-data-wiki/2859``
+- nothing entered after (provides link to Published papers that use iNaturalist data Wiki on iNaturalist Forum)
+
 ``,inatsearch``
 
 - ``https://forum.inaturalist.org/t/how-to-use-inaturalists-search-urls-wiki/63``
@@ -882,6 +897,11 @@ from other nature-related sites:
 - ``http://vireo.ansp.org/bird_academy/bird_glossary.html#{0:query}``
 - put ornithological search terms after command
 
+``,waterway``
+
+- ``https://mywaterway.epa.gov/community/{0:query}/overview``
+- put zip code after command
+
 ``,wildflower``
 
 - ``https://www.wildflower.org/plants/search.php?search_field={0:query}&newsearch=true``
@@ -963,10 +983,6 @@ Conv Subcommands
 ``lb`` Convert pounds to kilograms.
 
 ``mi`` Convert miles to kilometers.
-
-``todate`` Convert a unix timestamp to a readable datetime.
-
-``tounix`` Convert a date to a unix timestamp.
 
 ``-define``
 
@@ -1361,7 +1377,7 @@ Preceding and following text with ~~ (e.g. ~~stuff~~) will strikethrough
 the text: [STRIKEOUT:stuff]
 
 Preceding and following text with \|\| (e.g. \||stuff||) will hide the
-text until readers click it.
+text until readers click it. (Use this when submitting answers on #quizzes.)
 
 Preceding and following text with |backtick| (e.g. \`stuff`) will quote text
 (good for displaying command text when you don’t want it to execute).
