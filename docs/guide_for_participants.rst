@@ -529,7 +529,7 @@ from other nature-related sites:
    :width: 100%
    :widths: 20, 30, 50
 
-   "**faves**", "``,faves <username>``", "Favorited observations for iNat username"
+   "**faves**", "``,faves <inat username>``", "Favorited observations for iNat username"
 
 .. csv-table:: iNat forum custom commands
    :header: "Command", "Usage", "Description"
@@ -548,8 +548,8 @@ from other nature-related sites:
    "**bio**", "``,bio <query>``", "Definitions & posts at biologyonline.com"
    "**biorxiv**", "``,biorxiv <query>``", "Scientific paper preprints at biorxiv.org"
    "**birdcast**", "``,birdcast <days>``", "*1, 2, or 3* day migration forecasts from birdcast.info"
-   "**bold3**", "``,bold <genus> <epithet>``", "DNA barcodes at v3.boldsystems.org"
-   "**bold4**", "``,bold4 <genus> <epithet>``", "V4 DNA barcodes at boldsystems.org [*]_ "
+   "**bold3**", "``,bold <genus> [epithet]``", "DNA barcodes at v3.boldsystems.org"
+   "**bold4**", "``,bold4 <genus> [epithet]``", "V4 DNA barcodes at boldsystems.org [*]_ "
    "**doaja**", "``,doaja <query>``", "Articles at doaj.org"
    "**doaja**", "``,doajj <query>``", "Journals at doaj.org"
 
@@ -573,9 +573,9 @@ from other nature-related sites:
    "**cms**", "``,cms <query>``", "CMS species of concern at speciesplus.net"
    "**crustacea**", "``,crustacea <term>``", "Crustacea glossary at research.nhm.org"
    "**diptera**", "``,diptera <query>``", "Diptera info at diptera.info"
-   "**faunaeu**", "``,faunaeu <taxon>``", "Animalia info at fauna-eu.org"
+   "**faunaeu**", "``,faunaeu <taxon terms>``", "Animalia info at fauna-eu.org"
    "**feather**", "``,feather``", "Feather Atlas at fws.gov (US FWS)"
-   "**fishbase**", "``,fishbase <genus> <epithet>``", "Fish info at fishbase.de" 
+   "**fishbase**", "``,fishbase <genus> [epithet]``", "Fish info at fishbase.de" 
    "**fishbaseglossary**", "``,fishbaseglossary``", "Fish glossary at fishbase.de"
 
 .. csv-table:: Chromista custom commands
@@ -590,7 +590,7 @@ from other nature-related sites:
    :width: 100%
    :widths: 20, 30, 50
 
-   "**lichen**", "``,lichen <genus> <epithet>``", "Lichen info at lichenportal.org"
+   "**lichen**", "``,lichen <genus> [epithet]``", "Lichen info at lichenportal.org"
 
 .. csv-table:: Plants custom commands
    :header: "Command", "Usage", "Description"
