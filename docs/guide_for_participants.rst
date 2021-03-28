@@ -517,57 +517,39 @@ Dronefly Custom Commands
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
 
-``,adw``
+.. csv-table:: General or Cross-disciplinary custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
 
-- ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
-- put search term after command
+   "**bhl**", "``,bhl <query>``", "Titles at biodiversitylibrary.org"
+   "**bio**", "``,bio <query>``", "Definitions & posts at biologyonline.com"
+   "**biorxiv**", "``,biorxiv <query>``", "Scientific paper preprints at biorxiv.org"
+   "**birdcast**", "``,birdcast <days>``", "*1, 2, or 3* day migration forecasts from birdcast.info"
+   "**bold3**", "``,bold <taxon>``", "*genus or binomial* DNA barcodes at v3.boldsystems.org"
+   "**bold4**", "``,bold4``","*genus or binomial* V4 DNA barcodes at boldsystems.org [*]_ "
 
-``,aesglossary``
 
-- ``https://www.amentsoc.org/insects/glossary/terms/{0:query}``
-- put search term after command
+.. [*]
+   see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
+   support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
+   [researcher], [tax]
 
-``,algae``
+.. csv-table:: Animalia custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
 
-- ``https://www.algaebase.org/search/glossary/``
-- nothing entered after (provides link to Algaebase glossary)
+   "**adw**", "``,adw <query>``", "Taxon info at animaldiversity.org"
+   "**aesglossary**", "``,aesglossary <query>``", "Insects glossary at amentsoc.org"
+   "**antwiki**", "``,antwiki <genus> <epithet>``", "Taxon info at antiwiki.org"
 
-``,antwiki``
+.. csv-table:: Chromista custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
 
-- ``https://antwiki.org/wiki/{0:query}_{1:query}``
-- put ant binomial after command
-
-``,bhl``
-
-- ``https://www.biodiversitylibrary.org/search?searchTerm={0:query}#/titles``
-- put search term after command
-
-``,bio``
-
-- ``https://www.biologyonline.com/search/{0:query}``
-- put search term after command
-
-``,biorxiv``
-
-- ``https://www.biorxiv.org/search/{0:query}``
-- put search term after command
-
-``,birdcast``
-
-- ``https://s3.amazonaws.com/is-birdcast-predicted/current/day{1}.jpg?{message.id}``
-- put 1, 2, or 3 after command (shows image of 1-, 2- or 3-day bird migration forecast map)
-
-``,bold3``
-
-- ``https://v3.boldsystems.org/index.php/Public_SearchTerms?query={0:query}``
-- put genus or binomial after command
-
-``,bold4``
-
-- ``http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records&query={0:query}``
-- see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
-  support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
-  [researcher], [tax]
+   "**algae**", "``,algae``", "Glossary at algaebase.org (link only)"
 
 ``,bonapkey``
 
