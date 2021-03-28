@@ -517,6 +517,28 @@ Dronefly Custom Commands
 Dronefly also utilizes custom commands that can be used to draw data
 from other nature-related sites:
 
+.. csv-table:: Commands overview
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
+
+   "**cchelp**", "``,cchelp``", "Link to this documentation"
+
+.. csv-table:: iNat custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
+
+   "**faves**", "``,faves <username>``", "Favorited observations for iNat username"
+
+.. csv-table:: iNat forum custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
+
+   "**cvcleanup**", "``,cvcleanup``", "Computer vision cleanup wiki"
+   "**forumtags**", "``,forumtags``", "Forum tags page"
+
 .. csv-table:: General or Cross-disciplinary custom commands
    :header: "Command", "Usage", "Description"
    :width: 100%
@@ -526,9 +548,10 @@ from other nature-related sites:
    "**bio**", "``,bio <query>``", "Definitions & posts at biologyonline.com"
    "**biorxiv**", "``,biorxiv <query>``", "Scientific paper preprints at biorxiv.org"
    "**birdcast**", "``,birdcast <days>``", "*1, 2, or 3* day migration forecasts from birdcast.info"
-   "**bold3**", "``,bold <taxon>``", "*genus or binomial* DNA barcodes at v3.boldsystems.org"
-   "**bold4**", "``,bold4``","*genus or binomial* V4 DNA barcodes at boldsystems.org [*]_ "
-
+   "**bold3**", "``,bold <genus> <epithet>``", "DNA barcodes at v3.boldsystems.org"
+   "**bold4**", "``,bold4 <genus> <epithet>``", "V4 DNA barcodes at boldsystems.org [*]_ "
+   "**doaja**", "``,doaja <query>``", "Articles at doaj.org"
+   "**doaja**", "``,doajj <query>``", "Journals at doaj.org"
 
 .. [*]
    see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
@@ -542,7 +565,18 @@ from other nature-related sites:
 
    "**adw**", "``,adw <query>``", "Taxon info at animaldiversity.org"
    "**aesglossary**", "``,aesglossary <query>``", "Insects glossary at amentsoc.org"
-   "**antwiki**", "``,antwiki <genus> <epithet>``", "Taxon info at antiwiki.org"
+   "**antwiki**", "``,antwiki <genus> <epithet>``", "Ant info at antiwiki.org"
+   "**bug**", "``,bug <query>``", "Species of economic concern at insectimages.org"
+   "**bugguide**", "``,bugguide <query>``", "Insect, spider, etc. info at bugguide.net"
+   "**cicada**", "``,cicada <query>``", "Cicada info at cicadamania.com"
+   "**cites**", "``,cites <query>``", "CITES species of concern at speciesplus.net"
+   "**cms**", "``,cms <query>``", "CMS species of concern at speciesplus.net"
+   "**crustacea**", "``,crustacea <term>``", "Crustacea glossary at research.nhm.org"
+   "**diptera**", "``,diptera <query>``", "Diptera info at diptera.info"
+   "**faunaeu**", "``,faunaeu <taxon>``", "Animalia info at fauna-eu.org"
+   "**feather**", "``,feather``", "Feather Atlas at fws.gov (US FWS)"
+   "**fishbase**", "``,fishbase <genus> <epithet>``", "Fish info at fishbase.de" 
+   "**fishbaseglossary**", "``,fishbaseglossary``", "Fish glossary at fishbase.de"
 
 .. csv-table:: Chromista custom commands
    :header: "Command", "Usage", "Description"
@@ -551,110 +585,22 @@ from other nature-related sites:
 
    "**algae**", "``,algae``", "Glossary at algaebase.org (link only)"
 
-``,bonapkey``
+.. csv-table:: Fungi custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
 
-- Retrigger
-- nothing entered after (displays image of BONAP key)
+   "**lichen**", "``,lichen <genus> <epithet>``", "Lichen info at lichenportal.org"
 
-``,botanary``
+.. csv-table:: Plants custom commands
+   :header: "Command", "Usage", "Description"
+   :width: 100%
+   :widths: 20, 30, 50
 
-- ``https://davesgarden.com/guides/botanary/search.php?search_text={0:query}``
-- put botanical term being searched after command
-
-``,botdict``
-
-- ``http://www.botanydictionary.org/{0:query}.html``
-- put botanical term being searched after command
-
-``,bug``
-
-- ``https://www.insectimages.org/search/action.cfm?q={0:query}``
-- put search term after command
-
-``,bugguide``
-
-- ``https://bugguide.net/index.php?q=search&keys={0:query}&search=Search``
-- put search term after command
-
-``,cchelp``
-
-- ``<https://dronefly.readthedocs.io/en/latest/guide_for_participants.html#dronefly-custom-commands>``
-- nothing entered after (provides link to this section of the Participant's Guide)
-
-``,cicada``
-
-- ``https://cse.google.com/cse?q={0:query}&cx=partner-pub-8561311701230022%3A50ncgfv7bjm&siteurl=www.cicadamania.com``
-- put cicada-related search term after command (returns Google search of cicadamania.com)
-
-``,cites``
-
-- ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cites_eu&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cites&page=1``
-- put taxon search terms after command
-
-``,cms``
-
-- ``https://www.speciesplus.net/#/taxon_concepts?taxonomy=cms&taxon_concept_query={0:query}&geo_entities_ids=&geo_entity_scope=cms&page=1``
-- put taxon search terms after command
-
-``,crustacea``
-
-- ``https://research.nhm.org/glossary/define.html?term={0:query}``
-- put crustacea-related search terms after command
-
-``,cvcleanup``
-
-- ``https://forum.inaturalist.org/t/computer-vision-clean-up-wiki/7281``
-- nothing entered after (provides link to Computer Vision Clean-up Wiki on iNaturalist Forum)
-
-``,daves``
-
-- ``https://davesgarden.com/sitewidesearch.php?q={0:query}``
-- put plant-related search terms after command
-
-``,diptera``
-
-- ``https://diptera.info/search.php?stext={0:query}&search=Search&method=OR&forum_id=0&stype=all&datelimit=0&fields=2&sort=datestamp&order=0&chars=50``
-- put search term after command (searches diptera.info)
-
-``,doaja``
-
-- ``https://doaj.org/search/articles?ref=homepage-box&source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%7D``
-- put search terms after command
-
-``,doajj``
-
-- ``https://doaj.org/search/journals?source=%7B%22query%22%3A%7B%22query_string%22%3A%7B%22query%22%3A%22{0:query}%22%2C%22default_operator%22%3A%22AND%22%7D%7D%2C%22size%22%3A50%2C%22sort%22%3A%5B%7B%22created_date%22%3A%7B%22order%22%3A%22desc%22%7D%7D%5D%7D``
-- put search terms after command
-
-``,faunaeu``
-
-- ``https://fauna-eu.org/cdm_dataportal/search/results/taxon?ws=portal%2Ftaxon%2Ffind&query={0:query}&form_build_id=form-XcnY0EAtNC8G2bBQ_fzx-LyrLViJpJwpyb0_OAtXIZo&form_id=cdm_dataportal_search_taxon_form&search[doTaxaByCommonNames]=&search[doSynonyms]=&search[doTaxa]=1&search[pageSize]=25&search[pageNumber]=0``
-- put fauna taxon search terms after command
-
-``,faves``
-
-- ``https://www.inaturalist.org/faves/{0:query}``
-- put iNaturalist username after command (returns specified user's favorited observations)
-
-``,feather``
-
-- ``https://www.fws.gov/lab/featheratlas/search.php``
-- nothing entered after (provides link to US FWS Feather Atlas)
-
-``,fishbase``
-
-- ``https://www.fishbase.de/summary/{0:query}-{1:query}.html``
-- put binomial after command
-
-``,fishbaseglossary``
-
-- ``https://www.fishbase.de/glossary/Glossary.php?q={0:query}``
-- put search terms after command
-
-``,forumtags``
-
-- ``https://forum.inaturalist.org/tags``
-- nothing entered after (provides link to Tags page on iNaturalist Forum)
+   "**bonapkey**", "``,bonapkey``", "Map key for bonap.org"
+   "**botanary**", "``,botanary <query>``", "Botanical dictionary at davesgarden.com"
+   "**botdict**", "``,botdict <term>``", "Botanical dictionary at botanydictionary.org"
+   "**daves**", "``,daves <query>``", "Plant info at davesgarden.com"
 
 ``,gbif``
 
@@ -725,11 +671,6 @@ from other nature-related sites:
 
 - ``https://plants.jstor.org/search?filter=name&so=ps_group_by_genus_species+asc&Query={0:query}``
 - put plant genus or binomial after command
-
-``,lichen``
-
-- ``https://lichenportal.org/cnalh/taxa/index.php?taxon={0:query}&formsubmit=Search+Terms``
-- put lichen genus or binomial after command
 
 ``,lists``
 
