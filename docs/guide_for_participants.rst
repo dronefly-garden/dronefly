@@ -201,7 +201,7 @@ Let a moderator know if you think a file is important enough to be
 pinned.
 
 Participating - #suggestions-and-meta (under Important)
-----------------------------------------------
+-------------------------------------------------------
 
 Anyone can make a suggestion to improve the server in this channel.
 
