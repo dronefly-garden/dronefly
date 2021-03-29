@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   inatcog.commands
    inatcog.tests
 
 Submodules
@@ -195,7 +196,6 @@ inatcog.users module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

@@ -12,7 +12,7 @@ WWW_BASE_URL = "https://www.inaturalist.org"
 # See https://www.inaturalist.org/pages/network
 WWW_URL_PAT = (
     r"https?://("
-    r"((www|colombia|panama|ecuador|israel)\.)?inaturalist\.org"
+    r"((www|colombia|panama|ecuador|israel|greece)\.)?inaturalist\.org"
     r"|inaturalist\.ala\.org\.au"
     r"|(www\.)?("
     r"inaturalist\.(ca|nz)"
