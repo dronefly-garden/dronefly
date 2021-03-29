@@ -36,7 +36,6 @@ inatcog.tests.test\_users module
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 
