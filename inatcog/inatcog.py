@@ -7,6 +7,7 @@ from redbot.core import commands, Config
 from .api import INatAPI
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
+from .commands.map import CommandsMap
 from .commands.obs import CommandsObs
 from .commands.place import CommandsPlace
 from .commands.project import CommandsProject
@@ -40,6 +41,7 @@ class INatCog(
     commands.Cog,
     CommandsInat,
     CommandsLast,
+    CommandsMap,
     CommandsObs,
     CommandsPlace,
     CommandsProject,
