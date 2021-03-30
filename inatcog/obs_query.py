@@ -22,6 +22,8 @@ class INatObsQuery:
             message += " by " + filtered_taxon.user.display_name()
         if filtered_taxon.unobserved_by:
             message += " unobserved by " + filtered_taxon.unobserved_by.display_name()
+        if filtered_taxon.id_by:
+            message += " identified by " + filtered_taxon.id_by.display_name()
         if term:
             if value:
                 message += f" with {term.label} {value.label}"
@@ -45,6 +47,8 @@ class INatObsQuery:
             if filtered_taxon.unobserved_by:
                 kwargs["unobserved_by_user_id"] = filtered_taxon.unobserved_by.user_id
                 kwargs["lrank"] = "species"
+            if filtered_taxon.id_by:
+                kwargs["ident_user_id"] = filtered_taxon.id_by.user_id
         if query.controlled_term:
             query_term, query_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()

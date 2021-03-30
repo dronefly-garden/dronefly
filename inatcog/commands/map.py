@@ -40,8 +40,8 @@ class CommandsMap(INatEmbeds, MixinMeta):
 
         await ctx.send(embed=await self.make_map_embed(taxa))
 
-    @map.command()
-    async def obs(self, ctx, *, query: NaturalCompoundQueryConverter):
+    @map.command(name="obs")
+    async def map_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show map of observations."""
 
         try:
@@ -61,6 +61,8 @@ class CommandsMap(INatEmbeds, MixinMeta):
                 query_title += f" by {filtered_taxon.user.login}"
             if filtered_taxon.unobserved_by:
                 query_title += f" unobserved by {filtered_taxon.unobserved_by.login}"
+            if filtered_taxon.id_by:
+                query_title += f" identified by {filtered_taxon.id_by.login}"
             if filtered_taxon.place:
                 query_title += f" from {filtered_taxon.place.display_name}"
         except LookupError as err:

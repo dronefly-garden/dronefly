@@ -5,7 +5,7 @@ import shlex
 from typing import NamedTuple
 import discord
 from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
-from .common import DEQUOTE
+from .common import DEQUOTE, LOG
 from .base_classes import (
     CompoundQuery,
     PAT_OBS_LINK,
@@ -128,6 +128,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--in", nargs="+", dest="ancestor", default=[])
         parser.add_argument("--by", nargs="+", dest="user", default=[])
         parser.add_argument("--not-by", nargs="+", dest="unobserved_by", default=[])
+        parser.add_argument("--id-by", nargs="+", dest="id_by", default=[])
         parser.add_argument("--from", nargs="+", dest="place", default=[])
         parser.add_argument("--rank", dest="rank", default="")
         parser.add_argument("--with", nargs="+", dest="controlled_term")
@@ -158,6 +159,7 @@ class CompoundQueryConverter(CompoundQuery):
             or vals.rank
             or vals.controlled_term
             or vals.unobserved_by
+            or vals.id_by
             or vals.per
         ):
             main = None
@@ -205,15 +207,18 @@ class CompoundQueryConverter(CompoundQuery):
                 controlled_term = [term_name, term_value]
             else:
                 controlled_term = None
-            return cls(
+            query = cls(
                 main=main,
                 ancestor=ancestor,
                 user=" ".join(vals.user),
                 place=" ".join(vals.place),
                 controlled_term=controlled_term,
                 unobserved_by=" ".join(vals.unobserved_by),
+                id_by=" ".join(vals.id_by),
                 per=" ".join(vals.per),
             )
+            LOG.info(repr(query))
+            return query
 
         return argument
 
@@ -228,7 +233,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if mat and mat["url"]:
             return argument
         try:
-            arg_normalized = re.sub(r"not by", "not-by", argument, re.I)
+            arg_normalized = re.sub(r"(id|not) by", r"\1-by", argument, re.I)
             args_normalized = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
             raise BadArgument(err.args[0])
@@ -239,7 +244,16 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 args_normalized.remove(arg_lowered)
                 ranks.append(arg_lowered)
             # FIXME: determine programmatically from parser:
-            if arg_lowered in ["of", "in", "by", "not-by", "from", "rank", "with"]:
+            if arg_lowered in [
+                "of",
+                "in",
+                "by",
+                "not-by",
+                "id-by",
+                "from",
+                "rank",
+                "with",
+            ]:
                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
         if not re.match(r"^--", args_normalized[0]):
             args_normalized.insert(0, "--of")

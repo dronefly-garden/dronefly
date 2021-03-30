@@ -105,6 +105,7 @@ class INatTaxonQuery:
         place = None
         user = None
         unobserved_by = None
+        id_by = None
         preferred_place_id = await self.cog.get_home(ctx)
         if query.place:
             place = await self.cog.place_table.get_place(
@@ -132,7 +133,15 @@ class INatTaxonQuery:
             except BadArgument as err:
                 raise LookupError(str(err))
             unobserved_by = await self.cog.user_table.get_user(who.member)
-        return FilteredTaxon(taxon, user, place, unobserved_by)
+        if query.id_by:
+            try:
+                who = await ContextMemberConverter.convert(
+                    ctx, re.sub(DEQUOTE, r"\1", query.id_by)
+                )
+            except BadArgument as err:
+                raise LookupError(str(err))
+            id_by = await self.cog.user_table.get_user(who.member)
+        return FilteredTaxon(taxon, user, place, unobserved_by, id_by)
 
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""

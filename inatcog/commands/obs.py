@@ -7,6 +7,7 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
+from inatcog.common import LOG
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
@@ -72,6 +73,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             compound_query = await NaturalCompoundQueryConverter.convert(ctx, query)
             obs = await self.obs_query.query_single_obs(ctx, compound_query)
+            LOG.info(obs)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
@@ -96,7 +98,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • If no taxon is specified, all observations are searched.
         • The `not by` qualifier counts observations / species
           unobserved by each user in the table. It may be combined
-          with `from`, but not `by`.
+          with `from`, but not `by` or `id by`.
+        • The `id by` qualifier counts observations / species
+          identified by each user in the table. It may be combined
+          with `from`, but not `by` or `not by`.
         e.g.
         ```
         ,tab fish from home
@@ -105,6 +110,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
              -> per user (self listed; others react to add)
         ,tab fish not by me
              -> per unobserved by (self listed; others react to add)
+        ,tab fish id by me
+             -> per identified by (self listed; others react to add)
         ,tab fish from canada by me
              -> per user (self listed; others react to add)
                 but only fish from canada are tabulated
@@ -136,6 +143,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             or query.controlled_term
             or query.main
             or query.unobserved_by
+            or query.id_by
             or query.per
         ):
             await apologize(ctx, "I can't tabulate that yet.")

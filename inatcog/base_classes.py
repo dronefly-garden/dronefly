@@ -123,6 +123,7 @@ class CompoundQuery(NamedTuple):
     place: str
     controlled_term: str
     unobserved_by: str
+    id_by: str
     per: str
 
 
@@ -393,6 +394,7 @@ class FilteredTaxon(NamedTuple):
     user: User
     place: Place
     unobserved_by: User
+    id_by: User
 
 
 class Obs(NamedTuple):

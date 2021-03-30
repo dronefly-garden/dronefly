@@ -51,6 +51,8 @@ from .taxa import (
     TAXON_PLACES_HEADER_PAT,
     TAXON_NOTBY_HEADER,
     TAXON_NOTBY_HEADER_PAT,
+    TAXON_IDBY_HEADER,
+    TAXON_IDBY_HEADER_PAT,
 )
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
@@ -65,6 +67,9 @@ PLACE_ID_PAT = re.compile(
 )
 UNOBSERVED_BY_USER_ID_PAT = re.compile(
     r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]unobserved_by_user_id=(?P<unobserved_by_user_id>\d+).*?\)",
+)
+ID_BY_USER_ID_PAT = re.compile(
+    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]ident_user_id=(?P<ident_user_id>\d+).*?\)",
 )
 USER_ID_PAT = re.compile(r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]user_id=(?P<user_id>\d+).*?\)")
 
@@ -107,6 +112,10 @@ class INatEmbed(discord.Embed):
         """Embed has a user counts table."""
         return bool(re.search(TAXON_COUNTS_HEADER_PAT, self.description or ""))
 
+    def has_id_by_users(self):
+        """Embed has an id by user counts table."""
+        return bool(re.search(TAXON_IDBY_HEADER_PAT, self.description or ""))
+
     def has_not_by_users(self):
         """Embed has a not by user counts table."""
         return bool(re.search(TAXON_NOTBY_HEADER_PAT, self.description or ""))
@@ -115,6 +124,13 @@ class INatEmbed(discord.Embed):
         """Embed has a place counts table."""
         # prevent misdetect as 'not by' (unobserved_by_user_id=# can have a place filter applied)
         return bool(re.search(TAXON_PLACES_HEADER_PAT, self.description or ""))
+
+    def listed_id_by_user_ids(self):
+        """Return listed users, if present."""
+        if not self.has_id_by_users():
+            return None
+
+        return [int(id) for id in re.findall(ID_BY_USER_ID_PAT, self.description)]
 
     def listed_not_by_user_ids(self):
         """Return listed users, if present."""
@@ -294,7 +310,7 @@ class INatEmbeds(MixinMeta):
         """Return embed for observation counts from place or by user."""
         title_params = {}
         formatted_counts = ""
-        (taxon, user, place, unobserved_by) = arg
+        (taxon, user, place, unobserved_by, id_by) = arg
 
         if taxon:
             title = format_taxon_title(taxon)
@@ -310,7 +326,7 @@ class INatEmbeds(MixinMeta):
                     self, user, taxon, place.place_id
                 )
                 header = TAXON_COUNTS_HEADER
-            elif unobserved_by:
+            elif unobserved_by or id_by:
                 raise BadArgument("I can't tabulate that yet.")
             else:
                 formatted_counts = await format_user_taxon_counts(self, user, taxon)
@@ -323,6 +339,13 @@ class INatEmbeds(MixinMeta):
                     self, unobserved_by, taxon, place.place_id, unobserved=True,
                 )
                 header = TAXON_NOTBY_HEADER
+            elif id_by:
+                full_title = f"Observations of {title} from {place.display_name}"
+                title_params["place_id"] = place.place_id
+                formatted_counts = await format_user_taxon_counts(
+                    self, id_by, taxon, place.place_id, ident=True,
+                )
+                header = TAXON_IDBY_HEADER
             else:
                 formatted_counts = await format_place_taxon_counts(self, place, taxon)
                 header = TAXON_PLACES_HEADER
@@ -331,6 +354,11 @@ class INatEmbeds(MixinMeta):
                 self, unobserved_by, taxon, None, unobserved=True,
             )
             header = TAXON_NOTBY_HEADER
+        elif id_by:
+            formatted_counts = await format_user_taxon_counts(
+                self, id_by, taxon, None, ident=True,
+            )
+            header = TAXON_IDBY_HEADER
         if formatted_counts:
             description = f"\n{header}\n{formatted_counts}"
 
@@ -643,12 +671,13 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place, _unobserved_by) = arg  # noqa: F841
+            (taxon, user, place, _unobserved_by, _id_by) = arg  # noqa: F841
         else:
             taxon = arg
             user = None
             place = None
             _unobserved_by = None  # noqa: F841
+            _id_by = None  # noqa: F841
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
@@ -871,7 +900,13 @@ class INatEmbeds(MixinMeta):
     ):
         """Add taxon embed reaction emojis."""
         if isinstance(filtered_taxon, FilteredTaxon):
-            (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841
+            (
+                taxon,
+                _user,
+                _place,
+                _unobserved_by,
+                _id_by,
+            ) = filtered_taxon  # noqa: F841
         else:
             taxon = filtered_taxon
         if taxonomy and len(taxon.ancestor_ids) > 2:
@@ -1107,8 +1142,9 @@ class INatEmbeds(MixinMeta):
     ):
         """Update the totals for the embed."""
         unobserved = inat_embed.has_not_by_users()
+        ident = inat_embed.has_id_by_users()
         place_id = inat_embed.place_id()
-        if not unobserved:
+        if not (unobserved or ident):
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
                 r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
@@ -1122,6 +1158,8 @@ class INatEmbeds(MixinMeta):
             if len(matches) == 1:
                 if unobserved:
                     description = re.sub(TAXON_NOTBY_HEADER_PAT, "", description)
+                elif ident:
+                    description = re.sub(TAXON_IDBY_HEADER_PAT, "", description)
                 else:
                     description = re.sub(TAXON_COUNTS_HEADER_PAT, "", description)
             description = re.sub(counts_pat + r".*?((?=\n)|$)", "", description)
@@ -1131,14 +1169,17 @@ class INatEmbeds(MixinMeta):
                 if unobserved:
                     # not currently possible (new :hash: reaction starts 'by' embed)
                     description += "\n" + TAXON_NOTBY_HEADER
+                elif ident:
+                    # not currently possible (new :hash: reaction starts 'by' embed)
+                    description += "\n" + TAXON_IDBY_HEADER
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
             formatted_counts = await format_user_taxon_counts(
-                self, inat_user, taxon, place_id, unobserved
+                self, inat_user, taxon, place_id, unobserved, ident
             )
             description += "\n" + formatted_counts
 
-        if not unobserved:
+        if not (unobserved or ident):
             matches = re.findall(
                 r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
             )

@@ -19,6 +19,8 @@ TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
 TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
 TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")
+TAXON_IDBY_HEADER = "__obs# (spp#) identified by user:__"
+TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
@@ -460,6 +462,7 @@ async def format_user_taxon_counts(
     taxon: Taxon = None,
     place_id: int = None,
     unobserved: bool = False,
+    ident: bool = False,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):
@@ -479,6 +482,9 @@ async def format_user_taxon_counts(
             "lrank": "species",
             "per_page": 0,
         }
+    elif ident:
+        obs_opt = {"ident_user_id": user_id, "per_page": 0}
+        species_opt = {"ident_user_id": user_id, "per_page": 0}
     else:
         obs_opt = {"user_id": user_id, "per_page": 0}
         species_opt = {"user_id": user_id, "per_page": 0}
@@ -499,6 +505,8 @@ async def format_user_taxon_counts(
             url += f"&taxon_id={taxon_id}"
         if unobserved:
             url += f"&unobserved_by_user_id={user_id}&lrank=species"
+        elif ident:
+            url += f"&ident_user_id={user_id}"
         else:
             url += f"&user_id={user_id}"
         if place_id:
