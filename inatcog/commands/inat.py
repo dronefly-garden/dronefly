@@ -276,7 +276,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         embed_description = f"```md\n{inat_embed.description}\n```"
         description_embed = make_embed(
-            title="Markdown formatted content", description=embed_description,
+            title="Markdown formatted content",
+            description=embed_description,
         )
 
         embed_dict = inat_embed.to_dict()

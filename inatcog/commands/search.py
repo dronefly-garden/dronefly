@@ -141,7 +141,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 results = [
                     "\n".join(
                         await self.format_obs(
-                            obs, with_description=False, with_link=True, compact=True,
+                            obs,
+                            with_description=False,
+                            with_link=True,
+                            compact=True,
                         )
                     )
                     for obs in observations

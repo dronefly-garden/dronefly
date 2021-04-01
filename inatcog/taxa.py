@@ -411,7 +411,10 @@ def match_taxon(query, records):
 
 
 async def format_place_taxon_counts(
-    cog, place: Union[Place, str], taxon: Taxon = None, user_id: int = None,
+    cog,
+    place: Union[Place, str],
+    taxon: Taxon = None,
+    user_id: int = None,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
