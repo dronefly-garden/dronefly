@@ -38,6 +38,10 @@ class INatTaxonQuery:
     async def maybe_match_taxon(self, query, ancestor_id=None, preferred_place_id=None):
         """Get taxon and return a match, if any."""
         kwargs = {}
+        taxon = None
+        records_read = 0
+        total_records = 0
+
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if query.taxon_id:
@@ -48,15 +52,30 @@ class INatTaxonQuery:
                 kwargs["rank"] = ",".join(query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
-            records = (await self.cog.api.get_taxa(**kwargs))["results"]
-
-        if not records:
-            raise LookupError("No matching taxon found")
-
-        taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+            for page in range(10):
+                kwargs["per_page"] = 30
+                kwargs["page"] = page + 1
+                response = await self.cog.api.get_taxa(**kwargs)
+                if response:
+                    total_records = response.get("total_results") or 0
+                    records = response.get("results")
+                if not records:
+                    break
+                records_read += len(records)
+                taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+                if taxon:
+                    break
+                if records_read >= total_records:
+                    break
 
         if not taxon:
-            raise LookupError("No exact match")
+            if records_read >= total_records:
+                raise LookupError("No matching taxon found")
+
+            raise LookupError(
+                f"No exact match found in {records_read} of {total_records} records containing those terms."
+                f" Try: `,s taxa {' '.join(query.terms)}`"
+            )
 
         return taxon
 
