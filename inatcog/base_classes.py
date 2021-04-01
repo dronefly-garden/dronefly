@@ -15,7 +15,7 @@ WWW_URL_PAT = (
     r"((www|colombia|panama|ecuador|israel|greece)\.)?inaturalist\.org"
     r"|inaturalist\.ala\.org\.au"
     r"|(www\.)?("
-    r"inaturalist\.(ca|nz)"
+    r"inaturalist\.(ca|lu|nz)"
     r"|naturalista\.mx"
     r"|biodiversity4all\.org"
     r"|argentinat\.org"
