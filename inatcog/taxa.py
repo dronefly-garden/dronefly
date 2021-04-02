@@ -284,8 +284,8 @@ class NameMatch(NamedTuple):
 NO_NAME_MATCH = NameMatch(None, None, None)
 
 
-def match_name(record, pat):
-    """Match all terms specified.
+def match_pat(record, pat, scientific_name=False):
+    """Match specified pattern.
 
     Parameters
     ----------
@@ -295,11 +295,20 @@ def match_name(record, pat):
     pat: re.Pattern or str
         A pattern to match against each name field in the record.
 
+    scientific_name: bool
+        Only search scientific name
+
     Returns
     -------
     NameMatch
         A tuple of search results for the pat for each name in the record.
     """
+    if scientific_name:
+        return NameMatch(
+            None,
+            re.search(pat, record.name),
+            None,
+        )
     return NameMatch(
         re.search(pat, record.term),
         re.search(pat, record.name),
@@ -307,8 +316,8 @@ def match_name(record, pat):
     )
 
 
-def match_exact(record, exact):
-    """Match any exact phrases specified.
+def match_pat_list(record, pat_list, scientific_name=False):
+    """Match all of a list of patterns.
 
     Parameters
     ----------
@@ -316,7 +325,7 @@ def match_exact(record, exact):
         A candidate taxon to match.
 
     exact: list
-        A list of exact patterns to match.
+        A list of patterns to match.
 
     Returns
     -------
@@ -327,8 +336,8 @@ def match_exact(record, exact):
     """
     matched = NO_NAME_MATCH
     try:
-        for pat in exact:
-            this_match = match_name(record, pat)
+        for pat in pat_list:
+            this_match = match_pat(record, pat, scientific_name)
             if this_match == NO_NAME_MATCH:
                 matched = this_match
                 raise ValueError("At least one field must match.")
@@ -343,7 +352,7 @@ def match_exact(record, exact):
     return matched
 
 
-def score_match(query, record, all_terms, exact=None):
+def score_match(query, record, all_terms, pat_list=None, scientific_name=False):
     """Score a matched record. A higher score is a better match.
     Parameters
     ----------
@@ -356,8 +365,8 @@ def score_match(query, record, all_terms, exact=None):
     all_terms: re.Pattern
         A pattern matching all terms.
 
-    exact: list
-        A list of exact patterns to match.
+    pat_list: list
+        A list of patterns to match.
 
     Returns
     -------
@@ -371,41 +380,63 @@ def score_match(query, record, all_terms, exact=None):
     if query.taxon_id:
         return 1000  # An id is always the best match
 
-    matched = match_exact(record, exact) if exact else NO_NAME_MATCH
-    all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH
+    matched = (
+        match_pat_list(record, pat_list, scientific_name) if pat_list else NO_NAME_MATCH
+    )
+    all_matched = (
+        match_pat(record, all_terms, scientific_name)
+        if query.taxon_id
+        else NO_NAME_MATCH
+    )
 
-    if query.code and (query.code == record.term):
-        score = 300
-    elif matched.name or matched.common:
-        score = 210
-    elif matched.term:
-        score = 200
-    elif all_matched.name or all_matched.common:
-        score = 120
-    elif all_matched.term:
-        score = 110
+    if scientific_name:
+        if matched.name:
+            score = 200
+        else:
+            score = -1
     else:
-        score = 100
+        if query.code and (query.code == record.term):
+            score = 300
+        elif matched.name or matched.common:
+            score = 210
+        elif matched.term:
+            score = 200
+        elif all_matched.name or all_matched.common:
+            score = 120
+        elif all_matched.term:
+            score = 110
+        else:
+            score = 100
 
     return score
 
 
-def match_taxon(query, records):
+def match_taxon(query, records, scientific_name=False):
     """Match a single taxon for the given query among records returned by API."""
-    exact = []
+    pat_list = []
     all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)
     if query.phrases:
         for phrase in query.phrases:
             pat = re.compile(r"\b%s\b" % re.escape(" ".join(phrase)), re.I)
-            exact.append(pat)
+            pat_list.append(pat)
+    elif scientific_name:
+        for term in query.terms:
+            pat = re.compile(r"\b%s" % re.escape(term), re.I)
+            pat_list.append(pat)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
+        scores[num] = score_match(
+            query,
+            record,
+            all_terms=all_terms,
+            pat_list=pat_list,
+            scientific_name=scientific_name,
+        )
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
+    min_score_met = (best_score >= 0) and ((not query.phrases) or (best_score >= 200))
 
     return best_record if min_score_met else None
 

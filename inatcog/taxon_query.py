@@ -35,7 +35,9 @@ class INatTaxonQuery:
             return ancestor
         return None
 
-    async def maybe_match_taxon(self, query, ancestor_id=None, preferred_place_id=None):
+    async def maybe_match_taxon(
+        self, query, ancestor_id=None, preferred_place_id=None, scientific_name=False
+    ):
         """Get taxon and return a match, if any."""
         kwargs = {}
         taxon = None
@@ -52,9 +54,16 @@ class INatTaxonQuery:
                 kwargs["rank"] = ",".join(query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
-            for page in range(10):
-                kwargs["per_page"] = 30
-                kwargs["page"] = page + 1
+            for page in range(11):
+                if page == 0:
+                    kwargs["per_page"] = 30
+                else:
+                    # restart numbering, as we are using a different endpoint
+                    # now with different page size:
+                    if page == 1:
+                        records_read = 0
+                    kwargs["page"] = page
+                    kwargs["per_page"] = 200
                 response = await self.cog.api.get_taxa(**kwargs)
                 if response:
                     total_records = response.get("total_results") or 0
@@ -62,7 +71,11 @@ class INatTaxonQuery:
                 if not records:
                     break
                 records_read += len(records)
-                taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+                taxon = match_taxon(
+                    query,
+                    list(map(get_taxon_fields, records)),
+                    scientific_name=scientific_name,
+                )
                 if taxon:
                     break
                 if records_read >= total_records:
@@ -73,13 +86,16 @@ class INatTaxonQuery:
                 raise LookupError("No matching taxon found")
 
             raise LookupError(
-                f"No exact match found in {records_read} of {total_records} records containing those terms."
-                f" Try: `,s taxa {' '.join(query.terms)}`"
+                f"No {'exact ' if query.phrases else ''}match "
+                f"found in {'scientific name of ' if scientific_name else ''}{records_read}"
+                f" of {total_records} total records containing those terms."
             )
 
         return taxon
 
-    async def maybe_match_taxon_compound(self, compound_query, preferred_place_id=None):
+    async def maybe_match_taxon_compound(
+        self, compound_query, preferred_place_id=None, scientific_name=False
+    ):
         """Get one or more taxa and return a match, if any.
 
         Currently the grammar supports only one ancestor taxon
@@ -89,7 +105,9 @@ class INatTaxonQuery:
         query_ancestor = compound_query.ancestor
         if query_ancestor:
             ancestor = await self.maybe_match_taxon(
-                query_ancestor, preferred_place_id=preferred_place_id
+                query_ancestor,
+                preferred_place_id=preferred_place_id,
+                scientific_name=scientific_name,
             )
             if ancestor:
                 if query_main.ranks:
@@ -110,15 +128,18 @@ class INatTaxonQuery:
                     query_main,
                     ancestor_id=ancestor.taxon_id,
                     preferred_place_id=preferred_place_id,
+                    scientific_name=scientific_name,
                 )
         else:
             taxon = await self.maybe_match_taxon(
-                query_main, preferred_place_id=preferred_place_id
+                query_main,
+                preferred_place_id=preferred_place_id,
+                scientific_name=scientific_name,
             )
 
         return taxon
 
-    async def query_taxon(self, ctx, query: CompoundQuery):
+    async def query_taxon(self, ctx, query: CompoundQuery, scientific_name=False):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
@@ -134,7 +155,9 @@ class INatTaxonQuery:
             preferred_place_id = place.place_id
         if query.main:
             taxon = await self.maybe_match_taxon_compound(
-                query, preferred_place_id=preferred_place_id
+                query,
+                preferred_place_id=preferred_place_id,
+                scientific_name=scientific_name,
             )
         if query.user:
             try:

@@ -97,7 +97,11 @@ class INatAPI:
 
         # Select endpoint based on call signature:
         # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-        endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
+        endpoint = (
+            "/v1/taxa/autocomplete"
+            if "q" in kwargs and "page" not in kwargs
+            else "/v1/taxa"
+        )
         id_arg = f"/{args[0]}" if args else ""
         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
 

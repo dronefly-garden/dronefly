@@ -116,6 +116,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             pass
         await ctx.send(embed=make_embed(title=title, url=url, description=description))
 
+    @taxon.command(name="sci")
+    async def taxon_sci(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Search for taxon matching the scientific name."""
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await apologize(ctx, err.args[0])
+            return
+
+        try:
+            filtered_taxon = await self.taxon_query.query_taxon(
+                ctx, query, scientific_name=True
+            )
+        except LookupError as err:
+            await apologize(ctx, err.args[0])
+            return
+
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
+
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon name best matching the query.
