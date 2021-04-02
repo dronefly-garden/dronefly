@@ -337,6 +337,7 @@ class Taxon(NamedTuple):
     ancestor_ranks: list
     active: bool
     listed_taxa: list
+    names: list
     establishment_means: Optional[EstablishmentMeansPartial]
     conservation_status: Optional[ConservationStatus]
 

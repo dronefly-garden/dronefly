@@ -36,7 +36,12 @@ class INatTaxonQuery:
         return None
 
     async def maybe_match_taxon(
-        self, query, ancestor_id=None, preferred_place_id=None, scientific_name=False
+        self,
+        query,
+        ancestor_id=None,
+        preferred_place_id=None,
+        scientific_name=False,
+        locale=None,
     ):
         """Get taxon and return a match, if any."""
         kwargs = {}
@@ -44,6 +49,9 @@ class INatTaxonQuery:
         records_read = 0
         total_records = 0
 
+        if locale:
+            kwargs["all_names"] = "true"
+            kwargs["locale"] = locale
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if query.taxon_id:
@@ -75,6 +83,7 @@ class INatTaxonQuery:
                     query,
                     list(map(get_taxon_fields, records)),
                     scientific_name=scientific_name,
+                    locale=locale,
                 )
                 if taxon:
                     break
@@ -94,7 +103,11 @@ class INatTaxonQuery:
         return taxon
 
     async def maybe_match_taxon_compound(
-        self, compound_query, preferred_place_id=None, scientific_name=False
+        self,
+        compound_query,
+        preferred_place_id=None,
+        scientific_name=False,
+        locale=None,
     ):
         """Get one or more taxa and return a match, if any.
 
@@ -108,6 +121,7 @@ class INatTaxonQuery:
                 query_ancestor,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
+                locale=locale,
             )
             if ancestor:
                 if query_main.ranks:
@@ -129,17 +143,21 @@ class INatTaxonQuery:
                     ancestor_id=ancestor.taxon_id,
                     preferred_place_id=preferred_place_id,
                     scientific_name=scientific_name,
+                    locale=locale,
                 )
         else:
             taxon = await self.maybe_match_taxon(
                 query_main,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
+                locale=locale,
             )
 
         return taxon
 
-    async def query_taxon(self, ctx, query: CompoundQuery, scientific_name=False):
+    async def query_taxon(
+        self, ctx, query: CompoundQuery, scientific_name=False, locale=None
+    ):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
@@ -158,6 +176,7 @@ class INatTaxonQuery:
                 query,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
+                locale=locale,
             )
         if query.user:
             try:

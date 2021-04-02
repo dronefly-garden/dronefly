@@ -135,6 +135,27 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon(ctx, filtered_taxon)
 
+    @taxon.command(name="lang")
+    async def taxon_loc(
+        self, ctx, locale: str, *, query: NaturalCompoundQueryConverter
+    ):
+        """Search for taxon matching specific locale/language."""
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await apologize(ctx, err.args[0])
+            return
+
+        try:
+            filtered_taxon = await self.taxon_query.query_taxon(
+                ctx, query, locale=locale
+            )
+        except LookupError as err:
+            await apologize(ctx, err.args[0])
+            return
+
+        await self.send_embed_for_taxon(ctx, filtered_taxon)
+
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show taxon name best matching the query.

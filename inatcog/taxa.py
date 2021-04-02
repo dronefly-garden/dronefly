@@ -267,6 +267,7 @@ def get_taxon_fields(record):
         ancestor_ranks,
         record["is_active"],
         listed_taxa,
+        record.get("names"),
         establishment_means,
         conservation_status,
     )
@@ -284,7 +285,7 @@ class NameMatch(NamedTuple):
 NO_NAME_MATCH = NameMatch(None, None, None)
 
 
-def match_pat(record, pat, scientific_name=False):
+def match_pat(record, pat, scientific_name=False, locale=None):
     """Match specified pattern.
 
     Parameters
@@ -298,6 +299,9 @@ def match_pat(record, pat, scientific_name=False):
     scientific_name: bool
         Only search scientific name
 
+    locale: str
+        Only search common names matching locale
+
     Returns
     -------
     NameMatch
@@ -309,6 +313,28 @@ def match_pat(record, pat, scientific_name=False):
             re.search(pat, record.name),
             None,
         )
+    if locale:
+        names = [
+            name["name"]
+            for name in sorted(
+                [
+                    name
+                    for name in record.names
+                    if name["is_valid"] and re.match(locale, name["locale"], re.I)
+                ],
+                key=lambda x: x["position"],
+            )
+        ]
+        for name in names:
+            mat = re.search(pat, name)
+            if mat:
+                LOG.info("match=%s", pat)
+                return NameMatch(
+                    mat,
+                    None,
+                    mat,
+                )
+        return NO_NAME_MATCH
     return NameMatch(
         re.search(pat, record.term),
         re.search(pat, record.name),
@@ -316,7 +342,7 @@ def match_pat(record, pat, scientific_name=False):
     )
 
 
-def match_pat_list(record, pat_list, scientific_name=False):
+def match_pat_list(record, pat_list, scientific_name=False, locale=None):
     """Match all of a list of patterns.
 
     Parameters
@@ -337,7 +363,7 @@ def match_pat_list(record, pat_list, scientific_name=False):
     matched = NO_NAME_MATCH
     try:
         for pat in pat_list:
-            this_match = match_pat(record, pat, scientific_name)
+            this_match = match_pat(record, pat, scientific_name, locale)
             if this_match == NO_NAME_MATCH:
                 matched = this_match
                 raise ValueError("At least one field must match.")
@@ -352,7 +378,9 @@ def match_pat_list(record, pat_list, scientific_name=False):
     return matched
 
 
-def score_match(query, record, all_terms, pat_list=None, scientific_name=False):
+def score_match(
+    query, record, all_terms, pat_list=None, scientific_name=False, locale=None
+):
     """Score a matched record. A higher score is a better match.
     Parameters
     ----------
@@ -381,16 +409,23 @@ def score_match(query, record, all_terms, pat_list=None, scientific_name=False):
         return 1000  # An id is always the best match
 
     matched = (
-        match_pat_list(record, pat_list, scientific_name) if pat_list else NO_NAME_MATCH
+        match_pat_list(record, pat_list, scientific_name, locale)
+        if pat_list
+        else NO_NAME_MATCH
     )
     all_matched = (
-        match_pat(record, all_terms, scientific_name)
+        match_pat(record, all_terms, scientific_name, locale)
         if query.taxon_id
         else NO_NAME_MATCH
     )
 
     if scientific_name:
         if matched.name:
+            score = 200
+        else:
+            score = -1
+    elif locale:
+        if matched.term:
             score = 200
         else:
             score = -1
@@ -411,7 +446,7 @@ def score_match(query, record, all_terms, pat_list=None, scientific_name=False):
     return score
 
 
-def match_taxon(query, records, scientific_name=False):
+def match_taxon(query, records, scientific_name=False, locale=None):
     """Match a single taxon for the given query among records returned by API."""
     pat_list = []
     all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)
@@ -419,7 +454,7 @@ def match_taxon(query, records, scientific_name=False):
         for phrase in query.phrases:
             pat = re.compile(r"\b%s\b" % re.escape(" ".join(phrase)), re.I)
             pat_list.append(pat)
-    elif scientific_name:
+    elif scientific_name or locale:
         for term in query.terms:
             pat = re.compile(r"\b%s" % re.escape(term), re.I)
             pat_list.append(pat)
@@ -432,6 +467,7 @@ def match_taxon(query, records, scientific_name=False):
             all_terms=all_terms,
             pat_list=pat_list,
             scientific_name=scientific_name,
+            locale=locale,
         )
 
     best_score = max(scores)
