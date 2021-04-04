@@ -42,7 +42,7 @@ class ContextMemberConverter(NamedTuple):
         # Try partial match on name or nick from recent messages for this guild.
         cached_members = {
             str(msg.author.name): msg.author
-            for msg in ctx.bot.cached_messages
+            for msg in reversed(ctx.bot.cached_messages)
             if not msg.author.bot
             and ctx.guild == msg.guild
             and ctx.guild.get_member(msg.author.id)
