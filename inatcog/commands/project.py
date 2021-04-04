@@ -62,7 +62,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
 
     @project.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
-    async def project_list(self, ctx, match=""):
+    async def project_list(self, ctx, *, match=""):
         """List projects with abbreviations on this server."""
         if not ctx.guild:
             return
@@ -109,8 +109,13 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
                 proj_str_text = abbrev
             if match:
-                pat = re.compile(r"\b%s" % re.escape(match), re.I)
-                if re.search(pat, proj_str_text):
+                words = match.split(" ")
+                if all(
+                    re.search(pat, proj_str_text)
+                    for pat in [
+                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                    ]
+                ):
                     result_pages.append(proj_str)
             else:
                 result_pages.append(proj_str)

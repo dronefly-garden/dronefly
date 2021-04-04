@@ -60,7 +60,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
 
     @place.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
-    async def place_list(self, ctx, match=""):
+    async def place_list(self, ctx, *, match=""):
         """List places with abbreviations on this server."""
         if not ctx.guild:
             return
@@ -107,8 +107,13 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
                 place_str_text = abbrev
             if match:
-                pat = re.compile(r"\b%s" % re.escape(match), re.I)
-                if re.search(pat, place_str_text):
+                words = match.split(" ")
+                if all(
+                    re.search(pat, place_str_text)
+                    for pat in [
+                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                    ]
+                ):
                     result_pages.append(place_str)
             else:
                 result_pages.append(place_str)
