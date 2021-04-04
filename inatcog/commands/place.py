@@ -89,7 +89,6 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         for place_id_group in place_id_groups:
             await self.api.get_places(place_id_group)
 
-
         # Iterate over places and do a quick cache lookup per place:
         for abbrev in sorted(places):
             place_id = int(places[abbrev])

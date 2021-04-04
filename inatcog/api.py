@@ -160,7 +160,9 @@ class INatAPI:
         full_url = f"{API_BASE_URL}{endpoint}"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    async def get_places(self, query: Union[int, str, list], refresh_cache=False, **kwargs):
+    async def get_places(
+        self, query: Union[int, str, list], refresh_cache=False, **kwargs
+    ):
         """Get places for the specified ids or text query."""
 
         last_place_id = None
