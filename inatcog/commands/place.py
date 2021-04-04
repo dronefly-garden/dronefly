@@ -69,9 +69,9 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         places = await config.places()
         result_pages = []
 
-        # Prefetch all uncached places, 100 at a time
-        # - 100 is a guess. see projects which has a lower limit (10)
-        # - beyond the actual limit, iNat API will respond with:
+        # Prefetch all uncached places, 500 at a time
+        # - 500 is a maximum determined by testing. beyond that, iNat API
+        #   will respond with:
         #
         #      Unprocessable Entity (422)
         #
@@ -83,7 +83,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     for abbrev in places
                     if int(places[abbrev]) not in self.api.places_cache
                 ],
-                100,
+                500,
             )
         ]
         for place_id_group in place_id_groups:
