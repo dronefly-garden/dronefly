@@ -1,5 +1,7 @@
 """Module for project command group."""
 
+import re
+
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -60,7 +62,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
 
     @project.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
-    async def project_list(self, ctx):
+    async def project_list(self, ctx, match=""):
         """List projects with abbreviations on this server."""
         if not ctx.guild:
             return
@@ -68,18 +70,46 @@ class CommandsProject(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         projects = await config.projects()
         result_pages = []
-        for abbrev in projects:
-            # Only lookup cached projects. Uncached projects will just be shown by number.
+
+        # Prefetch all uncached projects, 10 at a time
+        # - 10 is a maximum determined by testing. beyond that, iNat API
+        #   will respond with:
+        #
+        #      Unprocessable Entity (422)
+        #
+        proj_id_groups = [
+            list(filter(None, results))
+            for results in grouper(
+                [
+                    projects[abbrev]
+                    for abbrev in projects
+                    if int(projects[abbrev]) not in self.api.projects_cache
+                ],
+                10,
+            )
+        ]
+        for proj_id_group in proj_id_groups:
+            await self.api.get_projects(proj_id_group)
+
+        # Iterate over projects and do a quick cache lookup per project:
+        for abbrev in sorted(projects):
             proj_id = int(projects[abbrev])
             if proj_id in self.api.projects_cache:
                 try:
                     project = await self.project_table.get_project(ctx.guild, proj_id)
                     proj_str = f"{abbrev}: [{project.title}]({project.url})"
                 except LookupError:
+                    # In the unlikely case of the deletion of a project that is cached:
                     proj_str = f"{abbrev}: {proj_id} not found."
             else:
+                # Uncached projects are listed by id (prefetch above should prevent this!)
                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
-            result_pages.append(proj_str)
+            if match:
+                pat = re.compile(r"\b%s" % re.escape(match), re.I)
+                if re.search(pat, proj_str):
+                    result_pages.append(proj_str)
+            else:
+                result_pages.append(proj_str)
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
         ]

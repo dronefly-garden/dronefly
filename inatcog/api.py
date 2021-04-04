@@ -160,31 +160,53 @@ class INatAPI:
         full_url = f"{API_BASE_URL}{endpoint}"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):
-        """Query API for places matching place ID or params."""
+    async def get_places(self, query: Union[int, str, list], refresh_cache=False, **kwargs):
+        """Get places for the specified ids or text query."""
 
-        # Select endpoint based on call signature:
-        request = f"/v1/places/{query}"
+        last_place_id = None
+        if isinstance(query, list):
+            cached = set(query).issubset(set(self.places_cache))
+            request = f"/v1/places/{','.join(map(str, query))}"
+        elif isinstance(query, int):
+            cached = query in self.places_cache
+            if cached:
+                last_place_id = query
+            request = f"/v1/places/{query}"
+        else:
+            cached = False
+            request = f"/v1/places/{query}"
         full_url = f"{API_BASE_URL}{request}"
 
-        # Cache lookup by id#, as those should be stable.
-        if isinstance(query, int) or query.isnumeric():
-            place_id = int(query)
-            if refresh_cache or place_id not in self.places_cache:
-                place = await self._get_rate_limited(full_url, **kwargs)
-                if place:
-                    self.places_cache[place_id] = place
-            return (
-                self.places_cache[place_id] if place_id in self.places_cache else None
-            )
+        if refresh_cache or not cached:
+            results = await self._get_rate_limited(full_url, **kwargs)
+            if results:
+                places = results.get("results") or []
+                for place in places:
+                    key = place.get("id")
+                    if key:
+                        last_place_id = key
+                        record = {
+                            "total_results": 1,
+                            "page": 1,
+                            "per_page": 1,
+                            "results": [place],
+                        }
+                        self.places_cache[key] = record
 
-        # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **kwargs)
+        if isinstance(query, list):
+            return {
+                place_id: self.places_cache[place_id]
+                for place_id in query
+                if self.places_cache[place_id]
+            }
+        if last_place_id in self.places_cache:
+            return self.places_cache[last_place_id]
+        return None
 
     async def get_projects(
         self, query: Union[str, int, list], refresh_cache=False, **kwargs
     ):
-        """Get the project for the specified id."""
+        """Get projects for the specified ids or text query."""
 
         last_project_id = None
         if isinstance(query, list):

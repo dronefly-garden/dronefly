@@ -1,5 +1,7 @@
 """Module for place command group."""
 
+import re
+
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
@@ -58,7 +60,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
 
     @place.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
-    async def place_list(self, ctx):
+    async def place_list(self, ctx, match=""):
         """List places with abbreviations on this server."""
         if not ctx.guild:
             return
@@ -66,18 +68,47 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         places = await config.places()
         result_pages = []
-        for abbrev in places:
-            # Only lookup cached places. Uncached places will just be shown by number.
+
+        # Prefetch all uncached places, 100 at a time
+        # - 100 is a guess. see projects which has a lower limit (10)
+        # - beyond the actual limit, iNat API will respond with:
+        #
+        #      Unprocessable Entity (422)
+        #
+        place_id_groups = [
+            list(filter(None, results))
+            for results in grouper(
+                [
+                    places[abbrev]
+                    for abbrev in places
+                    if int(places[abbrev]) not in self.api.places_cache
+                ],
+                100,
+            )
+        ]
+        for place_id_group in place_id_groups:
+            await self.api.get_places(place_id_group)
+
+
+        # Iterate over places and do a quick cache lookup per place:
+        for abbrev in sorted(places):
             place_id = int(places[abbrev])
             if place_id in self.api.places_cache:
                 try:
                     place = await self.place_table.get_place(ctx.guild, place_id)
                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"
                 except LookupError:
+                    # In the unlikely case of the deletion of a place that is cached:
                     place_str = f"{abbrev}: {place_id} not found."
             else:
+                # Uncached places are listed by id (prefetch above should prevent this!)
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
-            result_pages.append(place_str)
+            if match:
+                pat = re.compile(r"\b%s" % re.escape(match), re.I)
+                if re.search(pat, place_str):
+                    result_pages.append(place_str)
+            else:
+                result_pages.append(place_str)
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
         ]
