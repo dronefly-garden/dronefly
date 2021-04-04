@@ -94,19 +94,23 @@ class CommandsProject(INatEmbeds, MixinMeta):
         # Iterate over projects and do a quick cache lookup per project:
         for abbrev in sorted(projects):
             proj_id = int(projects[abbrev])
+            proj_str_text = ""
             if proj_id in self.api.projects_cache:
                 try:
                     project = await self.project_table.get_project(ctx.guild, proj_id)
                     proj_str = f"{abbrev}: [{project.title}]({project.url})"
+                    proj_str_text = f"{abbrev} {project.title}"
                 except LookupError:
                     # In the unlikely case of the deletion of a project that is cached:
                     proj_str = f"{abbrev}: {proj_id} not found."
+                    proj_str_text = abbrev
             else:
                 # Uncached projects are listed by id (prefetch above should prevent this!)
                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                proj_str_text = abbrev
             if match:
                 pat = re.compile(r"\b%s" % re.escape(match), re.I)
-                if re.search(pat, proj_str):
+                if re.search(pat, proj_str_text):
                     result_pages.append(proj_str)
             else:
                 result_pages.append(proj_str)

@@ -93,19 +93,23 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         # Iterate over places and do a quick cache lookup per place:
         for abbrev in sorted(places):
             place_id = int(places[abbrev])
+            place_str_text = ""
             if place_id in self.api.places_cache:
                 try:
                     place = await self.place_table.get_place(ctx.guild, place_id)
                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"
+                    place_str_text = f"{abbrev} {place.display_name}"
                 except LookupError:
                     # In the unlikely case of the deletion of a place that is cached:
                     place_str = f"{abbrev}: {place_id} not found."
+                    place_str_text = abbrev
             else:
                 # Uncached places are listed by id (prefetch above should prevent this!)
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
+                place_str_text = abbrev
             if match:
                 pat = re.compile(r"\b%s" % re.escape(match), re.I)
-                if re.search(pat, place_str):
+                if re.search(pat, place_str_text):
                     result_pages.append(place_str)
             else:
                 result_pages.append(place_str)
