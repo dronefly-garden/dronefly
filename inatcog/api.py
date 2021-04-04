@@ -165,14 +165,14 @@ class INatAPI:
     ):
         """Get places for the specified ids or text query."""
 
-        last_place_id = None
+        first_place_id = None
         if isinstance(query, list):
             cached = set(query).issubset(set(self.places_cache))
             request = f"/v1/places/{','.join(map(str, query))}"
         elif isinstance(query, int):
             cached = query in self.places_cache
             if cached:
-                last_place_id = query
+                first_place_id = query
             request = f"/v1/places/{query}"
         else:
             cached = False
@@ -186,7 +186,8 @@ class INatAPI:
                 for place in places:
                     key = place.get("id")
                     if key:
-                        last_place_id = key
+                        if not first_place_id:
+                            first_place_id = key
                         record = {
                             "total_results": 1,
                             "page": 1,
@@ -201,8 +202,8 @@ class INatAPI:
                 for place_id in query
                 if self.places_cache[place_id]
             }
-        if last_place_id in self.places_cache:
-            return self.places_cache[last_place_id]
+        if first_place_id in self.places_cache:
+            return self.places_cache[first_place_id]
         return None
 
     async def get_projects(
@@ -210,14 +211,14 @@ class INatAPI:
     ):
         """Get projects for the specified ids or text query."""
 
-        last_project_id = None
+        first_project_id = None
         if isinstance(query, list):
             cached = set(query).issubset(set(self.projects_cache))
             request = f"/v1/projects/{','.join(map(str, query))}"
         elif isinstance(query, int):
             cached = query in self.projects_cache
             if cached:
-                last_project_id = query
+                first_project_id = query
             request = f"/v1/projects/{query}"
         else:
             cached = False
@@ -231,7 +232,8 @@ class INatAPI:
                 for project in projects:
                     key = project.get("id")
                     if key:
-                        last_project_id = key
+                        if not first_project_id:
+                            first_project_id = key
                         record = {
                             "total_results": 1,
                             "page": 1,
@@ -246,8 +248,8 @@ class INatAPI:
                 for project_id in query
                 if self.projects_cache[project_id]
             }
-        if last_project_id in self.projects_cache:
-            return self.projects_cache[last_project_id]
+        if first_project_id in self.projects_cache:
+            return self.projects_cache[first_project_id]
         return None
 
     async def get_project_observers_stats(self, **kwargs):
