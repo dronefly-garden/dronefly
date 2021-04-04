@@ -11,7 +11,11 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import User
 from inatcog.checks import known_inat_user
 from inatcog.common import DEQUOTE, grouper
-from inatcog.converters import ContextMemberConverter, QuotedContextMemberConverter
+from inatcog.converters import (
+    ContextMemberConverter,
+    QuotedContextMemberConverter,
+    NaturalCompoundQueryConverter,
+)
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -441,13 +445,27 @@ class CommandsUser(INatEmbeds, MixinMeta):
         """Show your observations, species, & ranks for an iNat project."""
         await (self.bot.get_command("project stats")(ctx, project, user="me"))
 
-    @my.command(name="inatyear", invoke_without_command=True)
+    @my.command(name="inatyear")
     @known_inat_user()
     async def my_inatyear(self, ctx, year: int = None):
         """Display the URL for your iNat year graphs.
 
         Where `year` is a valid year on or after 1950."""
         await self.user_inatyear(ctx, user="me", year=year)
+
+    @my.command(name="map")
+    @known_inat_user()
+    async def my_map(self, ctx, *, query=""):
+        """Display a map of your observations."""
+        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} by me")
+        await (self.bot.get_command("map obs")(ctx, query=my_query))
+
+    @my.command(name="idmap")
+    @known_inat_user()
+    async def my_idmap(self, ctx, *, query=""):
+        """Display a map of observations identified by you."""
+        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} id by me")
+        await (self.bot.get_command("map obs")(ctx, query=my_query))
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
