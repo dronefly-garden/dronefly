@@ -116,7 +116,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
                 except (BadArgument, LookupError):
                     return
-                if query.user or query.place:
+                if query.user or query.place or query.project:
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(filtered_taxon)
                     )
@@ -153,8 +153,6 @@ class Listeners(INatEmbeds, MixinMeta):
         if not message.embeds:
             return
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
-        if not inat_embed.taxon_id():
-            return
         msg = copy(message)
         msg.embeds[0] = inat_embed
 

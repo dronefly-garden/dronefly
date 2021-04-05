@@ -106,6 +106,7 @@ class INatEmbed(discord.Embed):
         content["place_id"] = self.place_id()
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
+        content["project_id"] = self.project_id()
         return content
 
     def has_users(self):
@@ -167,6 +168,19 @@ class INatEmbed(discord.Embed):
         params = parse_qs(url.query)
         place_id = params.get("place_id")
         return int(place_id[0]) if place_id else None
+
+    def project_id(self):
+        """Return project_id(s) from embed url, if present."""
+        if not self.url:
+            return None
+
+        mat = re.match(PAT_OBS_QUERY, self.url)
+        if not mat:
+            return None
+        url = urlsplit(mat["url"])
+        params = parse_qs(url.query)
+        project_id = params.get("project_id")
+        return int(project_id[0]) if project_id else None
 
     def taxon_id(self):
         """Return taxon_id(s) from embed url, if present."""
@@ -310,7 +324,7 @@ class INatEmbeds(MixinMeta):
         """Return embed for observation counts from place or by user."""
         title_params = {}
         formatted_counts = ""
-        (taxon, user, place, unobserved_by, id_by) = arg
+        (taxon, user, place, unobserved_by, id_by, project) = arg
 
         if taxon:
             title = format_taxon_title(taxon)
@@ -319,11 +333,15 @@ class INatEmbeds(MixinMeta):
             full_title = "Observations"
         description = ""
         if user:
-            if place:
-                full_title += f" from {place.display_name}"
-                title_params["place_id"] = place.place_id
+            if place or project:
+                if project:
+                    full_title += f" in {project.title}"
+                    title_params["project_id"] = project.project_id
+                if place:
+                    full_title += f" from {place.display_name}"
+                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self, user, taxon, place.place_id
+                    self, user, taxon, **title_params
                 )
                 header = TAXON_COUNTS_HEADER
             elif unobserved_by or id_by:
@@ -331,48 +349,49 @@ class INatEmbeds(MixinMeta):
             else:
                 formatted_counts = await format_user_taxon_counts(self, user, taxon)
                 header = TAXON_COUNTS_HEADER
-        elif place:
+        elif place or project:
             if unobserved_by:
-                full_title = f"Observations of {title} from {place.display_name}"
-                title_params["place_id"] = place.place_id
+                if project:
+                    full_title += f" in {project.title}"
+                    title_params["project_id"] = project.project_id
+                if place:
+                    full_title += f" from {place.display_name}"
+                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self,
-                    unobserved_by,
-                    taxon,
-                    place.place_id,
-                    unobserved=True,
+                    self, unobserved_by, taxon, unobserved=True, **title_params,
                 )
                 header = TAXON_NOTBY_HEADER
             elif id_by:
-                full_title = f"Observations of {title} from {place.display_name}"
-                title_params["place_id"] = place.place_id
+                if project:
+                    full_title += f" in {project.title}"
+                    title_params["project_id"] = project.project_id
+                if place:
+                    full_title += f" from {place.display_name}"
+                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self,
-                    id_by,
-                    taxon,
-                    place.place_id,
-                    ident=True,
+                    self, id_by, taxon, ident=True, **title_params,
                 )
                 header = TAXON_IDBY_HEADER
-            else:
-                formatted_counts = await format_place_taxon_counts(self, place, taxon)
+            elif place:
+                if project:
+                    full_title += f" in {project.title}"
+                    title_params["project_id"] = project.project_id
+                formatted_counts = await format_place_taxon_counts(
+                    self, place, taxon, **title_params
+                )
                 header = TAXON_PLACES_HEADER
+            else:  # project
+                full_title += f" in {project.title}"
+                title_params["project_id"] = project.project_id
+
         elif unobserved_by:
             formatted_counts = await format_user_taxon_counts(
-                self,
-                unobserved_by,
-                taxon,
-                None,
-                unobserved=True,
+                self, unobserved_by, taxon, None, unobserved=True,
             )
             header = TAXON_NOTBY_HEADER
         elif id_by:
             formatted_counts = await format_user_taxon_counts(
-                self,
-                id_by,
-                taxon,
-                None,
-                ident=True,
+                self, id_by, taxon, None, ident=True,
             )
             header = TAXON_IDBY_HEADER
         if formatted_counts:
@@ -383,11 +402,7 @@ class INatEmbeds(MixinMeta):
             title_params["taxon_id"] = taxon.taxon_id
         if title_params:
             url += "?" + urlencode(title_params)
-        embed = make_embed(
-            url=url,
-            title=full_title,
-            description=description,
-        )
+        embed = make_embed(url=url, title=full_title, description=description,)
         return embed
 
     async def format_obs(
@@ -671,10 +686,7 @@ class INatEmbeds(MixinMeta):
                     photos = (entry.get("photo") for entry in taxon_photos_raw)
                     (image, attribution) = next(
                         (
-                            (
-                                photo.get("original_url"),
-                                photo.get("attribution", ""),
-                            )
+                            (photo.get("original_url"), photo.get("attribution", ""),)
                             for i, photo in enumerate(photos, 1)
                             if i == index
                         ),
@@ -694,13 +706,14 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
         if isinstance(arg, FilteredTaxon):
-            (taxon, user, place, _unobserved_by, _id_by) = arg  # noqa: F841
+            (taxon, user, place, _unobserved_by, _id_by, _project) = arg  # noqa: F841
         else:
             taxon = arg
             user = None
             place = None
             _unobserved_by = None  # noqa: F841
             _id_by = None  # noqa: F841
+            _project = None  # noqa: F841
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
@@ -929,6 +942,7 @@ class INatEmbeds(MixinMeta):
                 _place,
                 _unobserved_by,
                 _id_by,
+                _project,
             ) = filtered_taxon  # noqa: F841
         else:
             taxon = filtered_taxon
@@ -988,7 +1002,10 @@ class INatEmbeds(MixinMeta):
             return
 
         inat_embed = msg.embeds[0]
-        taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+        if inat_embed.taxon_id():
+            taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+        else:
+            taxon = None
         # Observed by count add/remove for taxon:
         await self.edit_totals_locked(msg, taxon, inat_user, action, counts_pat)
 
@@ -1023,7 +1040,10 @@ class INatEmbeds(MixinMeta):
         place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
             update_place.display_name
         )
-        taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+        if inat_embed.taxon_id():
+            taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+        else:
+            taxon = None
         await self.edit_place_totals_locked(
             msg, taxon, update_place, action, place_counts_pat
         )
@@ -1118,10 +1138,7 @@ class INatEmbeds(MixinMeta):
         except LookupError:
             return
         response = await self.query_locked(
-            msg,
-            user,
-            "Add or remove which place (you have 15 seconds to answer)?",
-            15,
+            msg, user, "Add or remove which place (you have 15 seconds to answer)?", 15,
         )
         if response:
             try:
@@ -1156,10 +1173,7 @@ class INatEmbeds(MixinMeta):
                 formatted_names = format_taxon_names(ancestors, hierarchy=True)
                 hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
                 new_description = re.sub(
-                    NO_TAXONOMY_PAT,
-                    " in:\n" + hierarchy + r"\1",
-                    description,
-                    1,
+                    NO_TAXONOMY_PAT, " in:\n" + hierarchy + r"\1", description, 1,
                 )
             else:
                 return
@@ -1167,18 +1181,13 @@ class INatEmbeds(MixinMeta):
         await message.edit(embed=inat_embed)
 
     async def update_totals(
-        self,
-        description,
-        taxon,
-        inat_user,
-        action,
-        inat_embed,
-        counts_pat,
+        self, description, taxon, inat_user, action, inat_embed, counts_pat,
     ):
         """Update the totals for the embed."""
         unobserved = inat_embed.has_not_by_users()
         ident = inat_embed.has_id_by_users()
         place_id = inat_embed.place_id()
+        project_id = inat_embed.project_id()
         if not (unobserved or ident):
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
@@ -1210,7 +1219,7 @@ class INatEmbeds(MixinMeta):
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
             formatted_counts = await format_user_taxon_counts(
-                self, inat_user, taxon, place_id, unobserved, ident
+                self, inat_user, taxon, place_id, unobserved, ident, project_id
             )
             description += "\n" + formatted_counts
 
@@ -1221,19 +1230,14 @@ class INatEmbeds(MixinMeta):
             # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
-                    self, ",".join(matches), taxon, place_id
+                    self, ",".join(matches), taxon, place_id, project_id=project_id
                 )
                 description += f"\n{formatted_counts}"
                 return description
         return description
 
     async def edit_totals_locked(
-        self,
-        msg,
-        taxon,
-        inat_user,
-        action,
-        counts_pat,
+        self, msg, taxon, inat_user, action, counts_pat,
     ):
         """Update totals for message locked."""
         if msg.id not in self.reaction_locks:
@@ -1254,12 +1258,7 @@ class INatEmbeds(MixinMeta):
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
                 description = await self.update_totals(
-                    description,
-                    taxon,
-                    inat_user,
-                    action,
-                    inat_embed,
-                    counts_pat,
+                    description, taxon, inat_user, action, inat_embed, counts_pat,
                 )
                 if len(description) > MAX_EMBED_DESCRIPTION_LEN:
                     raise NoRoomInDisplay(
@@ -1296,18 +1295,25 @@ class INatEmbeds(MixinMeta):
             if not matches:
                 description += "\n" + TAXON_PLACES_HEADER
             formatted_counts = await format_place_taxon_counts(
-                self, place, taxon, inat_embed.user_id()
+                self,
+                place,
+                taxon,
+                inat_embed.user_id(),
+                project_id=inat_embed.project_id(),
             )
             description += "\n" + formatted_counts
 
         matches = re.findall(
-            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)",
-            description,
+            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)", description,
         )
         # Total added only if more than one place:
         if len(matches) > 1:
             formatted_counts = await format_place_taxon_counts(
-                self, ",".join(matches), taxon, inat_embed.user_id()
+                self,
+                ",".join(matches),
+                taxon,
+                inat_embed.user_id(),
+                project_id=inat_embed.project_id(),
             )
             description += f"\n{formatted_counts}"
             return description

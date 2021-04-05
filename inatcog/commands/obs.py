@@ -145,6 +145,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             or query.unobserved_by
             or query.id_by
             or query.per
+            or query.project
         ):
             await apologize(ctx, "I can't tabulate that yet.")
             return

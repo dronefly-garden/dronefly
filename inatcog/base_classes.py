@@ -125,6 +125,7 @@ class CompoundQuery(NamedTuple):
     unobserved_by: str
     id_by: str
     per: str
+    project: str
 
 
 # TODO: this should just be Place, as it is a superset
@@ -388,6 +389,19 @@ class Place(DataClassJsonMixin):
         self.url = f"{WWW_BASE_URL}/places/{self.place_id}"
 
 
+@dataclass
+class Project(DataClassJsonMixin):
+    """A project."""
+
+    project_id: int = field(metadata=config(field_name="id"))
+    title: str
+    url: str = field(init=False)
+
+    def __post_init__(self):
+        """URL for project."""
+        self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
+
+
 class FilteredTaxon(NamedTuple):
     """A taxon with optional filters."""
 
@@ -396,6 +410,7 @@ class FilteredTaxon(NamedTuple):
     place: Place
     unobserved_by: User
     id_by: User
+    project: Project
 
 
 class Obs(NamedTuple):

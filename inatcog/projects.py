@@ -3,20 +3,7 @@ from dataclasses import dataclass, field
 import re
 from typing import List, Union
 from dataclasses_json import config, DataClassJsonMixin
-from .base_classes import WWW_BASE_URL, WWW_URL_PAT
-
-
-@dataclass
-class Project(DataClassJsonMixin):
-    """A project."""
-
-    project_id: int = field(metadata=config(field_name="id"))
-    title: str
-    url: str = field(init=False)
-
-    def __post_init__(self):
-        """URL for project."""
-        self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
+from .base_classes import WWW_URL_PAT, Project
 
 
 # Match project link from any partner site.

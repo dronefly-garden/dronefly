@@ -16,6 +16,8 @@ class INatObsQuery:
         message = ""
         if filtered_taxon.taxon:
             message += " of " + format_taxon_name(filtered_taxon.taxon, with_term=True)
+        if filtered_taxon.project:
+            message += " in " + filtered_taxon.project.title
         if filtered_taxon.place:
             message += " from " + filtered_taxon.place.display_name
         if filtered_taxon.user:
@@ -42,6 +44,8 @@ class INatObsQuery:
                 kwargs["taxon_id"] = filtered_taxon.taxon.taxon_id
             if filtered_taxon.user:
                 kwargs["user_id"] = filtered_taxon.user.user_id
+            if filtered_taxon.project:
+                kwargs["project_id"] = filtered_taxon.project.project_id
             if filtered_taxon.place:
                 kwargs["place_id"] = filtered_taxon.place.place_id
             if filtered_taxon.unobserved_by:

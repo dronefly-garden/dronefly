@@ -168,7 +168,10 @@ class INatTaxonQuery:
         user = None
         unobserved_by = None
         id_by = None
+        project = None
         preferred_place_id = await self.cog.get_home(ctx)
+        if query.project:
+            project = await self.cog.project_table.get_project(ctx.guild, query.project)
         if query.place:
             place = await self.cog.place_table.get_place(
                 ctx.guild, query.place, ctx.author
@@ -206,7 +209,7 @@ class INatTaxonQuery:
             except BadArgument as err:
                 raise LookupError(str(err))
             id_by = await self.cog.user_table.get_user(who.member)
-        return FilteredTaxon(taxon, user, place, unobserved_by, id_by)
+        return FilteredTaxon(taxon, user, place, unobserved_by, id_by, project)
 
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""

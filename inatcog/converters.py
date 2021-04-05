@@ -133,6 +133,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--rank", dest="rank", default="")
         parser.add_argument("--with", nargs="+", dest="controlled_term")
         parser.add_argument("--per", nargs="+", dest="per", default=[])
+        parser.add_argument("--in-prj", nargs="+", dest="project", default=[])
 
         try:
             vals = parser.parse_args(shlex.split(argument, posix=False))
@@ -161,6 +162,7 @@ class CompoundQueryConverter(CompoundQuery):
             or vals.unobserved_by
             or vals.id_by
             or vals.per
+            or vals.project
         ):
             main = None
             ancestor = None
@@ -216,6 +218,7 @@ class CompoundQueryConverter(CompoundQuery):
                 unobserved_by=" ".join(vals.unobserved_by),
                 id_by=" ".join(vals.id_by),
                 per=" ".join(vals.per),
+                project=" ".join(vals.project),
             )
             LOG.info(repr(query))
             return query
@@ -234,6 +237,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
             return argument
         try:
             arg_normalized = re.sub(r"(id|not) by", r"\1-by", argument, re.I)
+            arg_normalized = re.sub(r"in prj", r"in-prj", arg_normalized, re.I)
             args_normalized = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
             raise BadArgument(err.args[0])
@@ -253,6 +257,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 "from",
                 "rank",
                 "with",
+                "in-prj",
             ]:
                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
         if not re.match(r"^--", args_normalized[0]):

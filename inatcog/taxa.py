@@ -308,11 +308,7 @@ def match_pat(record, pat, scientific_name=False, locale=None):
         A tuple of search results for the pat for each name in the record.
     """
     if scientific_name:
-        return NameMatch(
-            None,
-            re.search(pat, record.name),
-            None,
-        )
+        return NameMatch(None, re.search(pat, record.name), None,)
     if locale:
         names = [
             name["name"]
@@ -329,11 +325,7 @@ def match_pat(record, pat, scientific_name=False, locale=None):
             mat = re.search(pat, name)
             if mat:
                 LOG.info("match=%s", pat)
-                return NameMatch(
-                    mat,
-                    None,
-                    mat,
-                )
+                return NameMatch(mat, None, mat,)
         return NO_NAME_MATCH
     return NameMatch(
         re.search(pat, record.term),
@@ -482,6 +474,7 @@ async def format_place_taxon_counts(
     place: Union[Place, str],
     taxon: Taxon = None,
     user_id: int = None,
+    project_id: int = None,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
@@ -507,6 +500,9 @@ async def format_place_taxon_counts(
     if user_id:
         obs_opt["user_id"] = user_id
         species_opt["user_id"] = user_id
+    if project_id:
+        obs_opt["project_id"] = project_id
+        species_opt["project_id"] = project_id
     observations = await cog.api.get_observations(**obs_opt)
     species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:
@@ -517,6 +513,8 @@ async def format_place_taxon_counts(
             url += f"&taxon_id={taxon_id}"
         if user_id:
             url += f"&user_id={user_id}"
+        if project_id:
+            url += f"&project_id={project_id}"
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {name}"
         else:
@@ -533,6 +531,7 @@ async def format_user_taxon_counts(
     place_id: int = None,
     unobserved: bool = False,
     ident: bool = False,
+    project_id: int = None,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):
@@ -565,6 +564,9 @@ async def format_user_taxon_counts(
     if place_id:
         obs_opt["place_id"] = place_id
         species_opt["place_id"] = place_id
+    if project_id:
+        obs_opt["project_id"] = project_id
+        species_opt["project_id"] = project_id
     observations = await cog.api.get_observations(**obs_opt)
     species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:
@@ -581,6 +583,8 @@ async def format_user_taxon_counts(
             url += f"&user_id={user_id}"
         if place_id:
             url += f"&place_id={place_id}"
+        if project_id:
+            url += f"&project_id={project_id}"
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {login}"
         else:
