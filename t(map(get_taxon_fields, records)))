@@ -1,0 +1,1481 @@
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex d98d616..47cbfb4 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -110,3 +110,6 @@[m [mqgriff.ini[m
+ [m
+ # Red Bot V3 stuff[m
+ red_setup_logs[m
+[32m+[m
+[32m+[m[32m# Visual Studio Code stuff[m
+[32m+[m[32m.vscode/[m
+[1mdiff --git a/.vscode/settings.json b/.vscode/settings.json[m
+[1mdeleted file mode 100644[m
+[1mindex c71770f..0000000[m
+[1m--- a/.vscode/settings.json[m
+[1m+++ /dev/null[m
+[36m@@ -1,5 +0,0 @@[m
+[31m-{[m
+[31m-    "python.linting.pylintEnabled": true,[m
+[31m-    "restructuredtext.confPath": "${workspaceFolder}\\docs",[m
+[31m-    "restructuredtext.languageServer.disabled": true[m
+[31m-}[m
+\ No newline at end of file[m
+[1mdiff --git a/inatcog/api.py b/inatcog/api.py[m
+[1mindex 8047a8f..1aa5aa0 100644[m
+[1m--- a/inatcog/api.py[m
+[1m+++ b/inatcog/api.py[m
+[36m@@ -97,7 +97,11 @@[m [mclass INatAPI:[m
+ [m
+         # Select endpoint based on call signature:[m
+         # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])[m
+[31m-        endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"[m
+[32m+[m[32m        endpoint = ([m[41m[m
+[32m+[m[32m            "/v1/taxa/autocomplete"[m[41m[m
+[32m+[m[32m            if "q" in kwargs and "page" not in kwargs[m[41m[m
+[32m+[m[32m            else "/v1/taxa"[m[41m[m
+[32m+[m[32m        )[m[41m[m
+         id_arg = f"/{args[0]}" if args else ""[m
+         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"[m
+ [m
+[36m@@ -156,40 +160,65 @@[m [mclass INatAPI:[m
+         full_url = f"{API_BASE_URL}{endpoint}"[m
+         return await self._get_rate_limited(full_url, **kwargs)[m
+ [m
+[31m-    async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):[m
+[31m-        """Query API for places matching place ID or params."""[m
+[32m+[m[32m    async def get_places([m[41m[m
+[32m+[m[32m        self, query: Union[int, str, list], refresh_cache=False, **kwargs[m[41m[m
+[32m+[m[32m    ):[m[41m[m
+[32m+[m[32m        """Get places for the specified ids or text query."""[m[41m[m
+ [m
+[31m-        # Select endpoint based on call signature:[m
+[31m-        request = f"/v1/places/{query}"[m
+[32m+[m[32m        first_place_id = None[m[41m[m
+[32m+[m[32m        if isinstance(query, list):[m[41m[m
+[32m+[m[32m            cached = set(query).issubset(set(self.places_cache))[m[41m[m
+[32m+[m[32m            request = f"/v1/places/{','.join(map(str, query))}"[m[41m[m
+[32m+[m[32m        elif isinstance(query, int):[m[41m[m
+[32m+[m[32m            cached = query in self.places_cache[m[41m[m
+[32m+[m[32m            if cached:[m[41m[m
+[32m+[m[32m                first_place_id = query[m[41m[m
+[32m+[m[32m            request = f"/v1/places/{query}"[m[41m[m
+[32m+[m[32m        else:[m[41m[m
+[32m+[m[32m            cached = False[m[41m[m
+[32m+[m[32m            request = f"/v1/places/{query}"[m[41m[m
+         full_url = f"{API_BASE_URL}{request}"[m
+ [m
+[31m-        # Cache lookup by id#, as those should be stable.[m
+[31m-        if isinstance(query, int) or query.isnumeric():[m
+[31m-            place_id = int(query)[m
+[31m-            if refresh_cache or place_id not in self.places_cache:[m
+[31m-                place = await self._get_rate_limited(full_url, **kwargs)[m
+[31m-                if place:[m
+[31m-                    self.places_cache[place_id] = place[m
+[31m-            return ([m
+[31m-                self.places_cache[place_id] if place_id in self.places_cache else None[m
+[31m-            )[m
+[32m+[m[32m        if refresh_cache or not cached:[m[41m[m
+[32m+[m[32m            results = await self._get_rate_limited(full_url, **kwargs)[m[41m[m
+[32m+[m[32m            if results:[m[41m[m
+[32m+[m[32m                places = results.get("results") or [][m[41m[m
+[32m+[m[32m                for place in places:[m[41m[m
+[32m+[m[32m                    key = place.get("id")[m[41m[m
+[32m+[m[32m                    if key:[m[41m[m
+[32m+[m[32m                        if not first_place_id:[m[41m[m
+[32m+[m[32m                            first_place_id = key[m[41m[m
+[32m+[m[32m                        record = {[m[41m[m
+[32m+[m[32m                            "total_results": 1,[m[41m[m
+[32m+[m[32m                            "page": 1,[m[41m[m
+[32m+[m[32m                            "per_page": 1,[m[41m[m
+[32m+[m[32m                            "results": [place],[m[41m[m
+[32m+[m[32m                        }[m[41m[m
+[32m+[m[32m                        self.places_cache[key] = record[m[41m[m
+ [m
+[31m-        # Skip the cache for text queries which are not stable.[m
+[31m-        return await self._get_rate_limited(full_url, **kwargs)[m
+[32m+[m[32m        if isinstance(query, list):[m[41m[m
+[32m+[m[32m            return {[m[41m[m
+[32m+[m[32m                place_id: self.places_cache[place_id][m[41m[m
+[32m+[m[32m                for place_id in query[m[41m[m
+[32m+[m[32m                if self.places_cache[place_id][m[41m[m
+[32m+[m[32m            }[m[41m[m
+[32m+[m[32m        if first_place_id in self.places_cache:[m[41m[m
+[32m+[m[32m            return self.places_cache[first_place_id][m[41m[m
+[32m+[m[32m        return None[m[41m[m
+ [m
+     async def get_projects([m
+         self, query: Union[str, int, list], refresh_cache=False, **kwargs[m
+     ):[m
+[31m-        """Get the project for the specified id."""[m
+[32m+[m[32m        """Get projects for the specified ids or text query."""[m[41m[m
+ [m
+[31m-        last_project_id = None[m
+[32m+[m[32m        first_project_id = None[m[41m[m
+         if isinstance(query, list):[m
+             cached = set(query).issubset(set(self.projects_cache))[m
+             request = f"/v1/projects/{','.join(map(str, query))}"[m
+         elif isinstance(query, int):[m
+             cached = query in self.projects_cache[m
+             if cached:[m
+[31m-                last_project_id = query[m
+[32m+[m[32m                first_project_id = query[m[41m[m
+             request = f"/v1/projects/{query}"[m
+         else:[m
+             cached = False[m
+[36m@@ -203,7 +232,8 @@[m [mclass INatAPI:[m
+                 for project in projects:[m
+                     key = project.get("id")[m
+                     if key:[m
+[31m-                        last_project_id = key[m
+[32m+[m[32m                        if not first_project_id:[m[41m[m
+[32m+[m[32m                            first_project_id = key[m[41m[m
+                         record = {[m
+                             "total_results": 1,[m
+                             "page": 1,[m
+[36m@@ -218,8 +248,8 @@[m [mclass INatAPI:[m
+                 for project_id in query[m
+                 if self.projects_cache[project_id][m
+             }[m
+[31m-        if last_project_id in self.projects_cache:[m
+[31m-            return self.projects_cache[last_project_id][m
+[32m+[m[32m        if first_project_id in self.projects_cache:[m[41m[m
+[32m+[m[32m            return self.projects_cache[first_project_id][m[41m[m
+         return None[m
+ [m
+     async def get_project_observers_stats(self, **kwargs):[m
+[1mdiff --git a/inatcog/base_classes.py b/inatcog/base_classes.py[m
+[1mindex 69dd6ba..fdf74b6 100644[m
+[1m--- a/inatcog/base_classes.py[m
+[1m+++ b/inatcog/base_classes.py[m
+[36m@@ -15,7 +15,7 @@[m [mWWW_URL_PAT = ([m
+     r"((www|colombia|panama|ecuador|israel|greece)\.)?inaturalist\.org"[m
+     r"|inaturalist\.ala\.org\.au"[m
+     r"|(www\.)?("[m
+[31m-    r"inaturalist\.(ca|nz)"[m
+[32m+[m[32m    r"inaturalist\.(ca|lu|nz)"[m[41m[m
+     r"|naturalista\.mx"[m
+     r"|biodiversity4all\.org"[m
+     r"|argentinat\.org"[m
+[36m@@ -123,6 +123,7 @@[m [mclass CompoundQuery(NamedTuple):[m
+     place: str[m
+     controlled_term: str[m
+     unobserved_by: str[m
+[32m+[m[32m    id_by: str[m[41m[m
+     per: str[m
+ [m
+ [m
+[36m@@ -336,6 +337,7 @@[m [mclass Taxon(NamedTuple):[m
+     ancestor_ranks: list[m
+     active: bool[m
+     listed_taxa: list[m
+[32m+[m[32m    names: list[m[41m[m
+     establishment_means: Optional[EstablishmentMeansPartial][m
+     conservation_status: Optional[ConservationStatus][m
+ [m
+[36m@@ -393,6 +395,7 @@[m [mclass FilteredTaxon(NamedTuple):[m
+     user: User[m
+     place: Place[m
+     unobserved_by: User[m
+[32m+[m[32m    id_by: User[m[41m[m
+ [m
+ [m
+ class Obs(NamedTuple):[m
+[1mdiff --git a/inatcog/commands/inat.py b/inatcog/commands/inat.py[m
+[1mindex b448320..5a5793d 100644[m
+[1m--- a/inatcog/commands/inat.py[m
+[1m+++ b/inatcog/commands/inat.py[m
+[36m@@ -276,7 +276,8 @@[m [mclass CommandsInat(INatEmbeds, MixinMeta):[m
+ [m
+         embed_description = f"```md\n{inat_embed.description}\n```"[m
+         description_embed = make_embed([m
+[31m-            title="Markdown formatted content", description=embed_description,[m
+[32m+[m[32m            title="Markdown formatted content",[m[41m[m
+[32m+[m[32m            description=embed_description,[m[41m[m
+         )[m
+ [m
+         embed_dict = inat_embed.to_dict()[m
+[1mdiff --git a/inatcog/commands/last.py b/inatcog/commands/last.py[m
+[1mindex 6a074a0..b5d9a80 100644[m
+[1m--- a/inatcog/commands/last.py[m
+[1m+++ b/inatcog/commands/last.py[m
+[36m@@ -80,6 +80,7 @@[m [mclass CommandsLast(INatEmbeds, MixinMeta):[m
+             place=query.place,[m
+             controlled_term="",[m
+             unobserved_by=query.unobserved_by,[m
+[32m+[m[32m            id_by=query.id_by,[m[41m[m
+             per=query.per,[m
+         )[m
+         return await self.taxon_query.query_taxon(ctx, last_query)[m
+[1mdiff --git a/inatcog/commands/map.py b/inatcog/commands/map.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..fc0445e[m
+[1m--- /dev/null[m
+[1m+++ b/inatcog/commands/map.py[m
+[36m@@ -0,0 +1,73 @@[m
+[32m+[m[32m"""Module for map command group."""[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mimport urllib.parse[m[41m[m
+[32m+[m[32mfrom redbot.core import checks, commands[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mfrom inatcog.base_classes import WWW_BASE_URL[m[41m[m
+[32m+[m[32mfrom inatcog.converters import NaturalCompoundQueryConverter[m[41m[m
+[32m+[m[32mfrom inatcog.embeds import apologize, make_embed[m[41m[m
+[32m+[m[32mfrom inatcog.inat_embeds import INatEmbeds[m[41m[m
+[32m+[m[32mfrom inatcog.interfaces import MixinMeta[m[41m[m
+[32m+[m[32mfrom inatcog.taxa import format_taxon_name[m[41m[m
+[32m+[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32mclass CommandsMap(INatEmbeds, MixinMeta):[m[41m[m
+[32m+[m[32m    """Mixin providing taxon command group."""[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    @commands.group(invoke_without_command=True)[m[41m[m
+[32m+[m[32m    @checks.bot_has_permissions(embed_links=True)[m[41m[m
+[32m+[m[32m    async def map(self, ctx, *, taxa_list):[m[41m[m
+[32m+[m[32m        """Show range map for a list of one or more taxa.[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        **Examples:**[m[41m[m
+[32m+[m[32m        ```[m[41m[m
+[32m+[m[32m        [p]map polar bear[m[41m[m
+[32m+[m[32m        [p]map 24255,24267[m[41m[m
+[32m+[m[32m        [p]map boreal chorus frog,western chorus frog[m[41m[m
+[32m+[m[32m        ```[m[41m[m
+[32m+[m[32m        See `[p]help taxon` for help specifying taxa.[m[41m[m
+[32m+[m[32m        """[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        if not taxa_list:[m[41m[m
+[32m+[m[32m            await ctx.send_help()[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)[m[41m[m
+[32m+[m[32m        except LookupError as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        await ctx.send(embed=await self.make_map_embed(taxa))[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    @map.command(name="obs")[m[41m[m
+[32m+[m[32m    async def map_obs(self, ctx, *, query: NaturalCompoundQueryConverter):[m[41m[m
+[32m+[m[32m        """Show map of observations."""[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            ([m[41m[m
+[32m+[m[32m                kwargs,[m[41m[m
+[32m+[m[32m                filtered_taxon,[m[41m[m
+[32m+[m[32m                _term,[m[41m[m
+[32m+[m[32m                _value,[m[41m[m
+[32m+[m[32m            ) = await self.obs_query.get_query_args(ctx, query)[m[41m[m
+[32m+[m[32m            if filtered_taxon.taxon:[m[41m[m
+[32m+[m[32m                query_title = "Map of " + format_taxon_name([m[41m[m
+[32m+[m[32m                    filtered_taxon.taxon, with_term=True[m[41m[m
+[32m+[m[32m                )[m[41m[m
+[32m+[m[32m            else:[m[41m[m
+[32m+[m[32m                query_title = "Map of observations"[m[41m[m
+[32m+[m[32m            if filtered_taxon.user:[m[41m[m
+[32m+[m[32m                query_title += f" by {filtered_taxon.user.login}"[m[41m[m
+[32m+[m[32m            if filtered_taxon.unobserved_by:[m[41m[m
+[32m+[m[32m                query_title += f" unobserved by {filtered_taxon.unobserved_by.login}"[m[41m[m
+[32m+[m[32m            if filtered_taxon.id_by:[m[41m[m
+[32m+[m[32m                query_title += f" identified by {filtered_taxon.id_by.login}"[m[41m[m
+[32m+[m[32m            if filtered_taxon.place:[m[41m[m
+[32m+[m[32m                query_title += f" from {filtered_taxon.place.display_name}"[m[41m[m
+[32m+[m[32m        except LookupError as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        url = f"{WWW_BASE_URL}/observations/map?{urllib.parse.urlencode(kwargs)}"[m[41m[m
+[32m+[m[32m        await ctx.send(embed=make_embed(url=url, title=query_title))[m[41m[m
+[1mdiff --git a/inatcog/commands/obs.py b/inatcog/commands/obs.py[m
+[1mindex 2328e28..c7b26db 100644[m
+[1m--- a/inatcog/commands/obs.py[m
+[1m+++ b/inatcog/commands/obs.py[m
+[36m@@ -7,6 +7,7 @@[m [mfrom redbot.core import checks, commands[m
+ from redbot.core.commands import BadArgument[m
+ [m
+ from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL[m
+[32m+[m[32mfrom inatcog.common import LOG[m[41m[m
+ from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter[m
+ from inatcog.embeds import apologize, make_embed[m
+ from inatcog.inat_embeds import INatEmbeds[m
+[36m@@ -72,6 +73,7 @@[m [mclass CommandsObs(INatEmbeds, MixinMeta):[m
+         try:[m
+             compound_query = await NaturalCompoundQueryConverter.convert(ctx, query)[m
+             obs = await self.obs_query.query_single_obs(ctx, compound_query)[m
+[32m+[m[32m            LOG.info(obs)[m[41m[m
+         except (BadArgument, LookupError) as err:[m
+             await apologize(ctx, err.args[0])[m
+             return[m
+[36m@@ -96,7 +98,10 @@[m [mclass CommandsObs(INatEmbeds, MixinMeta):[m
+         • If no taxon is specified, all observations are searched.[m
+         • The `not by` qualifier counts observations / species[m
+           unobserved by each user in the table. It may be combined[m
+[31m-          with `from`, but not `by`.[m
+[32m+[m[32m          with `from`, but not `by` or `id by`.[m[41m[m
+[32m+[m[32m        • The `id by` qualifier counts observations / species[m[41m[m
+[32m+[m[32m          identified by each user in the table. It may be combined[m[41m[m
+[32m+[m[32m          with `from`, but not `by` or `not by`.[m[41m[m
+         e.g.[m
+         ```[m
+         ,tab fish from home[m
+[36m@@ -105,6 +110,8 @@[m [mclass CommandsObs(INatEmbeds, MixinMeta):[m
+              -> per user (self listed; others react to add)[m
+         ,tab fish not by me[m
+              -> per unobserved by (self listed; others react to add)[m
+[32m+[m[32m        ,tab fish id by me[m[41m[m
+[32m+[m[32m             -> per identified by (self listed; others react to add)[m[41m[m
+         ,tab fish from canada by me[m
+              -> per user (self listed; others react to add)[m
+                 but only fish from canada are tabulated[m
+[36m@@ -136,6 +143,7 @@[m [mclass CommandsObs(INatEmbeds, MixinMeta):[m
+             or query.controlled_term[m
+             or query.main[m
+             or query.unobserved_by[m
+[32m+[m[32m            or query.id_by[m[41m[m
+             or query.per[m
+         ):[m
+             await apologize(ctx, "I can't tabulate that yet.")[m
+[1mdiff --git a/inatcog/commands/place.py b/inatcog/commands/place.py[m
+[1mindex 3988045..25139fb 100644[m
+[1m--- a/inatcog/commands/place.py[m
+[1m+++ b/inatcog/commands/place.py[m
+[36m@@ -1,5 +1,7 @@[m
+ """Module for place command group."""[m
+ [m
+[32m+[m[32mimport re[m[41m[m
+[32m+[m[41m[m
+ from redbot.core import checks, commands[m
+ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS[m
+ [m
+[36m@@ -58,7 +60,7 @@[m [mclass CommandsPlace(INatEmbeds, MixinMeta):[m
+ [m
+     @place.command(name="list")[m
+     @checks.bot_has_permissions(embed_links=True)[m
+[31m-    async def place_list(self, ctx):[m
+[32m+[m[32m    async def place_list(self, ctx, *, match=""):[m[41m[m
+         """List places with abbreviations on this server."""[m
+         if not ctx.guild:[m
+             return[m
+[36m@@ -66,18 +68,55 @@[m [mclass CommandsPlace(INatEmbeds, MixinMeta):[m
+         config = self.config.guild(ctx.guild)[m
+         places = await config.places()[m
+         result_pages = [][m
+[31m-        for abbrev in places:[m
+[31m-            # Only lookup cached places. Uncached places will just be shown by number.[m
+[32m+[m[41m[m
+[32m+[m[32m        # Prefetch all uncached places, 500 at a time[m[41m[m
+[32m+[m[32m        # - 500 is a maximum determined by testing. beyond that, iNat API[m[41m[m
+[32m+[m[32m        #   will respond with:[m[41m[m
+[32m+[m[32m        #[m[41m[m
+[32m+[m[32m        #      Unprocessable Entity (422)[m[41m[m
+[32m+[m[32m        #[m[41m[m
+[32m+[m[32m        place_id_groups = [[m[41m[m
+[32m+[m[32m            list(filter(None, results))[m[41m[m
+[32m+[m[32m            for results in grouper([m[41m[m
+[32m+[m[32m                [[m[41m[m
+[32m+[m[32m                    places[abbrev][m[41m[m
+[32m+[m[32m                    for abbrev in places[m[41m[m
+[32m+[m[32m                    if int(places[abbrev]) not in self.api.places_cache[m[41m[m
+[32m+[m[32m                ],[m[41m[m
+[32m+[m[32m                500,[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m        ][m[41m[m
+[32m+[m[32m        for place_id_group in place_id_groups:[m[41m[m
+[32m+[m[32m            await self.api.get_places(place_id_group)[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        # Iterate over places and do a quick cache lookup per place:[m[41m[m
+[32m+[m[32m        for abbrev in sorted(places):[m[41m[m
+             place_id = int(places[abbrev])[m
+[32m+[m[32m            place_str_text = ""[m[41m[m
+             if place_id in self.api.places_cache:[m
+                 try:[m
+                     place = await self.place_table.get_place(ctx.guild, place_id)[m
+                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"[m
+[32m+[m[32m                    place_str_text = f"{abbrev} {place.display_name}"[m[41m[m
+                 except LookupError:[m
+[32m+[m[32m                    # In the unlikely case of the deletion of a place that is cached:[m[41m[m
+                     place_str = f"{abbrev}: {place_id} not found."[m
+[32m+[m[32m                    place_str_text = abbrev[m[41m[m
+             else:[m
+[32m+[m[32m                # Uncached places are listed by id (prefetch above should prevent this!)[m[41m[m
+                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"[m
+[31m-            result_pages.append(place_str)[m
+[32m+[m[32m                place_str_text = abbrev[m[41m[m
+[32m+[m[32m            if match:[m[41m[m
+[32m+[m[32m                words = match.split(" ")[m[41m[m
+[32m+[m[32m                if all([m[41m[m
+[32m+[m[32m                    re.search(pat, place_str_text)[m[41m[m
+[32m+[m[32m                    for pat in [[m[41m[m
+[32m+[m[32m                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words[m[41m[m
+[32m+[m[32m                    ][m[41m[m
+[32m+[m[32m                ):[m[41m[m
+[32m+[m[32m                    result_pages.append(place_str)[m[41m[m
+[32m+[m[32m            else:[m[41m[m
+[32m+[m[32m                result_pages.append(place_str)[m[41m[m
+         pages = [[m
+             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)[m
+         ][m
+[1mdiff --git a/inatcog/commands/project.py b/inatcog/commands/project.py[m
+[1mindex 4340f36..6edc6d5 100644[m
+[1m--- a/inatcog/commands/project.py[m
+[1m+++ b/inatcog/commands/project.py[m
+[36m@@ -1,5 +1,7 @@[m
+ """Module for project command group."""[m
+ [m
+[32m+[m[32mimport re[m[41m[m
+[32m+[m[41m[m
+ from redbot.core import checks, commands[m
+ from redbot.core.commands import BadArgument[m
+ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS[m
+[36m@@ -60,7 +62,7 @@[m [mclass CommandsProject(INatEmbeds, MixinMeta):[m
+ [m
+     @project.command(name="list")[m
+     @checks.bot_has_permissions(embed_links=True)[m
+[31m-    async def project_list(self, ctx):[m
+[32m+[m[32m    async def project_list(self, ctx, *, match=""):[m[41m[m
+         """List projects with abbreviations on this server."""[m
+         if not ctx.guild:[m
+             return[m
+[36m@@ -68,18 +70,55 @@[m [mclass CommandsProject(INatEmbeds, MixinMeta):[m
+         config = self.config.guild(ctx.guild)[m
+         projects = await config.projects()[m
+         result_pages = [][m
+[31m-        for abbrev in projects:[m
+[31m-            # Only lookup cached projects. Uncached projects will just be shown by number.[m
+[32m+[m[41m[m
+[32m+[m[32m        # Prefetch all uncached projects, 10 at a time[m[41m[m
+[32m+[m[32m        # - 10 is a maximum determined by testing. beyond that, iNat API[m[41m[m
+[32m+[m[32m        #   will respond with:[m[41m[m
+[32m+[m[32m        #[m[41m[m
+[32m+[m[32m        #      Unprocessable Entity (422)[m[41m[m
+[32m+[m[32m        #[m[41m[m
+[32m+[m[32m        proj_id_groups = [[m[41m[m
+[32m+[m[32m            list(filter(None, results))[m[41m[m
+[32m+[m[32m            for results in grouper([m[41m[m
+[32m+[m[32m                [[m[41m[m
+[32m+[m[32m                    projects[abbrev][m[41m[m
+[32m+[m[32m                    for abbrev in projects[m[41m[m
+[32m+[m[32m                    if int(projects[abbrev]) not in self.api.projects_cache[m[41m[m
+[32m+[m[32m                ],[m[41m[m
+[32m+[m[32m                10,[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m        ][m[41m[m
+[32m+[m[32m        for proj_id_group in proj_id_groups:[m[41m[m
+[32m+[m[32m            await self.api.get_projects(proj_id_group)[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        # Iterate over projects and do a quick cache lookup per project:[m[41m[m
+[32m+[m[32m        for abbrev in sorted(projects):[m[41m[m
+             proj_id = int(projects[abbrev])[m
+[32m+[m[32m            proj_str_text = ""[m[41m[m
+             if proj_id in self.api.projects_cache:[m
+                 try:[m
+                     project = await self.project_table.get_project(ctx.guild, proj_id)[m
+                     proj_str = f"{abbrev}: [{project.title}]({project.url})"[m
+[32m+[m[32m                    proj_str_text = f"{abbrev} {project.title}"[m[41m[m
+                 except LookupError:[m
+[32m+[m[32m                    # In the unlikely case of the deletion of a project that is cached:[m[41m[m
+                     proj_str = f"{abbrev}: {proj_id} not found."[m
+[32m+[m[32m                    proj_str_text = abbrev[m[41m[m
+             else:[m
+[32m+[m[32m                # Uncached projects are listed by id (prefetch above should prevent this!)[m[41m[m
+                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"[m
+[31m-            result_pages.append(proj_str)[m
+[32m+[m[32m                proj_str_text = abbrev[m[41m[m
+[32m+[m[32m            if match:[m[41m[m
+[32m+[m[32m                words = match.split(" ")[m[41m[m
+[32m+[m[32m                if all([m[41m[m
+[32m+[m[32m                    re.search(pat, proj_str_text)[m[41m[m
+[32m+[m[32m                    for pat in [[m[41m[m
+[32m+[m[32m                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words[m[41m[m
+[32m+[m[32m                    ][m[41m[m
+[32m+[m[32m                ):[m[41m[m
+[32m+[m[32m                    result_pages.append(proj_str)[m[41m[m
+[32m+[m[32m            else:[m[41m[m
+[32m+[m[32m                result_pages.append(proj_str)[m[41m[m
+         pages = [[m
+             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)[m
+         ][m
+[1mdiff --git a/inatcog/commands/search.py b/inatcog/commands/search.py[m
+[1mindex 1cdd7ee..1484f1f 100644[m
+[1m--- a/inatcog/commands/search.py[m
+[1m+++ b/inatcog/commands/search.py[m
+[36m@@ -118,6 +118,8 @@[m [mclass CommandsSearch(INatEmbeds, MixinMeta):[m
+                         query_title += ([m
+                             f" unobserved by {filtered_taxon.unobserved_by.login}"[m
+                         )[m
+[32m+[m[32m                    if filtered_taxon.id_by:[m[41m[m
+[32m+[m[32m                        query_title += f" identified by {filtered_taxon.id_by.login}"[m[41m[m
+                     if filtered_taxon.place:[m
+                         query_title += f" from {filtered_taxon.place.display_name}"[m
+                 except LookupError as err:[m
+[36m@@ -139,7 +141,10 @@[m [mclass CommandsSearch(INatEmbeds, MixinMeta):[m
+                 results = [[m
+                     "\n".join([m
+                         await self.format_obs([m
+[31m-                            obs, with_description=False, with_link=True, compact=True,[m
+[32m+[m[32m                            obs,[m[41m[m
+[32m+[m[32m                            with_description=False,[m[41m[m
+[32m+[m[32m                            with_link=True,[m[41m[m
+[32m+[m[32m                            compact=True,[m[41m[m
+                         )[m
+                     )[m
+                     for obs in observations[m
+[1mdiff --git a/inatcog/commands/taxon.py b/inatcog/commands/taxon.py[m
+[1mindex 8af34a2..015d282 100644[m
+[1m--- a/inatcog/commands/taxon.py[m
+[1m+++ b/inatcog/commands/taxon.py[m
+[36m@@ -116,6 +116,46 @@[m [mclass CommandsTaxon(INatEmbeds, MixinMeta):[m
+             pass[m
+         await ctx.send(embed=make_embed(title=title, url=url, description=description))[m
+ [m
+[32m+[m[32m    @taxon.command(name="sci")[m[41m[m
+[32m+[m[32m    async def taxon_sci(self, ctx, *, query: NaturalCompoundQueryConverter):[m[41m[m
+[32m+[m[32m        """Search for taxon matching the scientific name."""[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            self.check_taxon_query(ctx, query)[m[41m[m
+[32m+[m[32m        except BadArgument as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            filtered_taxon = await self.taxon_query.query_taxon([m[41m[m
+[32m+[m[32m                ctx, query, scientific_name=True[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m        except LookupError as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        await self.send_embed_for_taxon(ctx, filtered_taxon)[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    @taxon.command(name="lang")[m[41m[m
+[32m+[m[32m    async def taxon_loc([m[41m[m
+[32m+[m[32m        self, ctx, locale: str, *, query: NaturalCompoundQueryConverter[m[41m[m
+[32m+[m[32m    ):[m[41m[m
+[32m+[m[32m        """Search for taxon matching specific locale/language."""[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            self.check_taxon_query(ctx, query)[m[41m[m
+[32m+[m[32m        except BadArgument as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        try:[m[41m[m
+[32m+[m[32m            filtered_taxon = await self.taxon_query.query_taxon([m[41m[m
+[32m+[m[32m                ctx, query, locale=locale[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m        except LookupError as err:[m[41m[m
+[32m+[m[32m            await apologize(ctx, err.args[0])[m[41m[m
+[32m+[m[32m            return[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        await self.send_embed_for_taxon(ctx, filtered_taxon)[m[41m[m
+[32m+[m[41m[m
+     @commands.command()[m
+     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):[m
+         """Show taxon name best matching the query.[m
+[36m@@ -197,29 +237,3 @@[m [mclass CommandsTaxon(INatEmbeds, MixinMeta):[m
+             return[m
+ [m
+         await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)[m
+[31m-[m
+[31m-    @commands.command()[m
+[31m-    @checks.bot_has_permissions(embed_links=True)[m
+[31m-    async def map(self, ctx, *, taxa_list):[m
+[31m-        """Show range map for a list of one or more taxa.[m
+[31m-[m
+[31m-        **Examples:**[m
+[31m-        ```[m
+[31m-        [p]map polar bear[m
+[31m-        [p]map 24255,24267[m
+[31m-        [p]map boreal chorus frog,western chorus frog[m
+[31m-        ```[m
+[31m-        See `[p]help taxon` for help specifying taxa.[m
+[31m-        """[m
+[31m-[m
+[31m-        if not taxa_list:[m
+[31m-            await ctx.send_help()[m
+[31m-            return[m
+[31m-[m
+[31m-        try:[m
+[31m-            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)[m
+[31m-        except LookupError as err:[m
+[31m-            await apologize(ctx, err.args[0])[m
+[31m-            return[m
+[31m-[m
+[31m-        await ctx.send(embed=await self.make_map_embed(taxa))[m
+[1mdiff --git a/inatcog/commands/user.py b/inatcog/commands/user.py[m
+[1mindex 32ca07b..ba972e5 100644[m
+[1m--- a/inatcog/commands/user.py[m
+[1m+++ b/inatcog/commands/user.py[m
+[36m@@ -11,7 +11,11 @@[m [mfrom redbot.core.utils.menus import menu, DEFAULT_CONTROLS[m
+ from inatcog.base_classes import User[m
+ from inatcog.checks import known_inat_user[m
+ from inatcog.common import DEQUOTE, grouper[m
+[31m-from inatcog.converters import ContextMemberConverter, QuotedContextMemberConverter[m
+[32m+[m[32mfrom inatcog.converters import ([m[41m[m
+[32m+[m[32m    ContextMemberConverter,[m[41m[m
+[32m+[m[32m    QuotedContextMemberConverter,[m[41m[m
+[32m+[m[32m    NaturalCompoundQueryConverter,[m[41m[m
+[32m+[m[32m)[m[41m[m
+ from inatcog.embeds import apologize, make_embed[m
+ from inatcog.inat_embeds import INatEmbeds[m
+ from inatcog.interfaces import MixinMeta[m
+[36m@@ -441,7 +445,7 @@[m [mclass CommandsUser(INatEmbeds, MixinMeta):[m
+         """Show your observations, species, & ranks for an iNat project."""[m
+         await (self.bot.get_command("project stats")(ctx, project, user="me"))[m
+ [m
+[31m-    @my.command(name="inatyear", invoke_without_command=True)[m
+[32m+[m[32m    @my.command(name="inatyear")[m[41m[m
+     @known_inat_user()[m
+     async def my_inatyear(self, ctx, year: int = None):[m
+         """Display the URL for your iNat year graphs.[m
+[36m@@ -449,6 +453,20 @@[m [mclass CommandsUser(INatEmbeds, MixinMeta):[m
+         Where `year` is a valid year on or after 1950."""[m
+         await self.user_inatyear(ctx, user="me", year=year)[m
+ [m
+[32m+[m[32m    @my.command(name="map")[m[41m[m
+[32m+[m[32m    @known_inat_user()[m[41m[m
+[32m+[m[32m    async def my_map(self, ctx, *, query=""):[m[41m[m
+[32m+[m[32m        """Display a map of your observations."""[m[41m[m
+[32m+[m[32m        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} by me")[m[41m[m
+[32m+[m[32m        await (self.bot.get_command("map obs")(ctx, query=my_query))[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    @my.command(name="idmap")[m[41m[m
+[32m+[m[32m    @known_inat_user()[m[41m[m
+[32m+[m[32m    async def my_idmap(self, ctx, *, query=""):[m[41m[m
+[32m+[m[32m        """Display a map of observations identified by you."""[m[41m[m
+[32m+[m[32m        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} id by me")[m[41m[m
+[32m+[m[32m        await (self.bot.get_command("map obs")(ctx, query=my_query))[m[41m[m
+[32m+[m[41m[m
+     @commands.command()[m
+     @checks.bot_has_permissions(embed_links=True)[m
+     async def rank([m
+[1mdiff --git a/inatcog/converters.py b/inatcog/converters.py[m
+[1mindex 6379198..dbfbc71 100644[m
+[1m--- a/inatcog/converters.py[m
+[1m+++ b/inatcog/converters.py[m
+[36m@@ -5,7 +5,7 @@[m [mimport shlex[m
+ from typing import NamedTuple[m
+ import discord[m
+ from redbot.core.commands import BadArgument, Context, Converter, MemberConverter[m
+[31m-from .common import DEQUOTE[m
+[32m+[m[32mfrom .common import DEQUOTE, LOG[m[41m[m
+ from .base_classes import ([m
+     CompoundQuery,[m
+     PAT_OBS_LINK,[m
+[36m@@ -42,7 +42,7 @@[m [mclass ContextMemberConverter(NamedTuple):[m
+         # Try partial match on name or nick from recent messages for this guild.[m
+         cached_members = {[m
+             str(msg.author.name): msg.author[m
+[31m-            for msg in ctx.bot.cached_messages[m
+[32m+[m[32m            for msg in reversed(ctx.bot.cached_messages)[m[41m[m
+             if not msg.author.bot[m
+             and ctx.guild == msg.guild[m
+             and ctx.guild.get_member(msg.author.id)[m
+[36m@@ -128,6 +128,7 @@[m [mclass CompoundQueryConverter(CompoundQuery):[m
+         parser.add_argument("--in", nargs="+", dest="ancestor", default=[])[m
+         parser.add_argument("--by", nargs="+", dest="user", default=[])[m
+         parser.add_argument("--not-by", nargs="+", dest="unobserved_by", default=[])[m
+[32m+[m[32m        parser.add_argument("--id-by", nargs="+", dest="id_by", default=[])[m[41m[m
+         parser.add_argument("--from", nargs="+", dest="place", default=[])[m
+         parser.add_argument("--rank", dest="rank", default="")[m
+         parser.add_argument("--with", nargs="+", dest="controlled_term")[m
+[36m@@ -158,6 +159,7 @@[m [mclass CompoundQueryConverter(CompoundQuery):[m
+             or vals.rank[m
+             or vals.controlled_term[m
+             or vals.unobserved_by[m
+[32m+[m[32m            or vals.id_by[m[41m[m
+             or vals.per[m
+         ):[m
+             main = None[m
+[36m@@ -205,15 +207,18 @@[m [mclass CompoundQueryConverter(CompoundQuery):[m
+                 controlled_term = [term_name, term_value][m
+             else:[m
+                 controlled_term = None[m
+[31m-            return cls([m
+[32m+[m[32m            query = cls([m[41m[m
+                 main=main,[m
+                 ancestor=ancestor,[m
+                 user=" ".join(vals.user),[m
+                 place=" ".join(vals.place),[m
+                 controlled_term=controlled_term,[m
+                 unobserved_by=" ".join(vals.unobserved_by),[m
+[32m+[m[32m                id_by=" ".join(vals.id_by),[m[41m[m
+                 per=" ".join(vals.per),[m
+             )[m
+[32m+[m[32m            LOG.info(repr(query))[m[41m[m
+[32m+[m[32m            return query[m[41m[m
+ [m
+         return argument[m
+ [m
+[36m@@ -228,7 +233,7 @@[m [mclass NaturalCompoundQueryConverter(CompoundQueryConverter):[m
+         if mat and mat["url"]:[m
+             return argument[m
+         try:[m
+[31m-            arg_normalized = re.sub(r"not by", "not-by", argument, re.I)[m
+[32m+[m[32m            arg_normalized = re.sub(r"(id|not) by", r"\1-by", argument, re.I)[m[41m[m
+             args_normalized = shlex.split(arg_normalized, posix=False)[m
+         except ValueError as err:[m
+             raise BadArgument(err.args[0])[m
+[36m@@ -239,7 +244,16 @@[m [mclass NaturalCompoundQueryConverter(CompoundQueryConverter):[m
+                 args_normalized.remove(arg_lowered)[m
+                 ranks.append(arg_lowered)[m
+             # FIXME: determine programmatically from parser:[m
+[31m-            if arg_lowered in ["of", "in", "by", "not-by", "from", "rank", "with"]:[m
+[32m+[m[32m            if arg_lowered in [[m[41m[m
+[32m+[m[32m                "of",[m[41m[m
+[32m+[m[32m                "in",[m[41m[m
+[32m+[m[32m                "by",[m[41m[m
+[32m+[m[32m                "not-by",[m[41m[m
+[32m+[m[32m                "id-by",[m[41m[m
+[32m+[m[32m                "from",[m[41m[m
+[32m+[m[32m                "rank",[m[41m[m
+[32m+[m[32m                "with",[m[41m[m
+[32m+[m[32m            ]:[m[41m[m
+                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"[m
+         if not re.match(r"^--", args_normalized[0]):[m
+             args_normalized.insert(0, "--of")[m
+[1mdiff --git a/inatcog/inat_embeds.py b/inatcog/inat_embeds.py[m
+[1mindex d64c335..24ecfdd 100644[m
+[1m--- a/inatcog/inat_embeds.py[m
+[1m+++ b/inatcog/inat_embeds.py[m
+[36m@@ -51,6 +51,8 @@[m [mfrom .taxa import ([m
+     TAXON_PLACES_HEADER_PAT,[m
+     TAXON_NOTBY_HEADER,[m
+     TAXON_NOTBY_HEADER_PAT,[m
+[32m+[m[32m    TAXON_IDBY_HEADER,[m[41m[m
+[32m+[m[32m    TAXON_IDBY_HEADER_PAT,[m[41m[m
+ )[m
+ [m
+ HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)[m
+[36m@@ -66,6 +68,9 @@[m [mPLACE_ID_PAT = re.compile([m
+ UNOBSERVED_BY_USER_ID_PAT = re.compile([m
+     r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]unobserved_by_user_id=(?P<unobserved_by_user_id>\d+).*?\)",[m
+ )[m
+[32m+[m[32mID_BY_USER_ID_PAT = re.compile([m[41m[m
+[32m+[m[32m    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]ident_user_id=(?P<ident_user_id>\d+).*?\)",[m[41m[m
+[32m+[m[32m)[m[41m[m
+ USER_ID_PAT = re.compile(r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]user_id=(?P<user_id>\d+).*?\)")[m
+ [m
+ REACTION_EMOJI = {[m
+[36m@@ -107,6 +112,10 @@[m [mclass INatEmbed(discord.Embed):[m
+         """Embed has a user counts table."""[m
+         return bool(re.search(TAXON_COUNTS_HEADER_PAT, self.description or ""))[m
+ [m
+[32m+[m[32m    def has_id_by_users(self):[m[41m[m
+[32m+[m[32m        """Embed has an id by user counts table."""[m[41m[m
+[32m+[m[32m        return bool(re.search(TAXON_IDBY_HEADER_PAT, self.description or ""))[m[41m[m
+[32m+[m[41m[m
+     def has_not_by_users(self):[m
+         """Embed has a not by user counts table."""[m
+         return bool(re.search(TAXON_NOTBY_HEADER_PAT, self.description or ""))[m
+[36m@@ -116,6 +125,13 @@[m [mclass INatEmbed(discord.Embed):[m
+         # prevent misdetect as 'not by' (unobserved_by_user_id=# can have a place filter applied)[m
+         return bool(re.search(TAXON_PLACES_HEADER_PAT, self.description or ""))[m
+ [m
+[32m+[m[32m    def listed_id_by_user_ids(self):[m[41m[m
+[32m+[m[32m        """Return listed users, if present."""[m[41m[m
+[32m+[m[32m        if not self.has_id_by_users():[m[41m[m
+[32m+[m[32m            return None[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        return [int(id) for id in re.findall(ID_BY_USER_ID_PAT, self.description)][m[41m[m
+[32m+[m[41m[m
+     def listed_not_by_user_ids(self):[m
+         """Return listed users, if present."""[m
+         if not self.has_not_by_users():[m
+[36m@@ -294,7 +310,7 @@[m [mclass INatEmbeds(MixinMeta):[m
+         """Return embed for observation counts from place or by user."""[m
+         title_params = {}[m
+         formatted_counts = ""[m
+[31m-        (taxon, user, place, unobserved_by) = arg[m
+[32m+[m[32m        (taxon, user, place, unobserved_by, id_by) = arg[m[41m[m
+ [m
+         if taxon:[m
+             title = format_taxon_title(taxon)[m
+[36m@@ -310,7 +326,7 @@[m [mclass INatEmbeds(MixinMeta):[m
+                     self, user, taxon, place.place_id[m
+                 )[m
+                 header = TAXON_COUNTS_HEADER[m
+[31m-            elif unobserved_by:[m
+[32m+[m[32m            elif unobserved_by or id_by:[m[41m[m
+                 raise BadArgument("I can't tabulate that yet.")[m
+             else:[m
+                 formatted_counts = await format_user_taxon_counts(self, user, taxon)[m
+[36m@@ -320,17 +336,45 @@[m [mclass INatEmbeds(MixinMeta):[m
+                 full_title = f"Observations of {title} from {place.display_name}"[m
+                 title_params["place_id"] = place.place_id[m
+                 formatted_counts = await format_user_taxon_counts([m
+[31m-                    self, unobserved_by, taxon, place.place_id, unobserved=True,[m
+[32m+[m[32m                    self,[m[41m[m
+[32m+[m[32m                    unobserved_by,[m[41m[m
+[32m+[m[32m                    taxon,[m[41m[m
+[32m+[m[32m                    place.place_id,[m[41m[m
+[32m+[m[32m                    unobserved=True,[m[41m[m
+                 )[m
+                 header = TAXON_NOTBY_HEADER[m
+[32m+[m[32m            elif id_by:[m[41m[m
+[32m+[m[32m                full_title = f"Observations of {title} from {place.display_name}"[m[41m[m
+[32m+[m[32m                title_params["place_id"] = place.place_id[m[41m[m
+[32m+[m[32m                formatted_counts = await format_user_taxon_counts([m[41m[m
+[32m+[m[32m                    self,[m[41m[m
+[32m+[m[32m                    id_by,[m[41m[m
+[32m+[m[32m                    taxon,[m[41m[m
+[32m+[m[32m                    place.place_id,[m[41m[m
+[32m+[m[32m                    ident=True,[m[41m[m
+[32m+[m[32m                )[m[41m[m
+[32m+[m[32m                header = TAXON_IDBY_HEADER[m[41m[m
+             else:[m
+                 formatted_counts = await format_place_taxon_counts(self, place, taxon)[m
+                 header = TAXON_PLACES_HEADER[m
+         elif unobserved_by:[m
+             formatted_counts = await format_user_taxon_counts([m
+[31m-                self, unobserved_by, taxon, None, unobserved=True,[m
+[32m+[m[32m                self,[m[41m[m
+[32m+[m[32m                unobserved_by,[m[41m[m
+[32m+[m[32m                taxon,[m[41m[m
+[32m+[m[32m                None,[m[41m[m
+[32m+[m[32m                unobserved=True,[m[41m[m
+             )[m
+             header = TAXON_NOTBY_HEADER[m
+[32m+[m[32m        elif id_by:[m[41m[m
+[32m+[m[32m            formatted_counts = await format_user_taxon_counts([m[41m[m
+[32m+[m[32m                self,[m[41m[m
+[32m+[m[32m                id_by,[m[41m[m
+[32m+[m[32m                taxon,[m[41m[m
+[32m+[m[32m                None,[m[41m[m
+[32m+[m[32m                ident=True,[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m            header = TAXON_IDBY_HEADER[m[41m[m
+         if formatted_counts:[m
+             description = f"\n{header}\n{formatted_counts}"[m
+ [m
+[36m@@ -339,7 +383,11 @@[m [mclass INatEmbeds(MixinMeta):[m
+             title_params["taxon_id"] = taxon.taxon_id[m
+         if title_params:[m
+             url += "?" + urlencode(title_params)[m
+[31m-        embed = make_embed(url=url, title=full_title, description=description,)[m
+[32m+[m[32m        embed = make_embed([m[41m[m
+[32m+[m[32m            url=url,[m[41m[m
+[32m+[m[32m            title=full_title,[m[41m[m
+[32m+[m[32m            description=description,[m[41m[m
+[32m+[m[32m        )[m[41m[m
+         return embed[m
+ [m
+     async def format_obs([m
+[36m@@ -623,7 +671,10 @@[m [mclass INatEmbeds(MixinMeta):[m
+                     photos = (entry.get("photo") for entry in taxon_photos_raw)[m
+                     (image, attribution) = next([m
+                         ([m
+[31m-                            (photo.get("original_url"), photo.get("attribution", ""),)[m
+[32m+[m[32m                            ([m[41m[m
+[32m+[m[32m                                photo.get("original_url"),[m[41m[m
+[32m+[m[32m                                photo.get("attribution", ""),[m[41m[m
+[32m+[m[32m                            )[m[41m[m
+                             for i, photo in enumerate(photos, 1)[m
+                             if i == index[m
+                         ),[m
+[36m@@ -643,12 +694,13 @@[m [mclass INatEmbeds(MixinMeta):[m
+     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):[m
+         """Make embed describing taxa record."""[m
+         if isinstance(arg, FilteredTaxon):[m
+[31m-            (taxon, user, place, _unobserved_by) = arg  # noqa: F841[m
+[32m+[m[32m            (taxon, user, place, _unobserved_by, _id_by) = arg  # noqa: F841[m[41m[m
+         else:[m
+             taxon = arg[m
+             user = None[m
+             place = None[m
+             _unobserved_by = None  # noqa: F841[m
+[32m+[m[32m            _id_by = None  # noqa: F841[m[41m[m
+         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")[m
+         p = self.p  # pylint: disable=invalid-name[m
+ [m
+[36m@@ -871,7 +923,13 @@[m [mclass INatEmbeds(MixinMeta):[m
+     ):[m
+         """Add taxon embed reaction emojis."""[m
+         if isinstance(filtered_taxon, FilteredTaxon):[m
+[31m-            (taxon, _user, _place, _unobserved_by) = filtered_taxon  # noqa: F841[m
+[32m+[m[32m            ([m[41m[m
+[32m+[m[32m                taxon,[m[41m[m
+[32m+[m[32m                _user,[m[41m[m
+[32m+[m[32m                _place,[m[41m[m
+[32m+[m[32m                _unobserved_by,[m[41m[m
+[32m+[m[32m                _id_by,[m[41m[m
+[32m+[m[32m            ) = filtered_taxon  # noqa: F841[m[41m[m
+         else:[m
+             taxon = filtered_taxon[m
+         if taxonomy and len(taxon.ancestor_ids) > 2:[m
+[36m@@ -1060,7 +1118,10 @@[m [mclass INatEmbeds(MixinMeta):[m
+         except LookupError:[m
+             return[m
+         response = await self.query_locked([m
+[31m-            msg, user, "Add or remove which place (you have 15 seconds to answer)?", 15,[m
+[32m+[m[32m            msg,[m[41m[m
+[32m+[m[32m            user,[m[41m[m
+[32m+[m[32m            "Add or remove which place (you have 15 seconds to answer)?",[m[41m[m
+[32m+[m[32m            15,[m[41m[m
+         )[m
+         if response:[m
+             try:[m
+[36m@@ -1095,7 +1156,10 @@[m [mclass INatEmbeds(MixinMeta):[m
+                 formatted_names = format_taxon_names(ancestors, hierarchy=True)[m
+                 hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)[m
+                 new_description = re.sub([m
+[31m-                    NO_TAXONOMY_PAT, " in:\n" + hierarchy + r"\1", description, 1,[m
+[32m+[m[32m                    NO_TAXONOMY_PAT,[m[41m[m
+[32m+[m[32m                    " in:\n" + hierarchy + r"\1",[m[41m[m
+[32m+[m[32m                    description,[m[41m[m
+[32m+[m[32m                    1,[m[41m[m
+                 )[m
+             else:[m
+                 return[m
+[36m@@ -1103,12 +1167,19 @@[m [mclass INatEmbeds(MixinMeta):[m
+         await message.edit(embed=inat_embed)[m
+ [m
+     async def update_totals([m
+[31m-        self, description, taxon, inat_user, action, inat_embed, counts_pat,[m
+[32m+[m[32m        self,[m[41m[m
+[32m+[m[32m        description,[m[41m[m
+[32m+[m[32m        taxon,[m[41m[m
+[32m+[m[32m        inat_user,[m[41m[m
+[32m+[m[32m        action,[m[41m[m
+[32m+[m[32m        inat_embed,[m[41m[m
+[32m+[m[32m        counts_pat,[m[41m[m
+     ):[m
+         """Update the totals for the embed."""[m
+         unobserved = inat_embed.has_not_by_users()[m
+[32m+[m[32m        ident = inat_embed.has_id_by_users()[m[41m[m
+         place_id = inat_embed.place_id()[m
+[31m-        if not unobserved:[m
+[32m+[m[32m        if not (unobserved or ident):[m[41m[m
+             # Add/remove always results in a change to totals, so remove:[m
+             description = re.sub([m
+                 r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description[m
+[36m@@ -1122,6 +1193,8 @@[m [mclass INatEmbeds(MixinMeta):[m
+             if len(matches) == 1:[m
+                 if unobserved:[m
+                     description = re.sub(TAXON_NOTBY_HEADER_PAT, "", description)[m
+[32m+[m[32m                elif ident:[m[41m[m
+[32m+[m[32m                    description = re.sub(TAXON_IDBY_HEADER_PAT, "", description)[m[41m[m
+                 else:[m
+                     description = re.sub(TAXON_COUNTS_HEADER_PAT, "", description)[m
+             description = re.sub(counts_pat + r".*?((?=\n)|$)", "", description)[m
+[36m@@ -1131,14 +1204,17 @@[m [mclass INatEmbeds(MixinMeta):[m
+                 if unobserved:[m
+                     # not currently possible (new :hash: reaction starts 'by' embed)[m
+                     description += "\n" + TAXON_NOTBY_HEADER[m
+[32m+[m[32m                elif ident:[m[41m[m
+[32m+[m[32m                    # not currently possible (new :hash: reaction starts 'by' embed)[m[41m[m
+[32m+[m[32m                    description += "\n" + TAXON_IDBY_HEADER[m[41m[m
+                 else:[m
+                     description += "\n" + TAXON_COUNTS_HEADER[m
+             formatted_counts = await format_user_taxon_counts([m
+[31m-                self, inat_user, taxon, place_id, unobserved[m
+[32m+[m[32m                self, inat_user, taxon, place_id, unobserved, ident[m[41m[m
+             )[m
+             description += "\n" + formatted_counts[m
+ [m
+[31m-        if not unobserved:[m
+[32m+[m[32m        if not (unobserved or ident):[m[41m[m
+             matches = re.findall([m
+                 r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description[m
+             )[m
+[36m@@ -1152,7 +1228,12 @@[m [mclass INatEmbeds(MixinMeta):[m
+         return description[m
+ [m
+     async def edit_totals_locked([m
+[31m-        self, msg, taxon, inat_user, action, counts_pat,[m
+[32m+[m[32m        self,[m[41m[m
+[32m+[m[32m        msg,[m[41m[m
+[32m+[m[32m        taxon,[m[41m[m
+[32m+[m[32m        inat_user,[m[41m[m
+[32m+[m[32m        action,[m[41m[m
+[32m+[m[32m        counts_pat,[m[41m[m
+     ):[m
+         """Update totals for message locked."""[m
+         if msg.id not in self.reaction_locks:[m
+[36m@@ -1173,7 +1254,12 @@[m [mclass INatEmbeds(MixinMeta):[m
+ [m
+             if (mat and (action == "remove")) or (not mat and (action == "add")):[m
+                 description = await self.update_totals([m
+[31m-                    description, taxon, inat_user, action, inat_embed, counts_pat,[m
+[32m+[m[32m                    description,[m[41m[m
+[32m+[m[32m                    taxon,[m[41m[m
+[32m+[m[32m                    inat_user,[m[41m[m
+[32m+[m[32m                    action,[m[41m[m
+[32m+[m[32m                    inat_embed,[m[41m[m
+[32m+[m[32m                    counts_pat,[m[41m[m
+                 )[m
+                 if len(description) > MAX_EMBED_DESCRIPTION_LEN:[m
+                     raise NoRoomInDisplay([m
+[36m@@ -1215,7 +1301,8 @@[m [mclass INatEmbeds(MixinMeta):[m
+             description += "\n" + formatted_counts[m
+ [m
+         matches = re.findall([m
+[31m-            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)", description,[m
+[32m+[m[32m            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)",[m[41m[m
+[32m+[m[32m            description,[m[41m[m
+         )[m
+         # Total added only if more than one place:[m
+         if len(matches) > 1:[m
+[1mdiff --git a/inatcog/inatcog.py b/inatcog/inatcog.py[m
+[1mindex b130e57..58ff0f0 100644[m
+[1m--- a/inatcog/inatcog.py[m
+[1m+++ b/inatcog/inatcog.py[m
+[36m@@ -7,6 +7,7 @@[m [mfrom redbot.core import commands, Config[m
+ from .api import INatAPI[m
+ from .commands.inat import CommandsInat[m
+ from .commands.last import CommandsLast[m
+[32m+[m[32mfrom .commands.map import CommandsMap[m[41m[m
+ from .commands.obs import CommandsObs[m
+ from .commands.place import CommandsPlace[m
+ from .commands.project import CommandsProject[m
+[36m@@ -40,6 +41,7 @@[m [mclass INatCog([m
+     commands.Cog,[m
+     CommandsInat,[m
+     CommandsLast,[m
+[32m+[m[32m    CommandsMap,[m[41m[m
+     CommandsObs,[m
+     CommandsPlace,[m
+     CommandsProject,[m
+[1mdiff --git a/inatcog/obs_query.py b/inatcog/obs_query.py[m
+[1mindex 6cc3ce6..2dfe398 100644[m
+[1m--- a/inatcog/obs_query.py[m
+[1m+++ b/inatcog/obs_query.py[m
+[36m@@ -22,6 +22,8 @@[m [mclass INatObsQuery:[m
+             message += " by " + filtered_taxon.user.display_name()[m
+         if filtered_taxon.unobserved_by:[m
+             message += " unobserved by " + filtered_taxon.unobserved_by.display_name()[m
+[32m+[m[32m        if filtered_taxon.id_by:[m[41m[m
+[32m+[m[32m            message += " identified by " + filtered_taxon.id_by.display_name()[m[41m[m
+         if term:[m
+             if value:[m
+                 message += f" with {term.label} {value.label}"[m
+[36m@@ -45,6 +47,8 @@[m [mclass INatObsQuery:[m
+             if filtered_taxon.unobserved_by:[m
+                 kwargs["unobserved_by_user_id"] = filtered_taxon.unobserved_by.user_id[m
+                 kwargs["lrank"] = "species"[m
+[32m+[m[32m            if filtered_taxon.id_by:[m[41m[m
+[32m+[m[32m                kwargs["ident_user_id"] = filtered_taxon.id_by.user_id[m[41m[m
+         if query.controlled_term:[m
+             query_term, query_value = query.controlled_term[m
+             controlled_terms_dict = await self.cog.api.get_controlled_terms()[m
+[1mdiff --git a/inatcog/taxa.py b/inatcog/taxa.py[m
+[1mindex 5443cbc..0cd6b0e 100644[m
+[1m--- a/inatcog/taxa.py[m
+[1m+++ b/inatcog/taxa.py[m
+[36m@@ -19,6 +19,8 @@[m [mTAXON_PLACES_HEADER = "__obs# (spp#) from place:__"[m
+ TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")[m
+ TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"[m
+ TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")[m
+[32m+[m[32mTAXON_IDBY_HEADER = "__obs# (spp#) identified by user:__"[m[41m[m
+[32m+[m[32mTAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")[m[41m[m
+ TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"[m
+ TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")[m
+ TAXON_LIST_DELIMITER = [", ", " > "][m
+[36m@@ -265,6 +267,7 @@[m [mdef get_taxon_fields(record):[m
+         ancestor_ranks,[m
+         record["is_active"],[m
+         listed_taxa,[m
+[32m+[m[32m        record.get("names"),[m[41m[m
+         establishment_means,[m
+         conservation_status,[m
+     )[m
+[36m@@ -282,8 +285,8 @@[m [mclass NameMatch(NamedTuple):[m
+ NO_NAME_MATCH = NameMatch(None, None, None)[m
+ [m
+ [m
+[31m-def match_name(record, pat):[m
+[31m-    """Match all terms specified.[m
+[32m+[m[32mdef match_pat(record, pat, scientific_name=False, locale=None):[m[41m[m
+[32m+[m[32m    """Match specified pattern.[m[41m[m
+ [m
+     Parameters[m
+     ----------[m
+[36m@@ -293,11 +296,45 @@[m [mdef match_name(record, pat):[m
+     pat: re.Pattern or str[m
+         A pattern to match against each name field in the record.[m
+ [m
+[32m+[m[32m    scientific_name: bool[m[41m[m
+[32m+[m[32m        Only search scientific name[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    locale: str[m[41m[m
+[32m+[m[32m        Only search common names matching locale[m[41m[m
+[32m+[m[41m[m
+     Returns[m
+     -------[m
+     NameMatch[m
+         A tuple of search results for the pat for each name in the record.[m
+     """[m
+[32m+[m[32m    if scientific_name:[m[41m[m
+[32m+[m[32m        return NameMatch([m[41m[m
+[32m+[m[32m            None,[m[41m[m
+[32m+[m[32m            re.search(pat, record.name),[m[41m[m
+[32m+[m[32m            None,[m[41m[m
+[32m+[m[32m        )[m[41m[m
+[32m+[m[32m    if locale:[m[41m[m
+[32m+[m[32m        names = [[m[41m[m
+[32m+[m[32m            name["name"][m[41m[m
+[32m+[m[32m            for name in sorted([m[41m[m
+[32m+[m[32m                [[m[41m[m
+[32m+[m[32m                    name[m[41m[m
+[32m+[m[32m                    for name in record.names[m[41m[m
+[32m+[m[32m                    if name["is_valid"] and re.match(locale, name["locale"], re.I)[m[41m[m
+[32m+[m[32m                ],[m[41m[m
+[32m+[m[32m                key=lambda x: x["position"],[m[41m[m
+[32m+[m[32m            )[m[41m[m
+[32m+[m[32m        ][m[41m[m
+[32m+[m[32m        for name in names:[m[41m[m
+[32m+[m[32m            mat = re.search(pat, name)[m[41m[m
+[32m+[m[32m            if mat:[m[41m[m
+[32m+[m[32m                LOG.info("match=%s", pat)[m[41m[m
+[32m+[m[32m                return NameMatch([m[41m[m
+[32m+[m[32m                    mat,[m[41m[m
+[32m+[m[32m                    None,[m[41m[m
+[32m+[m[32m                    mat,[m[41m[m
+[32m+[m[32m                )[m[41m[m
+[32m+[m[32m        return NO_NAME_MATCH[m[41m[m
+     return NameMatch([m
+         re.search(pat, record.term),[m
+         re.search(pat, record.name),[m
+[36m@@ -305,8 +342,8 @@[m [mdef match_name(record, pat):[m
+     )[m
+ [m
+ [m
+[31m-def match_exact(record, exact):[m
+[31m-    """Match any exact phrases specified.[m
+[32m+[m[32mdef match_pat_list(record, pat_list, scientific_name=False, locale=None):[m[41m[m
+[32m+[m[32m    """Match all of a list of patterns.[m[41m[m
+ [m
+     Parameters[m
+     ----------[m
+[36m@@ -314,7 +351,7 @@[m [mdef match_exact(record, exact):[m
+         A candidate taxon to match.[m
+ [m
+     exact: list[m
+[31m-        A list of exact patterns to match.[m
+[32m+[m[32m        A list of patterns to match.[m[41m[m
+ [m
+     Returns[m
+     -------[m
+[36m@@ -325,8 +362,8 @@[m [mdef match_exact(record, exact):[m
+     """[m
+     matched = NO_NAME_MATCH[m
+     try:[m
+[31m-        for pat in exact:[m
+[31m-            this_match = match_name(record, pat)[m
+[32m+[m[32m        for pat in pat_list:[m[41m[m
+[32m+[m[32m            this_match = match_pat(record, pat, scientific_name, locale)[m[41m[m
+             if this_match == NO_NAME_MATCH:[m
+                 matched = this_match[m
+                 raise ValueError("At least one field must match.")[m
+[36m@@ -341,7 +378,9 @@[m [mdef match_exact(record, exact):[m
+     return matched[m
+ [m
+ [m
+[31m-def score_match(query, record, all_terms, exact=None):[m
+[32m+[m[32mdef score_match([m[41m[m
+[32m+[m[32m    query, record, all_terms, pat_list=None, scientific_name=False, locale=None[m[41m[m
+[32m+[m[32m):[m[41m[m
+     """Score a matched record. A higher score is a better match.[m
+     Parameters[m
+     ----------[m
+[36m@@ -354,8 +393,8 @@[m [mdef score_match(query, record, all_terms, exact=None):[m
+     all_terms: re.Pattern[m
+         A pattern matching all terms.[m
+ [m
+[31m-    exact: list[m
+[31m-        A list of exact patterns to match.[m
+[32m+[m[32m    pat_list: list[m[41m[m
+[32m+[m[32m        A list of patterns to match.[m[41m[m
+ [m
+     Returns[m
+     -------[m
+[36m@@ -369,47 +408,80 @@[m [mdef score_match(query, record, all_terms, exact=None):[m
+     if query.taxon_id:[m
+         return 1000  # An id is always the best match[m
+ [m
+[31m-    matched = match_exact(record, exact) if exact else NO_NAME_MATCH[m
+[31m-    all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH[m
+[31m-[m
+[31m-    if query.code and (query.code == record.term):[m
+[31m-        score = 300[m
+[31m-    elif matched.name or matched.common:[m
+[31m-        score = 210[m
+[31m-    elif matched.term:[m
+[31m-        score = 200[m
+[31m-    elif all_matched.name or all_matched.common:[m
+[31m-        score = 120[m
+[31m-    elif all_matched.term:[m
+[31m-        score = 110[m
+[32m+[m[32m    matched = ([m[41m[m
+[32m+[m[32m        match_pat_list(record, pat_list, scientific_name, locale)[m[41m[m
+[32m+[m[32m        if pat_list[m[41m[m
+[32m+[m[32m        else NO_NAME_MATCH[m[41m[m
+[32m+[m[32m    )[m[41m[m
+[32m+[m[32m    all_matched = ([m[41m[m
+[32m+[m[32m        match_pat(record, all_terms, scientific_name, locale)[m[41m[m
+[32m+[m[32m        if query.taxon_id[m[41m[m
+[32m+[m[32m        else NO_NAME_MATCH[m[41m[m
+[32m+[m[32m    )[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m    if scientific_name:[m[41m[m
+[32m+[m[32m        if matched.name:[m[41m[m
+[32m+[m[32m            score = 200[m[41m[m
+[32m+[m[32m        else:[m[41m[m
+[32m+[m[32m            score = -1[m[41m[m
+[32m+[m[32m    elif locale:[m[41m[m
+[32m+[m[32m        if matched.term:[m[41m[m
+[32m+[m[32m            score = 200[m[41m[m
+[32m+[m[32m        else:[m[41m[m
+[32m+[m[32m            score = -1[m[41m[m
+     else:[m
+[31m-        score = 100[m
+[32m+[m[32m        if query.code and (query.code == record.term):[m[41m[m
+[32m+[m[32m            score = 300[m[41m[m
+[32m+[m[32m        elif matched.name or matched.common:[m[41m[m
+[32m+[m[32m            score = 210[m[41m[m
+[32m+[m[32m        elif matched.term:[m[41m[m
+[32m+[m[32m            score = 200[m[41m[m
+[32m+[m[32m        elif all_matched.name or all_matched.common:[m[41m[m
+[32m+[m[32m            score = 120[m[41m[m
+[32m+[m[32m        elif all_matched.term:[m[41m[m
+[32m+[m[32m            score = 110[m[41m[m
+[32m+[m[32m        else:[m[41m[m
+[32m+[m[32m            score = 100[m[41m[m
+ [m
+     return score[m
+ [m
+ [m
+[31m-def match_taxon(query, records):[m
+[32m+[m[32mdef match_taxon(query, records, scientific_name=False, locale=None):[m[41m[m
+     """Match a single taxon for the given query among records returned by API."""[m
+[31m-    exact = [][m
+[32m+[m[32m    pat_list = [][m[41m[m
+     all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)[m
+     if query.phrases:[m
+         for phrase in query.phrases:[m
+             pat = re.compile(r"\b%s\b" % re.escape(" ".join(phrase)), re.I)[m
+[31m-            exact.append(pat)[m
+[32m+[m[32m            pat_list.append(pat)[m[41m[m
+[32m+[m[32m    elif scientific_name or locale:[m[41m[m
+[32m+[m[32m        for term in query.terms:[m[41m[m
+[32m+[m[32m            pat = re.compile(r"\b%s" % re.escape(term), re.I)[m[41m[m
+[32m+[m[32m            pat_list.append(pat)[m[41m[m
+     scores = [0] * len(records)[m
+ [m
+     for num, record in enumerate(records, start=0):[m
+[31m-        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)[m
+[32m+[m[32m        scores[num] = score_match([m[41m[m
+[32m+[m[32m            query,[m[41m[m
+[32m+[m[32m            record,[m[41m[m
+[32m+[m[32m            all_terms=all_terms,[m[41m[m
+[32m+[m[32m            pat_list=pat_list,[m[41m[m
+[32m+[m[32m            scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m            locale=locale,[m[41m[m
+[32m+[m[32m        )[m[41m[m
+ [m
+     best_score = max(scores)[m
+     best_record = records[scores.index(best_score)][m
+[31m-    min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))[m
+[32m+[m[32m    min_score_met = (best_score >= 0) and ((not query.phrases) or (best_score >= 200))[m[41m[m
+ [m
+     return best_record if min_score_met else None[m
+ [m
+ [m
+ async def format_place_taxon_counts([m
+[31m-    cog, place: Union[Place, str], taxon: Taxon = None, user_id: int = None,[m
+[32m+[m[32m    cog,[m[41m[m
+[32m+[m[32m    place: Union[Place, str],[m[41m[m
+[32m+[m[32m    taxon: Taxon = None,[m[41m[m
+[32m+[m[32m    user_id: int = None,[m[41m[m
+ ):[m
+     """Format user observation & species counts for taxon."""[m
+     if isinstance(place, str):[m
+[36m@@ -460,6 +532,7 @@[m [masync def format_user_taxon_counts([m
+     taxon: Taxon = None,[m
+     place_id: int = None,[m
+     unobserved: bool = False,[m
+[32m+[m[32m    ident: bool = False,[m[41m[m
+ ):[m
+     """Format user observation & species counts for taxon."""[m
+     if isinstance(user, str):[m
+[36m@@ -479,6 +552,9 @@[m [masync def format_user_taxon_counts([m
+             "lrank": "species",[m
+             "per_page": 0,[m
+         }[m
+[32m+[m[32m    elif ident:[m[41m[m
+[32m+[m[32m        obs_opt = {"ident_user_id": user_id, "per_page": 0}[m[41m[m
+[32m+[m[32m        species_opt = {"ident_user_id": user_id, "per_page": 0}[m[41m[m
+     else:[m
+         obs_opt = {"user_id": user_id, "per_page": 0}[m
+         species_opt = {"user_id": user_id, "per_page": 0}[m
+[36m@@ -499,6 +575,8 @@[m [masync def format_user_taxon_counts([m
+             url += f"&taxon_id={taxon_id}"[m
+         if unobserved:[m
+             url += f"&unobserved_by_user_id={user_id}&lrank=species"[m
+[32m+[m[32m        elif ident:[m[41m[m
+[32m+[m[32m            url += f"&ident_user_id={user_id}"[m[41m[m
+         else:[m
+             url += f"&user_id={user_id}"[m
+         if place_id:[m
+[1mdiff --git a/inatcog/taxon_query.py b/inatcog/taxon_query.py[m
+[1mindex f1a4e0e..ed5f8eb 100644[m
+[1m--- a/inatcog/taxon_query.py[m
+[1m+++ b/inatcog/taxon_query.py[m
+[36m@@ -35,9 +35,23 @@[m [mclass INatTaxonQuery:[m
+             return ancestor[m
+         return None[m
+ [m
+[31m-    async def maybe_match_taxon(self, query, ancestor_id=None, preferred_place_id=None):[m
+[32m+[m[32m    async def maybe_match_taxon([m[41m[m
+[32m+[m[32m        self,[m[41m[m
+[32m+[m[32m        query,[m[41m[m
+[32m+[m[32m        ancestor_id=None,[m[41m[m
+[32m+[m[32m        preferred_place_id=None,[m[41m[m
+[32m+[m[32m        scientific_name=False,[m[41m[m
+[32m+[m[32m        locale=None,[m[41m[m
+[32m+[m[32m    ):[m[41m[m
+         """Get taxon and return a match, if any."""[m
+         kwargs = {}[m
+[32m+[m[32m        taxon = None[m[41m[m
+[32m+[m[32m        records_read = 0[m[41m[m
+[32m+[m[32m        total_records = 0[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m        if locale:[m[41m[m
+[32m+[m[32m            kwargs["all_names"] = "true"[m[41m[m
+[32m+[m[32m            kwargs["locale"] = locale[m[41m[m
+         if preferred_place_id:[m
+             kwargs["preferred_place_id"] = int(preferred_place_id)[m
+         if query.taxon_id:[m
+[36m@@ -48,19 +62,53 @@[m [mclass INatTaxonQuery:[m
+                 kwargs["rank"] = ",".join(query.ranks)[m
+             if ancestor_id:[m
+                 kwargs["taxon_id"] = ancestor_id[m
+[31m-            records = (await self.cog.api.get_taxa(**kwargs))["results"][m
+[31m-[m
+[31m-        if not records:[m
+[31m-            raise LookupError("No matching taxon found")[m
+[31m-[m
+[31m-        taxon = match_taxon(query, list(map(get_taxon_fields, records)))[m
+[32m+[m[32m            for page in range(11):[m[41m[m
+[32m+[m[32m                if page == 0:[m[41m[m
+[32m+[m[32m                    kwargs["per_page"] = 30[m[41m[m
+[32m+[m[32m                else:[m[41m[m
+[32m+[m[32m                    # restart numbering, as we are using a different endpoint[m[41m[m
+[32m+[m[32m                    # now with different page size:[m[41m[m
+[32m+[m[32m                    if page == 1:[m[41m[m
+[32m+[m[32m                        records_read = 0[m[41m[m
+[32m+[m[32m                    kwargs["page"] = page[m[41m[m
+[32m+[m[32m                    kwargs["per_page"] = 200[m[41m[m
+[32m+[m[32m                response = await self.cog.api.get_taxa(**kwargs)[m[41m[m
+[32m+[m[32m                if response:[m[41m[m
+[32m+[m[32m                    total_records = response.get("total_results") or 0[m[41m[m
+[32m+[m[32m                    records = response.get("results")[m[41m[m
+[32m+[m[32m                if not records:[m[41m[m
+[32m+[m[32m                    break[m[41m[m
+[32m+[m[32m                records_read += len(records)[m[41m[m
+[32m+[m[32m                taxon = match_taxon([m[41m[m
+[32m+[m[32m                    query,[m[41m[m
+[32m+[m[32m                    list(map(get_taxon_fields, records)),[m[41m[m
+[32m+[m[32m                    scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m                    locale=locale,[m[41m[m
+[32m+[m[32m                )[m[41m[m
+[32m+[m[32m                if taxon:[m[41m[m
+[32m+[m[32m                    break[m[41m[m
+[32m+[m[32m                if records_read >= total_records:[m[41m[m
+[32m+[m[32m                    break[m[41m[m
+ [m
+         if not taxon:[m
+[31m-            raise LookupError("No exact match")[m
+[32m+[m[32m            if records_read >= total_records:[m[41m[m
+[32m+[m[32m                raise LookupError("No matching taxon found")[m[41m[m
+[32m+[m[41m[m
+[32m+[m[32m            raise LookupError([m[41m[m
+[32m+[m[32m                f"No {'exact ' if query.phrases else ''}match "[m[41m[m
+[32m+[m[32m                f"found in {'scientific name of ' if scientific_name else ''}{records_read}"[m[41m[m
+[32m+[m[32m                f" of {total_records} total records containing those terms."[m[41m[m
+[32m+[m[32m            )[m[41m[m
+ [m
+         return taxon[m
+ [m
+[31m-    async def maybe_match_taxon_compound(self, compound_query, preferred_place_id=None):[m
+[32m+[m[32m    async def maybe_match_taxon_compound([m[41m[m
+[32m+[m[32m        self,[m[41m[m
+[32m+[m[32m        compound_query,[m[41m[m
+[32m+[m[32m        preferred_place_id=None,[m[41m[m
+[32m+[m[32m        scientific_name=False,[m[41m[m
+[32m+[m[32m        locale=None,[m[41m[m
+[32m+[m[32m    ):[m[41m[m
+         """Get one or more taxa and return a match, if any.[m
+ [m
+         Currently the grammar supports only one ancestor taxon[m
+[36m@@ -70,7 +118,10 @@[m [mclass INatTaxonQuery:[m
+         query_ancestor = compound_query.ancestor[m
+         if query_ancestor:[m
+             ancestor = await self.maybe_match_taxon([m
+[31m-                query_ancestor, preferred_place_id=preferred_place_id[m
+[32m+[m[32m                query_ancestor,[m[41m[m
+[32m+[m[32m                preferred_place_id=preferred_place_id,[m[41m[m
+[32m+[m[32m                scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m                locale=locale,[m[41m[m
+             )[m
+             if ancestor:[m
+                 if query_main.ranks:[m
+[36m@@ -91,20 +142,28 @@[m [mclass INatTaxonQuery:[m
+                     query_main,[m
+                     ancestor_id=ancestor.taxon_id,[m
+                     preferred_place_id=preferred_place_id,[m
+[32m+[m[32m                    scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m                    locale=locale,[m[41m[m
+                 )[m
+         else:[m
+             taxon = await self.maybe_match_taxon([m
+[31m-                query_main, preferred_place_id=preferred_place_id[m
+[32m+[m[32m                query_main,[m[41m[m
+[32m+[m[32m                preferred_place_id=preferred_place_id,[m[41m[m
+[32m+[m[32m                scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m                locale=locale,[m[41m[m
+             )[m
+ [m
+         return taxon[m
+ [m
+[31m-    async def query_taxon(self, ctx, query: CompoundQuery):[m
+[32m+[m[32m    async def query_taxon([m[41m[m
+[32m+[m[32m        self, ctx, query: CompoundQuery, scientific_name=False, locale=None[m[41m[m
+[32m+[m[32m    ):[m[41m[m
+         """Query for taxon and return single taxon if found."""[m
+         taxon = None[m
+         place = None[m
+         user = None[m
+         unobserved_by = None[m
+[32m+[m[32m        id_by = None[m[41m[m
+         preferred_place_id = await self.cog.get_home(ctx)[m
+         if query.place:[m
+             place = await self.cog.place_table.get_place([m
+[36m@@ -114,7 +173,10 @@[m [mclass INatTaxonQuery:[m
+             preferred_place_id = place.place_id[m
+         if query.main:[m
+             taxon = await self.maybe_match_taxon_compound([m
+[31m-                query, preferred_place_id=preferred_place_id[m
+[32m+[m[32m                query,[m[41m[m
+[32m+[m[32m                preferred_place_id=preferred_place_id,[m[41m[m
+[32m+[m[32m                scientific_name=scientific_name,[m[41m[m
+[32m+[m[32m                locale=locale,[m[41m[m
+             )[m
+         if query.user:[m
+             try:[m
+[36m@@ -132,7 +194,15 @@[m [mclass INatTaxonQuery:[m
+             except BadArgument as err:[m
+                 raise LookupError(str(err))[m
+             unobserved_by = await self.cog.user_table.get_user(who.member)[m
+[31m-        return FilteredTaxon(taxon, user, place, unobserved_by)[m
+[32m+[m[32m        if query.id_by:[m[41m[m
+[32m+[m[32m            try:[m[41m[m
+[32m+[m[32m                who = await ContextMemberConverter.convert([m[41m[m
+[32m+[m[32m                    ctx, re.sub(DEQUOTE, r"\1", query.id_by)[m[41m[m
+[32m+[m[32m                )[m[41m[m
+[32m+[m[32m            except BadArgument as err:[m[41m[m
+[32m+[m[32m                raise LookupError(str(err))[m[41m[m
+[32m+[m[32m            id_by = await self.cog.user_table.get_user(who.member)[m[41m[m
+[32m+[m[32m        return FilteredTaxon(taxon, user, place, unobserved_by, id_by)[m[41m[m
+ [m
+     async def query_taxa(self, ctx, query):[m
+         """Query for one or more taxa and return list of matching taxa, if any."""[m

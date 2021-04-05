@@ -55,7 +55,11 @@ class INatTaxonQuery:
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if query.taxon_id:
-            records = (await self.cog.api.get_taxa(query.taxon_id, **kwargs))["results"]
+            response = await self.cog.api.get_taxa(query.taxon_id, **kwargs)
+            if response:
+                records = response.get("results")
+            if records:
+                taxon = match_taxon(query, list(map(get_taxon_fields, records)))
         else:
             kwargs["q"] = " ".join(query.terms)
             if query.ranks:
