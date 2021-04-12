@@ -18,7 +18,10 @@ class INatAPI:
         self.projects_cache = {}
         self.users_cache = {}
         self.users_login_cache = {}
-        self.session = aiohttp.ClientSession()
+        # As per https://github.com/aio-libs/aiohttp/issues/850#issuecomment-471663047
+        # we're trying to avoid having to handle the server running out of keepalives
+        # and disconnecting us, leading to ServerDisconnectedError.
+        self.session = aiohttp.ClientSession(headers={"Connection": "close"},)
         self.taxa_cache = {}
         # api_v1_limiter:
         # ---------------
