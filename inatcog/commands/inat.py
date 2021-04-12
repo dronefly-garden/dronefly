@@ -111,6 +111,34 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 msg = "not set"
         await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
 
+    @inat_set.command(name="beta_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_beta_role(self, ctx, beta_role: Optional[discord.Role]):
+        """Set server beta role.
+
+        The beta role grants users with the role early access to iNat bot
+        features that are not yet released for all users.
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if beta_role:
+            msg = beta_role.mention
+            await config.beta_role.set(beta_role.id)
+        else:
+            find = await config.beta_role()
+            if find:
+                beta_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = beta_role.mention if beta_role else f"missing role: <@&{find}>"
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Beta role: {msg}"))
+
     @inat.group(name="clear")
     @checks.admin_or_permissions(manage_messages=True)
     async def inat_clear(self, ctx):
@@ -276,8 +304,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         embed_description = f"```md\n{inat_embed.description}\n```"
         description_embed = make_embed(
-            title="Markdown formatted content",
-            description=embed_description,
+            title="Markdown formatted content", description=embed_description,
         )
 
         embed_dict = inat_embed.to_dict()
