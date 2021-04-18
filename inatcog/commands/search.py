@@ -87,8 +87,25 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             await display_selected(result)
             await menu(ctx, pages, controls, message, page, timeout)
 
+        def make_search_embed(
+            query_title, page, thumbnails, index, per_embed_page, pages_len
+        ):
+            embed = make_embed(
+                title=f"Search: {query_title} (page {index + 1} of {pages_len})",
+                url=url,
+                description=page,
+            )
+            try:
+                thumbnail = thumbnails[index * per_embed_page]
+                embed.set_thumbnail(url=thumbnail)
+            except IndexError:
+                pass
+            return embed
+
         kwargs = {}
         kw_lowered = ""
+        results = []
+        thumbnails = []
         if isinstance(query, str):
             query_title = query
             url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
@@ -138,17 +155,18 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     total_results,
                     per_page,
                 ) = await self.obs_query.query_observations(ctx, query)
-                results = [
-                    "\n".join(
-                        await self.format_obs(
-                            obs,
-                            with_description=False,
-                            with_link=True,
-                            compact=True,
+                for obs in observations:
+                    results.append(
+                        "\n".join(
+                            await self.format_obs(
+                                obs,
+                                with_description=False,
+                                with_link=True,
+                                compact=True,
+                            )
                         )
                     )
-                    for obs in observations
-                ]
+                    thumbnails.append(obs.thumbnail)
             except LookupError as err:
                 await apologize(ctx, err.args[0])
                 return
@@ -171,7 +189,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         pages = []
         for group in grouper(results, per_embed_page):
             lines = [
-                " ".join((buttons[i], result))
+                " ".join((buttons[i], ("__" if i == 0 else "") + result))
+                + ("__" if i == 0 else "")
                 for i, result in enumerate(filter(None, group), 0)
             ]
             page = "\n".join(lines)
@@ -185,12 +204,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     f"{ceil((total_results - per_page)/per_embed_page)} more not shown"
                 )
             embeds = [
-                make_embed(
-                    title=f"Search: {query_title} (page {index} of {pages_len})",
-                    url=url,
-                    description=page,
+                make_search_embed(
+                    query_title, page, thumbnails, index, per_embed_page, pages_len
                 )
-                for index, page in enumerate(pages, start=1)
+                for index, page in enumerate(pages, start=0)
             ]
             await menu(ctx, embeds, controls)
         else:
