@@ -62,6 +62,7 @@ SHORT_DATE_PAT = re.compile(
 )
 TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
+OBS_ID_PAT = re.compile(r"\(.*/observations/(?P<obs_id>\d+).*?\)")
 PLACE_ID_PAT = re.compile(
     r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]place_id=(?P<place_id>\d+).*?\)"
 )
@@ -103,6 +104,7 @@ class INatEmbed(discord.Embed):
         content["listed_not_by_user_ids"] = self.listed_not_by_user_ids()
         content["listed_place_ids"] = self.listed_place_ids()
         content["listed_user_ids"] = self.listed_user_ids()
+        content["listed_observation_ids"] = self.listed_observation_ids()
         content["place_id"] = self.place_id()
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
@@ -120,6 +122,10 @@ class INatEmbed(discord.Embed):
     def has_not_by_users(self):
         """Embed has a not by user counts table."""
         return bool(re.search(TAXON_NOTBY_HEADER_PAT, self.description or ""))
+
+    def has_observations(self):
+        """Embed has listed observations (e.g. from `[p]search obs`)."""
+        return bool(re.search(OBS_ID_PAT, self.description or ""))
 
     def has_places(self):
         """Embed has a place counts table."""
@@ -141,6 +147,13 @@ class INatEmbed(discord.Embed):
         return [
             int(id) for id in re.findall(UNOBSERVED_BY_USER_ID_PAT, self.description)
         ]
+
+    def listed_observation_ids(self):
+        """Return listed observations, if present."""
+        if not self.has_observations():
+            return None
+
+        return [int(id) for id in re.findall(OBS_ID_PAT, self.description)]
 
     def listed_place_ids(self):
         """Return listed places, if present."""
