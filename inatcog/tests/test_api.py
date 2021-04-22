@@ -1,10 +1,9 @@
 """Test inatcog.api."""
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
-
 from inatcog.api import INatAPI
 
-API_REQUESTS_PATCH = patch("inatcog.api.aiohttp.ClientSession.get")
+API_REQUESTS_PATCH = patch("aiohttp_retry.RetryClient.get")
 
 
 class AsyncMock:

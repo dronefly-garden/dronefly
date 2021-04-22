@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from inatcog import maps
 from inatcog.api import INatAPI
 
-API_REQUESTS_PATCH = patch("inatcog.api.aiohttp.ClientSession.get")
+API_REQUESTS_PATCH = patch("aiohttp_retry.RetryClient.get")
 
 
 class AsyncMock:
@@ -35,7 +35,8 @@ class TestMaps(IsolatedAsyncioTestCase):
     """Test maps module members."""
 
     def setUp(self):
-        self.inat_map_url = maps.INatMapURL(INatAPI())
+        self.api = INatAPI()
+        self.inat_map_url = maps.INatMapURL(self.api)
 
     async def test_get_zoom_level(self):
         """Test get_zoom_level."""
