@@ -27,13 +27,8 @@ class INatAPI:
             params: TraceRequestStartParams,
         ) -> None:
             current_attempt = trace_config_ctx.trace_request_ctx["current_attempt"]
-            max_attempts = self.retry_options.attempts
-            if max_attempts <= current_attempt:
-                LOG.warning(
-                    "iNat request failed after %d attempts: %s",
-                    max_attempts,
-                    repr(params),
-                )
+            if current_attempt > 1:
+                LOG.info("iNat request attempt #%d: %s", current_attempt, repr(params))
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
