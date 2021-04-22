@@ -1,10 +1,17 @@
 """Module to access iNaturalist API."""
 from time import time
+from types import SimpleNamespace
 from typing import Union
+from aiohttp import (
+    ClientSession,
+    ContentTypeError,
+    TraceConfig,
+    TraceRequestStartParams,
+)
+from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-import aiohttp
 from .common import LOG
 from .base_classes import API_BASE_URL
 
@@ -13,15 +20,34 @@ class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
 
     def __init__(self):
+        # pylint: disable=unused-argument
+        async def on_request_start(
+            session: ClientSession,
+            trace_config_ctx: SimpleNamespace,
+            params: TraceRequestStartParams,
+        ) -> None:
+            current_attempt = trace_config_ctx.trace_request_ctx["current_attempt"]
+            max_attempts = self.retry_options.attempts
+            if max_attempts <= current_attempt:
+                LOG.warning(
+                    "iNat request failed after %d attempts: %s",
+                    max_attempts,
+                    repr(params),
+                )
+
+        trace_config = TraceConfig()
+        trace_config.on_request_start.append(on_request_start)
+        self.retry_options = ExponentialRetry(attempts=2)
+        self.session = RetryClient(
+            raise_for_status=False,
+            retry_options=self.retry_options,
+            trace_configs=[trace_config],
+        )
         self.request_time = time()
         self.places_cache = {}
         self.projects_cache = {}
         self.users_cache = {}
         self.users_login_cache = {}
-        # As per https://github.com/aio-libs/aiohttp/issues/850#issuecomment-471663047
-        # we're trying to avoid having to handle the server running out of keepalives
-        # and disconnecting us, leading to ServerDisconnectedError.
-        self.session = aiohttp.ClientSession(headers={"Connection": "close"},)
         self.taxa_cache = {}
         # api_v1_limiter:
         # ---------------
@@ -45,7 +71,7 @@ class INatAPI:
                     try:
                         json = await response.json()
                         msg = f"{json.get('error')} ({json.get('status')})"
-                    except aiohttp.ContentTypeError:
+                    except ContentTypeError:
                         data = await response.text()
                         document = BeautifulSoup(data, "html.parser")
                         # Only use the body, if present
