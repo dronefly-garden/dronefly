@@ -29,7 +29,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
     async def _search(self, ctx, query, keyword: Optional[str]):
         async def cancel_timeout(
-            ctx, pages, controls, message, page, timeout, reaction
+            ctx, pages, controls, message, page, _timeout, _reaction
         ):
             await menu(ctx, pages, controls, message, page, 0.1)
 
