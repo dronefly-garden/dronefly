@@ -180,16 +180,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         def get_button_controls(results):
             all_buttons = [
-                "\u0031\u20e3",  # :one:
-                "\u0032\u20e3",  # :two:
-                "\u0033\u20e3",  # :three:
-                "\u0034\u20e3",  # :four:
-                "\u0035\u20e3",  # :five:
-                "\u0036\u20e3",  # :six:
-                "\u0037\u20e3",  # :seven:
-                "\u0038\u20e3",  # :eight:
-                "\u0039\u20e3",  # :nine:
-                "\u0001\uf51f",  # :keycap_ten:
+                "\U0001F1E6",  # :regional_indicator_a:
+                "\U0001F1E7",  # :regional_indicator_b:
+                "\U0001F1E8",  # :regional_indicator_c:
+                "\U0001F1E9",  # :regional_indicator_d:
+                "\U0001F1EA",  # :regional_indicator_e:
+                "\U0001F1EB",  # :regional_indicator_f:
+                "\U0001F1EC",  # :regional_indicator_g:
+                "\U0001F1ED",  # :regional_indicator_h:
+                "\U0001F1EE",  # :regional_indicator_i:
+                "\U0001F1EF",  # :regional_indicator_j:
             ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
