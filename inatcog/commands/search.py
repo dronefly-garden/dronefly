@@ -77,7 +77,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         async def select_result_reaction(
             ctx, pages, controls, message, page, timeout, reaction
-        ):
+        ):  # pylint: disable=too-many-arguments
             number = buttons.index(reaction)
             selected_result_offset = number + page * per_embed_page
             if selected_result_offset > len(results) - 1:
@@ -88,7 +88,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         def make_search_embed(
             query_title, page, thumbnails, index, per_embed_page, pages_len
-        ):
+        ):  # pylint: disable=too-many-arguments
             embed = make_embed(
                 title=f"Search: {query_title} (page {index + 1} of {pages_len})",
                 url=url,
