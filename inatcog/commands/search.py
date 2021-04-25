@@ -202,8 +202,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             pages = []
             for group in grouper(results, per_embed_page):
                 lines = [
-                    ("\u2015" * 15)
-                    + "\n"
+                    (("\u2015" * 15) + "\n" if per_page <= 5 else "")
                     + (
                         ("**" if i == 0 else "")
                         + " ".join((buttons[i], result))
