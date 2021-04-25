@@ -179,9 +179,18 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return (total_results, results, thumbnails, per_page, per_embed_page)
 
         def get_button_controls(results):
-            all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"][
-                :per_embed_page
-            ]
+            all_buttons = [
+                "\u0031\u20e3",  # :one:
+                "\u0032\u20e3",  # :two:
+                "\u0033\u20e3",  # :three:
+                "\u0034\u20e3",  # :four:
+                "\u0035\u20e3",  # :five:
+                "\u0036\u20e3",  # :six:
+                "\u0037\u20e3",  # :seven:
+                "\u0038\u20e3",  # :eight:
+                "\u0039\u20e3",  # :nine:
+                "\u0001\uf51f",  # :keycap_ten:
+            ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
             controls = DEFAULT_CONTROLS.copy()
