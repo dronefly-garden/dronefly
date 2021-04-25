@@ -465,8 +465,10 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs.obs_on
             if obs.obs_at:
                 if compact:
-                    summary += "\nat " + textwrap.shorten(
-                        obs.obs_at, width=30, placeholder="…"
+                    summary += (
+                        "\n__at "
+                        + textwrap.shorten(obs.obs_at, width=30, placeholder="…")
+                        + "__"
                     )
                 else:
                     summary += " at " + obs.obs_at
