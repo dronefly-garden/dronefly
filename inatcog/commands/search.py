@@ -209,7 +209,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     )
                     for i, result in enumerate(filter(None, group), 0)
                 ]
-                page = "\n".join(lines)
+                page = (
+                    "\n~~" + ("\u2015" * 15) + "~~\n" if per_embed_page <= 4 else "\n"
+                ).join(lines)
                 pages.append(page)
 
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
