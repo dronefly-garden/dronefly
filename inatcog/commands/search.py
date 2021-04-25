@@ -52,9 +52,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     controls = {"❌": DEFAULT_CONTROLS["❌"], "✅": cancel_timeout}
                     await menu(ctx, [embed], controls)
                     return
-                else:
-                    await apologize(ctx, "Not found")
-                    return
+                await apologize(ctx, "Not found")
+                return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 query = await NaturalCompoundQueryConverter.convert(
@@ -102,6 +101,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 pass
             return embed
 
+        def get_inactive_query_args(query):
+            kwargs = {}
+            url = f"{WWW_BASE_URL}/taxa/search?q={urllib.parse.quote_plus(query)}"
+            url += f"&sources={keyword}"
+            kwargs["is_active"] = "any"
+            return (url, kwargs)
+
         async def get_obs_query_args(query):
             (
                 kwargs,
@@ -125,30 +131,28 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             kwargs["per_page"] = 200
             return (query_title, url, kwargs)
 
-        kwargs = {}
-        kw_lowered = ""
-        results = []
-        thumbnails = []
-        if isinstance(query, str):
-            query_title = query
-            url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
-        if keyword:
-            kw_lowered = keyword.lower()
-            if kw_lowered == "inactive":
-                url = f"{WWW_BASE_URL}/taxa/search?q={urllib.parse.quote_plus(query)}"
-                url += f"&sources={keyword}"
-                kwargs["is_active"] = "any"
-            elif kw_lowered == "obs":
-                try:
+        async def get_query_args(query):
+            kwargs = {}
+            kw_lowered = ""
+            query_title = ""
+            if isinstance(query, str):
+                query_title = query
+                url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
+            if keyword:
+                kw_lowered = keyword.lower()
+                if kw_lowered == "inactive":
+                    (url, kwargs) = get_inactive_query_args(query)
+                elif kw_lowered == "obs":
                     (query_title, url, kwargs) = await get_obs_query_args(query)
-                except LookupError as err:
-                    await apologize(ctx, err.args[0])
-                    return
-            else:
-                kwargs["sources"] = kw_lowered
-                url += f"&sources={keyword}"
-        if kw_lowered == "obs":
-            try:
+                else:
+                    kwargs["sources"] = kw_lowered
+                    url += f"&sources={keyword}"
+            return (kw_lowered, query_title, url, kwargs)
+
+        async def get_formatted_results(query, query_type, kwargs):
+            results = []
+            thumbnails = []
+            if query_type == "obs":
                 (
                     observations,
                     total_results,
@@ -166,15 +170,26 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         )
                     )
                     thumbnails.append(obs.thumbnail)
-            except LookupError as err:
-                await apologize(ctx, err.args[0])
-                return
-            per_embed_page = 5
-        else:
-            (results, total_results, per_page) = await self.site_search.search(
-                ctx, query, **kwargs
-            )
-            per_embed_page = 10
+                per_embed_page = 5
+            else:
+                (results, total_results, per_page) = await self.site_search.search(
+                    ctx, query, **kwargs
+                )
+                per_embed_page = 10
+            return (total_results, results, thumbnails, per_page, per_embed_page)
+
+        try:
+            query_type, query_title, url, kwargs = await get_query_args(query)
+        except LookupError as err:
+            await apologize(ctx, err.args[0])
+            return
+        (
+            total_results,
+            results,
+            thumbnails,
+            per_page,
+            per_embed_page,
+        ) = await get_formatted_results(query, query_type, kwargs)
 
         all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"][
             :per_embed_page
