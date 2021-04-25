@@ -1,14 +1,15 @@
 """Test maps module."""
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+from aiohttp import ClientSession
 
 from inatcog import maps
 from inatcog.api import INatAPI
 
-API_REQUESTS_PATCH = patch("inatcog.api.aiohttp.ClientSession.get")
+API_REQUESTS_PATCH = patch("aiohttp_retry.RetryClient.get")
 
 
-class AsyncMock:
+class ResponseMock:
     def __init__(self, expected_result):
         self.status = 200
         self.expected_result = expected_result
@@ -29,13 +30,18 @@ class AsyncSleep(MagicMock):
 
 
 SLEEP_PATCH = patch("asyncio.sleep", new_callable=AsyncSleep)
+SESSION_PATCH = patch(
+    "aiohttp_retry.ClientSession", return_value=AsyncMock(ClientSession)
+)
 
 
 class TestMaps(IsolatedAsyncioTestCase):
     """Test maps module members."""
 
     def setUp(self):
-        self.inat_map_url = maps.INatMapURL(INatAPI())
+        with SESSION_PATCH:
+            self.api = INatAPI()
+        self.inat_map_url = maps.INatMapURL(self.api)
 
     async def test_get_zoom_level(self):
         """Test get_zoom_level."""
@@ -136,26 +142,25 @@ class TestMaps(IsolatedAsyncioTestCase):
                 "nelng": -63.738748440518975,
             }
         }
-        with API_REQUESTS_PATCH as mock_get:
-            with SLEEP_PATCH:
-                mock_get.return_value = AsyncMock(bounds_1)
-                self.assertEqual(
-                    await self.inat_map_url.get_map_coords_for_taxon_ids([]),
-                    maps.MapCoords(zoom_level=2, center_lat=0, center_lon=0),
-                )
+        with SESSION_PATCH, SLEEP_PATCH, API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value = ResponseMock(bounds_1)
+            self.assertEqual(
+                await self.inat_map_url.get_map_coords_for_taxon_ids([]),
+                maps.MapCoords(zoom_level=2, center_lat=0, center_lon=0),
+            )
 
-                mock_get.return_value = AsyncMock(bounds_2)
-                self.assertEqual(
-                    await self.inat_map_url.get_map_coords_for_taxon_ids([]),
-                    maps.MapCoords(zoom_level=3, center_lat=47.0, center_lon=51.5),
-                )
+            mock_get.return_value = ResponseMock(bounds_2)
+            self.assertEqual(
+                await self.inat_map_url.get_map_coords_for_taxon_ids([]),
+                maps.MapCoords(zoom_level=3, center_lat=47.0, center_lon=51.5),
+            )
 
-                mock_get.return_value = AsyncMock(bounds_3)
-                self.assertEqual(
-                    await self.inat_map_url.get_map_coords_for_taxon_ids([]),
-                    maps.MapCoords(
-                        zoom_level=3,
-                        center_lat=24.1094379988499,
-                        center_lon=217.94684012420475,
-                    ),
-                )
+            mock_get.return_value = ResponseMock(bounds_3)
+            self.assertEqual(
+                await self.inat_map_url.get_map_coords_for_taxon_ids([]),
+                maps.MapCoords(
+                    zoom_level=3,
+                    center_lat=24.1094379988499,
+                    center_lon=217.94684012420475,
+                ),
+            )

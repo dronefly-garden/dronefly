@@ -1,13 +1,14 @@
 """Test inatcog.api."""
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+from aiohttp import ClientSession
 
 from inatcog.api import INatAPI
 
-API_REQUESTS_PATCH = patch("inatcog.api.aiohttp.ClientSession.get")
+API_REQUESTS_PATCH = patch("aiohttp_retry.RetryClient.get")
 
 
-class AsyncMock:
+class ResponseMock:
     def __init__(self, expected_result):
         self.status = 200
         self.expected_result = expected_result
@@ -29,18 +30,22 @@ class AsyncSleep(MagicMock):
 
 
 SLEEP_PATCH = patch("asyncio.sleep", new_callable=AsyncSleep)
+SESSION_PATCH = patch(
+    "aiohttp_retry.ClientSession", return_value=AsyncMock(ClientSession)
+)
 
 
 class TestAPI(IsolatedAsyncioTestCase):
     def setUp(self):
-        self.api = INatAPI()
+        with SESSION_PATCH:
+            self.api = INatAPI()
 
     async def test_get_taxa_by_id(self):
         """Test get_taxa by id."""
         expected_result = {"results": [{"name": "Animalia"}]}
 
         with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result)
+            mock_get.return_value = ResponseMock(expected_result)
             taxon = await self.api.get_taxa(1)
             self.assertEqual(taxon["results"][0]["name"], "Animalia")
 
@@ -49,7 +54,7 @@ class TestAPI(IsolatedAsyncioTestCase):
         expected_result = {"results": [{"name": "Animalia"}]}
 
         with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result)
+            mock_get.return_value = ResponseMock(expected_result)
             taxon = await self.api.get_taxa(q="animals")
             self.assertEqual(taxon["results"][0]["name"], "Animalia")
 
@@ -61,11 +66,11 @@ class TestAPI(IsolatedAsyncioTestCase):
         }
 
         with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result_1)
+            mock_get.return_value = ResponseMock(expected_result_1)
             self.assertIsNone(await self.api.get_observation_bounds([]))
             self.assertIsNone(await self.api.get_observation_bounds(["1"]))
 
-            mock_get.return_value = AsyncMock(expected_result_2)
+            mock_get.return_value = ResponseMock(expected_result_2)
             self.assertDictEqual(
                 await self.api.get_observation_bounds(["1"]),
                 expected_result_2["total_bounds"],
@@ -75,21 +80,19 @@ class TestAPI(IsolatedAsyncioTestCase):
         """Test get_users by id."""
         expected_result = {"results": [{"id": 545640, "login": "benarmstrong"}]}
 
-        with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result)
-            with SLEEP_PATCH:
-                users = await self.api.get_users(545640, refresh_cache=True)
-                self.assertEqual(users["results"][0]["login"], "benarmstrong")
+        with SESSION_PATCH, SLEEP_PATCH, API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value = ResponseMock(expected_result)
+            users = await self.api.get_users(545640, refresh_cache=True)
+            self.assertEqual(users["results"][0]["login"], "benarmstrong")
 
     async def test_get_users_by_login(self):
         """Test get_users by login."""
         expected_result = {"results": [{"id": 545640, "login": "benarmstrong"}]}
 
-        with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result)
-            with SLEEP_PATCH:
-                users = await self.api.get_users("benarmstrong", refresh_cache=True)
-                self.assertEqual(users["results"][0]["login"], "benarmstrong")
+        with SESSION_PATCH, SLEEP_PATCH, API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value = ResponseMock(expected_result)
+            users = await self.api.get_users("benarmstrong", refresh_cache=True)
+            self.assertEqual(users["results"][0]["login"], "benarmstrong")
 
     async def test_get_users_by_name(self):
         """Test get_users by name."""
@@ -100,8 +103,7 @@ class TestAPI(IsolatedAsyncioTestCase):
             ]
         }
 
-        with API_REQUESTS_PATCH as mock_get:
-            mock_get.return_value = AsyncMock(expected_result)
-            with SLEEP_PATCH:
-                users = await self.api.get_users("Ben Armstrong", refresh_cache=True)
-                self.assertEqual(users["results"][1]["login"], "bensomebodyelse")
+        with SESSION_PATCH, SLEEP_PATCH, API_REQUESTS_PATCH as mock_get:
+            mock_get.return_value = ResponseMock(expected_result)
+            users = await self.api.get_users("Ben Armstrong", refresh_cache=True)
+            self.assertEqual(users["results"][1]["login"], "bensomebodyelse")

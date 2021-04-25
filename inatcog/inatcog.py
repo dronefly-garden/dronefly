@@ -121,7 +121,6 @@ class INatCog(
     def cog_unload(self):
         """Cleanup when the cog unloads."""
         if not self._cleaned_up:
-            self.api.session.detach()
             if self._init_task:
                 self._init_task.cancel()
             self._cleaned_up = True
