@@ -202,11 +202,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             pages = []
             for group in grouper(results, per_embed_page):
                 lines = [
-                    (
+                    ("\u2015" * 15)
+                    + "\n"
+                    + (
                         ("**" if i == 0 else "")
                         + " ".join((buttons[i], result))
                         + ("**" if i == 0 else "")
-                    ).replace("\n", "\n\u2003\u2002")
+                    )
                     for i, result in enumerate(filter(None, group), 0)
                 ]
                 page = "\n".join(lines)
