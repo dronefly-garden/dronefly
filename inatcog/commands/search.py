@@ -160,7 +160,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 ) = await self.obs_query.query_observations(ctx, query)
                 for obs in observations:
                     results.append(
-                        "\n".join(
+                        " ".join(
                             await self.format_obs(
                                 obs,
                                 with_description=False,
@@ -170,7 +170,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         )
                     )
                     thumbnails.append(obs.thumbnail)
-                per_embed_page = 5
+                per_embed_page = 4
             else:
                 (results, total_results, per_page) = await self.site_search.search(
                     ctx, query, **kwargs
@@ -202,8 +202,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             pages = []
             for group in grouper(results, per_embed_page):
                 lines = [
-                    " ".join((buttons[i], ("__" if i == 0 else "") + result))
-                    + ("__" if i == 0 else "")
+                    (
+                        ("**" if i == 0 else "")
+                        + " ".join((buttons[i], result))
+                        + ("**" if i == 0 else "")
+                    ).replace("\n", "\n\u2003\u2002")
                     for i, result in enumerate(filter(None, group), 0)
                 ]
                 page = "\n".join(lines)

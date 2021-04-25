@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 from io import BytesIO
 import re
+import textwrap
 from typing import Union
 from urllib.parse import parse_qs, urlencode, urlsplit
 import discord
@@ -431,7 +432,13 @@ class INatEmbeds(MixinMeta):
                 title = format_taxon_name(taxon)
             else:
                 title = "Unknown"
-            title += " " + EMOJI[obs.quality_grade]
+            if compact:
+                if len(title) > 30 and re.search(r"\(", title):
+                    title = title.replace("(", "\n(")
+                title += "\n"
+            else:
+                title += " "
+            title += EMOJI[obs.quality_grade]
             if obs.faves_count:
                 title += format_count("fave", obs.faves_count)
             if obs.comments_count:
@@ -453,13 +460,14 @@ class INatEmbeds(MixinMeta):
                 summary += "Observed by " + user.profile_link()
             if obs.obs_on:
                 if compact:
-                    summary += " on " + re.sub(SHORT_DATE_PAT, r"\1", obs.obs_on)
+                    summary += "\non " + re.sub(SHORT_DATE_PAT, r"\1", obs.obs_on)
                 else:
                     summary += " on " + obs.obs_on
             if obs.obs_at:
                 if compact:
-                    summary += "\n"
-                summary += " at " + obs.obs_at
+                    summary += "\nat " + "\n".join(textwrap.wrap(obs.obs_at, width=30))
+                else:
+                    summary += " at " + obs.obs_at
             if with_description and obs.description:
                 # Contribute up to 10 lines from the description, and no more
                 # than 500 characters:
