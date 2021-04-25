@@ -149,7 +149,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     url += f"&sources={keyword}"
             return (kw_lowered, query_title, url, kwargs)
 
-        async def get_formatted_results(query, query_type, kwargs):
+        async def query_formatted_results(query, query_type, kwargs):
             results = []
             thumbnails = []
             if query_type == "obs":
@@ -178,39 +178,28 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 per_embed_page = 10
             return (total_results, results, thumbnails, per_page, per_embed_page)
 
-        try:
-            query_type, query_title, url, kwargs = await get_query_args(query)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-            return
-        (
-            total_results,
-            results,
-            thumbnails,
-            per_page,
-            per_embed_page,
-        ) = await get_formatted_results(query, query_type, kwargs)
-
-        all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"][
-            :per_embed_page
-        ]
-        buttons_count = min(len(results), len(all_buttons))
-        buttons = all_buttons[:buttons_count]
-        controls = DEFAULT_CONTROLS.copy()
-        for button in buttons:
-            controls[button] = select_result_reaction
-
-        pages = []
-        for group in grouper(results, per_embed_page):
-            lines = [
-                " ".join((buttons[i], ("__" if i == 0 else "") + result))
-                + ("__" if i == 0 else "")
-                for i, result in enumerate(filter(None, group), 0)
+        def get_button_controls(results):
+            all_buttons = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯"][
+                :per_embed_page
             ]
-            page = "\n".join(lines)
-            pages.append(page)
+            buttons_count = min(len(results), len(all_buttons))
+            buttons = all_buttons[:buttons_count]
+            controls = DEFAULT_CONTROLS.copy()
+            for button in buttons:
+                controls[button] = select_result_reaction
+            return (buttons, controls)
 
-        if pages:
+        def format_embeds(results, total_results, per_page, per_embed_page, buttons):
+            pages = []
+            for group in grouper(results, per_embed_page):
+                lines = [
+                    " ".join((buttons[i], ("__" if i == 0 else "") + result))
+                    + ("__" if i == 0 else "")
+                    for i, result in enumerate(filter(None, group), 0)
+                ]
+                page = "\n".join(lines)
+                pages.append(page)
+
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             if len(results) < total_results:
                 pages_len = (
@@ -223,14 +212,34 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 )
                 for index, page in enumerate(pages, start=0)
             ]
-            await menu(ctx, embeds, controls)
-        else:
+            return embeds
+
+        try:
+            query_type, query_title, url, kwargs = await get_query_args(query)
+        except LookupError as err:
+            await apologize(ctx, err.args[0])
+            return
+        (
+            total_results,
+            results,
+            thumbnails,
+            per_page,
+            per_embed_page,
+        ) = await query_formatted_results(query, query_type, kwargs)
+        if not results:
             await apologize(
                 ctx,
                 "Nothing matches that query. "
                 "Check for mistakes in spelling or syntax.\n"
                 f"Type `{ctx.clean_prefix}help search` for help.",
             )
+            return
+
+        (buttons, controls) = get_button_controls(results)
+        embeds = format_embeds(
+            results, total_results, per_page, per_embed_page, buttons
+        )
+        await menu(ctx, embeds, controls)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
