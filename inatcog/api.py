@@ -3,8 +3,10 @@ from time import time
 from types import SimpleNamespace
 from typing import Union
 from aiohttp import (
+    ClientConnectorError,
     ClientSession,
     ContentTypeError,
+    ServerDisconnectedError,
     TraceConfig,
     TraceRequestStartParams,
 )
@@ -32,7 +34,14 @@ class INatAPI:
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
-        self.retry_options = ExponentialRetry(attempts=2)
+        self.retry_options = ExponentialRetry(
+            attempts=2,
+            exceptions=[
+                ServerDisconnectedError,
+                ConnectionResetError,
+                ClientConnectorError,
+            ],
+        )
         self.session = RetryClient(
             raise_for_status=False,
             retry_options=self.retry_options,
