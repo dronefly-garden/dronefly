@@ -2,7 +2,7 @@
 
 import re
 
-from .base_classes import WWW_BASE_URL, Obs, PAT_OBS_LINK, RANK_LEVELS, User, Taxon
+from .base_classes import WWW_BASE_URL, Obs, PAT_OBS_LINK, User
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields
@@ -134,17 +134,17 @@ async def maybe_match_obs(cog, ctx, content, id_permitted=False):
     return (obs, url)
 
 
-async def get_formatted_observer_counts(
-    cog, taxon: Taxon = None, place_id: int = None, project_id: int = None,
+def get_formatted_observer_counts(
+    observers: list, base_url: str, species_only: bool = False
 ):
     """Format per observer observation & species counts."""
 
-    def format_observer_link(observer):
+    def format_observer_link(observer, species_only):
         user_id = observer["user_id"]
         species_count = observer["species_count"]
         observation_count = observer["observation_count"]
         login = observer["user"]["login"]
-        observer_url = url + f"&user_id={user_id}"
+        observer_url = base_url + f"&user_id={user_id}"
         if species_only:
             observer_link = f"[{observation_count}]({observer_url}) {login}"
         else:
@@ -153,31 +153,8 @@ async def get_formatted_observer_counts(
             )
         return observer_link
 
-    obs_opt = {}
-    species_opt = {}
-    if taxon:
-        taxon_id = taxon.taxon_id
-        obs_opt["taxon_id"] = taxon_id
-        species_opt["taxon_id"] = taxon_id
-    if place_id:
-        obs_opt["place_id"] = place_id
-        species_opt["place_id"] = place_id
-    if project_id:
-        obs_opt["project_id"] = project_id
-        species_opt["project_id"] = project_id
-    observations = await cog.api.get_observations("observers", **obs_opt)
-    if observations:
-        observers = observations["total_results"]
-        url = WWW_BASE_URL + "/observations?view=observers"
-        if taxon:
-            url += f"&taxon_id={taxon_id}"
-        if place_id:
-            url += f"&place_id={place_id}"
-        if project_id:
-            url += f"&project_id={project_id}"
-        species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
-        observer_links = [
-            format_observer_link(observer) for observer in observations["results"]
-        ]
-
-    return (observers, observer_links)
+    observer_links = [
+        format_observer_link(observer, species_only)
+        for observer in observers["results"]
+    ]
+    return observer_links

@@ -2,12 +2,13 @@
 
 import re
 from typing import Optional
+import urllib.parse
 
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
+from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from inatcog.embeds import apologize, make_embed
@@ -173,6 +174,32 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @tabulate.command(aliases=["obs", "observer"])
     async def observers(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show observations per observer."""
+
+        async def get_observer_options(ctx, query):
+            (
+                _kwargs,
+                filtered_taxon,
+                _term,
+                _value,
+            ) = await self.obs_query.get_query_args(ctx, query)
+            taxon = filtered_taxon.taxon
+            place = filtered_taxon.place
+            project = filtered_taxon.project
+            obs_opt = {}
+            if taxon:
+                obs_opt["taxon_id"] = taxon.taxon_id
+                full_title = f"Observers of {format_taxon_title(taxon)}"
+            else:
+                full_title = "Observers"
+            if project:
+                obs_opt["project_id"] = project.project_id
+                full_title += f" in {project.title}"
+            if place:
+                obs_opt["place_id"] = place.place_id
+                full_title += f" from {place.display_name}"
+            species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
+            return (filtered_taxon, obs_opt, full_title, species_only)
+
         if query and (
             query.controlled_term
             or query.unobserved_by
@@ -184,41 +211,27 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
         try:
             (
-                _kwargs,
                 filtered_taxon,
-                _term,
-                _value,
-            ) = await self.obs_query.get_query_args(ctx, query)
-            if not filtered_taxon:
-                await apologize(ctx, "oops")
+                obs_opt,
+                full_title,
+                species_only,
+            ) = await get_observer_options(ctx, query)
+            observers = await self.api.get_observations("observers", **obs_opt)
+            observers_count = observers["total_results"]
+            if not observers_count:
+                await apologize(
+                    ctx,
+                    f"No observations found {self.obs_query.format_query_args(filtered_taxon)}",
+                )
                 return
-            taxon = filtered_taxon.taxon
-            place = filtered_taxon.place
-            project = filtered_taxon.project
-            url = f"{WWW_BASE_URL}/observations?view=observers"
-            if taxon:
-                taxon_id = taxon.taxon_id
-                url += f"&taxon_id={taxon_id}"
-                full_title = f"Observers of {format_taxon_title(taxon)}"
-            else:
-                full_title = "Observers"
-            place_id = None
-            project_id = None
-            if project:
-                project_id = project.project_id
-                full_title += f" in {project.title}"
-                url += f"&project_id={project_id}"
-            if place:
-                place_id = place.place_id
-                full_title += f" from {place.display_name}"
-                url += f"&place_id={place_id}"
-            (observers, observer_links) = await get_formatted_observer_counts(
-                self, taxon, place_id, project_id
-            )
-            if observers > 10:
-                if observers > 500:
+
+            obs_opt["view"] = "observers"
+            url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
+            observer_links = get_formatted_observer_counts(observers, url, species_only)
+            if observers_count > 10:
+                if observers_count > 500:
                     first = "first "
-                    observers = 500
+                    observers_count = 500
                 else:
                     first = ""
                 pages_len = int((len(observer_links) - 1) / 10) + 1
@@ -226,7 +239,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 for page, links in enumerate(grouper(observer_links, 10), start=1):
                     formatted_counts = "\n".join(filter(None, links))
                     total = (
-                        f"**Observations by {first}{observers} observers"
+                        f"**Observations by {first}{observers_count} observers"
                         f" (page {page} of {pages_len}):**"
                     )
                     pages.append(f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}")
@@ -237,7 +250,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 await menu(ctx, embeds, DEFAULT_CONTROLS)
             else:
                 formatted_counts = "\n".join(observer_links)
-                total = f"**Observations by {observers} observers:**"
+                total = f"**Observations by {observers_count} observers:**"
                 description = f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
                 embed = make_embed(title=full_title, url=url, description=description)
                 await ctx.send(embed=embed)
