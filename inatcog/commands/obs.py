@@ -5,15 +5,16 @@ from typing import Optional
 
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import PAT_OBS_LINK, WWW_BASE_URL
-from inatcog.common import LOG
+from inatcog.common import grouper, LOG
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds
+from inatcog.inat_embeds import INatEmbeds, format_taxon_title
 from inatcog.interfaces import MixinMeta
-from inatcog.obs import get_obs_fields, maybe_match_obs
-from inatcog.taxa import PAT_TAXON_LINK
+from inatcog.obs import get_obs_fields, get_formatted_observer_counts, maybe_match_obs
+from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
 
 
 class CommandsObs(INatEmbeds, MixinMeta):
@@ -165,6 +166,81 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 f"&user_id={user.user_id}"
             )
             await ctx.send(embed=embed)
+        except (BadArgument, LookupError) as err:
+            await apologize(ctx, err.args[0])
+            return
+
+    @tabulate.command(aliases=["obs", "observer"])
+    async def observers(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show observations per observer."""
+        if query and (
+            query.controlled_term
+            or query.unobserved_by
+            or query.id_by
+            or query.per
+            or query.user
+        ):
+            await apologize(ctx, "I can't tabulate that yet.")
+            return
+        try:
+            (
+                _kwargs,
+                filtered_taxon,
+                _term,
+                _value,
+            ) = await self.obs_query.get_query_args(ctx, query)
+            if not filtered_taxon:
+                await apologize(ctx, "oops")
+                return
+            taxon = filtered_taxon.taxon
+            place = filtered_taxon.place
+            project = filtered_taxon.project
+            url = f"{WWW_BASE_URL}/observations?view=observers"
+            if taxon:
+                taxon_id = taxon.taxon_id
+                url += f"&taxon_id={taxon_id}"
+                full_title = f"Observers of {format_taxon_title(taxon)}"
+            else:
+                full_title = "Observers"
+            place_id = None
+            project_id = None
+            if project:
+                project_id = project.project_id
+                full_title += f" in {project.title}"
+                url += f"&project_id={project_id}"
+            if place:
+                place_id = place.place_id
+                full_title += f" from {place.display_name}"
+                url += f"&place_id={place_id}"
+            (observers, observer_links) = await get_formatted_observer_counts(
+                self, taxon, place_id, project_id
+            )
+            if observers > 10:
+                if observers > 500:
+                    first = "first "
+                    observers = 500
+                else:
+                    first = ""
+                pages_len = int((len(observer_links) - 1) / 10) + 1
+                pages = []
+                for page, links in enumerate(grouper(observer_links, 10), start=1):
+                    formatted_counts = "\n".join(filter(None, links))
+                    total = (
+                        f"**Observations by {first}{observers} observers"
+                        f" (page {page} of {pages_len}):**"
+                    )
+                    pages.append(f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}")
+                embeds = [
+                    make_embed(title=full_title, url=url, description=page)
+                    for page in pages
+                ]
+                await menu(ctx, embeds, DEFAULT_CONTROLS)
+            else:
+                formatted_counts = "\n".join(observer_links)
+                total = f"**Observations by {observers} observers:**"
+                description = f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
+                embed = make_embed(title=full_title, url=url, description=description)
+                await ctx.send(embed=embed)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
