@@ -714,11 +714,6 @@ from other nature-related sites:
 - ``https://idtools.net/idAids/searchResults.cfm?searchString={0:query}&searchType=1``
 - put insect genus or binomial after command
 
-``,idsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?ident_user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's identifications)
-
 ``,ilwild``
 
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_spp.html``
@@ -826,11 +821,6 @@ from other nature-related sites:
 
 - ``https://www.ncbi.nlm.nih.gov/nuccore/?term={0:query}``
 - put taxa of interest after command
-
-``,obsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's observations)
 
 ``,paflora``
 
