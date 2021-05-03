@@ -14,7 +14,7 @@ from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConve
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds, format_taxon_title
 from inatcog.interfaces import MixinMeta
-from inatcog.obs import get_obs_fields, get_formatted_observer_counts, maybe_match_obs
+from inatcog.obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
 
 
@@ -131,8 +131,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
 
-    @tabulate.command()
-    async def maverick(self, ctx, *, query: Optional[NaturalCompoundQueryConverter]):
+    @tabulate.command(name="maverick")
+    async def tabulate_maverick(
+        self, ctx, *, query: Optional[NaturalCompoundQueryConverter]
+    ):
         """Show maverick identifications.
 
         • By default, if your iNat login is known, your own maverick
@@ -171,11 +173,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
 
-    @tabulate.command(aliases=["obs", "observer"])
-    async def observers(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Show observations per observer."""
-
-        async def get_observer_options(ctx, query):
+    async def _tabulate_query(self, ctx, query, view="obs"):
+        async def get_observer_options(ctx, query, view):
             (
                 _kwargs,
                 filtered_taxon,
@@ -188,9 +187,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             obs_opt = {}
             if taxon:
                 obs_opt["taxon_id"] = taxon.taxon_id
-                full_title = f"Observers of {format_taxon_title(taxon)}"
+                full_title = f"{view.capitalize()} of {format_taxon_title(taxon)}"
             else:
-                full_title = "Observers"
+                full_title = view.capitalize()
             if project:
                 obs_opt["project_id"] = project.project_id
                 full_title += f" in {project.title}"
@@ -210,36 +209,45 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await apologize(ctx, "I can't tabulate that yet.")
             return
         try:
+            obs_opt_view = "identifiers" if view == "ids" else "observers"
             (
                 filtered_taxon,
                 obs_opt,
                 full_title,
                 species_only,
-            ) = await get_observer_options(ctx, query)
-            observers = await self.api.get_observations("observers", **obs_opt)
-            observers_count = observers["total_results"]
-            if not observers_count:
+            ) = await get_observer_options(ctx, query, obs_opt_view)
+            obs_opt["view"] = obs_opt_view
+            users = await self.api.get_observations(obs_opt["view"], **obs_opt)
+            users_count = users["total_results"]
+            if not users_count:
                 await apologize(
                     ctx,
                     f"No observations found {self.obs_query.format_query_args(filtered_taxon)}",
                 )
                 return
 
-            obs_opt["view"] = "observers"
-            url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
-            observer_links = get_formatted_observer_counts(observers, url, species_only)
-            if observers_count > 10:
-                if observers_count > 500:
-                    first = "first "
-                    observers_count = 500
+            by_species = " by species" if view == "spp" else ""
+            if view == "ids":
+                ids_opt = obs_opt.copy()
+                del ids_opt["view"]
+                url = (
+                    f"{WWW_BASE_URL}/identifications?{urllib.parse.urlencode(ids_opt)}"
+                )
+            else:
+                url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
+            user_links = get_formatted_user_counts(users, url, species_only, view)
+            if users_count > 10:
+                if users_count > 500:
+                    first = "First "
+                    users_count = 500
                 else:
                     first = ""
-                pages_len = int((len(observer_links) - 1) / 10) + 1
+                pages_len = int((len(user_links) - 1) / 10) + 1
                 pages = []
-                for page, links in enumerate(grouper(observer_links, 10), start=1):
+                for page, links in enumerate(grouper(user_links, 10), start=1):
                     formatted_counts = "\n".join(filter(None, links))
                     total = (
-                        f"**Observations by {first}{observers_count} observers"
+                        f"**{first}{users_count} top {obs_opt['view']}{by_species}"
                         f" (page {page} of {pages_len}):**"
                     )
                     pages.append(f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}")
@@ -249,14 +257,54 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 ]
                 await menu(ctx, embeds, DEFAULT_CONTROLS)
             else:
-                formatted_counts = "\n".join(observer_links)
-                total = f"**Observations by {observers_count} observers:**"
+                formatted_counts = "\n".join(user_links)
+                total = f"**{users_count} {obs_opt['view']}{by_species}:**"
                 description = f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
                 embed = make_embed(title=full_title, url=url, description=description)
                 await ctx.send(embed=embed)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
+
+    @tabulate.command(name="topids")
+    async def tabulate_top_identifiers(
+        self, ctx, *, query: NaturalCompoundQueryConverter
+    ):
+        """Show top observations identified per identifier (alias `[p]topids`)."""
+        await self._tabulate_query(ctx, query, view="ids")
+        return
+
+    @commands.command(name="topids")
+    async def top_identifiers(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show top observations identified per identifier (alias `[p]tab topids`)."""
+        await self._tabulate_query(ctx, query, view="ids")
+        return
+
+    @tabulate.command(name="topobs")
+    async def tabulate_top_observers(
+        self, ctx, *, query: NaturalCompoundQueryConverter
+    ):
+        """Show top observations per observer (alias `[p]topobs`)."""
+        await self._tabulate_query(ctx, query)
+        return
+
+    @commands.command(name="topobs")
+    async def top_observers(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show top observations per observer (alias `[p]tab topobs`)."""
+        await self._tabulate_query(ctx, query)
+        return
+
+    @tabulate.command(name="topspp", alias=["topsp"])
+    async def tabulate_top_species(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show top species per observer (alias `[p]topspp`)."""
+        await self._tabulate_query(ctx, query, view="spp")
+        return
+
+    @commands.command(name="topspp", alias=["topsp"])
+    async def top_species(self, ctx, *, query: NaturalCompoundQueryConverter):
+        """Show top species per observer (alias `[p]tab topspp`)."""
+        await self._tabulate_query(ctx, query, view="spp")
+        return
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
