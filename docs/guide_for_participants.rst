@@ -877,16 +877,6 @@ from other nature-related sites:
 - ``http://tolweb.org/{0:query}``
 - put taxon at family level or above after command
 
-``,topids``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=identifiers``
-- put iNaturalist Taxon ID number after command
-
-``,topobs``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
-- put iNaturalist Taxon ID number after command
-
 ``,unknowns``
 
 - ``https://www.inaturalist.org/observations/identify?reviewed=any&quality_grade=any&user_id={0:query}&lrank=kingdom&without_taxon_id=47170,48222,1,67333,47126,131236,47686``
