@@ -35,7 +35,7 @@ class INatAPI:
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
         self.retry_options = ExponentialRetry(
-            attempts=2,
+            attempts=3,
             exceptions=[
                 ServerDisconnectedError,
                 ConnectionResetError,
