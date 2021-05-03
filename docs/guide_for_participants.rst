@@ -832,11 +832,6 @@ from other nature-related sites:
 - ``https://www.ncbi.nlm.nih.gov/nuccore/?term={0:query}``
 - put taxa of interest after command
 
-``,observers``
-
-- ``https://www.inaturalist.org/observations?place_id={0:query}&subview=table&view=observers``
-- put iNaturalist Place ID number after command
-
 ``,obsheatmap``
 
 - ``https://www.inaturalist.org/observations/map?user_id={0:query}#2/0/0``
