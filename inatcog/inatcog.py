@@ -1,6 +1,5 @@
 """A cog for using the iNaturalist platform."""
 from abc import ABC
-import logging
 import re
 import asyncio
 import inflect
@@ -124,10 +123,5 @@ class INatCog(
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
-            # hide warning when RetryClient not closed
-            # - we'd close it but it has to be awaited, and that's not possible
-            #   in cog_unload
-            retry_logger = logging.getLogger("aiohttp_retry")
-            if retry_logger:
-                retry_logger.setLevel(logging.ERROR)
+            self.bot.loop.create_task(self.api.session.close())
             self._cleaned_up = True
