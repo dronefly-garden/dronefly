@@ -40,6 +40,7 @@ class INatAPI:
                 ServerDisconnectedError,
                 ConnectionResetError,
                 ClientConnectorError,
+                TimeoutError,
             ],
         )
         self.session = RetryClient(
