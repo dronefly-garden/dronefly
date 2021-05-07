@@ -153,7 +153,12 @@ class Listeners(INatEmbeds, MixinMeta):
         if not message.embeds or not message.reactions:
             return
         reaction = next(
-            reaction for reaction in message.reactions if reaction.emoji == str(emoji)
+            (
+                reaction
+                for reaction in message.reactions
+                if reaction.emoji == str(emoji)
+            ),
+            None,
         )
         if not reaction or not reaction.me:
             return
