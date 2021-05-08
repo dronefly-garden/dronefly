@@ -130,13 +130,24 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
+        async def update_and_display_selected(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            selected_index[0] = buttons.index(reaction)
+            await display_selected(
+                ctx, pages, controls, message, page, timeout, reaction
+            )
+
         async def select_result_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
             result_index = buttons.index(reaction)
             result = get_result(page, results, result_index)
             if result:
-                thumbnail = get_thumbnail(page, thumbnails, result_index)
+                if thumbnails:
+                    thumbnail = get_thumbnail(page, thumbnails, result_index)
+                else:
+                    thumbnail = None
                 pages = update_selected(pages, page, thumbnail, result_index)
             await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
@@ -233,7 +244,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 per_embed_page = 10
             return (total_results, results, thumbnails, per_page, per_embed_page)
 
-        def get_button_controls(results):
+        def get_button_controls(results, query_type):
             all_buttons = [
                 "\U0001F1E6",  # :regional_indicator_a:
                 "\U0001F1E7",  # :regional_indicator_b:
@@ -248,23 +259,33 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
-            controls = {
-                "⬅️": prev_page,
-                "❌": DEFAULT_CONTROLS["❌"],
-                "➡️": next_page,
-                "✅": display_selected,
-            }
+            if query_type == "obs":
+                controls = {
+                    "⬅️": prev_page,
+                    "❌": DEFAULT_CONTROLS["❌"],
+                    "➡️": next_page,
+                    "✅": display_selected,
+                }
+            else:
+                controls = DEFAULT_CONTROLS.copy()
+            letter_button_reaction = (
+                select_result_reaction
+                if query_type == "obs"
+                else update_and_display_selected
+            )
             for button in buttons:
-                controls[button] = select_result_reaction
+                controls[button] = letter_button_reaction
             return (buttons, controls)
 
         def format_page(buttons, group, selected=0):
+            def text_style(i):
+                if query_type != "obs":
+                    return ""
+
+                return "**" if i == selected else ""
+
             lines = [
-                (
-                    ("**" if i == selected else "")
-                    + " ".join((buttons[i], result))
-                    + ("**" if i == selected else "")
-                )
+                (text_style(i) + " ".join((buttons[i], result)) + text_style(i))
                 for i, result in enumerate(filter(None, group), 0)
             ]
             page = (
@@ -313,7 +334,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             )
             return
 
-        (buttons, controls) = get_button_controls(results)
+        (buttons, controls) = get_button_controls(results, query_type)
         embeds = format_embeds(
             results, total_results, per_page, per_embed_page, buttons
         )
