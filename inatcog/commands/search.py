@@ -288,9 +288,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 (text_style(i) + " ".join((buttons[i], result)) + text_style(i))
                 for i, result in enumerate(filter(None, group), 0)
             ]
-            page = (
-                "\n~~" + ("\u2015" * 15) + "~~\n" if per_embed_page <= 4 else "\n"
-            ).join(lines)
+            page = "\n".join(lines)
             return page
 
         def format_embeds(results, total_results, per_page, per_embed_page, buttons):
