@@ -1,5 +1,6 @@
 """Module to work with iNat observations."""
 
+from operator import itemgetter
 import re
 
 from .base_classes import WWW_BASE_URL, Obs, PAT_OBS_LINK, User
@@ -132,3 +133,50 @@ async def maybe_match_obs(cog, ctx, content, id_permitted=False):
     if obs_id and not url:
         url = WWW_BASE_URL + "/observations/" + str(obs_id)
     return (obs, url)
+
+
+def get_formatted_user_counts(
+    user_counts: list, base_url: str, species_only: bool = False, view: str = "obs"
+):
+    """Format per user observation & species counts."""
+
+    def format_observer_link(observer, species_only):
+        user_id = observer["user_id"]
+        species_count = observer["species_count"]
+        observation_count = observer["observation_count"]
+        login = observer["user"]["login"]
+        observer_url = base_url + f"&user_id={user_id}"
+        if species_only:
+            observer_link = f"[{observation_count}]({observer_url}) {login}"
+        else:
+            observer_link = (
+                f"[{observation_count} ({species_count})]({observer_url}) {login}"
+            )
+        return observer_link
+
+    def format_identifier_link(identifier):
+        user_id = identifier["user"]["id"]
+        observation_count = identifier["count"]
+        login = identifier["user"]["login"]
+        identifier_url = base_url + f"&user_id={user_id}"
+        observer_link = f"[{observation_count}]({identifier_url}) {login}"
+        return observer_link
+
+    if view == "ids":
+        identifier_links = [
+            format_identifier_link(identifier) for identifier in user_counts["results"]
+        ]
+        return identifier_links
+
+    if not species_only and view == "spp":
+        sorted_observers = sorted(
+            user_counts["results"],
+            key=itemgetter("species_count", "observation_count"),
+            reverse=True,
+        )
+    else:
+        sorted_observers = user_counts["results"]
+    observer_links = [
+        format_observer_link(observer, species_only) for observer in sorted_observers
+    ]
+    return observer_links

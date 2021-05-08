@@ -35,9 +35,9 @@ Dronefly cog repository
 
 Dronefly bot is based on `Red Discord
 Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__ but it is also the
-name of the approved by Red cog repository for the bot on GitHub. The latter
-provides the components that interact with sites of interest to its users,
-such as iNaturalist.
+name of the Red cog repository for the bot on GitHub. The latter provides
+the components that interact with sites of interest to its users, such as
+iNaturalist.
 
 While some developers and some users may have an interest in the repository,
 most will find it simplest to just use the bot on Discord. You don't need to

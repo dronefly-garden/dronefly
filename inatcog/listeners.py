@@ -150,8 +150,19 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             self.bot.dispatch("commandstats_action", ctx)
 
-        if not message.embeds:
+        if not message.embeds or not message.reactions:
             return
+        reaction = next(
+            (
+                reaction
+                for reaction in message.reactions
+                if reaction.emoji == str(emoji)
+            ),
+            None,
+        )
+        if not reaction or not reaction.me:
+            return
+
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
         msg = copy(message)
         msg.embeds[0] = inat_embed

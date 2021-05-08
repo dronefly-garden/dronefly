@@ -123,4 +123,5 @@ class INatCog(
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
+            self.bot.loop.create_task(self.api.session.close())
             self._cleaned_up = True

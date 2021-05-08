@@ -1,5 +1,9 @@
 """INatCog init."""
+from redbot.core.utils import get_end_user_data_statement
+
 from .inatcog import INatCog
+
+__red_end_user_data_statement__ = get_end_user_data_statement(__file__)
 
 
 def setup(bot):

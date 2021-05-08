@@ -11,7 +11,7 @@ class INatObsQuery:
     def __init__(self, cog):
         self.cog = cog
 
-    def format_query_args(self, filtered_taxon, term, value):
+    def format_query_args(self, filtered_taxon, term=None, value=None):
         """Format query into a human-readable string"""
         message = ""
         if filtered_taxon.taxon:

@@ -714,11 +714,6 @@ from other nature-related sites:
 - ``https://idtools.net/idAids/searchResults.cfm?searchString={0:query}&searchType=1``
 - put insect genus or binomial after command
 
-``,idsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?ident_user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's identifications)
-
 ``,ilwild``
 
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_spp.html``
@@ -760,11 +755,6 @@ from other nature-related sites:
 - nothing entered after (displays image of iNaturalist map key)
 
 |image73|
-
-``,maverick``
-
-- ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
-- put iNaturalist username after command (case sensitive) (returns specified user's Maverick identifications)
 
 ``,meglossary``
 
@@ -832,16 +822,6 @@ from other nature-related sites:
 - ``https://www.ncbi.nlm.nih.gov/nuccore/?term={0:query}``
 - put taxa of interest after command
 
-``,observers``
-
-- ``https://www.inaturalist.org/observations?place_id={0:query}&subview=table&view=observers``
-- put iNaturalist Place ID number after command
-
-``,obsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's observations)
-
 ``,paflora``
 
 - ``http://paflora.org/original/sp-page.php?submitted=true&criteria={0:query}``
@@ -876,16 +856,6 @@ from other nature-related sites:
 
 - ``http://tolweb.org/{0:query}``
 - put taxon at family level or above after command
-
-``,topids``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=identifiers``
-- put iNaturalist Taxon ID number after command
-
-``,topobs``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
-- put iNaturalist Taxon ID number after command
 
 ``,unknowns``
 
