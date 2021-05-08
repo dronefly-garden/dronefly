@@ -33,16 +33,44 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         ):
             await menu(ctx, pages, controls, message, page, 0.1)
 
-        async def display_selected(result):
+        def get_result(page, results, result_index):
+            selected_result_offset = result_index + page * per_embed_page
+            last_index = len(results) - 1
+            if selected_result_offset > last_index:
+                selected_result_offset = last_index
+            return results[selected_result_offset]
+
+        def get_thumbnail(page, thumbnails, result_index):
+            selected_result_offset = result_index + page * per_embed_page
+            last_index = len(results) - 1
+            if selected_result_offset > last_index:
+                selected_result_offset = last_index
+            return thumbnails[selected_result_offset]
+
+        def update_selected(pages, page, thumbnail, result_index):
+            embed = pages[page]
+            embed.set_thumbnail(url=thumbnail)
+            results_page_start = page * per_embed_page
+            results_page_end = results_page_start + per_embed_page
+            page_of_results = results[results_page_start:results_page_end]
+            last_index = len(page_of_results) - 1
+            if result_index > last_index:
+                result_index = last_index
+            page = format_page(buttons, page_of_results, result_index)
+            embed.description = page
+            selected_index[0] = result_index
+            return pages
+
+        async def _display_selected(result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
                 home = await self.get_home(ctx)
-                results = (
+                obs_results = (
                     await self.api.get_observations(
                         mat["obs_id"], include_new_projects=1, preferred_place_id=home
                     )
                 )["results"]
-                obs = get_obs_fields(results[0]) if results else None
+                obs = get_obs_fields(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
                         ctx.guild, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
@@ -75,15 +103,42 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             if mat:
                 await (self.bot.get_command("place")(ctx, query=mat["place_id"]))
 
+        async def next_page(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            thumbnail = get_thumbnail(page, thumbnails, 0)
+            pages = update_selected(pages, page, thumbnail, 0)
+            await DEFAULT_CONTROLS["➡️"](
+                ctx, pages, controls, message, page, timeout, reaction
+            )
+
+        async def prev_page(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            thumbnail = get_thumbnail(page, thumbnails, 0)
+            pages = update_selected(pages, page, thumbnail, 0)
+            await DEFAULT_CONTROLS["⬅️"](
+                ctx, pages, controls, message, page, timeout, reaction
+            )
+
+        async def display_selected(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            result = get_result(page, results, selected_index[0])
+            if result:
+                await _display_selected(result)
+            await message.remove_reaction(reaction, ctx.author)
+            await menu(ctx, pages, controls, message, page, timeout)
+
         async def select_result_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
-            number = buttons.index(reaction)
-            selected_result_offset = number + page * per_embed_page
-            if selected_result_offset > len(results) - 1:
-                return
-            result = results[number + page * per_embed_page]
-            await display_selected(result)
+            result_index = buttons.index(reaction)
+            result = get_result(page, results, result_index)
+            if result:
+                thumbnail = get_thumbnail(page, thumbnails, result_index)
+                pages = update_selected(pages, page, thumbnail, result_index)
+            await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
         def make_search_embed(
@@ -193,25 +248,34 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
-            controls = DEFAULT_CONTROLS.copy()
+            controls = {
+                "⬅️": prev_page,
+                "❌": DEFAULT_CONTROLS["❌"],
+                "➡️": next_page,
+                "✅": display_selected,
+            }
             for button in buttons:
                 controls[button] = select_result_reaction
             return (buttons, controls)
 
+        def format_page(buttons, group, selected=0):
+            lines = [
+                (
+                    ("**" if i == selected else "")
+                    + " ".join((buttons[i], result))
+                    + ("**" if i == selected else "")
+                )
+                for i, result in enumerate(filter(None, group), 0)
+            ]
+            page = (
+                "\n~~" + ("\u2015" * 15) + "~~\n" if per_embed_page <= 4 else "\n"
+            ).join(lines)
+            return page
+
         def format_embeds(results, total_results, per_page, per_embed_page, buttons):
             pages = []
             for group in grouper(results, per_embed_page):
-                lines = [
-                    (
-                        ("**" if i == 0 else "")
-                        + " ".join((buttons[i], result))
-                        + ("**" if i == 0 else "")
-                    )
-                    for i, result in enumerate(filter(None, group), 0)
-                ]
-                page = (
-                    "\n~~" + ("\u2015" * 15) + "~~\n" if per_embed_page <= 4 else "\n"
-                ).join(lines)
+                page = format_page(buttons, group)
                 pages.append(page)
 
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
@@ -253,6 +317,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         embeds = format_embeds(
             results, total_results, per_page, per_embed_page, buttons
         )
+        # Track index in outer scope
+        # - TODO: use a menu class (from vendored menu) and make this an attribute.
+        selected_index = [0]
+
         await menu(ctx, embeds, controls)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
