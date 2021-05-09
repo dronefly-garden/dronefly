@@ -47,8 +47,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 selected_result_offset = last_index
             return thumbnails[selected_result_offset]
 
-        def update_selected(pages, page, thumbnail, result_index):
+        def update_selected(pages, page, result_index):
             embed = pages[page]
+            thumbnail = (
+                get_thumbnail(page, thumbnails, result_index) if thumbnails else None
+            )
             embed.set_thumbnail(url=thumbnail)
             results_page_start = page * per_embed_page
             results_page_end = results_page_start + per_embed_page
@@ -103,25 +106,51 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             if mat:
                 await (self.bot.get_command("place")(ctx, query=mat["place_id"]))
 
-        async def next_page(
+        async def next_page_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
-            thumbnail = get_thumbnail(page, thumbnails, 0)
-            pages = update_selected(pages, page, thumbnail, 0)
+            pages = update_selected(pages, page, 0)
             await DEFAULT_CONTROLS["➡️"](
                 ctx, pages, controls, message, page, timeout, reaction
             )
 
-        async def prev_page(
+        async def prev_page_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
-            thumbnail = get_thumbnail(page, thumbnails, 0)
-            pages = update_selected(pages, page, thumbnail, 0)
+            pages = update_selected(pages, page, 0)
             await DEFAULT_CONTROLS["⬅️"](
                 ctx, pages, controls, message, page, timeout, reaction
             )
 
-        async def display_selected(
+        async def prev_result_reaction(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            was_selected = selected_index[0]
+            if was_selected == 0:
+                # back to bottommost result on prev page:
+                selected_index[0] = per_embed_page - 1
+                target_page = (page - 1) % len(pages)
+                pages = update_selected(pages, target_page, selected_index[0])
+                await message.remove_reaction(reaction, ctx.author)
+                prev_reaction = DEFAULT_CONTROLS["⬅️"]
+            else:
+                selected_index[0] -= 1
+                prev_reaction = update_selected_reaction
+            await prev_reaction(ctx, pages, controls, message, page, timeout, reaction)
+
+        async def next_result_reaction(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            was_selected = selected_index[0]
+            if was_selected == per_embed_page - 1:
+                next_reaction = next_page_reaction
+            else:
+                selected_index[0] += 1
+                pages = update_selected(pages, page, selected_index[0])
+                next_reaction = update_selected_reaction
+            await next_reaction(ctx, pages, controls, message, page, timeout, reaction)
+
+        async def display_selected_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
             result = get_result(page, results, selected_index[0])
@@ -130,11 +159,21 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
-        async def update_and_display_selected(
+        async def update_selected_reaction(
+            ctx, pages, controls, message, page, timeout, reaction
+        ):  # pylint: disable=too-many-arguments
+            result_index = selected_index[0]
+            result = get_result(page, results, result_index)
+            if result:
+                pages = update_selected(pages, page, result_index)
+            await message.remove_reaction(reaction, ctx.author)
+            await menu(ctx, pages, controls, message, page, timeout)
+
+        async def update_and_display_selected_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
             selected_index[0] = buttons.index(reaction)
-            await display_selected(
+            await display_selected_reaction(
                 ctx, pages, controls, message, page, timeout, reaction
             )
 
@@ -144,11 +183,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result_index = buttons.index(reaction)
             result = get_result(page, results, result_index)
             if result:
-                if thumbnails:
-                    thumbnail = get_thumbnail(page, thumbnails, result_index)
-                else:
-                    thumbnail = None
-                pages = update_selected(pages, page, thumbnail, result_index)
+                pages = update_selected(pages, page, result_index)
             await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -261,20 +296,22 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             buttons = all_buttons[:buttons_count]
             if query_type == "obs":
                 controls = {
-                    "⬅️": prev_page,
+                    "⬆️": prev_result_reaction,
+                    "⬇️": next_result_reaction,
+                    "⬅️": prev_page_reaction,
+                    "➡️": next_page_reaction,
+                    "✅": display_selected_reaction,
                     "❌": DEFAULT_CONTROLS["❌"],
-                    "➡️": next_page,
-                    "✅": display_selected,
                 }
             else:
                 controls = DEFAULT_CONTROLS.copy()
-            letter_button_reaction = (
-                select_result_reaction
-                if query_type == "obs"
-                else update_and_display_selected
-            )
-            for button in buttons:
-                controls[button] = letter_button_reaction
+                letter_button_reaction = (
+                    select_result_reaction
+                    if query_type == "obs"
+                    else update_and_display_selected_reaction
+                )
+                for button in buttons:
+                    controls[button] = letter_button_reaction
             return (buttons, controls)
 
         def format_page(buttons, group, selected=0):
