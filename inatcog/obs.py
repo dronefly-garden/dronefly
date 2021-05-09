@@ -61,6 +61,7 @@ def get_obs_fields(obs):
         (idents_count, idents_agree) = count_community_id(obs, obs_community_taxon)
         community_taxon = get_taxon_fields(obs_community_taxon)
     else:
+        idents_count = obs.get("identifications_count")
         community_taxon = None
 
     user = User.from_dict(obs["user"])

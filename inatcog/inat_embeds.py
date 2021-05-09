@@ -253,6 +253,7 @@ EMOJI = {
     "community": ":busts_in_silhouette:",
     "image": ":camera:",
     "sound": ":sound:",
+    "ident": ":label:",
 }
 
 
@@ -511,13 +512,18 @@ class INatEmbeds(MixinMeta):
         def format_community_id(title, summary, obs, taxon_summary):
             idents_count = ""
             if obs.idents_count:
-                idents_count = (
-                    f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
-                )
+                if obs.community_taxon:
+                    idents_count = (
+                        f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
+                    )
+                else:
+                    obs_idents_count = obs.idents_count if obs.idents_count > 1 else ""
+                    idents_count = f"{EMOJI['ident']}{obs_idents_count}"
             if not compact:
                 summary += f" [obs#: {obs.obs_id}]"
             if (
-                obs.community_taxon
+                not compact
+                and obs.community_taxon
                 and obs.community_taxon.taxon_id != obs.taxon.taxon_id
             ):
                 if taxon_summary:
@@ -540,7 +546,10 @@ class INatEmbeds(MixinMeta):
                 )
             else:
                 if idents_count:
-                    title += " " + idents_count
+                    if compact:
+                        summary += " " + idents_count
+                    else:
+                        title += " " + idents_count
             return (title, summary)
 
         def format_media_counts(obs):
