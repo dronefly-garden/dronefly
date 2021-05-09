@@ -453,6 +453,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
         Where `year` is a valid year on or after 1950."""
         await self.user_inatyear(ctx, user="me", year=year)
 
+    @my.command(name="obs")
+    @known_inat_user()
+    async def my_obs(self, ctx, *, query=""):
+        """Search your observations."""
+        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} by me")
+        await (self.bot.get_command("search obs")(ctx, query=my_query))
+
     @my.command(name="map")
     @known_inat_user()
     async def my_map(self, ctx, *, query=""):
