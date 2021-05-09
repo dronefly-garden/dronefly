@@ -131,7 +131,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 selected_index[0] = per_embed_page - 1
                 target_page = (page - 1) % len(pages)
                 pages = update_selected(pages, target_page, selected_index[0])
-                await message.remove_reaction(reaction, ctx.author)
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                    await message.remove_reaction(reaction, ctx.author)
                 prev_reaction = DEFAULT_CONTROLS["⬅️"]
             else:
                 selected_index[0] -= 1
@@ -156,7 +157,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, selected_index[0])
             if result:
                 await _display_selected(result)
-            await message.remove_reaction(reaction, ctx.author)
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
         async def update_selected_reaction(
@@ -166,7 +168,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            await message.remove_reaction(reaction, ctx.author)
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
         async def update_and_display_selected_reaction(
@@ -184,7 +187,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            await message.remove_reaction(reaction, ctx.author)
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
         def make_search_embed(
