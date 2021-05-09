@@ -254,11 +254,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             results = []
             thumbnails = []
             if query_type == "obs":
-                (
-                    observations,
-                    total_results,
-                    per_page,
-                ) = await self.obs_query.query_observations(ctx, query)
+                try:
+                    (
+                        observations,
+                        total_results,
+                        per_page,
+                    ) = await self.obs_query.query_observations(ctx, query)
+                except LookupError:
+                    observations = []
+                    total_results = 0
+                    per_page = 0
                 for obs in observations:
                     results.append(
                         "".join(
@@ -403,7 +408,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p] search` or `[p]search taxa`.
         """
-        await self._search(ctx, query, None)
+        try:
+            await self._search(ctx, query, None)
+        except LookupError as err:
+            await apologize(ctx, err.args[0])
 
     @search.command(name="places", aliases=["place"])
     async def search_places(self, ctx, *, query):
