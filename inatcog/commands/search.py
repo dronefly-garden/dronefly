@@ -310,13 +310,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 }
             else:
                 controls = DEFAULT_CONTROLS.copy()
-                letter_button_reaction = (
-                    select_result_reaction
-                    if query_type == "obs"
-                    else update_and_display_selected_reaction
-                )
-                for button in buttons:
-                    controls[button] = letter_button_reaction
+            letter_button_reaction = (
+                select_result_reaction
+                if query_type == "obs"
+                else update_and_display_selected_reaction
+            )
+            for button in buttons:
+                controls[button] = letter_button_reaction
             return (buttons, controls)
 
         def format_page(buttons, group, selected=0):
@@ -327,9 +327,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 return "**" if i == selected else ""
 
             def format_result(result, i):
-                if query_type == "obs":
-                    return result
-
                 return " ".join((buttons[i], result))
 
             lines = [
