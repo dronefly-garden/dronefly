@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import datetime as dt
 from io import BytesIO
 import re
 import textwrap
@@ -425,24 +426,28 @@ class INatEmbeds(MixinMeta):
         """Format an observation title & description."""
 
         def format_count(label, count):
-            return f", {EMOJI[label]}" + (str(count) if count > 1 else "")
+            delim = " " if compact else ", "
+            return f"{delim}{EMOJI[label]}" + (str(count) if count > 1 else "")
 
         def format_title(taxon, obs):
-            if taxon:
-                title = format_taxon_name(taxon)
-            else:
-                title = "Unknown"
+            title = ""
             if compact:
-                if len(title) > 30 and re.search(r"\(", title):
-                    title = title.replace("(", "\n(")
-                title += "\n"
+                title += f"{EMOJI[obs.quality_grade]} "
+            if taxon:
+                title += format_taxon_name(
+                    taxon,
+                    with_rank=not compact,
+                    with_term=not compact,
+                    with_common=not compact,
+                )
             else:
-                title += " "
-            title += EMOJI[obs.quality_grade]
-            if obs.faves_count:
-                title += format_count("fave", obs.faves_count)
-            if obs.comments_count:
-                title += format_count("comment", obs.comments_count)
+                title += "Unknown"
+            if not compact:
+                title += " " + EMOJI[obs.quality_grade]
+                if obs.faves_count:
+                    title += format_count("fave", obs.faves_count)
+                if obs.comments_count:
+                    title += format_count("comment", obs.comments_count)
             return title
 
         def format_summary(user, obs, taxon_summary):
@@ -455,21 +460,37 @@ class INatEmbeds(MixinMeta):
                 if means:
                     summary += f"{means.emoji()}{means.link()}\n"
             if compact:
-                summary += "by " + user.login
+                summary += f": {user.login}"
             else:
                 summary += "Observed by " + user.profile_link()
             if obs.obs_on:
                 if compact:
-                    summary += "\non " + re.sub(SHORT_DATE_PAT, r"\1", obs.obs_on)
+                    if obs.obs_on.date() == dt.datetime.now().date():
+                        obs_on = obs.obs_on.strftime("%I:%M%P")
+                    elif obs.obs_on.year == dt.datetime.now().year:
+                        obs_on = obs.obs_on.strftime("%-d-%b")
+                    else:
+                        obs_on = obs.obs_on.strftime("%b-%Y")
+                    if with_link:
+                        link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                        summary += f" [{obs_on}]({link_url})"
+                    else:
+                        summary += f" {obs_on}"
                 else:
-                    summary += " on " + obs.obs_on
+                    summary += " on " + obs.obs_on.strftime("%c")
             if obs.obs_at:
                 if compact:
-                    summary += "\nat " + textwrap.shorten(
-                        obs.obs_at, width=30, placeholder="…"
+                    summary += " " + textwrap.shorten(
+                        obs.obs_at, width=20, placeholder="…"
                     )
                 else:
                     summary += " at " + obs.obs_at
+            if compact:
+                if obs.faves_count:
+                    summary += format_count("fave", obs.faves_count)
+                if obs.comments_count:
+                    summary += format_count("comment", obs.comments_count)
+                summary += format_media_counts(obs)
             if with_description and obs.description:
                 # Contribute up to 10 lines from the description, and no more
                 # than 500 characters:
@@ -518,15 +539,17 @@ class INatEmbeds(MixinMeta):
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
-                title += " " + idents_count
+                if idents_count:
+                    title += " " + idents_count
             return (title, summary)
 
-        def format_media_counts(title, obs):
+        def format_media_counts(obs):
+            media_counts = ""
             if obs.images:
-                title += format_count("image", len(obs.images))
+                media_counts += format_count("image", len(obs.images))
             if obs.sounds:
-                title += format_count("sound", len(obs.sounds))
-            return title
+                media_counts += format_count("sound", len(obs.sounds))
+            return media_counts
 
         async def get_taxon_summary(obs, **kwargs):
             taxon_summary_raw = await self.api.get_obs_taxon_summary(
@@ -561,10 +584,11 @@ class INatEmbeds(MixinMeta):
         title, summary = format_community_id(
             title, summary, obs, community_taxon_summary
         )
-        title = format_media_counts(title, obs)
-        if with_link:
-            link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
-            title = f"{title} [🔗]({link_url})"
+        if not compact:
+            title += format_media_counts(obs)
+            if with_link:
+                link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
     async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):

@@ -1,4 +1,5 @@
 """Module for base classes and constants."""
+import datetime as dt
 import re
 from typing import List, NamedTuple, Optional
 from dataclasses import dataclass, field
@@ -419,7 +420,7 @@ class Obs(NamedTuple):
     taxon: Taxon or None
     community_taxon: Taxon or None
     obs_id: int
-    obs_on: str
+    obs_on: dt.datetime
     obs_at: str
     user: User
     thumbnail: str

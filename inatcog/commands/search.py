@@ -52,7 +52,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             thumbnail = (
                 get_thumbnail(page, thumbnails, result_index) if thumbnails else None
             )
-            embed.set_thumbnail(url=thumbnail)
+            embed.set_image(url=thumbnail)
             results_page_start = page * per_embed_page
             results_page_end = results_page_start + per_embed_page
             page_of_results = results[results_page_start:results_page_end]
@@ -197,7 +197,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             )
             try:
                 thumbnail = thumbnails[index * per_embed_page]
-                embed.set_thumbnail(url=thumbnail)
+                embed.set_image(url=thumbnail)
             except IndexError:
                 pass
             return embed
@@ -261,7 +261,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 ) = await self.obs_query.query_observations(ctx, query)
                 for obs in observations:
                     results.append(
-                        " ".join(
+                        "".join(
                             await self.format_obs(
                                 obs,
                                 with_description=False,
@@ -271,7 +271,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         )
                     )
                     thumbnails.append(obs.thumbnail)
-                per_embed_page = 4
+                per_embed_page = 5
             else:
                 (results, total_results, per_page) = await self.site_search.search(
                     ctx, query, **kwargs

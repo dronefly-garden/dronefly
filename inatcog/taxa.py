@@ -99,7 +99,9 @@ def format_taxon_names(
     return names_format % delimiter.join(names)
 
 
-def format_taxon_name(rec, with_term=False, hierarchy=False):
+def format_taxon_name(
+    rec, with_term=False, hierarchy=False, with_rank=True, with_common=True
+):
     """Format taxon name from matched record.
 
     Parameters
@@ -107,10 +109,15 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
     rec: Taxon
         A matched taxon record.
     with_term: bool, optional
-        With non-common / non-name matching term in parentheses in place of common name.
+        When with_common=True, non-common / non-name matching term is put in
+        parentheses in place of common name.
     hierarchy: bool, optional
         If specified, produces a list item suitable for inclusion in the hierarchy section
         of a taxon embed. See format_taxon_names() for details.
+    with_rank: bool, optional
+        If specified and hierarchy=False, includes the rank for ranks higher than species.
+    with_common: bool, optional
+        If specified, include common name in parentheses after scientific name.
 
     Returns
     -------
@@ -125,13 +132,16 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
           insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
           name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
     """
-    if with_term:
-        common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
-    else:
-        if hierarchy:
-            common = None
+    if with_common:
+        if with_term:
+            common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
         else:
-            common = rec.common
+            if hierarchy:
+                common = None
+            else:
+                common = rec.common
+    else:
+        common = None
     name = rec.name
 
     rank = rec.rank
@@ -144,7 +154,7 @@ def format_taxon_name(rec, with_term=False, hierarchy=False):
             # FIXME: List formatting concerns don't belong here. Move them up a level.
             bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
             name = f"{bold[0]}{name}{bold[1]}"
-        else:
+        elif with_rank:
             name = f"{rank.capitalize()} {name}"
     else:
         if rank in TRINOMIAL_ABBR.keys():

@@ -1,5 +1,6 @@
 """Module to work with iNat observations."""
 
+import datetime as dt
 from operator import itemgetter
 import re
 
@@ -88,12 +89,13 @@ def get_obs_fields(obs):
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
         project_ids += [project["project_id"] for project in non_traditional_projects]
+    obs_on = dt.datetime.fromisoformat(obs["time_observed_at"])
 
     return Obs(
         taxon,
         community_taxon,
         obs["id"],
-        obs["observed_on_string"],
+        obs_on,
         obs["place_guess"],
         user,
         thumbnail,
