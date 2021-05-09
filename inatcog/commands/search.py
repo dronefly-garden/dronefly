@@ -321,8 +321,14 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
                 return "**" if i == selected else ""
 
+            def format_result(result, i):
+                if query_type == "obs":
+                    return result
+
+                return " ".join((buttons[i], result))
+
             lines = [
-                (text_style(i) + " ".join((buttons[i], result)) + text_style(i))
+                (text_style(i) + format_result(result, i) + text_style(i))
                 for i, result in enumerate(filter(None, group), 0)
             ]
             page = "\n".join(lines)
