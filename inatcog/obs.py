@@ -89,13 +89,17 @@ def get_obs_fields(obs):
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
         project_ids += [project["project_id"] for project in non_traditional_projects]
-    obs_on = dt.datetime.fromisoformat(obs["time_observed_at"])
+    obs_on = obs.get("time_observed_at")
+    if obs_on:
+        obs_on_fmt = dt.datetime.fromisoformat(obs["time_observed_at"])
+    else:
+        obs_on_fmt = None
 
     return Obs(
         taxon,
         community_taxon,
         obs["id"],
-        obs_on,
+        obs_on_fmt,
         obs["place_guess"],
         user,
         thumbnail,

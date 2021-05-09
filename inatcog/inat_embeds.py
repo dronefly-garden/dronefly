@@ -468,7 +468,7 @@ class INatEmbeds(MixinMeta):
                     if obs.obs_on.date() == dt.datetime.now().date():
                         obs_on = obs.obs_on.strftime("%I:%M%P")
                     elif obs.obs_on.year == dt.datetime.now().year:
-                        obs_on = obs.obs_on.strftime("%-d-%b")
+                        obs_on = obs.obs_on.strftime("%d-%b")
                     else:
                         obs_on = obs.obs_on.strftime("%b-%Y")
                     if with_link:
