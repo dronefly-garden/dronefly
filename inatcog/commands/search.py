@@ -7,7 +7,7 @@ import urllib.parse
 
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-from inatcog.common import grouper, LOG
+from inatcog.common import grouper
 from inatcog.converters import NaturalCompoundQueryConverter
 from inatcog.places import PAT_PLACE_LINK
 from inatcog.projects import PAT_PROJECT_LINK
@@ -143,15 +143,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
             was_selected = selected_index[0]
-            LOG.info(
-                "page=%d len(results)=%d len(pages)=%d", page, len(results), len(pages)
-            )
             page_len = (
                 per_embed_page
                 if (page + 1) < len(pages)
                 else len(results) - ((len(pages) - 1) * per_embed_page)
             )
-            LOG.info("page_len=%d", page_len)
             if was_selected == page_len - 1:
                 next_reaction = next_page_reaction
             else:
