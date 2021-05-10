@@ -481,7 +481,10 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs.obs_on.strftime("%c")
             if obs.obs_at:
                 if compact:
+                    name_width = len(taxon.name) if taxon else 7
                     place_width = 20 if with_user else 30
+                    place_width += 18 - name_width
+                    place_width = max(place_width, 20)
                     summary += " " + textwrap.shorten(
                         obs.obs_at, width=place_width, placeholder="…"
                     )
