@@ -436,10 +436,7 @@ class INatEmbeds(MixinMeta):
                 title += f"{EMOJI[obs.quality_grade]} "
             if taxon:
                 title += format_taxon_name(
-                    taxon,
-                    with_rank=not compact,
-                    with_term=not compact,
-                    with_common=not compact,
+                    taxon, with_rank=not compact, with_common=not compact,
                 )
             else:
                 title += "Unknown"
