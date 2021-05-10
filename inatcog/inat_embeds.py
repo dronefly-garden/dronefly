@@ -481,8 +481,9 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs.obs_on.strftime("%c")
             if obs.obs_at:
                 if compact:
+                    place_width = 20 if with_user else 30
                     summary += " " + textwrap.shorten(
-                        obs.obs_at, width=20, placeholder="…"
+                        obs.obs_at, width=place_width, placeholder="…"
                     )
                 else:
                     summary += " at " + obs.obs_at
