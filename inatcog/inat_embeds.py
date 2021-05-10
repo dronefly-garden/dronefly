@@ -422,7 +422,7 @@ class INatEmbeds(MixinMeta):
         return embed
 
     async def format_obs(
-        self, obs, with_description=True, with_link=False, compact=False
+        self, obs, with_description=True, with_link=False, compact=False, with_user=True
     ):
         """Format an observation title & description."""
 
@@ -461,7 +461,7 @@ class INatEmbeds(MixinMeta):
                 if means:
                     summary += f"{means.emoji()}{means.link()}\n"
             if compact:
-                summary += f": {user.login}"
+                summary += f": {user.login if with_user else ''}"
             else:
                 summary += "Observed by " + user.profile_link()
             if obs.obs_on:

@@ -281,6 +281,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                                 with_description=False,
                                 with_link=True,
                                 compact=True,
+                                with_user=not query.user,
                             )
                         )
                     )
