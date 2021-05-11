@@ -133,6 +133,7 @@ class CompoundQueryConverter(CompoundQuery):
         parser.add_argument("--rank", dest="rank", default="")
         parser.add_argument("--with", nargs="+", dest="controlled_term")
         parser.add_argument("--per", nargs="+", dest="per", default=[])
+        parser.add_argument("--opt", nargs="+", dest="options", default=[])
         parser.add_argument("--in-prj", nargs="+", dest="project", default=[])
 
         try:
@@ -162,6 +163,7 @@ class CompoundQueryConverter(CompoundQuery):
             or vals.unobserved_by
             or vals.id_by
             or vals.per
+            or vals.options
             or vals.project
         ):
             main = None
@@ -219,6 +221,7 @@ class CompoundQueryConverter(CompoundQuery):
                 id_by=" ".join(vals.id_by),
                 per=" ".join(vals.per),
                 project=" ".join(vals.project),
+                options=vals.options,
             )
             LOG.info(repr(query))
             return query
@@ -258,6 +261,7 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 "rank",
                 "with",
                 "in-prj",
+                "opt",
             ]:
                 args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
         if not re.match(r"^--", args_normalized[0]):

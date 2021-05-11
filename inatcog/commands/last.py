@@ -83,6 +83,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             id_by=query.id_by,
             per=query.per,
             project=query.project,
+            options=query.options,
         )
         return await self.taxon_query.query_taxon(ctx, last_query)
 

@@ -1,4 +1,6 @@
 """Module to query iNat observations."""
+import re
+
 from .base_classes import CompoundQuery
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
@@ -91,7 +93,43 @@ class INatObsQuery:
         kwargs["per_page"] = 200
         home = await self.cog.get_home(ctx)
         kwargs["preferred_place_id"] = home
-        response = await self.cog.api.get_observations(**kwargs)
+        if query.options:
+            # Accept a limited selection of observation options:
+            # - all options and values are lowercased
+            # - only alphanumeric, dash or underscore characters accepted in values
+            options = {
+                key: (value[0] if value else "true")
+                for (key, *value) in map(
+                    lambda opt: opt.lower().split("="), query.options
+                )
+                if key
+                in [
+                    "captive",
+                    "endemic",
+                    "identified",
+                    "introduced",
+                    "native",
+                    "out_of_range",
+                    "pcid",
+                    "photos",
+                    "popular",
+                    "sounds",
+                    "threatened",
+                    "verifiable",
+                    "id",
+                    "not_id",
+                    "quality_grade",
+                    "reviewed",
+                    "page",
+                    "order",
+                    "order_by",
+                ]
+                and not value
+                or re.match(r"^[a-z0-9_-]*$", value[0])
+            }
+        else:
+            options = {}
+        response = await self.cog.api.get_observations(**{**kwargs, **options})
         if not response["results"]:
             raise LookupError(
                 f"No observations found {self.format_query_args(filtered_taxon, term, value)}"

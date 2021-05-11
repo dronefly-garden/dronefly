@@ -127,6 +127,7 @@ class CompoundQuery(NamedTuple):
     id_by: str
     per: str
     project: str
+    options: list
 
 
 # TODO: this should just be Place, as it is a superset
