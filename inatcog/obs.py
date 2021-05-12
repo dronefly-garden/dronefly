@@ -90,11 +90,16 @@ def get_obs_fields(obs):
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
         project_ids += [project["project_id"] for project in non_traditional_projects]
-    obs_on = obs.get("time_observed_at")
-    if obs_on:
-        obs_on_fmt = dt.datetime.fromisoformat(obs["time_observed_at"])
-    else:
-        obs_on_fmt = None
+    time_obs_at = obs.get("time_observed_at")
+    obs_on_str = obs.get("observed_on")
+    obs_on_fmt = None
+    try:
+        if time_obs_at:
+            obs_on_fmt = dt.datetime.fromisoformat(time_obs_at)
+        elif obs_on_str:
+            obs_on_fmt = dt.datetime.strptime(obs_on_str, "%Y-%m-%d")
+    except ValueError:
+        pass
 
     return Obs(
         taxon,
