@@ -229,6 +229,15 @@ class CompoundQueryConverter(CompoundQuery):
         return argument
 
 
+QUERY_MACROS = {
+    "rg": {"opt": ["quality_grade=research"]},
+    "nid": {"opt": ["quality_grade=needs_id"]},
+    "oldest": {"opt": ["order=asc", "order_by=observed_on"]},
+    "newest": {"opt": ["order=desc", "order_by=observed_on"]},
+    "reverse": {"opt": ["order=asc"]},
+}
+
+
 class NaturalCompoundQueryConverter(CompoundQueryConverter):
     """Convert query with natural language filters via argparse."""
 
@@ -245,11 +254,13 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         except ValueError as err:
             raise BadArgument(err.args[0])
         ranks = []
+        opts = []
+        in_opt = False
+        in_rank = False
+        filtered_args = []
         for arg in args_normalized:
             arg_lowered = arg.lower()
-            if arg_lowered in RANK_KEYWORDS:
-                args_normalized.remove(arg_lowered)
-                ranks.append(arg_lowered)
+
             # FIXME: determine programmatically from parser:
             if arg_lowered in [
                 "of",
@@ -263,13 +274,38 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 "in-prj",
                 "opt",
             ]:
-                args_normalized[args_normalized.index(arg_lowered)] = f"--{arg_lowered}"
-        if not re.match(r"^--", args_normalized[0]):
-            args_normalized.insert(0, "--of")
+                arg_lowered = f"--{arg_lowered}"
+            if re.match(r"--", arg_lowered):
+                in_opt = arg_lowered == "--opt"
+                in_rank = arg_lowered == "--rank"
+                if in_opt or in_rank:
+                    continue
+            # Whether or not in rank arguments, collect ranks
+            if arg_lowered in RANK_KEYWORDS:
+                ranks.append(arg_lowered)
+                break
+            # Whether or not in opt arguments, collect macro opts
+            if arg_lowered in QUERY_MACROS:
+                macro = QUERY_MACROS[arg_lowered]
+                macro_opts = macro.get("opt")
+                if macro_opts:
+                    opts.extend(macro_opts)
+                    continue
+            elif in_opt:  # otherwise collect opts from arguments
+                opts.append(arg_lowered)
+                continue
+            filtered_args.append(arg_lowered)
+
+        if not re.match(r"^--", filtered_args[0]):
+            filtered_args.insert(0, "--of")
         if ranks:
-            args_normalized.append("--rank")
-            args_normalized += ranks
-        argument_normalized = " ".join(args_normalized)
+            filtered_args.append("--rank")
+            filtered_args += ranks
+        if opts:
+            filtered_args.append("--opt")
+            filtered_args += opts
+        argument_normalized = " ".join(filtered_args)
+        await ctx.send(f"filtered_args={repr(filtered_args)}")
         return await super(NaturalCompoundQueryConverter, cls).convert(
             ctx, argument_normalized
         )
