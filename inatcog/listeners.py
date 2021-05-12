@@ -1,5 +1,5 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple, Union
+from typing import NamedTuple, Tuple, Union
 import asyncio
 import contextlib
 from copy import copy
@@ -208,7 +208,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
     async def maybe_get_reaction(
         self, payload: discord.raw_models.RawReactionActionEvent
-    ) -> (discord.Member, discord.Message):
+    ) -> Tuple[discord.Member, discord.Message]:
         """Return reaction member & message if valid."""
         await self._ready_event.wait()
         if not payload.guild_id:
