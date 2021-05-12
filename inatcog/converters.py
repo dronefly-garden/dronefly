@@ -248,8 +248,12 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if mat and mat["url"]:
             return argument
         try:
-            arg_normalized = re.sub(r"((^| )(id|not)) ?by ", r"\1-by ", argument, re.I)
-            arg_normalized = re.sub(r"(^| )in ?prj ", r"in-prj ", arg_normalized, re.I)
+            arg_normalized = re.sub(
+                r"((^| )(id|not)) ?by ", r"\1\2-by ", argument, re.I
+            )
+            arg_normalized = re.sub(
+                r"((^| )in ?prj) ", r"\2in-prj ", arg_normalized, re.I
+            )
             args_normalized = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
             raise BadArgument(err.args[0])
@@ -296,14 +300,14 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
                 continue
             filtered_args.append(arg_lowered)
 
-        if not re.match(r"^--", filtered_args[0]):
-            filtered_args.insert(0, "--of")
         if ranks:
             filtered_args.append("--rank")
             filtered_args += ranks
         if opts:
             filtered_args.append("--opt")
             filtered_args += opts
+        if not re.match(r"^--", filtered_args[0]):
+            filtered_args.insert(0, "--of")
         argument_normalized = " ".join(filtered_args)
         return await super(NaturalCompoundQueryConverter, cls).convert(
             ctx, argument_normalized
