@@ -305,7 +305,6 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
             filtered_args.append("--opt")
             filtered_args += opts
         argument_normalized = " ".join(filtered_args)
-        await ctx.send(f"filtered_args={repr(filtered_args)}")
         return await super(NaturalCompoundQueryConverter, cls).convert(
             ctx, argument_normalized
         )
