@@ -248,8 +248,8 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if mat and mat["url"]:
             return argument
         try:
-            arg_normalized = re.sub(r"(id|not) by", r"\1-by", argument, re.I)
-            arg_normalized = re.sub(r"in prj", r"in-prj", arg_normalized, re.I)
+            arg_normalized = re.sub(r"((^| )(id|not)) ?by ", r"\1-by ", argument, re.I)
+            arg_normalized = re.sub(r"(^| )in ?prj ", r"in-prj ", arg_normalized, re.I)
             args_normalized = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
             raise BadArgument(err.args[0])
