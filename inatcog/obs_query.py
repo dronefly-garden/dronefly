@@ -106,6 +106,7 @@ class INatObsQuery:
                 in [
                     "captive",
                     "endemic",
+                    "iconic_taxa",
                     "identified",
                     "introduced",
                     "native",

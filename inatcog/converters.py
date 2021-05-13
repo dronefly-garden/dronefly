@@ -235,6 +235,7 @@ QUERY_MACROS = {
     "oldest": {"opt": ["order=asc", "order_by=observed_on"]},
     "newest": {"opt": ["order=desc", "order_by=observed_on"]},
     "reverse": {"opt": ["order=asc"]},
+    "unknown": {"opt": ["iconic_taxa=unknown"]},
 }
 
 
