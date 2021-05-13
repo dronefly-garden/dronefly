@@ -130,6 +130,9 @@ class CompoundQuery(NamedTuple):
     options: list
 
 
+EMPTY_QUERY = CompoundQuery(None, None, None, None, None, None, None, None, None, None,)
+
+
 # TODO: this should just be Place, as it is a superset
 @dataclass
 class MeansPlace(DataClassJsonMixin):
@@ -434,3 +437,4 @@ class Obs(NamedTuple):
     description: str
     project_ids: list
     sounds: List[Sound]
+    time_obs: dt.datetime

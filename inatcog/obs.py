@@ -90,22 +90,26 @@ def get_obs_fields(obs):
     non_traditional_projects = obs.get("non_traditional_projects")
     if non_traditional_projects:
         project_ids += [project["project_id"] for project in non_traditional_projects]
-    time_obs_at = obs.get("time_observed_at")
     obs_on_str = obs.get("observed_on")
-    obs_on_fmt = None
-    try:
-        if time_obs_at:
-            obs_on_fmt = dt.datetime.fromisoformat(time_obs_at)
-        elif obs_on_str:
-            obs_on_fmt = dt.datetime.strptime(obs_on_str, "%Y-%m-%d")
-    except ValueError:
-        pass
+    obs_on = None
+    if obs_on_str:
+        try:
+            obs_on = dt.datetime.strptime(obs_on_str, "%Y-%m-%d")
+        except ValueError:
+            pass
+    time_obs_str = obs.get("time_observed_at")
+    time_obs = None
+    if time_obs_str:
+        try:
+            time_obs = dt.datetime.fromisoformat(time_obs_str)
+        except ValueError:
+            pass
 
     return Obs(
         taxon,
         community_taxon,
         obs["id"],
-        obs_on_fmt,
+        obs_on,
         obs["place_guess"],
         user,
         thumbnail,
@@ -118,6 +122,7 @@ def get_obs_fields(obs):
         obs["description"],
         obs["project_ids"],
         sounds,
+        time_obs,
     )
 
 

@@ -7,6 +7,7 @@ import urllib.parse
 
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from inatcog.base_classes import EMPTY_QUERY
 from inatcog.common import grouper
 from inatcog.converters import NaturalCompoundQueryConverter
 from inatcog.places import PAT_PLACE_LINK
@@ -496,7 +497,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
-    async def search_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def search_obs(
+        self, ctx, *, query: NaturalCompoundQueryConverter = EMPTY_QUERY
+    ):
         """Search iNat observations.
 
         `Aliases: [p]s obs`

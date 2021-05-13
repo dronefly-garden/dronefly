@@ -435,11 +435,15 @@ class INatEmbeds(MixinMeta):
             if compact:
                 title += f"{EMOJI[obs.quality_grade]} "
             if taxon:
-                title += format_taxon_name(
+                taxon_str = format_taxon_name(
                     taxon, with_rank=not compact, with_common=not compact,
                 )
             else:
-                title += "Unknown"
+                taxon_str = "Unknown"
+            if compact and with_link:
+                link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                taxon_str = f"[{taxon_str}]({link_url})"
+            title += taxon_str
             if not compact:
                 title += " " + EMOJI[obs.quality_grade]
                 if obs.faves_count:
@@ -464,18 +468,21 @@ class INatEmbeds(MixinMeta):
             if obs.obs_on:
                 if compact:
                     if obs.obs_on.date() == dt.datetime.now().date():
-                        obs_on = obs.obs_on.strftime("%I:%M%P")
+                        if obs.time_obs:
+                            obs_on = obs.time_obs.strftime("%I:%M%P")
+                        else:
+                            obs_on = "today"
                     elif obs.obs_on.year == dt.datetime.now().year:
                         obs_on = obs.obs_on.strftime("%d-%b")
                     else:
                         obs_on = obs.obs_on.strftime("%b-%Y")
-                    if with_link:
-                        link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
-                        summary += f" [{obs_on}]({link_url})"
-                    else:
-                        summary += f" {obs_on}"
+                    summary += f" {obs_on}"
                 else:
-                    summary += " on " + obs.obs_on.strftime("%c")
+                    if obs.time_obs:
+                        obs_on = obs.time_obs.strftime("%c")
+                    else:
+                        obs_on = obs.obs_on.strftime("%a %b %d %Y")
+                    summary += " on " + obs_on
             if obs.obs_at:
                 if compact:
                     name_width = len(taxon.name) if taxon else 7
