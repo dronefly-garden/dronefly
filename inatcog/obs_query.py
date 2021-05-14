@@ -27,6 +27,7 @@ VALID_OBS_OPTS = [
     "page",
     "order",
     "order_by",
+    "without_taxon_id",
 ]
 
 

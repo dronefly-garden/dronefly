@@ -235,7 +235,9 @@ QUERY_MACROS = {
     "oldest": {"opt": ["order=asc", "order_by=observed_on"]},
     "newest": {"opt": ["order=desc", "order_by=observed_on"]},
     "reverse": {"opt": ["order=asc"]},
-    "unknown": {"opt": ["iconic_taxa=unknown"]},
+    # Because there are no iconic taxa for these three taxa, they must be specifically
+    # excluded in order to match only actual unknowns (Bacteria, Archaea, & Viruses):
+    "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
 }
 
 
