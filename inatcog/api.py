@@ -17,6 +17,13 @@ import html2markdown
 from .common import LOG
 from .base_classes import API_BASE_URL
 
+RETRY_EXCEPTIONS = [
+    ServerDisconnectedError,
+    ConnectionResetError,
+    ClientConnectorError,
+    TimeoutError,
+]
+
 
 class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
@@ -58,39 +65,40 @@ class INatAPI:
         """Query API, respecting 60 requests per minute rate limit."""
         LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
-            retry_options = ExponentialRetry(
-                attempts=3,
-                exceptions=[
-                    ServerDisconnectedError,
-                    ConnectionResetError,
-                    ClientConnectorError,
-                    TimeoutError,
-                ],
-            )
-            async with self.session.get(
-                full_url, params=kwargs, retry_options=retry_options
-            ) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    try:
-                        json = await response.json()
-                        msg = f"{json.get('error')} ({json.get('status')})"
-                    except ContentTypeError:
-                        data = await response.text()
-                        document = BeautifulSoup(data, "html.parser")
-                        # Only use the body, if present
-                        if document.body:
-                            text = document.body.find().text
-                        else:
-                            text = document
-                        # Treat as much as we can as markdown
-                        markdown = html2markdown.convert(text)
-                        # Punt the rest back to bs4 to drop unhandled tags
-                        msg = BeautifulSoup(markdown, "html.parser").text
-                    lookup_failed_msg = f"Lookup failed: {msg}"
-                    LOG.error(lookup_failed_msg)
-                    raise LookupError(lookup_failed_msg)
+            # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, and finally give up
+            retry_options = ExponentialRetry(attempts=4, exceptions=RETRY_EXCEPTIONS,)
+            try:
+                async with self.session.get(
+                    full_url, params=kwargs, retry_options=retry_options
+                ) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        try:
+                            json = await response.json()
+                            msg = f"{json.get('error')} ({json.get('status')})"
+                        except ContentTypeError:
+                            data = await response.text()
+                            document = BeautifulSoup(data, "html.parser")
+                            # Only use the body, if present
+                            if document.body:
+                                text = document.body.find().text
+                            else:
+                                text = document
+                            # Treat as much as we can as markdown
+                            markdown = html2markdown.convert(text)
+                            # Punt the rest back to bs4 to drop unhandled tags
+                            msg = BeautifulSoup(markdown, "html.parser").text
+                        lookup_failed_msg = f"Lookup failed: {msg}"
+                        LOG.error(lookup_failed_msg)
+                        raise LookupError(lookup_failed_msg)
+            except Exception as e:  # pylint: disable=broad-except,invalid-name
+                if any(isinstance(e, exc) for exc in retry_options.exceptions):
+                    attempts = retry_options.attempts
+                    msg = f"iNat not responding after {attempts} attempts. Please try again later."
+                    LOG.error(msg)
+                    raise LookupError(msg) from e
+                raise e
 
         return None
 
