@@ -63,7 +63,7 @@ class INatObsQuery:
         """Get arguments for observation query from query string."""
         kwargs = {}
         term = None
-        value = None
+        term_value = None
         filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
         if filtered_taxon:
             if filtered_taxon.taxon:
@@ -80,31 +80,31 @@ class INatObsQuery:
             if filtered_taxon.id_by:
                 kwargs["ident_user_id"] = filtered_taxon.id_by.user_id
         if query.controlled_term:
-            query_term, query_value = query.controlled_term
+            query_term, query_term_value = query.controlled_term
             controlled_terms_dict = await self.cog.api.get_controlled_terms()
             controlled_terms = [
                 ControlledTerm.from_dict(term, infer_missing=True)
                 for term in controlled_terms_dict["results"]
             ]
-            (term, value) = match_controlled_term(
-                controlled_terms, query_term, query_value
+            (term, term_value) = match_controlled_term(
+                controlled_terms, query_term, query_term_value
             )
             kwargs["term_id"] = term.id
-            kwargs["term_value_id"] = value.id
+            kwargs["term_value_id"] = term_value.id
         kwargs["verifiable"] = "any"
         kwargs["include_new_projects"] = 1
         if query.options:
             # Accept a limited selection of observation options:
             # - all options and values are lowercased
-            for (key, *value) in map(lambda opt: opt.lower().split("="), query.options):
-                value = value[0] if value else "true"
+            for (key, *val) in map(lambda opt: opt.lower().split("="), query.options):
+                val = val[0] if val else "true"
                 # - conservatively, only alphanumeric, comma, dash or
                 #   underscore characters accepted in values so far
                 # - TODO: proper validation per field type
-                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", value):
-                    kwargs[key] = value
+                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", val):
+                    kwargs[key] = val
 
-        return kwargs, filtered_taxon, term, value
+        return kwargs, filtered_taxon, term, term_value
 
     async def query_single_obs(self, ctx, query: CompoundQuery):
         """Query observations and return first if found."""
