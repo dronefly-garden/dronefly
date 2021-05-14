@@ -6,6 +6,29 @@ from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
 from .taxa import format_taxon_name
 
+VALID_OBS_OPTS = [
+    "captive",
+    "endemic",
+    "iconic_taxa",
+    "identified",
+    "introduced",
+    "native",
+    "out_of_range",
+    "pcid",
+    "photos",
+    "popular",
+    "sounds",
+    "threatened",
+    "verifiable",
+    "id",
+    "not_id",
+    "quality_grade",
+    "reviewed",
+    "page",
+    "order",
+    "order_by",
+]
+
 
 class INatObsQuery:
     """Query iNat for one or more observation."""
@@ -69,6 +92,17 @@ class INatObsQuery:
             kwargs["term_value_id"] = value.id
         kwargs["verifiable"] = "any"
         kwargs["include_new_projects"] = 1
+        if query.options:
+            # Accept a limited selection of observation options:
+            # - all options and values are lowercased
+            for (key, *value) in map(lambda opt: opt.lower().split("="), query.options):
+                value = value[0] if value else "true"
+                # - conservatively, only alphanumeric, comma, dash or
+                #   underscore characters accepted in values so far
+                # - TODO: proper validation per field type
+                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", value):
+                    kwargs[key] = value
+
         return kwargs, filtered_taxon, term, value
 
     async def query_single_obs(self, ctx, query: CompoundQuery):
@@ -93,44 +127,7 @@ class INatObsQuery:
         kwargs["per_page"] = 200
         home = await self.cog.get_home(ctx)
         kwargs["preferred_place_id"] = home
-        if query.options:
-            # Accept a limited selection of observation options:
-            # - all options and values are lowercased
-            # - only alphanumeric, dash or underscore characters accepted in values
-            options = {
-                key: (value[0] if value else "true")
-                for (key, *value) in map(
-                    lambda opt: opt.lower().split("="), query.options
-                )
-                if key
-                in [
-                    "captive",
-                    "endemic",
-                    "iconic_taxa",
-                    "identified",
-                    "introduced",
-                    "native",
-                    "out_of_range",
-                    "pcid",
-                    "photos",
-                    "popular",
-                    "sounds",
-                    "threatened",
-                    "verifiable",
-                    "id",
-                    "not_id",
-                    "quality_grade",
-                    "reviewed",
-                    "page",
-                    "order",
-                    "order_by",
-                ]
-                and not value
-                or re.match(r"^[a-z0-9_-]*$", value[0])
-            }
-        else:
-            options = {}
-        response = await self.cog.api.get_observations(**{**kwargs, **options})
+        response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
             raise LookupError(
                 f"No observations found {self.format_query_args(filtered_taxon, term, value)}"
