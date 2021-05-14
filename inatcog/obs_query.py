@@ -92,7 +92,6 @@ class INatObsQuery:
             kwargs["term_id"] = term.id
             kwargs["term_value_id"] = term_value.id
         kwargs["verifiable"] = "any"
-        kwargs["include_new_projects"] = 1
         if query.options:
             # Accept a limited selection of observation options:
             # - all options and values are lowercased

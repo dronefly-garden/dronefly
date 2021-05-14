@@ -12,7 +12,7 @@ from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
 from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds, format_taxon_title
+from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
@@ -176,26 +176,14 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def _tabulate_query(self, ctx, query, view="obs"):
         async def get_observer_options(ctx, query, view):
             (
-                _kwargs,
+                obs_opt,
                 filtered_taxon,
-                _term,
-                _value,
+                term,
+                value,
             ) = await self.obs_query.get_query_args(ctx, query)
+            full_title = view.capitalize()
+            full_title += self.obs_query.format_query_args(filtered_taxon, term, value)
             taxon = filtered_taxon.taxon
-            place = filtered_taxon.place
-            project = filtered_taxon.project
-            obs_opt = {}
-            if taxon:
-                obs_opt["taxon_id"] = taxon.taxon_id
-                full_title = f"{view.capitalize()} of {format_taxon_title(taxon)}"
-            else:
-                full_title = view.capitalize()
-            if project:
-                obs_opt["project_id"] = project.project_id
-                full_title += f" in {project.title}"
-            if place:
-                obs_opt["place_id"] = place.place_id
-                full_title += f" from {place.display_name}"
             species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
             return (filtered_taxon, obs_opt, full_title, species_only)
 
