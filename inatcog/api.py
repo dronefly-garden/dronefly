@@ -34,19 +34,8 @@ class INatAPI:
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
-        self.retry_options = ExponentialRetry(
-            attempts=3,
-            exceptions=[
-                ServerDisconnectedError,
-                ConnectionResetError,
-                ClientConnectorError,
-                TimeoutError,
-            ],
-        )
         self.session = RetryClient(
-            raise_for_status=False,
-            retry_options=self.retry_options,
-            trace_configs=[trace_config],
+            raise_for_status=False, trace_configs=[trace_config],
         )
         self.request_time = time()
         self.places_cache = {}
@@ -69,7 +58,18 @@ class INatAPI:
         """Query API, respecting 60 requests per minute rate limit."""
         LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
-            async with self.session.get(full_url, params=kwargs) as response:
+            retry_options = ExponentialRetry(
+                attempts=3,
+                exceptions=[
+                    ServerDisconnectedError,
+                    ConnectionResetError,
+                    ClientConnectorError,
+                    TimeoutError,
+                ],
+            )
+            async with self.session.get(
+                full_url, params=kwargs, retry_options=retry_options
+            ) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
