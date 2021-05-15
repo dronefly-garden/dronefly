@@ -4,18 +4,23 @@ import re
 import shlex
 from typing import NamedTuple
 import discord
-from redbot.core.commands import BadArgument, Context, Converter, MemberConverter
+from redbot.core.commands import (
+    BadArgument,
+    Context,
+    Converter,
+    MemberConverter as RedMemberConverter,
+)
 from .common import DEQUOTE, LOG
 from .base_classes import (
-    CompoundQuery,
+    Query,
     PAT_OBS_LINK,
-    SimpleQuery,
+    TaxonQuery,
     RANK_EQUIVALENTS,
     RANK_KEYWORDS,
 )
 
 
-class ContextMemberConverter(NamedTuple):
+class MemberConverter(NamedTuple):
     """Context-aware member converter."""
 
     member: discord.Member
@@ -32,7 +37,7 @@ class ContextMemberConverter(NamedTuple):
 
         # Prefer exact match:
         try:
-            match = await MemberConverter().convert(ctx, arg)
+            match = await RedMemberConverter().convert(ctx, arg)
             return cls(match)
         except BadArgument:
             match = None
@@ -72,7 +77,7 @@ class QuotedContextMemberConverter(Converter):
 
     async def convert(self, ctx, argument):
         dequoted = re.sub(DEQUOTE, r"\1", argument)
-        return await ContextMemberConverter.convert(ctx, dequoted)
+        return await MemberConverter.convert(ctx, dequoted)
 
 
 class InheritableBoolConverter(Converter):
@@ -96,7 +101,7 @@ class NoExitParser(argparse.ArgumentParser):
         raise BadArgument("Query not understood") from None
 
 
-class CompoundQueryConverter(CompoundQuery):
+class QueryConverter(Query):
     """Convert query via argparse."""
 
     @classmethod
@@ -183,7 +188,7 @@ class CompoundQueryConverter(CompoundQuery):
                             "Taxon IDs are unique. Retry without `in <taxon2>`."
                         )
                 if terms:
-                    main = SimpleQuery(
+                    main = TaxonQuery(
                         taxon_id=id,
                         terms=terms,
                         phrases=phrases,
@@ -202,7 +207,7 @@ class CompoundQueryConverter(CompoundQuery):
                 except ValueError as err:
                     raise BadArgument(err.args[0])
                 if terms:
-                    ancestor = SimpleQuery(
+                    ancestor = TaxonQuery(
                         taxon_id=id, terms=terms, phrases=phrases, ranks=[], code=code
                     )
             if vals.controlled_term:
@@ -241,7 +246,7 @@ QUERY_MACROS = {
 }
 
 
-class NaturalCompoundQueryConverter(CompoundQueryConverter):
+class NaturalQueryConverter(QueryConverter):
     """Convert query with natural language filters via argparse."""
 
     @classmethod
@@ -312,6 +317,4 @@ class NaturalCompoundQueryConverter(CompoundQueryConverter):
         if not re.match(r"^--", filtered_args[0]):
             filtered_args.insert(0, "--of")
         argument_normalized = " ".join(filtered_args)
-        return await super(NaturalCompoundQueryConverter, cls).convert(
-            ctx, argument_normalized
-        )
+        return await super(NaturalQueryConverter, cls).convert(ctx, argument_normalized)

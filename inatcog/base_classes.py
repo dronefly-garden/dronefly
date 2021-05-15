@@ -105,7 +105,7 @@ RANK_EQUIVALENTS = {
 RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
 
 
-class SimpleQuery(NamedTuple):
+class TaxonQuery(NamedTuple):
     """A taxon query composed of terms and/or phrases or a code or taxon_id, filtered by ranks."""
 
     taxon_id: int
@@ -115,11 +115,11 @@ class SimpleQuery(NamedTuple):
     code: str
 
 
-class CompoundQuery(NamedTuple):
+class Query(NamedTuple):
     """A taxon query that may contain another (ancestor) taxon query."""
 
-    main: SimpleQuery
-    ancestor: SimpleQuery
+    main: TaxonQuery
+    ancestor: TaxonQuery
     user: str
     place: str
     controlled_term: str
@@ -130,7 +130,7 @@ class CompoundQuery(NamedTuple):
     options: list
 
 
-EMPTY_QUERY = CompoundQuery(None, None, None, None, None, None, None, None, None, None,)
+EMPTY_QUERY = Query(None, None, None, None, None, None, None, None, None, None,)
 
 
 # TODO: this should just be Place, as it is a superset

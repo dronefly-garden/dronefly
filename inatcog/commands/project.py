@@ -9,7 +9,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.checks import known_inat_user
 from inatcog.common import grouper
-from inatcog.converters import ContextMemberConverter
+from inatcog.converters import MemberConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -175,7 +175,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             return
 
         try:
-            ctx_member = await ContextMemberConverter.convert(ctx, user)
+            ctx_member = await MemberConverter.convert(ctx, user)
             member = ctx_member.member
             user = await self.user_table.get_user(member)
         except (BadArgument, LookupError) as err:

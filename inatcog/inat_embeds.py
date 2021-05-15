@@ -15,7 +15,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 from .base_classes import (
-    CompoundQuery,
+    Query,
     MEANS_LABEL_DESC,
     WWW_BASE_URL,
     PAT_OBS_LINK,
@@ -27,7 +27,7 @@ from .base_classes import (
     TaxonSummary,
 )
 from .common import LOG
-from .converters import ContextMemberConverter
+from .converters import MemberConverter
 from .embeds import (
     format_items_for_embed,
     make_embed,
@@ -264,7 +264,7 @@ class INatEmbeds(MixinMeta):
 
     def check_taxon_query(self, ctx, query):
         """Check for valid taxon query."""
-        if not isinstance(query, CompoundQuery):
+        if not isinstance(query, Query):
             return
         if query.controlled_term or (query.user and query.place) or not query.main:
             args = ctx.message.content.split(" ", 1)[1]
@@ -1180,7 +1180,7 @@ class INatEmbeds(MixinMeta):
         )
         if response:
             try:
-                who = await ContextMemberConverter.convert(ctx, response.content)
+                who = await MemberConverter.convert(ctx, response.content)
             except discord.ext.commands.errors.BadArgument as error:
                 error_msg = await msg.channel.send(error)
                 await asyncio.sleep(15)

@@ -4,7 +4,7 @@ import urllib.parse
 from redbot.core import checks, commands
 
 from inatcog.base_classes import WWW_BASE_URL
-from inatcog.converters import NaturalCompoundQueryConverter
+from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -41,7 +41,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
         await ctx.send(embed=await self.make_map_embed(taxa))
 
     @map.command(name="obs")
-    async def map_obs(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def map_obs(self, ctx, *, query: NaturalQueryConverter):
         """Show map of observations."""
 
         try:

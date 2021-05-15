@@ -1,7 +1,7 @@
 """Module to query iNat observations."""
 import re
 
-from .base_classes import CompoundQuery
+from .base_classes import Query
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .obs import get_obs_fields
 from .taxa import format_taxon_name
@@ -59,7 +59,7 @@ class INatObsQuery:
                 message += f" with {term.label}"
         return message
 
-    async def get_query_args(self, ctx, query: CompoundQuery):
+    async def get_query_args(self, ctx, query: Query):
         """Get arguments for observation query from query string."""
         kwargs = {}
         term = None
@@ -105,7 +105,7 @@ class INatObsQuery:
 
         return kwargs, query_response, term, term_value
 
-    async def query_single_obs(self, ctx, query: CompoundQuery):
+    async def query_single_obs(self, ctx, query: Query):
         """Query observations and return first if found."""
 
         kwargs, query_response, term, value = await self.get_query_args(ctx, query)
@@ -120,7 +120,7 @@ class INatObsQuery:
 
         return get_obs_fields(response["results"][0])
 
-    async def query_observations(self, ctx, query: CompoundQuery):
+    async def query_observations(self, ctx, query: Query):
         """Query observations and return iterator for any found."""
 
         kwargs, query_response, term, value = await self.get_query_args(ctx, query)

@@ -12,9 +12,9 @@ from inatcog.base_classes import User
 from inatcog.checks import known_inat_user
 from inatcog.common import DEQUOTE, grouper
 from inatcog.converters import (
-    ContextMemberConverter,
+    MemberConverter,
     QuotedContextMemberConverter,
-    NaturalCompoundQueryConverter,
+    NaturalQueryConverter,
 )
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
@@ -390,7 +390,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return
 
         try:
-            ctx_member = await ContextMemberConverter.convert(ctx, user)
+            ctx_member = await MemberConverter.convert(ctx, user)
             member = ctx_member.member
             inat_user = await self.user_table.get_user(member)
         except (BadArgument, LookupError) as err:
@@ -435,7 +435,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True)
     async def me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
-        member = await ContextMemberConverter.convert(ctx, "me")
+        member = await MemberConverter.convert(ctx, "me")
         await self.user(ctx, who=member)
 
     @commands.group(invoke_without_command=True)
@@ -457,21 +457,21 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @known_inat_user()
     async def my_obs(self, ctx, *, query=""):
         """Search your observations."""
-        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} by me")
+        my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
         await (self.bot.get_command("search obs")(ctx, query=my_query))
 
     @my.command(name="map")
     @known_inat_user()
     async def my_map(self, ctx, *, query=""):
         """Display a map of your observations."""
-        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} by me")
+        my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
         await (self.bot.get_command("map obs")(ctx, query=my_query))
 
     @my.command(name="idmap")
     @known_inat_user()
     async def my_idmap(self, ctx, *, query=""):
         """Display a map of observations identified by you."""
-        my_query = await NaturalCompoundQueryConverter.convert(ctx, f"{query} id by me")
+        my_query = await NaturalQueryConverter.convert(ctx, f"{query} id by me")
         await (self.bot.get_command("map obs")(ctx, query=my_query))
 
     @commands.command()

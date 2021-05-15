@@ -3,13 +3,13 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import (
-    CompoundQuery,
-    SimpleQuery,
+    Query,
+    TaxonQuery,
     Taxon,
     RANK_EQUIVALENTS,
     RANK_KEYWORDS,
 )
-from inatcog.converters import NaturalCompoundQueryConverter
+from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -66,15 +66,15 @@ class CommandsLast(INatEmbeds, MixinMeta):
         else:
             await apologize(ctx, "Nothing found")
 
-    async def query_from_last_taxon(self, ctx, taxon: Taxon, query: CompoundQuery):
+    async def query_from_last_taxon(self, ctx, taxon: Taxon, query: Query):
         """Query constructed from last taxon and arguments."""
         taxon_id = taxon.taxon_id
         if query.main:
             raise BadArgument("Taxon search terms can't be used here.")
         if query.controlled_term:
             raise BadArgument("A `with` filter can't be used here.")
-        last_query = CompoundQuery(
-            main=SimpleQuery(taxon_id, [], [], [], ""),
+        last_query = Query(
+            main=TaxonQuery(taxon_id, [], [], [], ""),
             ancestor=None,
             user=query.user,
             place=query.place,
@@ -88,7 +88,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         return await self.taxon_query.query_taxon(ctx, last_query)
 
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_obs_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
+    async def last_obs_taxon(self, ctx, *, query: NaturalQueryConverter = None):
         """Show taxon for recently mentioned iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         taxon = None
@@ -161,7 +161,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "The last observation has no taxon.")
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
+    async def last_taxon(self, ctx, *, query: NaturalQueryConverter = None):
         """Show recently mentioned iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         taxon = None

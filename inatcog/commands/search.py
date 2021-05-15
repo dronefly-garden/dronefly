@@ -9,7 +9,7 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import EMPTY_QUERY
 from inatcog.common import grouper
-from inatcog.converters import NaturalCompoundQueryConverter
+from inatcog.converters import NaturalQueryConverter
 from inatcog.places import PAT_PLACE_LINK
 from inatcog.projects import PAT_PROJECT_LINK
 from inatcog.taxa import format_taxon_name, PAT_TAXON_LINK
@@ -88,9 +88,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
-                query = await NaturalCompoundQueryConverter.convert(
-                    ctx, mat["taxon_id"]
-                )
+                query = await NaturalQueryConverter.convert(ctx, mat["taxon_id"])
                 await (self.bot.get_command("taxon")(ctx, query=query))
                 return
             mat = re.search(PAT_USER_LINK, result)
@@ -497,9 +495,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
-    async def search_obs(
-        self, ctx, *, query: NaturalCompoundQueryConverter = EMPTY_QUERY
-    ):
+    async def search_obs(self, ctx, *, query: NaturalQueryConverter = EMPTY_QUERY):
         """Search iNat observations.
 
         `Aliases: [p]s obs`

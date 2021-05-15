@@ -6,7 +6,7 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import WWW_BASE_URL
-from inatcog.converters import NaturalCompoundQueryConverter
+from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -18,7 +18,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.group(aliases=["t"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def taxon(self, ctx, *, query: NaturalQueryConverter):
         """Show taxon best matching the query.
 
         `Aliases: [p]t`
@@ -56,7 +56,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command()
-    async def bonap(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def bonap(self, ctx, *, query: NaturalQueryConverter):
         """Show info from bonap.net for taxon."""
         try:
             self.check_taxon_query(ctx, query)
@@ -80,9 +80,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
 
     @taxon.command(name="means")
-    async def taxon_means(
-        self, ctx, place_query: str, *, query: NaturalCompoundQueryConverter
-    ):
+    async def taxon_means(self, ctx, place_query: str, *, query: NaturalQueryConverter):
         """Show establishment means for taxon from the specified place."""
         try:
             place = await self.place_table.get_place(ctx.guild, place_query, ctx.author)
@@ -117,7 +115,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await ctx.send(embed=make_embed(title=title, url=url, description=description))
 
     @taxon.command(name="sci")
-    async def taxon_sci(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def taxon_sci(self, ctx, *, query: NaturalQueryConverter):
         """Search for taxon matching the scientific name."""
         try:
             self.check_taxon_query(ctx, query)
@@ -136,9 +134,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
-    async def taxon_loc(
-        self, ctx, locale: str, *, query: NaturalCompoundQueryConverter
-    ):
+    async def taxon_loc(self, ctx, locale: str, *, query: NaturalQueryConverter):
         """Search for taxon matching specific locale/language."""
         try:
             self.check_taxon_query(ctx, query)
@@ -157,7 +153,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         await self.send_embed_for_taxon(ctx, query_response)
 
     @commands.command()
-    async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def tname(self, ctx, *, query: NaturalQueryConverter):
         """Show taxon name best matching the query.
 
         See `[p]help taxon` for help with the query.
@@ -181,7 +177,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
-    async def species(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def species(self, ctx, *, query: NaturalQueryConverter):
         """Show species best matching the query.
 
         `Aliases: [p]sp, [p]t sp`
@@ -218,7 +214,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
+    async def image(self, ctx, *, taxon_query: NaturalQueryConverter):
         """Show default image for taxon query.
 
         `Aliases: [p]img`

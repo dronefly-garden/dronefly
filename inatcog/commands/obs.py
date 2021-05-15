@@ -10,7 +10,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
-from inatcog.converters import ContextMemberConverter, NaturalCompoundQueryConverter
+from inatcog.converters import MemberConverter, NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -73,7 +73,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 return
 
         try:
-            compound_query = await NaturalCompoundQueryConverter.convert(ctx, query)
+            compound_query = await NaturalQueryConverter.convert(ctx, query)
             obs = await self.obs_query.query_single_obs(ctx, compound_query)
             LOG.info(obs)
         except (BadArgument, LookupError) as err:
@@ -89,7 +89,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
-    async def tabulate(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def tabulate(self, ctx, *, query: NaturalQueryConverter):
         """Show a table from iNaturalist data matching the query.
 
         • Only observations can be tabulated. More kinds of table
@@ -132,9 +132,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     @tabulate.command(name="maverick")
-    async def tabulate_maverick(
-        self, ctx, *, query: Optional[NaturalCompoundQueryConverter]
-    ):
+    async def tabulate_maverick(self, ctx, *, query: Optional[NaturalQueryConverter]):
         """Show maverick identifications.
 
         • By default, if your iNat login is known, your own maverick
@@ -158,9 +156,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if query and query.user:
                 query_user = query.user
             else:
-                query_me = await NaturalCompoundQueryConverter.convert(ctx, "by me")
+                query_me = await NaturalQueryConverter.convert(ctx, "by me")
                 query_user = query_me.user
-            who = await ContextMemberConverter.convert(ctx, query_user)
+            who = await MemberConverter.convert(ctx, query_user)
             user = await self.user_table.get_user(who.member)
             embed = make_embed()
             embed.title = f"Maverick identifications by {user.display_name()}"
@@ -257,41 +255,37 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     @tabulate.command(name="topids")
-    async def tabulate_top_identifiers(
-        self, ctx, *, query: NaturalCompoundQueryConverter
-    ):
+    async def tabulate_top_identifiers(self, ctx, *, query: NaturalQueryConverter):
         """Show top observations identified per identifier (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
         return
 
     @commands.command(name="topids")
-    async def top_identifiers(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def top_identifiers(self, ctx, *, query: NaturalQueryConverter):
         """Show top observations identified per identifier (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
         return
 
     @tabulate.command(name="topobs")
-    async def tabulate_top_observers(
-        self, ctx, *, query: NaturalCompoundQueryConverter
-    ):
+    async def tabulate_top_observers(self, ctx, *, query: NaturalQueryConverter):
         """Show top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
         return
 
     @commands.command(name="topobs")
-    async def top_observers(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def top_observers(self, ctx, *, query: NaturalQueryConverter):
         """Show top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
         return
 
     @tabulate.command(name="topspp", alias=["topsp"])
-    async def tabulate_top_species(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def tabulate_top_species(self, ctx, *, query: NaturalQueryConverter):
         """Show top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
         return
 
     @commands.command(name="topspp", alias=["topsp"])
-    async def top_species(self, ctx, *, query: NaturalCompoundQueryConverter):
+    async def top_species(self, ctx, *, query: NaturalQueryConverter):
         """Show top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
         return
@@ -326,7 +320,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         mat = re.search(PAT_TAXON_LINK, query)
         if mat:
-            query = await NaturalCompoundQueryConverter.convert(ctx, mat["taxon_id"])
+            query = await NaturalQueryConverter.convert(ctx, mat["taxon_id"])
             await (self.bot.get_command("taxon")(ctx, query=query))
             return
 

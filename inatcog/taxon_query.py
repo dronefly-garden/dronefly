@@ -2,9 +2,9 @@
 import re
 from redbot.core.commands import BadArgument
 from .common import DEQUOTE
-from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
+from .converters import MemberConverter, NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .base_classes import CompoundQuery, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
+from .base_classes import Query, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
 
 
 class INatTaxonQuery:
@@ -159,9 +159,7 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(
-        self, ctx, query: CompoundQuery, scientific_name=False, locale=None
-    ):
+    async def query_taxon(self, ctx, query: Query, scientific_name=False, locale=None):
         """Query for taxon and return single taxon if found."""
         taxon = None
         place = None
@@ -188,7 +186,7 @@ class INatTaxonQuery:
             )
         if query.user:
             try:
-                who = await ContextMemberConverter.convert(
+                who = await MemberConverter.convert(
                     ctx, re.sub(DEQUOTE, r"\1", query.user)
                 )
             except BadArgument as err:
@@ -196,7 +194,7 @@ class INatTaxonQuery:
             user = await self.cog.user_table.get_user(who.member)
         if query.unobserved_by:
             try:
-                who = await ContextMemberConverter.convert(
+                who = await MemberConverter.convert(
                     ctx, re.sub(DEQUOTE, r"\1", query.unobserved_by)
                 )
             except BadArgument as err:
@@ -204,7 +202,7 @@ class INatTaxonQuery:
             unobserved_by = await self.cog.user_table.get_user(who.member)
         if query.id_by:
             try:
-                who = await ContextMemberConverter.convert(
+                who = await MemberConverter.convert(
                     ctx, re.sub(DEQUOTE, r"\1", query.id_by)
                 )
             except BadArgument as err:
@@ -228,7 +226,7 @@ class INatTaxonQuery:
         taxa = {}
         for query_str in queries:
             try:
-                query = await NaturalCompoundQueryConverter.convert(ctx, query_str)
+                query = await NaturalQueryConverter.convert(ctx, query_str)
                 query_response = await self.cog.taxon_query.query_taxon(ctx, query)
                 if query_response.taxon:
                     taxon = query_response.taxon
