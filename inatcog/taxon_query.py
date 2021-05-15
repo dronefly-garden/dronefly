@@ -190,7 +190,7 @@ class INatTaxonQuery:
                     ctx, re.sub(DEQUOTE, r"\1", query.user)
                 )
             except BadArgument as err:
-                raise LookupError(str(err))
+                raise LookupError(str(err)) from err
             user = await self.cog.user_table.get_user(who.member)
         if query.unobserved_by:
             try:
@@ -198,7 +198,7 @@ class INatTaxonQuery:
                     ctx, re.sub(DEQUOTE, r"\1", query.unobserved_by)
                 )
             except BadArgument as err:
-                raise LookupError(str(err))
+                raise LookupError(str(err)) from err
             unobserved_by = await self.cog.user_table.get_user(who.member)
         if query.id_by:
             try:
@@ -206,7 +206,7 @@ class INatTaxonQuery:
                     ctx, re.sub(DEQUOTE, r"\1", query.id_by)
                 )
             except BadArgument as err:
-                raise LookupError(str(err))
+                raise LookupError(str(err)) from err
             id_by = await self.cog.user_table.get_user(who.member)
         return QueryResponse(
             taxon=taxon,
