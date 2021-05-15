@@ -23,7 +23,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
     @checks.bot_has_permissions(embed_links=True)
-    async def obs(self, ctx, *, query: str):
+    async def obs(self, ctx, *, query_str: str):
         """Show observation matching query, link, or number.
 
         **query** may contain:
@@ -51,12 +51,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """
 
         id_or_link = None
-        if query.isnumeric():
-            id_or_link = query
+        if query_str.isnumeric():
+            id_or_link = query_str
         else:
-            mat = re.search(PAT_OBS_LINK, query)
+            mat = re.search(PAT_OBS_LINK, query_str)
             if mat and mat["url"]:
-                id_or_link = query
+                id_or_link = query_str
         if id_or_link:
             obs, url = await maybe_match_obs(self, ctx, id_or_link, id_permitted=True)
             # Note: if the user specified an invalid or deleted id, a url is still
@@ -73,8 +73,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 return
 
         try:
-            compound_query = await NaturalQueryConverter.convert(ctx, query)
-            obs = await self.obs_query.query_single_obs(ctx, compound_query)
+            query = await NaturalQueryConverter.convert(ctx, query_str)
+            obs = await self.obs_query.query_single_obs(ctx, query)
             LOG.info(obs)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])

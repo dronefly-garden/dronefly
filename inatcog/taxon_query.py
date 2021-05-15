@@ -107,43 +107,37 @@ class INatTaxonQuery:
         return taxon
 
     async def maybe_match_taxon_compound(
-        self,
-        compound_query,
-        preferred_place_id=None,
-        scientific_name=False,
-        locale=None,
+        self, query: Query, preferred_place_id=None, scientific_name=False, locale=None,
     ):
         """Get one or more taxa and return a match, if any.
 
         Currently the grammar supports only one ancestor taxon
         and one child taxon.
         """
-        query_main = compound_query.main
-        query_ancestor = compound_query.ancestor
-        if query_ancestor:
+        if query.ancestor:
             ancestor = await self.maybe_match_taxon(
-                query_ancestor,
+                query.ancestor,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
                 locale=locale,
             )
             if ancestor:
-                if query_main.ranks:
+                if query.main.ranks:
                     max_query_rank_level = max(
-                        [RANK_LEVELS[rank] for rank in query_main.ranks]
+                        [RANK_LEVELS[rank] for rank in query.main.ranks]
                     )
                     ancestor_rank_level = RANK_LEVELS[ancestor.rank]
                     if max_query_rank_level >= ancestor_rank_level:
                         raise LookupError(
                             "Child rank%s: `%s` must be below ancestor rank: `%s`"
                             % (
-                                "s" if len(query_main.ranks) > 1 else "",
-                                ",".join(query_main.ranks),
+                                "s" if len(query.main.ranks) > 1 else "",
+                                ",".join(query.main.ranks),
                                 ancestor.rank,
                             )
                         )
                 taxon = await self.maybe_match_taxon(
-                    query_main,
+                    query.main,
                     ancestor_id=ancestor.taxon_id,
                     preferred_place_id=preferred_place_id,
                     scientific_name=scientific_name,
@@ -151,7 +145,7 @@ class INatTaxonQuery:
                 )
         else:
             taxon = await self.maybe_match_taxon(
-                query_main,
+                query.main,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
                 locale=locale,
@@ -167,8 +161,8 @@ class INatTaxonQuery:
         unobserved_by = None
         id_by = None
         project = None
-        preferred_place_id = await self.cog.get_home(ctx)
         opt = None
+        preferred_place_id = await self.cog.get_home(ctx)
         if query.project:
             project = await self.cog.project_table.get_project(ctx.guild, query.project)
         if query.place:
