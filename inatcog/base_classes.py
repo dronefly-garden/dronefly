@@ -407,8 +407,25 @@ class Project(DataClassJsonMixin):
         self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
 
 
-class FilteredTaxon(NamedTuple):
-    """A taxon with optional filters."""
+class QueryResponse(NamedTuple):
+    """A generic query response object.
+
+    - The parsed QueryResponse contains objects that are already each queried
+      against the API and are ready for use in these main contexts:
+      - A display of the primary entity object.
+      - One or more queries for secondary entities related to the primary entity
+        (usually observations).
+    - For example, the command `,taxon rg bees by ben` transforms the query as follows:
+      - `bees` is queried and parsed into a `Taxon` object for `/taxa/630955-Anthophila`
+      - `ben`, in the context of a Discord server where this user is registered
+        and is the best match, is parsed into a `User` object for `/people/benarmstrong`
+        (which very likely can be fetched from cache)
+      - `rg` is a macro for `"opt": {"quality_grade": "research"}`
+      - The primary entity displayed by the `,taxon` command is `Anthophila`.
+      - The secondary entities are observations & species counts of
+        `Anthophila` for `benarmstrong` that are `research grade`, shown as a
+        subdisplay.
+    """
 
     taxon: Taxon
     user: User
@@ -416,6 +433,7 @@ class FilteredTaxon(NamedTuple):
     unobserved_by: User
     id_by: User
     project: Project
+    opt: dict
 
 
 class Obs(NamedTuple):

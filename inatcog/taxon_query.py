@@ -4,7 +4,7 @@ from redbot.core.commands import BadArgument
 from .common import DEQUOTE
 from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
+from .base_classes import CompoundQuery, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
 
 
 class INatTaxonQuery:
@@ -209,7 +209,7 @@ class INatTaxonQuery:
             except BadArgument as err:
                 raise LookupError(str(err))
             id_by = await self.cog.user_table.get_user(who.member)
-        return FilteredTaxon(taxon, user, place, unobserved_by, id_by, project)
+        return QueryResponse(taxon, user, place, unobserved_by, id_by, project, {})
 
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
@@ -220,9 +220,9 @@ class INatTaxonQuery:
         for query_str in queries:
             try:
                 query = await NaturalCompoundQueryConverter.convert(ctx, query_str)
-                filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
-                if filtered_taxon.taxon:
-                    taxon = filtered_taxon.taxon
+                query_response = await self.cog.taxon_query.query_taxon(ctx, query)
+                if query_response.taxon:
+                    taxon = query_response.taxon
                     taxa[str(taxon.taxon_id)] = taxon
             except (BadArgument, LookupError):
                 pass

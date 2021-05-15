@@ -22,7 +22,7 @@ from .base_classes import (
     PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
     Place,
-    FilteredTaxon,
+    QueryResponse,
     Taxon,
     TaxonSummary,
 )
@@ -769,8 +769,16 @@ class INatEmbeds(MixinMeta):
 
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
-        if isinstance(arg, FilteredTaxon):
-            (taxon, user, place, _unobserved_by, _id_by, _project) = arg  # noqa: F841
+        if isinstance(arg, QueryResponse):
+            (
+                taxon,
+                user,
+                place,
+                _unobserved_by,
+                _id_by,
+                _project,
+                _args,
+            ) = arg  # noqa: F841
         else:
             taxon = arg
             user = None
@@ -778,6 +786,7 @@ class INatEmbeds(MixinMeta):
             _unobserved_by = None  # noqa: F841
             _id_by = None  # noqa: F841
             _project = None  # noqa: F841
+            _args = None  # noqa: F841
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
@@ -996,10 +1005,10 @@ class INatEmbeds(MixinMeta):
         start_adding_reactions(msg, OBS_REACTION_EMOJIS)
 
     def add_taxon_reaction_emojis(
-        self, msg, filtered_taxon: Union[FilteredTaxon, Taxon], taxonomy=True
+        self, msg, query_response: Union[QueryResponse, Taxon], taxonomy=True
     ):
         """Add taxon embed reaction emojis."""
-        if isinstance(filtered_taxon, FilteredTaxon):
+        if isinstance(query_response, QueryResponse):
             (
                 taxon,
                 _user,
@@ -1007,9 +1016,10 @@ class INatEmbeds(MixinMeta):
                 _unobserved_by,
                 _id_by,
                 _project,
-            ) = filtered_taxon  # noqa: F841
+                _args,
+            ) = query_response  # noqa: F841
         else:
-            taxon = filtered_taxon
+            taxon = query_response
         if taxonomy and len(taxon.ancestor_ids) > 2:
             reaction_emojis = TAXON_REACTION_EMOJIS
         else:
@@ -1017,11 +1027,11 @@ class INatEmbeds(MixinMeta):
         start_adding_reactions(msg, reaction_emojis)
 
     async def send_embed_for_taxon_image(
-        self, ctx, filtered_taxon: Union[FilteredTaxon, Taxon], index=1
+        self, ctx, query_response: Union[QueryResponse, Taxon], index=1
     ):
         """Make embed for taxon image & send."""
         msg = await ctx.send(
-            embed=await self.make_image_embed(ctx, filtered_taxon, index)
+            embed=await self.make_image_embed(ctx, query_response, index)
         )
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
@@ -1029,16 +1039,16 @@ class INatEmbeds(MixinMeta):
         #   display with taxonomy instead, if they need it.
         # - Note: a tester may still manually add the :regional_indicator_t:
         #   reaction to test the feature in its current, broken state.
-        self.add_taxon_reaction_emojis(msg, filtered_taxon, taxonomy=False)
+        self.add_taxon_reaction_emojis(msg, query_response, taxonomy=False)
 
-    async def send_embed_for_taxon(self, ctx, filtered_taxon, include_ancestors=True):
+    async def send_embed_for_taxon(self, ctx, query_response, include_ancestors=True):
         """Make embed for taxon & send."""
         msg = await ctx.send(
             embed=await self.make_taxa_embed(
-                ctx, filtered_taxon, include_ancestors=include_ancestors
+                ctx, query_response, include_ancestors=include_ancestors
             )
         )
-        self.add_taxon_reaction_emojis(msg, filtered_taxon)
+        self.add_taxon_reaction_emojis(msg, query_response)
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""

@@ -47,26 +47,26 @@ class CommandsMap(INatEmbeds, MixinMeta):
         try:
             (
                 kwargs,
-                filtered_taxon,
+                query_response,
                 _term,
                 _value,
             ) = await self.obs_query.get_query_args(ctx, query)
-            if filtered_taxon.taxon:
+            if query_response.taxon:
                 query_title = "Map of " + format_taxon_name(
-                    filtered_taxon.taxon, with_term=True
+                    query_response.taxon, with_term=True
                 )
             else:
                 query_title = "Map of observations"
-            if filtered_taxon.user:
-                query_title += f" by {filtered_taxon.user.login}"
-            if filtered_taxon.unobserved_by:
-                query_title += f" unobserved by {filtered_taxon.unobserved_by.login}"
-            if filtered_taxon.id_by:
-                query_title += f" identified by {filtered_taxon.id_by.login}"
-            if filtered_taxon.project:
-                query_title += f" in {filtered_taxon.project.title}"
-            if filtered_taxon.place:
-                query_title += f" from {filtered_taxon.place.display_name}"
+            if query_response.user:
+                query_title += f" by {query_response.user.login}"
+            if query_response.unobserved_by:
+                query_title += f" unobserved by {query_response.unobserved_by.login}"
+            if query_response.id_by:
+                query_title += f" identified by {query_response.id_by.login}"
+            if query_response.project:
+                query_title += f" in {query_response.project.title}"
+            if query_response.place:
+                query_title += f" from {query_response.place.display_name}"
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return

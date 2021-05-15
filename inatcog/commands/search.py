@@ -222,22 +222,22 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         async def get_obs_query_args(query):
             (
                 kwargs,
-                filtered_taxon,
+                query_response,
                 _term,
                 _value,
             ) = await self.obs_query.get_query_args(ctx, query)
-            if filtered_taxon.taxon:
-                query_title = format_taxon_name(filtered_taxon.taxon, with_term=True)
+            if query_response.taxon:
+                query_title = format_taxon_name(query_response.taxon, with_term=True)
             else:
                 query_title = "Observations"
-            if filtered_taxon.user:
-                query_title += f" by {filtered_taxon.user.login}"
-            if filtered_taxon.unobserved_by:
-                query_title += f" unobserved by {filtered_taxon.unobserved_by.login}"
-            if filtered_taxon.id_by:
-                query_title += f" identified by {filtered_taxon.id_by.login}"
-            if filtered_taxon.place:
-                query_title += f" from {filtered_taxon.place.display_name}"
+            if query_response.user:
+                query_title += f" by {query_response.user.login}"
+            if query_response.unobserved_by:
+                query_title += f" unobserved by {query_response.unobserved_by.login}"
+            if query_response.id_by:
+                query_title += f" identified by {query_response.id_by.login}"
+            if query_response.place:
+                query_title += f" from {query_response.place.display_name}"
             url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
             kwargs["per_page"] = 200
             return (query_title, url, kwargs)

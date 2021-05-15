@@ -48,26 +48,26 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command()
     async def bonap(self, ctx, *, query: NaturalCompoundQueryConverter):
         """Show info from bonap.net for taxon."""
         try:
             self.check_taxon_query(ctx, query)
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
 
         base_url = "http://bonap.net/MapGallery/County/"
         maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
-        taxon = filtered_taxon.taxon
+        taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
         full_name = format_taxon_name(taxon)
         if taxon.rank == "genus":
@@ -93,11 +93,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         try:
             self.check_taxon_query(ctx, query)
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
-        taxon = filtered_taxon.taxon
+        taxon = query_response.taxon
         title = format_taxon_name(taxon, with_term=True)
         url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
         full_taxon = await get_taxon(self, taxon.taxon_id, preferred_place_id=place_id)
@@ -126,14 +126,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(
+            query_taxon = await self.taxon_query.query_taxon(
                 ctx, query, scientific_name=True
             )
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, query_taxon)
 
     @taxon.command(name="lang")
     async def taxon_loc(
@@ -147,14 +147,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(
+            query_response = await self.taxon_query.query_taxon(
                 ctx, query, locale=locale
             )
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, query_response)
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
@@ -171,13 +171,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(reason)
             return
 
-        await ctx.send(filtered_taxon.taxon.name)
+        await ctx.send(query_response.taxon.name)
 
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
@@ -231,9 +231,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
+            query_response = await self.taxon_query.query_taxon(ctx, taxon_query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
+        await self.send_embed_for_taxon_image(ctx, query_response.taxon)

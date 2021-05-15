@@ -124,8 +124,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
-            msg = await ctx.send(embed=await self.make_obs_counts_embed(filtered_taxon))
+            query_response = await self.taxon_query.query_taxon(ctx, query)
+            msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
             self.add_obs_reaction_emojis(msg)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
@@ -177,15 +177,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
         async def get_observer_options(ctx, query, view):
             (
                 obs_opt,
-                filtered_taxon,
+                query_response,
                 term,
                 value,
             ) = await self.obs_query.get_query_args(ctx, query)
             full_title = view.capitalize()
-            full_title += self.obs_query.format_query_args(filtered_taxon, term, value)
-            taxon = filtered_taxon.taxon
+            full_title += self.obs_query.format_query_args(query_response, term, value)
+            taxon = query_response.taxon
             species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
-            return (filtered_taxon, obs_opt, full_title, species_only)
+            return (query_response, obs_opt, full_title, species_only)
 
         if query and (
             query.controlled_term
@@ -199,7 +199,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             obs_opt_view = "identifiers" if view == "ids" else "observers"
             (
-                filtered_taxon,
+                query_response,
                 obs_opt,
                 full_title,
                 species_only,
@@ -210,7 +210,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if not users_count:
                 await apologize(
                     ctx,
-                    f"No observations found {self.obs_query.format_query_args(filtered_taxon)}",
+                    f"No observations found {self.obs_query.format_query_args(query_response)}",
                 )
                 return
 

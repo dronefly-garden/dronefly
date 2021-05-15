@@ -113,19 +113,19 @@ class Listeners(INatEmbeds, MixinMeta):
                     )
                     if query.controlled_term:
                         return
-                    filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+                    query_response = await self.taxon_query.query_taxon(ctx, query)
                 except (BadArgument, LookupError):
                     return
                 if query.user or query.place or query.project:
                     msg = await channel.send(
-                        embed=await self.make_obs_counts_embed(filtered_taxon)
+                        embed=await self.make_obs_counts_embed(query_response)
                     )
                     self.add_obs_reaction_emojis(msg)
                 else:
                     msg = await channel.send(
-                        embed=await self.make_taxa_embed(ctx, filtered_taxon)
+                        embed=await self.make_taxa_embed(ctx, query_response)
                     )
-                    self.add_taxon_reaction_emojis(msg, filtered_taxon)
+                    self.add_taxon_reaction_emojis(msg, query_response)
                 self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
