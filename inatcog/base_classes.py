@@ -407,14 +407,16 @@ class Project(DataClassJsonMixin):
         self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
 
 
-class QueryResponse(NamedTuple):
+@dataclass
+class QueryResponse:
     """A generic query response object.
 
-    - The parsed QueryResponse contains objects that are already each queried
-      against the API and are ready for use in these main contexts:
-      - A display of the primary entity object.
+    - The parsed QueryResponse contains zero or more objects that are already
+      each queried against the API and, optionally some additional options to
+      apply to secondary entity queries. It is used in these main contexts:
+      - Accessing the details of the primary entity object.
       - One or more queries for secondary entities related to the primary entity
-        (usually observations).
+        (e.g. observations).
     - For example, the command `,taxon rg bees by ben` transforms the query as follows:
       - `bees` is queried and parsed into a `Taxon` object for `/taxa/630955-Anthophila`
       - `ben`, in the context of a Discord server where this user is registered
@@ -427,13 +429,13 @@ class QueryResponse(NamedTuple):
         subdisplay.
     """
 
-    taxon: Taxon
-    user: User
-    place: Place
-    unobserved_by: User
-    id_by: User
-    project: Project
-    opt: dict
+    taxon: Optional[Taxon]
+    user: Optional[User]
+    place: Optional[Place]
+    unobserved_by: Optional[User]
+    id_by: Optional[User]
+    project: Optional[Project]
+    opt: Optional[dict]
 
 
 class Obs(NamedTuple):

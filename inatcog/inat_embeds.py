@@ -340,7 +340,12 @@ class INatEmbeds(MixinMeta):
         """Return embed for observation counts from place or by user."""
         title_params = {}
         formatted_counts = ""
-        (taxon, user, place, unobserved_by, id_by, project) = arg
+        taxon = arg.taxon
+        user = arg.user
+        place = arg.place
+        unobserved_by = arg.unobserved_by
+        id_by = arg.id_by
+        project = arg.project
 
         if taxon:
             title = format_taxon_title(taxon)
@@ -770,23 +775,13 @@ class INatEmbeds(MixinMeta):
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
         if isinstance(arg, QueryResponse):
-            (
-                taxon,
-                user,
-                place,
-                _unobserved_by,
-                _id_by,
-                _project,
-                _args,
-            ) = arg  # noqa: F841
+            taxon = arg.taxon
+            user = arg.user
+            place = arg.place
         else:
             taxon = arg
             user = None
             place = None
-            _unobserved_by = None  # noqa: F841
-            _id_by = None  # noqa: F841
-            _project = None  # noqa: F841
-            _args = None  # noqa: F841
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
@@ -1009,15 +1004,7 @@ class INatEmbeds(MixinMeta):
     ):
         """Add taxon embed reaction emojis."""
         if isinstance(query_response, QueryResponse):
-            (
-                taxon,
-                _user,
-                _place,
-                _unobserved_by,
-                _id_by,
-                _project,
-                _args,
-            ) = query_response  # noqa: F841
+            taxon = query_response.taxon
         else:
             taxon = query_response
         if taxonomy and len(taxon.ancestor_ids) > 2:

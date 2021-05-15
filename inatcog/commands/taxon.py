@@ -126,14 +126,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_taxon = await self.taxon_query.query_taxon(
+            query_response = await self.taxon_query.query_taxon(
                 ctx, query, scientific_name=True
             )
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await self.send_embed_for_taxon(ctx, query_taxon)
+        await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
     async def taxon_loc(
