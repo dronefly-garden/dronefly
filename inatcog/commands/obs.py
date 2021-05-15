@@ -204,8 +204,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 full_title,
                 species_only,
             ) = await get_observer_options(ctx, query, obs_opt_view)
+            users = await self.api.get_observations(obs_opt_view, **obs_opt)
             obs_opt["view"] = obs_opt_view
-            users = await self.api.get_observations(obs_opt["view"], **obs_opt)
             users_count = users["total_results"]
             if not users_count:
                 await apologize(
@@ -218,6 +218,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if view == "ids":
                 ids_opt = obs_opt.copy()
                 del ids_opt["view"]
+                # TODO: there are a bunch more observations parameters that could be deleted:
+                # - they'll just be ignored on this page.
                 url = (
                     f"{WWW_BASE_URL}/identifications?{urllib.parse.urlencode(ids_opt)}"
                 )
