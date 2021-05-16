@@ -4,6 +4,7 @@ import re
 from typing import List, NamedTuple, Optional
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
+from .controlled_terms import ControlledTermSelector
 from .photos import Photo
 from .sounds import Sound
 
@@ -436,6 +437,7 @@ class QueryResponse:
     id_by: Optional[User]
     project: Optional[Project]
     opt: Optional[dict]
+    controlled_term: Optional[ControlledTermSelector]
 
 
 class Obs(NamedTuple):

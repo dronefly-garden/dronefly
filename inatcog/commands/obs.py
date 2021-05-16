@@ -173,14 +173,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     async def _tabulate_query(self, ctx, query, view="obs"):
         async def get_observer_options(ctx, query, view):
-            (
-                obs_opt,
-                query_response,
-                term,
-                value,
-            ) = await self.obs_query.get_query_args(ctx, query)
+            (obs_opt, query_response) = await self.obs_query.get_query_args(ctx, query)
             full_title = view.capitalize()
-            full_title += self.obs_query.format_query_args(query_response, term, value)
+            full_title += self.obs_query.format_query_args(query_response)
             taxon = query_response.taxon
             species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
             return (query_response, obs_opt, full_title, species_only)

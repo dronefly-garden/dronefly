@@ -1,6 +1,6 @@
 """Module to handle controlled terms."""
 import re
-from typing import List, Optional
+from typing import List, NamedTuple, Optional
 from dataclasses import dataclass
 from dataclasses_json import DataClassJsonMixin
 
@@ -24,6 +24,13 @@ class ControlledTerm(DataClassJsonMixin):
     id: int
     label: str
     values: List[ControlledTermValue]
+
+
+class ControlledTermSelector(NamedTuple):
+    """An iNat controlled term and value pair."""
+
+    term: ControlledTerm
+    value: ControlledTermValue
 
 
 def match_controlled_term(
@@ -52,7 +59,7 @@ def match_controlled_term(
             None,
         )
         if matched_value:
-            return (matched_term, matched_value)
+            return ControlledTermSelector(matched_term, matched_value)
         raise LookupError(
             f'No value matching "`{value_label}`" for controlled term: `{matched_term.label}`'
         )

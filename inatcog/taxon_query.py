@@ -2,6 +2,7 @@
 import re
 from redbot.core.commands import BadArgument
 from .common import DEQUOTE
+from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters import MemberConverter, NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import Query, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
@@ -161,6 +162,7 @@ class INatTaxonQuery:
         unobserved_by = None
         id_by = None
         project = None
+        controlled_term = None
         opt = None
         preferred_place_id = await self.cog.get_home(ctx)
         if query.project:
@@ -202,6 +204,16 @@ class INatTaxonQuery:
             except BadArgument as err:
                 raise LookupError(str(err)) from err
             id_by = await self.cog.user_table.get_user(who.member)
+        if query.controlled_term:
+            (query_term, query_term_value) = query.controlled_term
+            controlled_terms_dict = await self.cog.api.get_controlled_terms()
+            controlled_terms = [
+                ControlledTerm.from_dict(term, infer_missing=True)
+                for term in controlled_terms_dict["results"]
+            ]
+            controlled_term = match_controlled_term(
+                controlled_terms, query_term, query_term_value
+            )
         return QueryResponse(
             taxon=taxon,
             user=user,
@@ -210,6 +222,7 @@ class INatTaxonQuery:
             id_by=id_by,
             project=project,
             opt=opt,
+            controlled_term=controlled_term,
         )
 
     async def query_taxa(self, ctx, query):
