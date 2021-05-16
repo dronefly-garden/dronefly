@@ -7,6 +7,30 @@ from .converters import MemberConverter, NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import Query, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
 
+VALID_OBS_OPTS = [
+    "captive",
+    "endemic",
+    "iconic_taxa",
+    "identified",
+    "introduced",
+    "native",
+    "out_of_range",
+    "pcid",
+    "photos",
+    "popular",
+    "sounds",
+    "threatened",
+    "verifiable",
+    "id",
+    "not_id",
+    "quality_grade",
+    "reviewed",
+    "page",
+    "order",
+    "order_by",
+    "without_taxon_id",
+]
+
 
 class INatTaxonQuery:
     """Query iNat for one or more taxa."""
@@ -163,7 +187,7 @@ class INatTaxonQuery:
         id_by = None
         project = None
         controlled_term = None
-        opt = None
+        options = {}
         preferred_place_id = await self.cog.get_home(ctx)
         if query.project:
             project = await self.cog.project_table.get_project(ctx.guild, query.project)
@@ -214,6 +238,19 @@ class INatTaxonQuery:
             controlled_term = match_controlled_term(
                 controlled_terms, query_term, query_term_value
             )
+        if query.options:
+            # Accept a limited selection of options:
+            # - all of these to date apply only to observations, though others could
+            #   be added later
+            # - all options and values are lowercased
+            for (key, *val) in map(lambda opt: opt.lower().split("="), query.options):
+                val = val[0] if val else "true"
+                # - conservatively, only alphanumeric, comma, dash or
+                #   underscore characters accepted in values so far
+                # - TODO: proper validation per field type
+                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", val):
+                    options[key] = val
+
         return QueryResponse(
             taxon=taxon,
             user=user,
@@ -221,7 +258,7 @@ class INatTaxonQuery:
             unobserved_by=unobserved_by,
             id_by=id_by,
             project=project,
-            opt=opt,
+            options=options,
             controlled_term=controlled_term,
         )
 

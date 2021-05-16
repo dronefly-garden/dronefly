@@ -1,33 +1,7 @@
 """Module to query iNat observations."""
-import re
-
 from .base_classes import Query
 from .obs import get_obs_fields
 from .taxa import format_taxon_name
-
-VALID_OBS_OPTS = [
-    "captive",
-    "endemic",
-    "iconic_taxa",
-    "identified",
-    "introduced",
-    "native",
-    "out_of_range",
-    "pcid",
-    "photos",
-    "popular",
-    "sounds",
-    "threatened",
-    "verifiable",
-    "id",
-    "not_id",
-    "quality_grade",
-    "reviewed",
-    "page",
-    "order",
-    "order_by",
-    "without_taxon_id",
-]
 
 
 class INatObsQuery:
@@ -82,17 +56,11 @@ class INatObsQuery:
                 (term, term_value) = query_response.controlled_term
                 kwargs["term_id"] = term.id
                 kwargs["term_value_id"] = term_value.id
-        kwargs["verifiable"] = "any"
-        if query.options:
-            # Accept a limited selection of observation options:
-            # - all options and values are lowercased
-            for (key, *val) in map(lambda opt: opt.lower().split("="), query.options):
-                val = val[0] if val else "true"
-                # - conservatively, only alphanumeric, comma, dash or
-                #   underscore characters accepted in values so far
-                # - TODO: proper validation per field type
-                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", val):
-                    kwargs[key] = val
+            kwargs["verifiable"] = "any"
+            if query_response.options:
+                if "verifiable" in kwargs:
+                    del kwargs["verifiable"]
+                kwargs = {**kwargs, **query_response.options}
 
         return kwargs, query_response
 

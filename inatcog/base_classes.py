@@ -436,7 +436,7 @@ class QueryResponse:
     unobserved_by: Optional[User]
     id_by: Optional[User]
     project: Optional[Project]
-    opt: Optional[dict]
+    options: Optional[dict]
     controlled_term: Optional[ControlledTermSelector]
 
 
