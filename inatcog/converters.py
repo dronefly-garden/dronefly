@@ -144,7 +144,7 @@ class QueryConverter(Query):
         try:
             vals = parser.parse_args(shlex.split(argument, posix=False))
         except ValueError as err:
-            raise BadArgument(err.args[0])
+            raise BadArgument(err.args[0]) from err
         ranks = []
         if vals.rank:
             parsed_ranks = shlex.shlex(vals.rank)
@@ -264,7 +264,7 @@ class NaturalQueryConverter(QueryConverter):
             )
             args_normalized = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
-            raise BadArgument(err.args[0])
+            raise BadArgument(err.args[0]) from err
         ranks = []
         opts = []
         in_opt = False
