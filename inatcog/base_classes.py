@@ -482,6 +482,15 @@ class Project(DataClassJsonMixin):
         self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
 
 
+class _Params(dict):
+    def set_from(self, obj: object, attr_name: str, param_name: str = None):
+        """Helper for simple one-to-one attribute to param assignments."""
+        if obj:
+            key = param_name or attr_name
+            value = getattr(obj, attr_name)
+            self[key] = value
+
+
 @dataclass
 class QueryResponse:
     """A generic query response object.
@@ -516,28 +525,19 @@ class QueryResponse:
     def obs_args(self):
         """Arguments for an observations query."""
 
-        kwargs = {}
-        if self.taxon:
-            kwargs["taxon_id"] = self.taxon.taxon_id
-        if self.user:
-            kwargs["user_id"] = self.user.user_id
-        if self.project:
-            kwargs["project_id"] = self.project.project_id
-        if self.place:
-            kwargs["place_id"] = self.place.place_id
+        kwargs = _Params({"verifiable": "any"})
+        kwargs.set_from(self.taxon, "taxon_id")
+        kwargs.set_from(self.user, "user_id")
+        kwargs.set_from(self.project, "project_id")
+        kwargs.set_from(self.place, "place_id")
+        kwargs.set_from(self.id_by, "user_id", "ident_user_id")
+        kwargs.set_from(self.unobserved_by, "user_id", "unobserved_by_user_id")
         if self.unobserved_by:
-            kwargs["unobserved_by_user_id"] = self.unobserved_by.user_id
             kwargs["lrank"] = "species"
-        if self.id_by:
-            kwargs["ident_user_id"] = self.id_by.user_id
         if self.controlled_term:
-            (term, term_value) = self.controlled_term
-            kwargs["term_id"] = term.id
-            kwargs["term_value_id"] = term_value.id
-        kwargs["verifiable"] = "any"
+            kwargs["term_id"] = self.controlled_term.term.id
+            kwargs["term_value_id"] = self.controlled_term.term_value.id
         if self.options:
-            if "verifiable" in kwargs:
-                del kwargs["verifiable"]
             kwargs = {**kwargs, **self.options}
         return kwargs
 
