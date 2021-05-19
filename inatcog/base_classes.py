@@ -104,6 +104,8 @@ RANK_EQUIVALENTS = {
 }
 
 RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
+TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
+TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 
 
 class TaxonQuery(NamedTuple):
@@ -116,22 +118,23 @@ class TaxonQuery(NamedTuple):
     code: str
 
 
-class Query(NamedTuple):
+@dataclass
+class Query:
     """A taxon query that may contain another (ancestor) taxon query."""
 
-    main: TaxonQuery
-    ancestor: TaxonQuery
-    user: str
-    place: str
-    controlled_term: str
-    unobserved_by: str
-    id_by: str
-    per: str
-    project: str
-    options: list
+    main: Optional[TaxonQuery] = None
+    ancestor: Optional[TaxonQuery] = None
+    user: Optional[str] = None
+    place: Optional[str] = None
+    controlled_term: Optional[str] = None
+    unobserved_by: Optional[str] = None
+    id_by: Optional[str] = None
+    per: Optional[str] = None
+    project: Optional[str] = None
+    options: Optional[List] = None
 
 
-EMPTY_QUERY = Query(None, None, None, None, None, None, None, None, None, None,)
+EMPTY_QUERY = Query()
 
 
 # TODO: this should just be Place, as it is a superset
@@ -328,7 +331,8 @@ class ConservationStatus(DataClassJsonMixin):
         return self.authority
 
 
-class Taxon(NamedTuple):
+@dataclass
+class Taxon:
     """A taxon."""
 
     name: str
@@ -347,6 +351,76 @@ class Taxon(NamedTuple):
     names: list
     establishment_means: Optional[EstablishmentMeansPartial]
     conservation_status: Optional[ConservationStatus]
+
+    def format_name(
+        self, with_term=False, hierarchy=False, with_rank=True, with_common=True
+    ):
+        """Format taxon name.
+
+        Parameters
+        ----------
+        with_term: bool, optional
+            When with_common=True, non-common / non-name matching term is put in
+            parentheses in place of common name.
+        hierarchy: bool, optional
+            If specified, produces a list item suitable for inclusion in the hierarchy section
+            of a taxon embed. See format_taxon_names() for details.
+        with_rank: bool, optional
+            If specified and hierarchy=False, includes the rank for ranks higher than species.
+        with_common: bool, optional
+            If specified, include common name in parentheses after scientific name.
+
+        Returns
+        -------
+        str
+            A name of the form "Rank Scientific name (Common name)" following the
+            same basic format as iNaturalist taxon pages on the web, i.e.
+
+            - drop the "Rank" keyword for species level and lower
+            - italicize the name (minus any rank abbreviations; see next point) for genus
+            level and lower
+            - for trinomials (must be subspecies level & have exactly 3 names to qualify),
+            insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
+            name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
+        """
+
+        if with_common:
+            if with_term:
+                common = (
+                    self.term
+                    if self.term not in (self.name, self.common)
+                    else self.common
+                )
+            else:
+                if hierarchy:
+                    common = None
+                else:
+                    common = self.common
+        else:
+            common = None
+        name = self.name
+
+        rank = self.rank
+        rank_level = RANK_LEVELS[rank]
+
+        if rank_level <= RANK_LEVELS["genus"]:
+            name = f"*{name}*"
+        if rank_level > RANK_LEVELS["species"]:
+            if hierarchy:
+                bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
+                name = f"{bold[0]}{name}{bold[1]}"
+            elif with_rank:
+                name = f"{rank.capitalize()} {name}"
+        else:
+            if rank in TRINOMIAL_ABBR.keys():
+                tri = name.split(" ")
+                if len(tri) == 3:
+                    # Note: name already italicized, so close/reopen italics around insertion.
+                    name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
+        full_name = f"{name} ({common})" if common else name
+        if not self.active:
+            full_name += " :exclamation: Inactive Taxon"
+        return full_name
 
 
 @dataclass
@@ -438,6 +512,57 @@ class QueryResponse:
     project: Optional[Project]
     options: Optional[dict]
     controlled_term: Optional[ControlledTermSelector]
+
+    def obs_args(self):
+        """Arguments for an observations query."""
+
+        kwargs = {}
+        if self.taxon:
+            kwargs["taxon_id"] = self.taxon.taxon_id
+        if self.user:
+            kwargs["user_id"] = self.user.user_id
+        if self.project:
+            kwargs["project_id"] = self.project.project_id
+        if self.place:
+            kwargs["place_id"] = self.place.place_id
+        if self.unobserved_by:
+            kwargs["unobserved_by_user_id"] = self.unobserved_by.user_id
+            kwargs["lrank"] = "species"
+        if self.id_by:
+            kwargs["ident_user_id"] = self.id_by.user_id
+        if self.controlled_term:
+            (term, term_value) = self.controlled_term
+            kwargs["term_id"] = term.id
+            kwargs["term_value_id"] = term_value.id
+        kwargs["verifiable"] = "any"
+        if self.options:
+            if "verifiable" in kwargs:
+                del kwargs["verifiable"]
+            kwargs = {**kwargs, **self.options}
+        return kwargs
+
+    def obs_query_description(self):
+        """Description of an observations query."""
+        message = ""
+        if self.taxon:
+            taxon = self.taxon
+            message += " of " + taxon.format_name(with_term=True)
+        if self.project:
+            message += " in " + self.project.title
+        if self.place:
+            message += " from " + self.place.display_name
+        if self.user:
+            message += " by " + self.user.display_name()
+        if self.unobserved_by:
+            message += " unobserved by " + self.unobserved_by.display_name()
+        if self.id_by:
+            message += " identified by " + self.id_by.display_name()
+        if self.controlled_term:
+            (term, term_value) = self.controlled_term
+            desc = f" with {term.label}"
+            desc += f" {term_value.label}"
+            message += desc
+        return message
 
 
 class Obs(NamedTuple):

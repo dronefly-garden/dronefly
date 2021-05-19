@@ -173,9 +173,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     async def _tabulate_query(self, ctx, query, view="obs"):
         async def get_observer_options(ctx, query, view):
-            (obs_opt, query_response) = await self.obs_query.get_query_args(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
+            obs_opt = query_response.obs_args()
             full_title = view.capitalize()
-            full_title += self.obs_query.format_query_args(query_response)
+            full_title += query_response.obs_query_description()
             taxon = query_response.taxon
             species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
             return (query_response, obs_opt, full_title, species_only)
@@ -203,7 +204,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if not users_count:
                 await apologize(
                     ctx,
-                    f"No observations found {self.obs_query.format_query_args(query_response)}",
+                    f"No observations found {query_response.obs_query_description()}",
                 )
                 return
 

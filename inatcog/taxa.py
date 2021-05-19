@@ -24,9 +24,6 @@ TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
-TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
-
-TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 
 PAT_TAXON_LINK = re.compile(
     r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/taxa/(?P<taxon_id>\d+))\b", re.I
@@ -63,8 +60,7 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        format_taxon_name(taxon, with_term=with_term, hierarchy=hierarchy)
-        for taxon in taxa
+        taxon.format_name(with_term=with_term, hierarchy=hierarchy) for taxon in taxa
     ]
 
     def fit_names(names):
@@ -97,75 +93,6 @@ def format_taxon_names(
         names = fit_names(names)
 
     return names_format % delimiter.join(names)
-
-
-def format_taxon_name(
-    rec, with_term=False, hierarchy=False, with_rank=True, with_common=True
-):
-    """Format taxon name from matched record.
-
-    Parameters
-    ----------
-    rec: Taxon
-        A matched taxon record.
-    with_term: bool, optional
-        When with_common=True, non-common / non-name matching term is put in
-        parentheses in place of common name.
-    hierarchy: bool, optional
-        If specified, produces a list item suitable for inclusion in the hierarchy section
-        of a taxon embed. See format_taxon_names() for details.
-    with_rank: bool, optional
-        If specified and hierarchy=False, includes the rank for ranks higher than species.
-    with_common: bool, optional
-        If specified, include common name in parentheses after scientific name.
-
-    Returns
-    -------
-    str
-        A name of the form "Rank Scientific name (Common name)" following the
-        same basic format as iNaturalist taxon pages on the web, i.e.
-
-        - drop the "Rank" keyword for species level and lower
-        - italicize the name (minus any rank abbreviations; see next point) for genus
-          level and lower
-        - for trinomials (must be subspecies level & have exactly 3 names to qualify),
-          insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
-          name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
-    """
-    if with_common:
-        if with_term:
-            common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
-        else:
-            if hierarchy:
-                common = None
-            else:
-                common = rec.common
-    else:
-        common = None
-    name = rec.name
-
-    rank = rec.rank
-    rank_level = RANK_LEVELS[rank]
-
-    if rank_level <= RANK_LEVELS["genus"]:
-        name = f"*{name}*"
-    if rank_level > RANK_LEVELS["species"]:
-        if hierarchy:
-            # FIXME: List formatting concerns don't belong here. Move them up a level.
-            bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
-            name = f"{bold[0]}{name}{bold[1]}"
-        elif with_rank:
-            name = f"{rank.capitalize()} {name}"
-    else:
-        if rank in TRINOMIAL_ABBR.keys():
-            tri = name.split(" ")
-            if len(tri) == 3:
-                # Note: name already italicized, so close/reopen italics around insertion.
-                name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
-    full_name = f"{name} ({common})" if common else name
-    if not rec.active:
-        full_name += " :exclamation: Inactive Taxon"
-    return full_name
 
 
 async def get_taxon_preferred_establishment_means(bot, ctx, taxon):

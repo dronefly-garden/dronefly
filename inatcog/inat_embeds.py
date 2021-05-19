@@ -39,7 +39,6 @@ from .maps import INatMapURL
 from .projects import UserProject, ObserverStats
 from .taxa import (
     format_place_taxon_counts,
-    format_taxon_name,
     format_taxon_names,
     format_user_taxon_counts,
     get_taxon,
@@ -237,7 +236,7 @@ def format_taxon_names_for_embed(*args, **kwargs):
 
 def format_taxon_title(rec):
     """Format taxon title."""
-    title = format_taxon_name(rec)
+    title = rec.format_name()
     matched = rec.term
     if matched not in (rec.name, rec.common):
         title += f" ({matched})"
@@ -440,8 +439,8 @@ class INatEmbeds(MixinMeta):
             if compact:
                 title += f"{EMOJI[obs.quality_grade]} "
             if taxon:
-                taxon_str = format_taxon_name(
-                    taxon, with_rank=not compact, with_common=not compact,
+                taxon_str = taxon.format_name(
+                    with_rank=not compact, with_common=not compact
                 )
             else:
                 taxon_str = "Unknown"
@@ -554,7 +553,7 @@ class INatEmbeds(MixinMeta):
                     means_link = ""
                     status_link = ""
                 summary = (
-                    f"{format_taxon_name(obs.community_taxon)} "
+                    f"{obs.community_taxon.format_name()} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
@@ -619,7 +618,7 @@ class INatEmbeds(MixinMeta):
 
         def format_image_title_url(taxon, obs, num):
             if taxon:
-                title = format_taxon_name(taxon)
+                title = taxon.format_name()
             else:
                 title = "Unknown"
             title += f" (Image {num} of {len(obs.images)})"
@@ -718,9 +717,7 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = (
-            f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon)}"
-        )
+        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name()}"
 
         return make_embed(title="Closest related taxon", description=description)
 

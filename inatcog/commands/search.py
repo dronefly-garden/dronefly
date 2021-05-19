@@ -12,7 +12,7 @@ from inatcog.common import grouper
 from inatcog.converters import NaturalQueryConverter
 from inatcog.places import PAT_PLACE_LINK
 from inatcog.projects import PAT_PROJECT_LINK
-from inatcog.taxa import format_taxon_name, PAT_TAXON_LINK
+from inatcog.taxa import PAT_TAXON_LINK
 from inatcog.users import PAT_USER_LINK
 
 from inatcog.base_classes import (
@@ -218,9 +218,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return (url, kwargs)
 
         async def get_obs_query_args(query):
-            (kwargs, query_response) = await self.obs_query.get_query_args(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
+            kwargs = query_response.obs_args()
             if query_response.taxon:
-                query_title = format_taxon_name(query_response.taxon, with_term=True)
+                query_title = query_response.taxon.format_name(with_term=True)
             else:
                 query_title = "Observations"
             if query_response.user:

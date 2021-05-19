@@ -10,7 +10,7 @@ from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
-from inatcog.taxa import format_taxon_name, get_taxon
+from inatcog.taxa import get_taxon
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
@@ -69,7 +69,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
         taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
-        full_name = format_taxon_name(taxon)
+        full_name = taxon.format_name()
         if taxon.rank == "genus":
             await ctx.send(
                 f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
@@ -96,7 +96,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
         taxon = query_response.taxon
-        title = format_taxon_name(taxon, with_term=True)
+        title = taxon.format_name(with_term=True)
         url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
         full_taxon = await get_taxon(self, taxon.taxon_id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"

@@ -8,7 +8,6 @@ from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
-from inatcog.taxa import format_taxon_name
 
 
 class CommandsMap(INatEmbeds, MixinMeta):
@@ -45,10 +44,11 @@ class CommandsMap(INatEmbeds, MixinMeta):
         """Show map of observations."""
 
         try:
-            (kwargs, query_response,) = await self.obs_query.get_query_args(ctx, query)
+            query_response = await self.taxon_query.query_taxon(ctx, query)
+            kwargs = query_response.obs_args()
             if query_response.taxon:
-                query_title = "Map of " + format_taxon_name(
-                    query_response.taxon, with_term=True
+                query_title = "Map of " + query_response.taxon.format_name(
+                    with_term=True
                 )
             else:
                 query_title = "Map of observations"

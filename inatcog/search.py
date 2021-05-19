@@ -2,7 +2,7 @@
 
 from .base_classes import Place, WWW_BASE_URL, User
 from .projects import Project
-from .taxa import format_taxon_name, get_taxon_fields
+from .taxa import get_taxon_fields
 
 
 def get_place(result):
@@ -29,7 +29,7 @@ def get_taxon(result):
     """Get taxon result (v1/search)."""
     taxon = get_taxon_fields(result.get("record"))
     return (
-        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
+        f":green_circle: [{taxon.format_name(with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
     )
 
@@ -38,7 +38,7 @@ def get_taxon2(result):
     """Get taxon result (/v1/taxa)."""
     taxon = get_taxon_fields(result)
     return (
-        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
+        f":green_circle: [{taxon.format_name(with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.taxon_id})"
     )
 
