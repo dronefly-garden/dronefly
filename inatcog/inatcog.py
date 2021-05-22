@@ -36,7 +36,7 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
     """
 
 
-# pylint: disable=too-many-ancestors
+# pylint: disable=too-many-ancestors,too-many-instance-attributes
 class INatCog(
     Listeners,
     commands.Cog,
