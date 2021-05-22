@@ -101,10 +101,26 @@ class NoExitParser(argparse.ArgumentParser):
         raise BadArgument("Query not understood") from None
 
 
+QUERY_ARGS = {
+    "of": {"nargs": "+", "dest": "main", "default": []},
+    "in": {"nargs": "+", "dest": "ancestor", "default": []},
+    "by": {"nargs": "+", "dest": "user", "default": []},
+    "not-by": {"nargs": "+", "dest": "unobserved_by", "default": []},
+    "id-by": {"nargs": "+", "dest": "id_by", "default": []},
+    "from": {"nargs": "+", "dest": "place", "default": []},
+    "rank": {"dest": "rank", "default": ""},
+    "with": {"nargs": "+", "dest": "controlled_term"},
+    "per": {"nargs": "+", "dest": "per", "default": []},
+    "opt": {"nargs": "+", "dest": "options", "default": []},
+    "in-prj": {"nargs": "+", "dest": "project", "default": []},
+}
+
+
 class QueryConverter(Query):
     """Convert query via argparse."""
 
     @classmethod
+    # pylint: disable=unused-argument
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
@@ -120,26 +136,17 @@ class QueryConverter(Query):
                 if (mat := re.match(r'^"(.*)"$', phrase))
             ]
             code = None
-            id = None
+            taxon_id = None
             if not phrases and len(terms) == 1:
                 if terms[0].isnumeric():
-                    id = terms[0]
+                    taxon_id = terms[0]
                 elif len(terms[0]) == 4:
                     code = terms[0].upper()
-            return terms, phrases, code, id
+            return terms, phrases, code, taxon_id
 
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
-        parser.add_argument("--of", nargs="+", dest="main", default=[])
-        parser.add_argument("--in", nargs="+", dest="ancestor", default=[])
-        parser.add_argument("--by", nargs="+", dest="user", default=[])
-        parser.add_argument("--not-by", nargs="+", dest="unobserved_by", default=[])
-        parser.add_argument("--id-by", nargs="+", dest="id_by", default=[])
-        parser.add_argument("--from", nargs="+", dest="place", default=[])
-        parser.add_argument("--rank", dest="rank", default="")
-        parser.add_argument("--with", nargs="+", dest="controlled_term")
-        parser.add_argument("--per", nargs="+", dest="per", default=[])
-        parser.add_argument("--opt", nargs="+", dest="options", default=[])
-        parser.add_argument("--in-prj", nargs="+", dest="project", default=[])
+        for arg in QUERY_ARGS:
+            parser.add_argument(f"--{arg}", **QUERY_ARGS[arg])
 
         try:
             vals = parser.parse_args(shlex.split(argument, posix=False))
@@ -175,10 +182,12 @@ class QueryConverter(Query):
             ancestor = None
             if vals.main:
                 try:
-                    terms, phrases, code, id = detect_terms_phrases_code_id(vals.main)
+                    terms, phrases, code, taxon_id = detect_terms_phrases_code_id(
+                        vals.main
+                    )
                 except ValueError as err:
-                    raise BadArgument(err.args[0])
-                if id:
+                    raise BadArgument(err.args[0]) from err
+                if taxon_id:
                     if ranks:
                         raise BadArgument(
                             "Taxon IDs are unique. Retry without any ranks: `sp`, `genus`, etc."
@@ -189,7 +198,7 @@ class QueryConverter(Query):
                         )
                 if terms:
                     main = TaxonQuery(
-                        taxon_id=id,
+                        taxon_id=taxon_id,
                         terms=terms,
                         phrases=phrases,
                         ranks=ranks,
@@ -201,14 +210,18 @@ class QueryConverter(Query):
                         "Missing `<taxon1>` for `<taxon1> in <taxon2>` search."
                     )
                 try:
-                    terms, phrases, code, id = detect_terms_phrases_code_id(
+                    terms, phrases, code, taxon_id = detect_terms_phrases_code_id(
                         vals.ancestor
                     )
                 except ValueError as err:
-                    raise BadArgument(err.args[0])
+                    raise BadArgument(err.args[0]) from err
                 if terms:
                     ancestor = TaxonQuery(
-                        taxon_id=id, terms=terms, phrases=phrases, ranks=[], code=code
+                        taxon_id=taxon_id,
+                        terms=terms,
+                        phrases=phrases,
+                        ranks=[],
+                        code=code,
                     )
             if vals.controlled_term:
                 term_name = vals.controlled_term[0]
@@ -273,19 +286,7 @@ class NaturalQueryConverter(QueryConverter):
         for arg in args_normalized:
             arg_lowered = arg.lower()
 
-            # FIXME: determine programmatically from parser:
-            if arg_lowered in [
-                "of",
-                "in",
-                "by",
-                "not-by",
-                "id-by",
-                "from",
-                "rank",
-                "with",
-                "in-prj",
-                "opt",
-            ]:
+            if arg_lowered in QUERY_ARGS:
                 arg_lowered = f"--{arg_lowered}"
             if re.match(r"--", arg_lowered):
                 in_opt = arg_lowered == "--opt"
