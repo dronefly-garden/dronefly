@@ -257,7 +257,7 @@ class NaturalQueryConverter(QueryConverter):
             return argument
         try:
             arg_normalized = re.sub(
-                r"((^| )(id|not)) ?by ", r"\1\2-by ", argument, re.I
+                r"((^| )(id|not)) ?by ", r"\2\3-by ", argument, re.I
             )
             arg_normalized = re.sub(
                 r"((^| )in ?prj) ", r"\2in-prj ", arg_normalized, re.I
