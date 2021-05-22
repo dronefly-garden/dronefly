@@ -48,7 +48,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
@@ -60,7 +60,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Show info from bonap.net for taxon."""
         try:
             self.check_taxon_query(ctx, query)
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
@@ -91,7 +91,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         try:
             self.check_taxon_query(ctx, query)
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
@@ -124,9 +124,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(
-                ctx, query, scientific_name=True
-            )
+            query_response = await self.query.get(ctx, query, scientific_name=True)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
@@ -143,9 +141,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(
-                ctx, query, locale=locale
-            )
+            query_response = await self.query.get(ctx, query, locale=locale)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
@@ -167,7 +163,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except LookupError as err:
             reason = err.args[0]
             await ctx.send(reason)
@@ -227,7 +223,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(ctx, taxon_query)
+            query_response = await self.query.get(ctx, taxon_query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return

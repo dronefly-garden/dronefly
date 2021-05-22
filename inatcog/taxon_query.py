@@ -1,44 +1,13 @@
 """Module to query iNat taxa."""
-import re
 from redbot.core.commands import BadArgument
-from .common import DEQUOTE
-from .controlled_terms import ControlledTerm, match_controlled_term
-from .converters import MemberConverter, NaturalQueryConverter
+from .converters import NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .base_classes import Query, QueryResponse, RANK_EQUIVALENTS, RANK_LEVELS
-
-VALID_OBS_OPTS = [
-    "captive",
-    "created_d1",
-    "created_d2",
-    "created_on",
-    "day",
-    "d1",
-    "d2",
-    "endemic",
-    "iconic_taxa",
-    "id",
-    "identified",
-    "introduced",
-    "month",
-    "native",
-    "not_id",
-    "observed_on",
-    "order",
-    "order_by",
-    "out_of_range",
-    "page",
-    "pcid",
-    "photos",
-    "popular",
-    "quality_grade",
-    "reviewed",
-    "sounds",
-    "threatened",
-    "verifiable",
-    "without_taxon_id",
-    "year",
-]
+from .base_classes import (
+    Query,
+    RANK_EQUIVALENTS,
+    RANK_LEVELS,
+    TaxonQuery,
+)
 
 
 class INatTaxonQuery:
@@ -71,11 +40,11 @@ class INatTaxonQuery:
 
     async def maybe_match_taxon(
         self,
-        query,
-        ancestor_id=None,
-        preferred_place_id=None,
-        scientific_name=False,
-        locale=None,
+        taxon_query: TaxonQuery,
+        ancestor_id: int = None,
+        preferred_place_id: int = None,
+        scientific_name: bool = False,
+        locale: str = None,
     ):
         """Get taxon and return a match, if any."""
         kwargs = {}
@@ -88,16 +57,16 @@ class INatTaxonQuery:
             kwargs["locale"] = locale
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
-        if query.taxon_id:
-            response = await self.cog.api.get_taxa(query.taxon_id, **kwargs)
+        if taxon_query.taxon_id:
+            response = await self.cog.api.get_taxa(taxon_query.taxon_id, **kwargs)
             if response:
                 records = response.get("results")
             if records:
-                taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+                taxon = match_taxon(taxon_query, list(map(get_taxon_fields, records)))
         else:
-            kwargs["q"] = " ".join(query.terms)
-            if query.ranks:
-                kwargs["rank"] = ",".join(query.ranks)
+            kwargs["q"] = " ".join(taxon_query.terms)
+            if taxon_query.ranks:
+                kwargs["rank"] = ",".join(taxon_query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
             for page in range(11):
@@ -118,7 +87,7 @@ class INatTaxonQuery:
                     break
                 records_read += len(records)
                 taxon = match_taxon(
-                    query,
+                    taxon_query,
                     list(map(get_taxon_fields, records)),
                     scientific_name=scientific_name,
                     locale=locale,
@@ -133,7 +102,7 @@ class INatTaxonQuery:
                 raise LookupError("No matching taxon found")
 
             raise LookupError(
-                f"No {'exact ' if query.phrases else ''}match "
+                f"No {'exact ' if taxon_query.phrases else ''}match "
                 f"found in {'scientific name of ' if scientific_name else ''}{records_read}"
                 f" of {total_records} total records containing those terms."
             )
@@ -187,90 +156,6 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxon(self, ctx, query: Query, scientific_name=False, locale=None):
-        """Query for taxon and return single taxon if found."""
-        taxon = None
-        place = None
-        user = None
-        unobserved_by = None
-        id_by = None
-        project = None
-        controlled_term = None
-        options = {}
-        preferred_place_id = await self.cog.get_home(ctx)
-        if query.project:
-            project = await self.cog.project_table.get_project(ctx.guild, query.project)
-        if query.place:
-            place = await self.cog.place_table.get_place(
-                ctx.guild, query.place, ctx.author
-            )
-        if place:
-            preferred_place_id = place.place_id
-        if query.main:
-            taxon = await self.maybe_match_taxon_compound(
-                query,
-                preferred_place_id=preferred_place_id,
-                scientific_name=scientific_name,
-                locale=locale,
-            )
-        if query.user:
-            try:
-                who = await MemberConverter.convert(
-                    ctx, re.sub(DEQUOTE, r"\1", query.user)
-                )
-            except BadArgument as err:
-                raise LookupError(str(err)) from err
-            user = await self.cog.user_table.get_user(who.member)
-        if query.unobserved_by:
-            try:
-                who = await MemberConverter.convert(
-                    ctx, re.sub(DEQUOTE, r"\1", query.unobserved_by)
-                )
-            except BadArgument as err:
-                raise LookupError(str(err)) from err
-            unobserved_by = await self.cog.user_table.get_user(who.member)
-        if query.id_by:
-            try:
-                who = await MemberConverter.convert(
-                    ctx, re.sub(DEQUOTE, r"\1", query.id_by)
-                )
-            except BadArgument as err:
-                raise LookupError(str(err)) from err
-            id_by = await self.cog.user_table.get_user(who.member)
-        if query.controlled_term:
-            (query_term, query_term_value) = query.controlled_term
-            controlled_terms_dict = await self.cog.api.get_controlled_terms()
-            controlled_terms = [
-                ControlledTerm.from_dict(term, infer_missing=True)
-                for term in controlled_terms_dict["results"]
-            ]
-            controlled_term = match_controlled_term(
-                controlled_terms, query_term, query_term_value
-            )
-        if query.options:
-            # Accept a limited selection of options:
-            # - all of these to date apply only to observations, though others could
-            #   be added later
-            # - all options and values are lowercased
-            for (key, *val) in map(lambda opt: opt.lower().split("="), query.options):
-                val = val[0] if val else "true"
-                # - conservatively, only alphanumeric, comma, dash or
-                #   underscore characters accepted in values so far
-                # - TODO: proper validation per field type
-                if key in VALID_OBS_OPTS and re.match(r"^[a-z0-9,_-]*$", val):
-                    options[key] = val
-
-        return QueryResponse(
-            taxon=taxon,
-            user=user,
-            place=place,
-            unobserved_by=unobserved_by,
-            id_by=id_by,
-            project=project,
-            options=options,
-            controlled_term=controlled_term,
-        )
-
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
         queries = query.split(",")
@@ -280,7 +165,7 @@ class INatTaxonQuery:
         for query_str in queries:
             try:
                 query = await NaturalQueryConverter.convert(ctx, query_str)
-                query_response = await self.cog.taxon_query.query_taxon(ctx, query)
+                query_response = await self.cog.query.get(ctx, query)
                 if query_response.taxon:
                     taxon = query_response.taxon
                     taxa[str(taxon.taxon_id)] = taxon

@@ -85,7 +85,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             project=query.project,
             options=query.options,
         )
-        return await self.taxon_query.query_taxon(ctx, last_query)
+        return await self.query.get(ctx, last_query)
 
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
     async def last_obs_taxon(self, ctx, *, query: NaturalQueryConverter = None):

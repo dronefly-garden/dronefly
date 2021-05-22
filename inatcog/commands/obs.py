@@ -124,7 +124,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         try:
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
             self.add_obs_reaction_emojis(msg)
         except (BadArgument, LookupError) as err:
@@ -173,7 +173,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     async def _tabulate_query(self, ctx, query, view="obs"):
         async def get_observer_options(ctx, query, view):
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
             obs_opt = query_response.obs_args()
             full_title = view.capitalize()
             full_title += query_response.obs_query_description()

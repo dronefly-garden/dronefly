@@ -111,7 +111,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     query = await NaturalQueryConverter.convert(ctx, mat["query"])
                     if query.controlled_term:
                         return
-                    query_response = await self.taxon_query.query_taxon(ctx, query)
+                    query_response = await self.query.get(ctx, query)
                 except (BadArgument, LookupError):
                     return
                 if query.user or query.place or query.project:

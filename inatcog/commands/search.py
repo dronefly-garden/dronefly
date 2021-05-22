@@ -218,7 +218,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return (url, kwargs)
 
         async def get_obs_query_args(query):
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
             kwargs = query_response.obs_args()
             if query_response.taxon:
                 query_title = query_response.taxon.format_name(with_term=True)

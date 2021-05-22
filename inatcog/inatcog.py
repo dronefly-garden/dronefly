@@ -17,6 +17,7 @@ from .commands.user import CommandsUser
 from .obs_query import INatObsQuery
 from .places import INatPlaceTable
 from .projects import INatProjectTable
+from .query import INatQuery
 from .listeners import Listeners
 from .search import INatSiteSearch
 from .taxon_query import INatTaxonQuery
@@ -61,6 +62,7 @@ class INatCog(
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)
+        self.query = INatQuery(self)
         self.user_table = INatUserTable(self)
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)

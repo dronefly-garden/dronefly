@@ -12,7 +12,7 @@ class INatObsQuery:
     async def query_single_obs(self, ctx, query: Query):
         """Query observations and return first if found."""
 
-        query_response = await self.cog.taxon_query.query_taxon(ctx, query)
+        query_response = await self.cog.query.get(ctx, query)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 1
         home = await self.cog.get_home(ctx)
@@ -28,7 +28,7 @@ class INatObsQuery:
     async def query_observations(self, ctx, query: Query):
         """Query observations and return iterator for any found."""
 
-        query_response = await self.cog.taxon_query.query_taxon(ctx, query)
+        query_response = await self.cog.query.get(ctx, query)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 200
         home = await self.cog.get_home(ctx)

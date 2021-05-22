@@ -8,6 +8,7 @@ from .base_classes import (
     EstablishmentMeans,
     EstablishmentMeansPartial,
     Taxon,
+    TaxonQuery,
     User,
     Place,
 )
@@ -308,12 +309,17 @@ def match_pat_list(record, pat_list, scientific_name=False, locale=None):
 
 
 def score_match(
-    query, record, all_terms, pat_list=None, scientific_name=False, locale=None
+    taxon_query: TaxonQuery,
+    record,
+    all_terms,
+    pat_list=None,
+    scientific_name=False,
+    locale=None,
 ):
     """Score a matched record. A higher score is a better match.
     Parameters
     ----------
-    query: SimpleQuery
+    taxon_query: TaxonQuery
         The query for the matched record being scored.
 
     record: Taxon
@@ -334,7 +340,7 @@ def score_match(
     """
     score = 0
 
-    if query.taxon_id:
+    if taxon_query.taxon_id:
         return 1000  # An id is always the best match
 
     matched = (
@@ -344,7 +350,7 @@ def score_match(
     )
     all_matched = (
         match_pat(record, all_terms, scientific_name, locale)
-        if query.taxon_id
+        if taxon_query.taxon_id
         else NO_NAME_MATCH
     )
 
@@ -359,7 +365,7 @@ def score_match(
         else:
             score = -1
     else:
-        if query.code and (query.code == record.term):
+        if taxon_query.code and (taxon_query.code == record.term):
             score = 300
         elif matched.name or matched.common:
             score = 210
@@ -375,23 +381,23 @@ def score_match(
     return score
 
 
-def match_taxon(query, records, scientific_name=False, locale=None):
+def match_taxon(taxon_query: TaxonQuery, records, scientific_name=False, locale=None):
     """Match a single taxon for the given query among records returned by API."""
     pat_list = []
-    all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)
-    if query.phrases:
-        for phrase in query.phrases:
+    all_terms = re.compile(r"^%s$" % re.escape(" ".join(taxon_query.terms)), re.I)
+    if taxon_query.phrases:
+        for phrase in taxon_query.phrases:
             pat = re.compile(r"\b%s\b" % re.escape(" ".join(phrase)), re.I)
             pat_list.append(pat)
     elif scientific_name or locale:
-        for term in query.terms:
+        for term in taxon_query.terms:
             pat = re.compile(r"\b%s" % re.escape(term), re.I)
             pat_list.append(pat)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
         scores[num] = score_match(
-            query,
+            taxon_query,
             record,
             all_terms=all_terms,
             pat_list=pat_list,
@@ -401,7 +407,9 @@ def match_taxon(query, records, scientific_name=False, locale=None):
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    min_score_met = (best_score >= 0) and ((not query.phrases) or (best_score >= 200))
+    min_score_met = (best_score >= 0) and (
+        (not taxon_query.phrases) or (best_score >= 200)
+    )
 
     return best_record if min_score_met else None
 

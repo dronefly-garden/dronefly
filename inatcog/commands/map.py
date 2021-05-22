@@ -44,7 +44,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
         """Show map of observations."""
 
         try:
-            query_response = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
             kwargs = query_response.obs_args()
             if query_response.taxon:
                 query_title = "Map of " + query_response.taxon.format_name(
