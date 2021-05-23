@@ -19,7 +19,6 @@ from .base_classes import (
     MEANS_LABEL_DESC,
     WWW_BASE_URL,
     PAT_OBS_LINK,
-    PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
     Place,
     QueryResponse,
@@ -94,10 +93,31 @@ OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
 class INatEmbed(discord.Embed):
     """Base class for INat embeds."""
 
+    params: dict = {}
+
     @classmethod
     def from_discord_embed(cls, embed: discord.Embed):
-        """Create an inat embed from discord.Embed argument."""
+        """Create an iNat embed from a discord.Embed."""
         return cls.from_dict(embed.to_dict())
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create an iNat embed from a dict."""
+        inat_embed = super(cls, INatEmbed).from_dict(data)
+        inat_embed.params = inat_embed.get_params()
+        return inat_embed
+
+    def __init__(self):
+        super().__init__()
+        self.params = self.get_params()
+
+    def get_params(self):
+        """Return params from url, if present."""
+        if self.params or not self.url:
+            return self.params
+
+        url = urlsplit(self.url)
+        return parse_qs(url.query)
 
     def inat_content_as_dict(self):
         """Return iNat content from embed as dict."""
@@ -111,6 +131,7 @@ class INatEmbed(discord.Embed):
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
         content["project_id"] = self.project_id()
+        content["params"] = self.params
         return content
 
     def has_users(self):
@@ -173,28 +194,12 @@ class INatEmbed(discord.Embed):
 
     def place_id(self):
         """Return place_id(s) from embed url, if present."""
-        if not self.url:
-            return None
-
-        mat = re.match(PAT_OBS_QUERY, self.url)
-        if not mat:
-            return None
-        url = urlsplit(mat["url"])
-        params = parse_qs(url.query)
-        place_id = params.get("place_id")
+        place_id = self.params.get("place_id")
         return int(place_id[0]) if place_id else None
 
     def project_id(self):
         """Return project_id(s) from embed url, if present."""
-        if not self.url:
-            return None
-
-        mat = re.match(PAT_OBS_QUERY, self.url)
-        if not mat:
-            return None
-        url = urlsplit(mat["url"])
-        params = parse_qs(url.query)
-        project_id = params.get("project_id")
+        project_id = self.params.get("project_id")
         return int(project_id[0]) if project_id else None
 
     def taxon_id(self):
@@ -206,26 +211,13 @@ class INatEmbed(discord.Embed):
         mat = re.match(PAT_TAXON_LINK, self.url)
         if mat and mat["taxon_id"]:
             return int(mat["taxon_id"])
-        # Otherwise, match from /observations query
-        mat = re.match(PAT_OBS_QUERY, self.url)
-        if not mat:
-            return None
-        url = urlsplit(mat["url"])
-        params = parse_qs(url.query)
-        taxon_id = params.get("taxon_id")
+
+        taxon_id = self.params.get("taxon_id")
         return int(taxon_id[0]) if taxon_id else None
 
     def user_id(self):
         """Return user_id(s) from embed url, if present."""
-        if not self.url:
-            return None
-
-        mat = re.match(PAT_OBS_QUERY, self.url)
-        if not mat:
-            return None
-        url = urlsplit(mat["url"])
-        params = parse_qs(url.query)
-        user_id = params.get("user_id")
+        user_id = self.params.get("user_id")
         return int(user_id[0]) if user_id else None
 
 
