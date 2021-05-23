@@ -102,6 +102,7 @@ class INatEmbed(discord.Embed):
     def inat_content_as_dict(self):
         """Return iNat content from embed as dict."""
         content = dict()
+        content["listed_id_by_user_ids"] = self.listed_id_by_user_ids()
         content["listed_not_by_user_ids"] = self.listed_not_by_user_ids()
         content["listed_place_ids"] = self.listed_place_ids()
         content["listed_user_ids"] = self.listed_user_ids()

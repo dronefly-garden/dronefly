@@ -137,7 +137,6 @@ class Query:
 EMPTY_QUERY = Query()
 
 
-# TODO: this should just be Place, as it is a superset
 @dataclass
 class MeansPlace(DataClassJsonMixin):
     """The place for establishment means."""
