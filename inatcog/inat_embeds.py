@@ -287,6 +287,7 @@ class INatEmbeds(MixinMeta):
             args = ctx.message.content.split(" ", 1)[1]
             reason = (
                 "I don't understand that query.\nPerhaps you meant one of:\n"
+                f"`{ctx.clean_prefix}tab {args}`\n"
                 f"`{ctx.clean_prefix}obs {args}`\n"
                 f"`{ctx.clean_prefix}search obs {args}`"
             )
