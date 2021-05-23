@@ -62,9 +62,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             # Note: if the user specified an invalid or deleted id, a url is still
             # produced (i.e. should 404).
             if url:
-                await ctx.send(
-                    embed=await self.make_obs_embed(ctx.guild, obs, url, preview=False)
-                )
+                await ctx.send(embed=await self.make_obs_embed(obs, url, preview=False))
                 if obs and obs.sounds:
                     await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                 return
@@ -81,9 +79,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
-        await ctx.send(
-            embed=await self.make_obs_embed(ctx.guild, obs, url, preview=True)
-        )
+        await ctx.send(embed=await self.make_obs_embed(obs, url, preview=True))
         if obs and obs.sounds:
             await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
 
@@ -309,7 +305,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
             )["results"]
             obs = get_obs_fields(results[0]) if results else None
-            await ctx.send(embed=await self.make_obs_embed(ctx.guild, obs, url))
+            await ctx.send(embed=await self.make_obs_embed(obs, url))
             if obs and obs.sounds:
                 await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
             return

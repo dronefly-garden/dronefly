@@ -287,13 +287,11 @@ class INatEmbeds(MixinMeta):
                 home = await self.config.home()
         return home
 
-    async def make_last_obs_embed(self, ctx, last):
+    async def make_last_obs_embed(self, last):
         """Return embed for recent observation link."""
         if last.obs:
             obs = last.obs
-            embed = await self.make_obs_embed(
-                ctx.guild, obs, url=last.url, preview=False
-            )
+            embed = await self.make_obs_embed(obs, url=last.url, preview=False)
         else:
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
@@ -613,7 +611,7 @@ class INatEmbeds(MixinMeta):
                 title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
-    async def make_obs_embed(self, guild, obs, url, preview: Union[bool, int] = True):
+    async def make_obs_embed(self, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
 
@@ -722,7 +720,7 @@ class INatEmbeds(MixinMeta):
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, ctx, rec, index=1):
+    async def make_image_embed(self, rec, index=1):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
 
@@ -1015,9 +1013,7 @@ class INatEmbeds(MixinMeta):
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1
     ):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(
-            embed=await self.make_image_embed(ctx, query_response, index)
-        )
+        msg = await ctx.send(embed=await self.make_image_embed(query_response, index))
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
         #   user will break the display; they can use `,last t` to get the taxon

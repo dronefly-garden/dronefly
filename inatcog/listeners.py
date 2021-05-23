@@ -88,7 +88,7 @@ class Listeners(INatEmbeds, MixinMeta):
             # Only output if an observation is found
             if obs:
                 await message.channel.send(
-                    embed=await self.make_obs_embed(guild, obs, url, preview=False)
+                    embed=await self.make_obs_embed(obs, url, preview=False)
                 )
                 if obs and obs.sounds:
                     await self.maybe_send_sound_url(channel, obs.sounds[0])
@@ -220,11 +220,13 @@ class Listeners(INatEmbeds, MixinMeta):
             message = next(
                 msg for msg in self.bot.cached_messages if msg.id == payload.message_id
             )
-        except StopIteration:  # too old; have to fetch it
+        except StopIteration as err:  # too old; have to fetch it
             try:
                 message = await channel.fetch_message(payload.message_id)
             except discord.errors.NotFound:
-                raise ValueError("Message was deleted before reaction handled.")
+                raise ValueError(
+                    "Message was deleted before reaction handled."
+                ) from err
         if message.author != self.bot.user:
             raise ValueError("Reaction is not to our own message.")
         return (member, message)

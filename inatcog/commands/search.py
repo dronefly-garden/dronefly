@@ -77,7 +77,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 obs = get_obs_fields(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
-                        ctx.guild, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                        obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
                     if obs and obs.sounds:
                         await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])

@@ -45,7 +45,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
+        await ctx.send(embed=await self.make_last_obs_embed(last))
         if last.obs.sounds:
             await self.maybe_send_sound_url(ctx.channel, last.obs.sounds[0])
 
@@ -59,9 +59,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             except ValueError:
                 num = 0
             await ctx.send(
-                embed=await self.make_obs_embed(
-                    ctx.guild, last.obs, last.url, preview=num
-                )
+                embed=await self.make_obs_embed(last.obs, last.url, preview=num)
             )
         else:
             await apologize(ctx, "Nothing found")
