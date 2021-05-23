@@ -369,12 +369,10 @@ class INatEmbeds(MixinMeta):
                 title_query_response.user = None
                 header = TAXON_COUNTS_HEADER
             elif unobserved_by:
-                count_args["unobserved"] = True
                 user = copy.copy(title_query_response.unobserved_by)
                 title_query_response.unobserved_by = None
                 header = TAXON_NOTBY_HEADER
             elif id_by:
-                count_args["ident"] = True
                 user = copy.copy(title_query_response.id_by)
                 title_query_response.id_by = None
                 header = TAXON_IDBY_HEADER
