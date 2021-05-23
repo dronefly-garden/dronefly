@@ -1247,8 +1247,6 @@ class INatEmbeds(MixinMeta):
         """Update the totals for the embed."""
         unobserved = inat_embed.has_not_by_users()
         ident = inat_embed.has_id_by_users()
-        place_id = inat_embed.place_id()
-        project_id = inat_embed.project_id()
         if not (unobserved or ident):
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
@@ -1291,12 +1289,7 @@ class INatEmbeds(MixinMeta):
             # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
-                    self,
-                    ",".join(matches),
-                    taxon,
-                    place_id,
-                    project_id=project_id,
-                    **inat_embed.params,
+                    self, ",".join(matches), taxon, **inat_embed.params,
                 )
                 description += f"\n{formatted_counts}"
                 return description
