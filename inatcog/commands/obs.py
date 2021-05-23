@@ -115,10 +115,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 but only fish from canada are tabulated
         ```
         """
-        if query.controlled_term:
-            await apologize(ctx, "I can't tabulate that yet.")
-            return
-
         try:
             query_response = await self.query.get(ctx, query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
@@ -177,15 +173,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
             species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
             return (query_response, obs_opt, full_title, species_only)
 
-        if query and (
-            query.controlled_term
-            or query.unobserved_by
-            or query.id_by
-            or query.per
-            or query.user
-        ):
-            await apologize(ctx, "I can't tabulate that yet.")
-            return
         try:
             obs_opt_view = "identifiers" if view == "ids" else "observers"
             (

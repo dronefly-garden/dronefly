@@ -359,58 +359,31 @@ class INatEmbeds(MixinMeta):
         place = query_response.place
         unobserved_by = query_response.unobserved_by
         id_by = query_response.id_by
-        project = query_response.project
         count_args = query_response.obs_args()
 
         title_query_response = copy.copy(query_response)
         description = ""
-        if user:
-            if place or project:
-                formatted_counts = await format_user_taxon_counts(
-                    self, user, taxon, **count_args
-                )
+        if user or unobserved_by or id_by:
+            if user:
                 title_query_response.user = None
                 header = TAXON_COUNTS_HEADER
-            elif unobserved_by or id_by:
-                raise BadArgument("I can't tabulate that yet.")
-            else:
-                formatted_counts = await format_user_taxon_counts(
-                    self, user, taxon, **count_args
-                )
-                title_query_response.user = None
-                header = TAXON_COUNTS_HEADER
-        elif place or project:
-            if unobserved_by:
-                formatted_counts = await format_user_taxon_counts(
-                    self, unobserved_by, taxon, unobserved=True, **count_args
-                )
+            elif unobserved_by:
+                count_args["unobserved"] = True
                 title_query_response.not_by = None
                 header = TAXON_NOTBY_HEADER
             elif id_by:
-                formatted_counts = await format_user_taxon_counts(
-                    self, id_by, taxon, ident=True, **count_args
-                )
+                count_args["id_by"] = True
                 title_query_response.id_by = None
                 header = TAXON_IDBY_HEADER
-            elif place:
-                formatted_counts = await format_place_taxon_counts(
-                    self, place, taxon, **count_args
-                )
-                title_query_response.place = None
-                header = TAXON_PLACES_HEADER
-
-        elif unobserved_by:
             formatted_counts = await format_user_taxon_counts(
-                self, unobserved_by, taxon, None, unobserved=True, **count_args
+                self, user, taxon, **count_args
             )
-            title_query_response.not_by = None
-            header = TAXON_NOTBY_HEADER
-        elif id_by:
-            formatted_counts = await format_user_taxon_counts(
-                self, id_by, taxon, None, ident=True, **count_args
+        elif place:
+            formatted_counts = await format_place_taxon_counts(
+                self, place, taxon, **count_args
             )
-            title_query_response.id_by = None
-            header = TAXON_IDBY_HEADER
+            title_query_response.place = None
+            header = TAXON_PLACES_HEADER
         if formatted_counts:
             description = f"\n{header}\n{formatted_counts}"
 
