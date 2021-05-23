@@ -5,7 +5,7 @@ import re
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import WWW_BASE_URL
+from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
 from inatcog.converters import NaturalQueryConverter
 from inatcog.embeds import apologize, make_embed
 from inatcog.inat_embeds import INatEmbeds
@@ -70,6 +70,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
         full_name = taxon.format_name()
+        if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
+            await ctx.send(f"{full_name} is not in Plantae")
+            return
         if taxon.rank == "genus":
             await ctx.send(
                 f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
@@ -78,6 +81,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
         else:
             await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            return
+        await (self.bot.get_command("tabulate")(ctx, query=query))
 
     @taxon.command(name="means")
     async def taxon_means(self, ctx, place_query: str, *, query: NaturalQueryConverter):

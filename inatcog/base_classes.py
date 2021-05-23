@@ -43,6 +43,8 @@ PAT_OBS_QUERY = re.compile(
     r"(?P<url>" + WWW_URL_PAT + r"/observations" + QUERY_PAT + ")"
 )
 
+PLANTAE_ID = 47126
+
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
 # - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
 RANK_LEVELS = {
