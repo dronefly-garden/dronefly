@@ -24,7 +24,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @commands.group(invoke_without_command=True, aliases=["observation"])
     @checks.bot_has_permissions(embed_links=True)
     async def obs(self, ctx, *, query_str: str):
-        """Show observation matching query, link, or number.
+        """Observation matching query, link, or number.
 
         **query** may contain:
         - `by [name]` to match the named resgistered user (or `me`)
@@ -86,7 +86,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
     async def tabulate(self, ctx, *, query: NaturalQueryConverter):
-        """Show a table from iNaturalist data matching the query.
+        """Tabulate iNaturalist data.
 
         • Only observations can be tabulated. More kinds of table
           to be supported in future releases.
@@ -125,7 +125,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @tabulate.command(name="maverick")
     async def tabulate_maverick(self, ctx, *, query: Optional[NaturalQueryConverter]):
-        """Show maverick identifications.
+        """Maverick identifications.
 
         • By default, if your iNat login is known, your own maverick
           identifications are displayed.
@@ -235,44 +235,44 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @tabulate.command(name="topids")
     async def tabulate_top_identifiers(self, ctx, *, query: NaturalQueryConverter):
-        """Show top observations identified per identifier (alias `[p]topids`)."""
+        """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
         return
 
     @commands.command(name="topids")
     async def top_identifiers(self, ctx, *, query: NaturalQueryConverter):
-        """Show top observations identified per identifier (alias `[p]tab topids`)."""
+        """Top observations IDed per IDer (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
         return
 
     @tabulate.command(name="topobs")
     async def tabulate_top_observers(self, ctx, *, query: NaturalQueryConverter):
-        """Show top observations per observer (alias `[p]topobs`)."""
+        """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
         return
 
     @commands.command(name="topobs")
     async def top_observers(self, ctx, *, query: NaturalQueryConverter):
-        """Show top observations per observer (alias `[p]tab topobs`)."""
+        """Top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
         return
 
     @tabulate.command(name="topspp", alias=["topsp"])
     async def tabulate_top_species(self, ctx, *, query: NaturalQueryConverter):
-        """Show top species per observer (alias `[p]topspp`)."""
+        """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
         return
 
     @commands.command(name="topspp", alias=["topsp"])
     async def top_species(self, ctx, *, query: NaturalQueryConverter):
-        """Show top species per observer (alias `[p]tab topspp`)."""
+        """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
         return
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
     async def link(self, ctx, *, query):
-        """Show summary for iNaturalist link.
+        """Summary for iNaturalist link.
 
         e.g.
         ```
