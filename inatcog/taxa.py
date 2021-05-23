@@ -426,7 +426,6 @@ async def format_place_taxon_counts(
         name = place.display_name
     obs_opt = copy.copy(kwargs)
     obs_opt["verifiable"] = "true"
-    obs_opt = {**obs_opt, **kwargs}
     observations = await cog.api.get_observations(per_page=0, **obs_opt)
     species = await cog.api.get_observations("species_counts", per_page=0, **obs_opt)
     if observations:

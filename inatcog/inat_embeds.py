@@ -1277,8 +1277,16 @@ class INatEmbeds(MixinMeta):
                     description += "\n" + TAXON_IDBY_HEADER
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
+            user_id = inat_user.user_id
+            count_params = copy.copy(inat_embed.params)
+            if unobserved:
+                count_params["unobserved_by_user_id"] = user_id
+            elif ident:
+                count_params["ident_user_id"] = user_id
+            else:
+                count_params["user_id"] = user_id
             formatted_counts = await format_user_taxon_counts(
-                self, inat_user, taxon, **inat_embed.params,
+                self, inat_user, taxon, **count_params,
             )
             description += "\n" + formatted_counts
 
@@ -1288,8 +1296,10 @@ class INatEmbeds(MixinMeta):
             )
             # Total added only if more than one user:
             if len(matches) > 1:
+                user_ids = ",".join(matches)
+                count_params["user_id"] = user_ids
                 formatted_counts = await format_user_taxon_counts(
-                    self, ",".join(matches), taxon, **inat_embed.params,
+                    self, user_ids, taxon, **count_params,
                 )
                 description += f"\n{formatted_counts}"
                 return description
