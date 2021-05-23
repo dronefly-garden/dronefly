@@ -369,10 +369,12 @@ class INatEmbeds(MixinMeta):
                 header = TAXON_COUNTS_HEADER
             elif unobserved_by:
                 count_args["unobserved"] = True
-                title_query_response.not_by = None
+                user = copy.copy(title_query_response.unobserved_by)
+                title_query_response.unobserved_by = None
                 header = TAXON_NOTBY_HEADER
             elif id_by:
-                count_args["id_by"] = True
+                count_args["ident"] = True
+                user = copy.copy(title_query_response.id_by)
                 title_query_response.id_by = None
                 header = TAXON_IDBY_HEADER
             formatted_counts = await format_user_taxon_counts(
@@ -1278,14 +1280,7 @@ class INatEmbeds(MixinMeta):
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
             formatted_counts = await format_user_taxon_counts(
-                self,
-                inat_user,
-                taxon,
-                place_id,
-                unobserved,
-                ident,
-                project_id,
-                **inat_embed.params,
+                self, inat_user, taxon, **inat_embed.params,
             )
             description += "\n" + formatted_counts
 
@@ -1366,12 +1361,7 @@ class INatEmbeds(MixinMeta):
             if not matches:
                 description += "\n" + TAXON_PLACES_HEADER
             formatted_counts = await format_place_taxon_counts(
-                self,
-                place,
-                taxon,
-                inat_embed.user_id(),
-                project_id=inat_embed.project_id(),
-                **inat_embed.params,
+                self, place, taxon, **inat_embed.params,
             )
             description += "\n" + formatted_counts
 
@@ -1381,12 +1371,7 @@ class INatEmbeds(MixinMeta):
         # Total added only if more than one place:
         if len(matches) > 1:
             formatted_counts = await format_place_taxon_counts(
-                self,
-                ",".join(matches),
-                taxon,
-                inat_embed.user_id(),
-                project_id=inat_embed.project_id(),
-                **inat_embed.params,
+                self, ",".join(matches), taxon, **inat_embed.params,
             )
             description += f"\n{formatted_counts}"
             return description

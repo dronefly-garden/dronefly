@@ -1,5 +1,7 @@
 """Module to work with iNat taxa."""
+import copy
 import re
+from urllib.parse import urlencode
 from typing import NamedTuple, Optional, Union
 from .base_classes import (
     WWW_BASE_URL,
@@ -415,54 +417,22 @@ def match_taxon(taxon_query: TaxonQuery, records, scientific_name=False, locale=
 
 
 async def format_place_taxon_counts(
-    cog,
-    place: Union[Place, str],
-    taxon: Taxon = None,
-    user_id: int = None,
-    project_id: int = None,
-    **kwargs,
+    cog, place: Union[Place, str], taxon: Taxon = None, **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
-        place_id = place
         name = "*total*"
     else:
-        place_id = place.place_id
         name = place.display_name
-    obs_opt = {
-        "place_id": place_id,
-        "per_page": 0,
-        "verifiable": "true",
-    }
-    species_opt = {
-        "place_id": place_id,
-        "per_page": 0,
-        "verifiable": "true",
-    }
-    if taxon:
-        taxon_id = taxon.taxon_id
-        obs_opt["taxon_id"] = taxon_id
-        species_opt["taxon_id"] = taxon_id
-    if user_id:
-        obs_opt["user_id"] = user_id
-        species_opt["user_id"] = user_id
-    if project_id:
-        obs_opt["project_id"] = project_id
-        species_opt["project_id"] = project_id
+    obs_opt = copy.copy(kwargs)
+    obs_opt["verifiable"] = "true"
     obs_opt = {**obs_opt, **kwargs}
-    species_opt = {**species_opt, **kwargs}
-    observations = await cog.api.get_observations(**obs_opt)
-    species = await cog.api.get_observations("species_counts", **species_opt)
+    observations = await cog.api.get_observations(per_page=0, **obs_opt)
+    species = await cog.api.get_observations("species_counts", per_page=0, **obs_opt)
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = WWW_BASE_URL + f"/observations?place_id={place_id}&verifiable=true"
-        if taxon:
-            url += f"&taxon_id={taxon_id}"
-        if user_id:
-            url += f"&user_id={user_id}"
-        if project_id:
-            url += f"&project_id={project_id}"
+        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {name}"
         else:
@@ -473,69 +443,25 @@ async def format_place_taxon_counts(
 
 
 async def format_user_taxon_counts(
-    cog,
-    user: Union[User, str],
-    taxon: Taxon = None,
-    place_id: int = None,
-    unobserved: bool = False,
-    ident: bool = False,
-    project_id: int = None,
-    **kwargs,
+    cog, user: Union[User, str], taxon: Taxon = None, **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):
-        user_id = user
         login = "*total*"
     else:
-        user_id = user.user_id
         login = user.login
-    if unobserved:
-        obs_opt = {
-            "unobserved_by_user_id": user_id,
-            "lrank": "species",
-            "per_page": 0,
-        }
-        species_opt = {
-            "unobserved_by_user_id": user_id,
-            "lrank": "species",
-            "per_page": 0,
-        }
-    elif ident:
-        obs_opt = {"ident_user_id": user_id, "per_page": 0}
-        species_opt = {"ident_user_id": user_id, "per_page": 0}
-    else:
-        obs_opt = {"user_id": user_id, "per_page": 0}
-        species_opt = {"user_id": user_id, "per_page": 0}
-    if taxon:
-        taxon_id = taxon.taxon_id
-        obs_opt["taxon_id"] = taxon_id
-        species_opt["taxon_id"] = taxon_id
-    if place_id:
-        obs_opt["place_id"] = place_id
-        species_opt["place_id"] = place_id
-    if project_id:
-        obs_opt["project_id"] = project_id
-        species_opt["project_id"] = project_id
-    obs_opt = {**obs_opt, **kwargs}
-    species_opt = {**species_opt, **kwargs}
-    observations = await cog.api.get_observations(**obs_opt)
-    species = await cog.api.get_observations("species_counts", **species_opt)
+    obs_opt = copy.copy(kwargs)
+    species_opt = copy.copy(kwargs)
+    if kwargs.get("unobserved_by_user_id"):
+        obs_opt["lrank"] = "species"
+    observations = await cog.api.get_observations(per_page=0, **obs_opt)
+    species = await cog.api.get_observations(
+        "species_counts", per_page=0, **species_opt
+    )
     if observations:
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = WWW_BASE_URL + "/observations?verifiable=any"
-        if taxon:
-            url += f"&taxon_id={taxon_id}"
-        if unobserved:
-            url += f"&unobserved_by_user_id={user_id}&lrank=species"
-        elif ident:
-            url += f"&ident_user_id={user_id}"
-        else:
-            url += f"&user_id={user_id}"
-        if place_id:
-            url += f"&place_id={place_id}"
-        if project_id:
-            url += f"&project_id={project_id}"
+        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count}]({url}) {login}"
         else:
