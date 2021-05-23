@@ -99,7 +99,7 @@ class INatTaxonQuery:
 
         if not taxon:
             if records_read >= total_records:
-                raise LookupError("No matching taxon found")
+                raise LookupError("No matching taxon found.")
 
             raise LookupError(
                 f"No {'exact ' if taxon_query.phrases else ''}match "
@@ -139,13 +139,20 @@ class INatTaxonQuery:
                                 ancestor.rank,
                             )
                         )
-                taxon = await self.maybe_match_taxon(
-                    query.main,
-                    ancestor_id=ancestor.taxon_id,
-                    preferred_place_id=preferred_place_id,
-                    scientific_name=scientific_name,
-                    locale=locale,
-                )
+                try:
+                    taxon = await self.maybe_match_taxon(
+                        query.main,
+                        ancestor_id=ancestor.taxon_id,
+                        preferred_place_id=preferred_place_id,
+                        scientific_name=scientific_name,
+                        locale=locale,
+                    )
+                except LookupError as err:
+                    reason = (
+                        str(err) + "\nPerhaps instead of `in` (ancestor), you meant\n"
+                        "`from` (place) or `in prj` (project)?"
+                    )
+                    raise LookupError(reason) from err
         else:
             taxon = await self.maybe_match_taxon(
                 query.main,
