@@ -116,7 +116,7 @@ class INatQuery:
         )
         args["id_by"] = await self._get_user(ctx, query.id_by) if query.id_by else None
         args["controlled_term"] = (
-            await self._get_controlled_term(ctx, *query.controlled_term)
+            await self._get_controlled_term(*query.controlled_term)
             if query.controlled_term
             else None
         )

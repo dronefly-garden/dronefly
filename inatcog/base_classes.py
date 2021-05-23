@@ -535,7 +535,7 @@ class QueryResponse:
             kwargs["lrank"] = "species"
         if self.controlled_term:
             kwargs["term_id"] = self.controlled_term.term.id
-            kwargs["term_value_id"] = self.controlled_term.term_value.id
+            kwargs["term_value_id"] = self.controlled_term.value.id
         if self.options:
             kwargs = {**kwargs, **self.options}
         return kwargs
