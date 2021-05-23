@@ -1256,6 +1256,7 @@ class INatEmbeds(MixinMeta):
         matches = re.findall(
             r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
         )
+        count_params = {**inat_embed.params}
         if action == "remove":
             # Remove the header if last one and the user's count:
             if len(matches) == 1:
@@ -1278,7 +1279,6 @@ class INatEmbeds(MixinMeta):
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
             user_id = inat_user.user_id
-            count_params = copy.copy(inat_embed.params)
             if unobserved:
                 count_params["unobserved_by_user_id"] = user_id
             elif ident:
@@ -1354,6 +1354,7 @@ class INatEmbeds(MixinMeta):
         description = re.sub(r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description)
 
         matches = re.findall(r"\n\[[0-9 \(\)]+\]\(.*?\) (.*?)(?=\n|$)", description)
+        count_params = {**inat_embed.params, "place_id": place.place_id}
         if action == "remove":
             # Remove the header if last one and the place's count:
             if len(matches) == 1:
@@ -1364,7 +1365,7 @@ class INatEmbeds(MixinMeta):
             if not matches:
                 description += "\n" + TAXON_PLACES_HEADER
             formatted_counts = await format_place_taxon_counts(
-                self, place, taxon, **inat_embed.params,
+                self, place, taxon, **count_params,
             )
             description += "\n" + formatted_counts
 
@@ -1373,8 +1374,9 @@ class INatEmbeds(MixinMeta):
         )
         # Total added only if more than one place:
         if len(matches) > 1:
+            place_ids = ",".join(matches)
             formatted_counts = await format_place_taxon_counts(
-                self, ",".join(matches), taxon, **inat_embed.params,
+                self, place_ids, taxon, **count_params,
             )
             description += f"\n{formatted_counts}"
             return description
