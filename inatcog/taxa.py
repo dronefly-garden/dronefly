@@ -420,6 +420,7 @@ async def format_place_taxon_counts(
     taxon: Taxon = None,
     user_id: int = None,
     project_id: int = None,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
@@ -448,6 +449,8 @@ async def format_place_taxon_counts(
     if project_id:
         obs_opt["project_id"] = project_id
         species_opt["project_id"] = project_id
+    obs_opt = {**obs_opt, **kwargs}
+    species_opt = {**species_opt, **kwargs}
     observations = await cog.api.get_observations(**obs_opt)
     species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:
@@ -477,6 +480,7 @@ async def format_user_taxon_counts(
     unobserved: bool = False,
     ident: bool = False,
     project_id: int = None,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):
@@ -512,6 +516,8 @@ async def format_user_taxon_counts(
     if project_id:
         obs_opt["project_id"] = project_id
         species_opt["project_id"] = project_id
+    obs_opt = {**obs_opt, **kwargs}
+    species_opt = {**species_opt, **kwargs}
     observations = await cog.api.get_observations(**obs_opt)
     species = await cog.api.get_observations("species_counts", **species_opt)
     if observations:

@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import copy
 import datetime as dt
 from io import BytesIO
 import re
@@ -20,6 +21,7 @@ from .base_classes import (
     WWW_BASE_URL,
     PAT_OBS_LINK,
     PAT_OBS_TAXON_LINK,
+    PAT_OBS_QUERY,
     Place,
     QueryResponse,
     Taxon,
@@ -93,6 +95,8 @@ OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
 class INatEmbed(discord.Embed):
     """Base class for INat embeds."""
 
+    taxon_url: None
+    obs_url: None
     params: dict = {}
 
     @classmethod
@@ -104,20 +108,49 @@ class INatEmbed(discord.Embed):
     def from_dict(cls, data: dict):
         """Create an iNat embed from a dict."""
         inat_embed = super(cls, INatEmbed).from_dict(data)
-        inat_embed.params = inat_embed.get_params()
+        inat_embed.obs_url = inat_embed.get_observations_url()
+        inat_embed.taxon_url, taxon_id = inat_embed.get_taxon_url()
+        inat_embed.params = inat_embed.get_params(taxon_id)
         return inat_embed
 
     def __init__(self):
         super().__init__()
-        self.params = self.get_params()
+        self.obs_url = self.get_observations_url()
+        self.taxon_url, taxon_id = self.get_taxon_url()
+        self.params = self.get_params(taxon_id)
 
-    def get_params(self):
-        """Return params from url, if present."""
-        if self.params or not self.url:
+    def get_observations_url(self):
+        """Return observations url, if present."""
+        if self.url:
+            if re.match(PAT_OBS_QUERY, self.url):
+                return self.url
+        # may be in body (i.e. observations count)
+        mat = re.match(PAT_OBS_QUERY, self.description)
+        if mat:
+            return mat["url"]
+        return None
+
+    def get_taxon_url(self):
+        """Return taxon url and the taxon_id in it, if present."""
+        if self.url:
+            mat = re.match(PAT_TAXON_LINK, self.url)
+            if mat:
+                return (mat["url"], mat["taxon_id"])
+        return (None, None)
+
+    def get_params(self, taxon_id=None):
+        """Return recognized params for the embed."""
+        url = self.obs_url or self.taxon_url or self.url
+        if self.params or not url:
             return self.params
 
-        url = urlsplit(self.url)
-        return parse_qs(url.query)
+        params = parse_qs(urlsplit(url).query)
+        # TODO: we should leave these as-is and use urlencode with doseq=True
+        # instead to put the URL back together later
+        new_params = {key: ",".join(params[key]) for key in params}
+        if taxon_id:
+            new_params["taxon_id"] = taxon_id
+        return new_params
 
     def inat_content_as_dict(self):
         """Return iNat content from embed as dict."""
@@ -193,32 +226,24 @@ class INatEmbed(discord.Embed):
         return [int(id) for id in re.findall(USER_ID_PAT, self.description)]
 
     def place_id(self):
-        """Return place_id(s) from embed url, if present."""
+        """Return place_id(s) from embed, if present."""
         place_id = self.params.get("place_id")
-        return int(place_id[0]) if place_id else None
+        return int(place_id) if place_id else None
 
     def project_id(self):
-        """Return project_id(s) from embed url, if present."""
+        """Return project_id(s) from embed, if present."""
         project_id = self.params.get("project_id")
-        return int(project_id[0]) if project_id else None
+        return int(project_id) if project_id else None
 
     def taxon_id(self):
-        """Return taxon_id(s) from embed url, if present."""
-        if not self.url:
-            return None
-
-        # Could be direct link to /taxa/# record
-        mat = re.match(PAT_TAXON_LINK, self.url)
-        if mat and mat["taxon_id"]:
-            return int(mat["taxon_id"])
-
+        """Return taxon_id(s) from embed, if present."""
         taxon_id = self.params.get("taxon_id")
-        return int(taxon_id[0]) if taxon_id else None
+        return int(taxon_id) if taxon_id else None
 
     def user_id(self):
-        """Return user_id(s) from embed url, if present."""
+        """Return user_id(s) from embed, if present."""
         user_id = self.params.get("user_id")
-        return int(user_id[0]) if user_id else None
+        return int(user_id) if user_id else None
 
 
 @format_items_for_embed
@@ -258,7 +283,7 @@ class INatEmbeds(MixinMeta):
         """Check for valid taxon query."""
         if not isinstance(query, Query):
             return
-        if query.controlled_term or (query.user and query.place) or not query.main:
+        if not query.main:
             args = ctx.message.content.split(" ", 1)[1]
             reason = (
                 "I don't understand that query.\nPerhaps you meant one of:\n"
@@ -326,94 +351,75 @@ class INatEmbeds(MixinMeta):
             embed.set_footer(text=sound.attribution)
             await channel.send(embed=embed, file=File(sound_io, filename=filename))
 
-    async def make_obs_counts_embed(self, arg):
+    async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
-        title_params = {}
         formatted_counts = ""
-        taxon = arg.taxon
-        user = arg.user
-        place = arg.place
-        unobserved_by = arg.unobserved_by
-        id_by = arg.id_by
-        project = arg.project
+        taxon = query_response.taxon
+        user = query_response.user
+        place = query_response.place
+        unobserved_by = query_response.unobserved_by
+        id_by = query_response.id_by
+        project = query_response.project
+        count_args = query_response.obs_args()
 
-        if taxon:
-            title = format_taxon_title(taxon)
-            full_title = f"Observations of {title}"
-        else:
-            full_title = "Observations"
+        title_query_response = copy.copy(query_response)
         description = ""
         if user:
             if place or project:
-                if project:
-                    full_title += f" in {project.title}"
-                    title_params["project_id"] = project.project_id
-                if place:
-                    full_title += f" from {place.display_name}"
-                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self, user, taxon, **title_params
+                    self, user, taxon, **count_args
                 )
+                title_query_response.user = None
                 header = TAXON_COUNTS_HEADER
             elif unobserved_by or id_by:
                 raise BadArgument("I can't tabulate that yet.")
             else:
-                formatted_counts = await format_user_taxon_counts(self, user, taxon)
+                formatted_counts = await format_user_taxon_counts(
+                    self, user, taxon, **count_args
+                )
+                title_query_response.user = None
                 header = TAXON_COUNTS_HEADER
         elif place or project:
             if unobserved_by:
-                if project:
-                    full_title += f" in {project.title}"
-                    title_params["project_id"] = project.project_id
-                if place:
-                    full_title += f" from {place.display_name}"
-                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self, unobserved_by, taxon, unobserved=True, **title_params,
+                    self, unobserved_by, taxon, unobserved=True, **count_args
                 )
+                title_query_response.not_by = None
                 header = TAXON_NOTBY_HEADER
             elif id_by:
-                if project:
-                    full_title += f" in {project.title}"
-                    title_params["project_id"] = project.project_id
-                if place:
-                    full_title += f" from {place.display_name}"
-                    title_params["place_id"] = place.place_id
                 formatted_counts = await format_user_taxon_counts(
-                    self, id_by, taxon, ident=True, **title_params,
+                    self, id_by, taxon, ident=True, **count_args
                 )
+                title_query_response.id_by = None
                 header = TAXON_IDBY_HEADER
             elif place:
-                if project:
-                    full_title += f" in {project.title}"
-                    title_params["project_id"] = project.project_id
                 formatted_counts = await format_place_taxon_counts(
-                    self, place, taxon, **title_params
+                    self, place, taxon, **count_args
                 )
+                title_query_response.place = None
                 header = TAXON_PLACES_HEADER
-            else:  # project
-                full_title += f" in {project.title}"
-                title_params["project_id"] = project.project_id
 
         elif unobserved_by:
             formatted_counts = await format_user_taxon_counts(
-                self, unobserved_by, taxon, None, unobserved=True,
+                self, unobserved_by, taxon, None, unobserved=True, **count_args
             )
+            title_query_response.not_by = None
             header = TAXON_NOTBY_HEADER
         elif id_by:
             formatted_counts = await format_user_taxon_counts(
-                self, id_by, taxon, None, ident=True,
+                self, id_by, taxon, None, ident=True, **count_args
             )
+            title_query_response.id_by = None
             header = TAXON_IDBY_HEADER
         if formatted_counts:
             description = f"\n{header}\n{formatted_counts}"
 
         url = f"{WWW_BASE_URL}/observations"
-        if taxon:
-            title_params["taxon_id"] = taxon.taxon_id
-        if title_params:
-            url += "?" + urlencode(title_params)
-        embed = make_embed(url=url, title=full_title, description=description,)
+        title_args = title_query_response.obs_args()
+        if title_args:
+            url += "?" + urlencode(title_args)
+        full_title = f"Observations {title_query_response.obs_query_description()}"
+        embed = make_embed(url=url, title=full_title, description=description)
         return embed
 
     async def format_obs(
@@ -762,21 +768,46 @@ class INatEmbeds(MixinMeta):
 
     async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
         """Make embed describing taxa record."""
+        obs_cnt_filtered = False
         if isinstance(arg, QueryResponse):
             taxon = arg.taxon
             user = arg.user
             place = arg.place
+            title_query_response = copy.copy(arg)
+            if user:
+                title_query_response.user = None
+            elif place:
+                title_query_response.place = None
+            obs_args = title_query_response.obs_args()
+            filter_args = copy.copy(obs_args)
+            if str(filter_args["verifiable"]) == "any":
+                del filter_args["verifiable"]
+            del filter_args["taxon_id"]
+            obs_cnt = taxon.observations
+            obs_url = "?".join((f"{WWW_BASE_URL}/observations", urlencode(obs_args)))
+            # i.e. any args other than the ones accounted for in rec.observations
+            if filter_args:
+                response = await self.api.get_observations(per_page=0, **obs_args)
+                if response:
+                    obs_cnt_filtered = True
+                    obs_cnt = response.get("total_results")
         else:
             taxon = arg
             user = None
             place = None
+            obs_args = {"taxon_id": taxon.taxon_id, "verifiable": "any"}
+            obs_cnt = taxon.observations
+            obs_url = (
+                f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}&verifiable=any"
+            )
+
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
 
-        async def format_description(rec, status, means_fmtd):
-            obs_cnt = rec.observations
-            url = f"{WWW_BASE_URL}/observations?taxon_id={rec.taxon_id}&verifiable=any"
-            obs_fmt = "[%d](%s)" % (obs_cnt, url)
+        async def format_description(
+            rec, status, means_fmtd, obs_cnt, obs_url, obs_cnt_filtered
+        ):
+            obs_fmt = "[%d](%s)" % (obs_cnt, obs_url)
             if status:
                 # inflect statuses with single digits in them correctly
                 first_word = re.sub(
@@ -793,6 +824,8 @@ class INatEmbeds(MixinMeta):
             description = (
                 f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
             )
+            if obs_cnt_filtered:
+                description += " matching your request"
             if means_fmtd:
                 description += f" {means_fmtd}"
             return description
@@ -832,20 +865,26 @@ class INatEmbeds(MixinMeta):
         except AttributeError:
             pass
 
-        description = await format_description(taxon, status, means_fmtd)
+        description = await format_description(
+            taxon, status, means_fmtd, obs_cnt, obs_url, obs_cnt_filtered
+        )
 
         if include_ancestors:
             ancestors = full_record.get("ancestors")
             description = await format_ancestors(description, ancestors)
 
-        if place:
-            formatted_counts = await format_place_taxon_counts(self, place, taxon)
-            if formatted_counts:
-                description += f"\n{TAXON_PLACES_HEADER}\n{formatted_counts}"
         if user:
-            formatted_counts = await format_user_taxon_counts(self, user, taxon)
+            formatted_counts = await format_user_taxon_counts(
+                self, user, taxon, **arg.obs_args()
+            )
             if formatted_counts:
                 description += f"\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
+        elif place:
+            formatted_counts = await format_place_taxon_counts(
+                self, place, taxon, **arg.obs_args()
+            )
+            if formatted_counts:
+                description += f"\n{TAXON_PLACES_HEADER}\n{formatted_counts}"
 
         embed.title = title
         embed.description = description
@@ -1266,7 +1305,14 @@ class INatEmbeds(MixinMeta):
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
             formatted_counts = await format_user_taxon_counts(
-                self, inat_user, taxon, place_id, unobserved, ident, project_id
+                self,
+                inat_user,
+                taxon,
+                place_id,
+                unobserved,
+                ident,
+                project_id,
+                **inat_embed.params,
             )
             description += "\n" + formatted_counts
 
@@ -1277,7 +1323,12 @@ class INatEmbeds(MixinMeta):
             # Total added only if more than one user:
             if len(matches) > 1:
                 formatted_counts = await format_user_taxon_counts(
-                    self, ",".join(matches), taxon, place_id, project_id=project_id
+                    self,
+                    ",".join(matches),
+                    taxon,
+                    place_id,
+                    project_id=project_id,
+                    **inat_embed.params,
                 )
                 description += f"\n{formatted_counts}"
                 return description
@@ -1347,6 +1398,7 @@ class INatEmbeds(MixinMeta):
                 taxon,
                 inat_embed.user_id(),
                 project_id=inat_embed.project_id(),
+                **inat_embed.params,
             )
             description += "\n" + formatted_counts
 
@@ -1361,6 +1413,7 @@ class INatEmbeds(MixinMeta):
                 taxon,
                 inat_embed.user_id(),
                 project_id=inat_embed.project_id(),
+                **inat_embed.params,
             )
             description += f"\n{formatted_counts}"
             return description
