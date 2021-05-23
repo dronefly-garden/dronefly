@@ -296,7 +296,7 @@ class NaturalQueryConverter(QueryConverter):
             # Whether or not in rank arguments, collect ranks
             if arg_lowered in RANK_KEYWORDS:
                 ranks.append(arg_lowered)
-                break
+                continue
             # Whether or not in opt arguments, collect macro opts
             if arg_lowered in QUERY_MACROS:
                 macro = QUERY_MACROS[arg_lowered]
