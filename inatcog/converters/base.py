@@ -10,8 +10,8 @@ from redbot.core.commands import (
     Converter,
     MemberConverter as RedMemberConverter,
 )
-from .common import DEQUOTE, LOG
-from .base_classes import (
+from inatcog.common import DEQUOTE, LOG
+from inatcog.base_classes import (
     Query,
     PAT_OBS_LINK,
     TaxonQuery,

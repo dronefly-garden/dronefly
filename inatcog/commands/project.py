@@ -9,7 +9,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.checks import known_inat_user
 from inatcog.common import grouper
-from inatcog.converters import MemberConverter
+from inatcog.converters.base import MemberConverter
 from inatcog.embeds.common import apologize, make_embed
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta

@@ -6,7 +6,7 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
-from inatcog.converters import NaturalQueryConverter
+from inatcog.converters.base import NaturalQueryConverter
 from inatcog.embeds.common import apologize, make_embed
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta

@@ -1,6 +1,6 @@
 """Module to query iNat taxa."""
 from redbot.core.commands import BadArgument
-from .converters import NaturalQueryConverter
+from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
 from .base_classes import (
     Query,

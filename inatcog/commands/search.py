@@ -9,7 +9,7 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import EMPTY_QUERY
 from inatcog.common import grouper
-from inatcog.converters import NaturalQueryConverter
+from inatcog.converters.base import NaturalQueryConverter
 from inatcog.places import PAT_PLACE_LINK
 from inatcog.projects import PAT_PROJECT_LINK
 from inatcog.taxa import PAT_TAXON_LINK

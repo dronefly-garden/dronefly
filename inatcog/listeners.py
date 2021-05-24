@@ -9,7 +9,7 @@ from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
 from .common import LOG
-from .converters import NaturalQueryConverter
+from .converters.base import NaturalQueryConverter
 from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta

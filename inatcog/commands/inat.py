@@ -9,7 +9,7 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from inatcog.base_classes import WWW_BASE_URL
-from inatcog.converters import InheritableBoolConverter
+from inatcog.converters.base import InheritableBoolConverter
 from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta

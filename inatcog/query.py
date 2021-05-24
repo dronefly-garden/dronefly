@@ -3,7 +3,7 @@ import re
 from redbot.core.commands import BadArgument, Context
 from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
-from .converters import MemberConverter
+from .converters.base import MemberConverter
 from .base_classes import Query, QueryResponse
 
 VALID_OBS_OPTS = [

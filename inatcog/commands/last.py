@@ -9,7 +9,7 @@ from inatcog.base_classes import (
     RANK_EQUIVALENTS,
     RANK_KEYWORDS,
 )
-from inatcog.converters import NaturalQueryConverter
+from inatcog.converters.base import NaturalQueryConverter
 from inatcog.embeds.common import apologize
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta

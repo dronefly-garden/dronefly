@@ -29,7 +29,7 @@ from inatcog.base_classes import (
     TaxonSummary,
 )
 from inatcog.common import LOG
-from inatcog.converters import MemberConverter
+from inatcog.converters.base import MemberConverter
 from inatcog.interfaces import MixinMeta
 from inatcog.maps import INatMapURL
 from inatcog.projects import UserProject, ObserverStats

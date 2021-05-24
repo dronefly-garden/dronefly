@@ -11,7 +11,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import User
 from inatcog.checks import known_inat_user
 from inatcog.common import DEQUOTE, grouper
-from inatcog.converters import (
+from inatcog.converters.base import (
     MemberConverter,
     QuotedContextMemberConverter,
     NaturalQueryConverter,

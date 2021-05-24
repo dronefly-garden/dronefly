@@ -2,7 +2,7 @@
 import re
 from typing import Union
 from .base_classes import Place, WWW_URL_PAT
-from .converters import QuotedContextMemberConverter
+from .converters.base import QuotedContextMemberConverter
 
 # Match place link from any partner site.
 PAT_PLACE_LINK = re.compile(
