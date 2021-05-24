@@ -7,8 +7,8 @@ from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
 from inatcog.converters import NaturalQueryConverter
-from inatcog.embeds.embeds import apologize, make_embed
-from inatcog.embeds.inat_embeds import INatEmbeds
+from inatcog.embeds.common import apologize, make_embed
+from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.taxa import get_taxon
 

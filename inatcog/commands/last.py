@@ -10,8 +10,8 @@ from inatcog.base_classes import (
     RANK_KEYWORDS,
 )
 from inatcog.converters import NaturalQueryConverter
-from inatcog.embeds.embeds import apologize
-from inatcog.embeds.inat_embeds import INatEmbeds
+from inatcog.embeds.common import apologize
+from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.last import INatLinkMsg
 from inatcog.taxa import get_taxon

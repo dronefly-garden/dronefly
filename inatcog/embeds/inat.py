@@ -15,6 +15,7 @@ import html2markdown
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
+
 from inatcog.base_classes import (
     Query,
     MEANS_LABEL_DESC,
@@ -50,7 +51,7 @@ from inatcog.taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
-from inatcog.embeds.embeds import (
+from inatcog.embeds.common import (
     format_items_for_embed,
     make_embed,
     MAX_EMBED_DESCRIPTION_LEN,

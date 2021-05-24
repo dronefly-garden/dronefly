@@ -10,8 +10,8 @@ from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
 from .common import LOG
 from .converters import NaturalQueryConverter
-from .embeds.embeds import NoRoomInDisplay
-from .embeds.inat_embeds import INatEmbed, INatEmbeds, REACTION_EMOJI
+from .embeds.common import NoRoomInDisplay
+from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
 

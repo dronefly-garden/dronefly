@@ -11,8 +11,8 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
 from inatcog.converters import MemberConverter, NaturalQueryConverter
-from inatcog.embeds.embeds import apologize, make_embed
-from inatcog.embeds.inat_embeds import INatEmbeds
+from inatcog.embeds.common import apologize, make_embed
+from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
@@ -164,34 +164,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     async def _tabulate_query(self, ctx, query, view="obs"):
-        async def get_observer_options(ctx, query, view):
-            query_response = await self.query.get(ctx, query)
-            obs_opt = query_response.obs_args()
-            full_title = view.capitalize()
-            full_title += query_response.obs_query_description()
-            taxon = query_response.taxon
-            species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
-            return (query_response, obs_opt, full_title, species_only)
-
-        try:
-            obs_opt_view = "identifiers" if view == "ids" else "observers"
-            (
-                query_response,
-                obs_opt,
-                full_title,
-                species_only,
-            ) = await get_observer_options(ctx, query, obs_opt_view)
-            users = await self.api.get_observations(obs_opt_view, **obs_opt)
-            obs_opt["view"] = obs_opt_view
-            users_count = users["total_results"]
-            if not users_count:
-                await apologize(
-                    ctx,
-                    f"No observations found {query_response.obs_query_description()}",
-                )
-                return
-
-            by_species = " by species" if view == "spp" else ""
+        def get_view_url(obs_opt, view):
             if view == "ids":
                 ids_opt = obs_opt.copy()
                 del ids_opt["view"]
@@ -202,72 +175,81 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
             else:
                 url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
-            user_links = get_formatted_user_counts(users, url, species_only, view)
-            if users_count > 10:
-                if users_count > 500:
-                    first = "First "
-                    users_count = 500
-                else:
-                    first = ""
-                pages_len = int((len(user_links) - 1) / 10) + 1
-                pages = []
-                for page, links in enumerate(grouper(user_links, 10), start=1):
-                    formatted_counts = "\n".join(filter(None, links))
-                    total = (
-                        f"**{first}{users_count} top {obs_opt['view']}{by_species}"
-                        f" (page {page} of {pages_len}):**"
-                    )
-                    pages.append(f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}")
-                embeds = [
-                    make_embed(title=full_title, url=url, description=page)
-                    for page in pages
-                ]
-                await menu(ctx, embeds, DEFAULT_CONTROLS)
-            else:
-                formatted_counts = "\n".join(user_links)
-                total = f"**{users_count} {obs_opt['view']}{by_species}:**"
-                description = f"{total}\n{TAXON_COUNTS_HEADER}\n{formatted_counts}"
-                embed = make_embed(title=full_title, url=url, description=description)
-                await ctx.send(embed=embed)
+            return url
+
+        def format_pages(user_links, users_count, obs_opt, view):
+            pages = []
+            pages_len = int((len(user_links) - 1) / 10) + 1
+            for page, links in enumerate(grouper(user_links, 10), start=1):
+                header = "**{} top {}{}{}**".format(
+                    "First 500" if users_count > 500 else users_count,
+                    obs_opt["view"],
+                    " by species" if view == "spp" else "",
+                    f" (page {page} of {pages_len})" if pages_len > 1 else "",
+                )
+                page = "\n".join([header, TAXON_COUNTS_HEADER, *filter(None, links)])
+                pages.append(page)
+            return pages
+
+        try:
+            query_response = await self.query.get(ctx, query)
+            obs_opt_view = "identifiers" if view == "ids" else "observers"
+            obs_opt = query_response.obs_args()
+            users = await self.api.get_observations(obs_opt_view, **obs_opt)
+            users_count = users.get("total_results")
+            if not users_count:
+                raise LookupError(
+                    f"No observations found {query_response.obs_query_description()}"
+                )
         except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
+
+        obs_opt["view"] = obs_opt_view
+        url = get_view_url(obs_opt, view)
+        taxon = query_response.taxon
+        species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
+        user_links = get_formatted_user_counts(users, url, species_only, view)
+        full_title = obs_opt_view.capitalize() + query_response.obs_query_description()
+        pages = format_pages(user_links, users_count, obs_opt, view)
+
+        embeds = [
+            make_embed(title=full_title, url=url, description=page) for page in pages
+        ]
+        if len(pages) > 1:
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=embeds[0])
 
     @tabulate.command(name="topids")
     async def tabulate_top_identifiers(self, ctx, *, query: NaturalQueryConverter):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
-        return
 
     @commands.command(name="topids")
     async def top_identifiers(self, ctx, *, query: NaturalQueryConverter):
         """Top observations IDed per IDer (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
-        return
 
     @tabulate.command(name="topobs")
     async def tabulate_top_observers(self, ctx, *, query: NaturalQueryConverter):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
-        return
 
     @commands.command(name="topobs")
     async def top_observers(self, ctx, *, query: NaturalQueryConverter):
         """Top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
-        return
 
     @tabulate.command(name="topspp", alias=["topsp"])
     async def tabulate_top_species(self, ctx, *, query: NaturalQueryConverter):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
-        return
 
     @commands.command(name="topspp", alias=["topsp"])
     async def top_species(self, ctx, *, query: NaturalQueryConverter):
         """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
-        return
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)

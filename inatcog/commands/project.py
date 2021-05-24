@@ -10,8 +10,8 @@ from inatcog.base_classes import WWW_BASE_URL
 from inatcog.checks import known_inat_user
 from inatcog.common import grouper
 from inatcog.converters import MemberConverter
-from inatcog.embeds.embeds import apologize, make_embed
-from inatcog.embeds.inat_embeds import INatEmbeds
+from inatcog.embeds.common import apologize, make_embed
+from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.places import RESERVED_PLACES
 

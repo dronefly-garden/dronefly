@@ -19,8 +19,8 @@ from inatcog.base_classes import (
     PAT_OBS_LINK,
     WWW_BASE_URL,
 )
-from inatcog.embeds.embeds import apologize, make_embed
-from inatcog.embeds.inat_embeds import INatEmbeds
+from inatcog.embeds.common import apologize, make_embed
+from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields
 

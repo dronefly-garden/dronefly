@@ -153,7 +153,7 @@ async def maybe_match_obs(cog, ctx, content, id_permitted=False):
 
 
 def get_formatted_user_counts(
-    user_counts: list, base_url: str, species_only: bool = False, view: str = "obs"
+    user_counts: dict, base_url: str, species_only: bool = False, view: str = "obs"
 ):
     """Format per user observation & species counts."""
 
