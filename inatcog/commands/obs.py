@@ -164,7 +164,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
 
-    async def _tabulate_query(self, ctx, query: str = "", view="obs"):
+    async def _tabulate_query(self, ctx, query, view="obs"):
         def get_view_url(obs_opt, view):
             if view == "ids":
                 ids_opt = obs_opt.copy()
@@ -192,10 +192,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 pages.append(page)
             return pages
 
-        _query = await TaxonReplyConverter.convert(ctx, query)
-        if not _query:
-            await ctx.send_help()
-            return
+        _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
             query_response = await self.query.get(ctx, _query)
             obs_opt_view = "identifiers" if view == "ids" else "observers"
@@ -227,32 +224,36 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await ctx.send(embed=embeds[0])
 
     @tabulate.command(name="topids")
-    async def tabulate_top_identifiers(self, ctx, *, query: str = ""):
+    async def tabulate_top_identifiers(
+        self, ctx, *, query: Optional[TaxonReplyConverter]
+    ):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @commands.command(name="topids")
-    async def top_identifiers(self, ctx, *, query: str = ""):
+    async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations IDed per IDer (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @tabulate.command(name="topobs")
-    async def tabulate_top_observers(self, ctx, *, query: str = ""):
+    async def tabulate_top_observers(
+        self, ctx, *, query: Optional[TaxonReplyConverter]
+    ):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
 
     @commands.command(name="topobs")
-    async def top_observers(self, ctx, *, query: str = ""):
+    async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
 
     @tabulate.command(name="topspp", alias=["topsp"])
-    async def tabulate_top_species(self, ctx, *, query: str = ""):
+    async def tabulate_top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.command(name="topspp", alias=["topsp"])
-    async def top_species(self, ctx, *, query: str = ""):
+    async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 

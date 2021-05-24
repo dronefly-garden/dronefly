@@ -1,6 +1,6 @@
 """Reply converters."""
 
-from redbot.core.commands import Context
+from redbot.core.commands import BadArgument, Context
 from inatcog.embeds.inat import INatEmbed
 from .base import NaturalQueryConverter
 
@@ -21,5 +21,5 @@ class TaxonReplyConverter:
                 if taxon_id:
                     argument += f" of {taxon_id}"
         if not argument:
-            return None
+            raise BadArgument()
         return await NaturalQueryConverter.convert(ctx, argument)
