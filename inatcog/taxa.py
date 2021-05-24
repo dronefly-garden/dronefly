@@ -193,11 +193,12 @@ def get_taxon_fields(record):
         conservation_status = ConservationStatus.from_dict(conservation_status_raw)
     else:
         conservation_status = None
+    preferred_common_name = record.get("preferred_common_name")
     taxon = Taxon(
         record["name"],
         taxon_id,
-        record.get("preferred_common_name"),
-        record.get("matched_term") or "Id: %s" % taxon_id,
+        preferred_common_name,
+        record.get("matched_term") or preferred_common_name,
         thumbnail,
         image,
         attribution,
