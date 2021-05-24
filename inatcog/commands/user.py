@@ -16,8 +16,8 @@ from inatcog.converters import (
     QuotedContextMemberConverter,
     NaturalQueryConverter,
 )
-from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds
+from inatcog.embeds.embeds import apologize, make_embed
+from inatcog.embeds.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.projects import UserProject
 from inatcog.users import PAT_USER_LINK

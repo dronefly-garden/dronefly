@@ -11,8 +11,8 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
 from inatcog.converters import MemberConverter, NaturalQueryConverter
-from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds
+from inatcog.embeds.embeds import apologize, make_embed
+from inatcog.embeds.inat_embeds import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER

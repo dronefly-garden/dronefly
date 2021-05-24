@@ -1,4 +1,4 @@
-from inatcog import embeds
+from inatcog.embeds import embeds
 import unittest
 
 

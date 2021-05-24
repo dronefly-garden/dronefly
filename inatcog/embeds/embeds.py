@@ -2,8 +2,10 @@
 import asyncio
 import contextlib
 from functools import wraps
+
 import discord
-from .common import make_decorator
+
+from inatcog.common import make_decorator
 
 EMBED_COLOR = 0x90EE90
 # From https://discordapp.com/developers/docs/resources/channel#embed-limits

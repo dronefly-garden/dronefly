@@ -15,7 +15,7 @@ import html2markdown
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
-from .base_classes import (
+from inatcog.base_classes import (
     Query,
     MEANS_LABEL_DESC,
     WWW_BASE_URL,
@@ -27,18 +27,12 @@ from .base_classes import (
     Taxon,
     TaxonSummary,
 )
-from .common import LOG
-from .converters import MemberConverter
-from .embeds import (
-    format_items_for_embed,
-    make_embed,
-    MAX_EMBED_DESCRIPTION_LEN,
-    NoRoomInDisplay,
-)
-from .interfaces import MixinMeta
-from .maps import INatMapURL
-from .projects import UserProject, ObserverStats
-from .taxa import (
+from inatcog.common import LOG
+from inatcog.converters import MemberConverter
+from inatcog.interfaces import MixinMeta
+from inatcog.maps import INatMapURL
+from inatcog.projects import UserProject, ObserverStats
+from inatcog.taxa import (
     format_place_taxon_counts,
     format_taxon_names,
     format_user_taxon_counts,
@@ -55,6 +49,12 @@ from .taxa import (
     TAXON_NOTBY_HEADER_PAT,
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
+)
+from inatcog.embeds.embeds import (
+    format_items_for_embed,
+    make_embed,
+    MAX_EMBED_DESCRIPTION_LEN,
+    NoRoomInDisplay,
 )
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)

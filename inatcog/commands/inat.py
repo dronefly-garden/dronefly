@@ -3,14 +3,15 @@
 import asyncio
 import pprint
 from typing import Optional, Union
+
 import discord
 from redbot.core import checks, commands
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters import InheritableBoolConverter
-from inatcog.embeds import make_embed
-from inatcog.inat_embeds import INatEmbeds, INatEmbed
+from inatcog.embeds.embeds import make_embed
+from inatcog.embeds.inat_embeds import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
 
 
