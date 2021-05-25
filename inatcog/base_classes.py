@@ -110,14 +110,33 @@ TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
 TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 
 
-class TaxonQuery(NamedTuple):
+@dataclass
+class TaxonQuery:
     """A taxon query composed of terms and/or phrases or a code or taxon_id, filtered by ranks."""
 
-    taxon_id: int
-    terms: List[str]
-    phrases: List[str]
-    ranks: List[str]
-    code: str
+    taxon_id: Optional[int] = None
+    terms: Optional[List[str]] = None
+    phrases: Optional[List[str]] = None
+    ranks: Optional[List[str]] = None
+    code: Optional[str] = None
+    _query: Optional[str] = None
+
+    def _add_term(self, item):
+        if item:
+            if isinstance(item, list):
+                formatted_item = " ".join(item)
+            else:
+                formatted_item = str(item)
+            self._query += " " + formatted_item if self._query else formatted_item
+
+    def __str__(self):
+        self._query = ""
+        self._add_term(self.taxon_id)
+        self._add_term(self.terms)
+        self._add_term(self.phrases)
+        self._add_term(self.ranks)
+        self._add_term(self.code)
+        return self._query
 
 
 @dataclass
@@ -134,6 +153,31 @@ class Query:
     per: Optional[str] = None
     project: Optional[str] = None
     options: Optional[List] = None
+    _query: Optional[str] = None
+
+    def _add_clause(self, fmt, item):
+        if item:
+            if isinstance(item, list):
+                formatted_item = fmt.format(" ".join(item))
+            else:
+                formatted_item = fmt.format(item)
+            self._query += " " + formatted_item if self._query else formatted_item
+
+    def __str__(self):
+        self._query = ""
+        if self.main:
+            self._add_clause("{}", str(self.main))
+        if self.ancestor:
+            self._add_clause("in {}", str(self.ancestor))
+        self._add_clause("from {}", self.place)
+        self._add_clause("in prj {}", self.project)
+        self._add_clause("by {}", self.user)
+        self._add_clause("id by {}", self.id_by)
+        self._add_clause("not by {}", self.unobserved_by)
+        self._add_clause("with {}", self.controlled_term)
+        self._add_clause("per {}", self.per)
+        self._add_clause("opt {}", self.options)
+        return self._query
 
 
 EMPTY_QUERY = Query()

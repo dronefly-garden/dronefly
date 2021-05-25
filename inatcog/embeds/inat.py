@@ -17,16 +17,18 @@ from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 
 from inatcog.base_classes import (
-    Query,
+    EMPTY_QUERY,
     MEANS_LABEL_DESC,
-    WWW_BASE_URL,
     PAT_OBS_LINK,
-    PAT_OBS_TAXON_LINK,
     PAT_OBS_QUERY,
+    PAT_OBS_TAXON_LINK,
     Place,
+    Query,
     QueryResponse,
     Taxon,
+    TaxonQuery,
     TaxonSummary,
+    WWW_BASE_URL,
 )
 from inatcog.common import LOG
 from inatcog.converters.base import MemberConverter
@@ -166,7 +168,35 @@ class INatEmbed(discord.Embed):
         content["user_id"] = self.user_id()
         content["project_id"] = self.project_id()
         content["params"] = self.params
+        content["query"] = str(self.query())
         return content
+
+    def query(self, query: Query = EMPTY_QUERY):  # Query
+        """Produce a query from embed, merging new query if given."""
+
+        main = query.main
+        if main and not (
+            (main.terms and main.terms[0] != "any")
+            or main.taxon_id
+            or main.code
+            or main.phrases
+            or main.ranks
+        ):
+            main = None
+        if not main:
+            main = TaxonQuery(taxon_id=self.taxon_id())
+        user = query.user or self.user_id()
+        place = query.place or self.place_id()
+        project = query.project or self.project_id()
+        controlled_term = query.controlled_term or self.controlled_term()
+        query = Query(
+            main=main,
+            user=user,
+            place=place,
+            project=project,
+            controlled_term=controlled_term,
+        )
+        return query
 
     def has_users(self):
         """Embed has a user counts table."""
@@ -240,6 +270,15 @@ class INatEmbed(discord.Embed):
         """Return taxon_id(s) from embed, if present."""
         taxon_id = self.params.get("taxon_id")
         return int(taxon_id) if taxon_id else None
+
+    def controlled_term(self):
+        term_id = self.params.get("term_id")
+        if not term_id:
+            return None
+        term_value_id = self.params.get("term_value_id")
+        if not term_value_id:
+            return str(term_id)
+        return "{} {}".format(term_id, term_value_id)
 
     def user_id(self):
         """Return user_id(s) from embed, if present."""

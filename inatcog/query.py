@@ -4,7 +4,7 @@ from redbot.core.commands import BadArgument, Context
 from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
-from .base_classes import Query, QueryResponse
+from .base_classes import Query, QueryResponse, TaxonQuery, User
 
 VALID_OBS_OPTS = [
     "captive",
@@ -56,6 +56,28 @@ def _get_options(query_options: list):
     return options
 
 
+def has_value(arg):
+    """Return true if arg is present and is not the `any` special keyword.
+
+    Use `any` in a query where a prior non-empty clause is present,
+    and that will negate that clause.
+    """
+    if not arg:
+        return False
+    if isinstance(arg, list):
+        return arg[0] and arg[0].lower() != "any"
+    elif isinstance(arg, TaxonQuery):
+        return (
+            (arg.terms and arg.terms[0].lower() != "any")
+            or arg.code
+            or arg.phrases
+            or arg.ranks
+            or arg.taxon_id
+        )
+    else:
+        return arg.lower() != "any"
+
+
 class INatQuery:
     """Query iNat for all requested entities."""
 
@@ -63,6 +85,14 @@ class INatQuery:
         self.cog = cog
 
     async def _get_user(self, ctx: Context, user: str):
+        if user.isnumeric():
+            response = await self.cog.api.get_users(user, False)
+            if response and response["results"] and len(response["results"]) == 1:
+                user = User.from_dict(response["results"][0])
+            if not user:
+                raise LookupError("iNat user id lookup failed.")
+            return user
+
         try:
             who = await MemberConverter.convert(ctx, re.sub(DEQUOTE, r"\1", user))
         except BadArgument as err:
@@ -88,12 +118,12 @@ class INatQuery:
         preferred_place_id = await self.cog.get_home(ctx)
         args["project"] = (
             await self.cog.project_table.get_project(ctx.guild, query.project)
-            if query.project
+            if has_value(query.project)
             else None
         )
         args["place"] = (
             await self.cog.place_table.get_place(ctx.guild, query.place, ctx.author)
-            if query.place
+            if has_value(query.place)
             else None
         )
         if args["place"]:
@@ -105,21 +135,27 @@ class INatQuery:
                 scientific_name=scientific_name,
                 locale=locale,
             )
-            if query.main
+            if has_value(query.main)
             else None
         )
-        args["user"] = await self._get_user(ctx, query.user) if query.user else None
+        args["user"] = (
+            await self._get_user(ctx, query.user) if has_value(query.user) else None
+        )
         args["unobserved_by"] = (
             await self._get_user(ctx, query.unobserved_by)
-            if query.unobserved_by
+            if has_value(query.unobserved_by)
             else None
         )
-        args["id_by"] = await self._get_user(ctx, query.id_by) if query.id_by else None
+        args["id_by"] = (
+            await self._get_user(ctx, query.id_by) if has_value(query.id_by) else None
+        )
         args["controlled_term"] = (
             await self._get_controlled_term(*query.controlled_term)
-            if query.controlled_term
+            if has_value(query.controlled_term)
             else None
         )
-        args["options"] = _get_options(query.options) if query.options else None
+        args["options"] = (
+            _get_options(query.options) if has_value(query.options) else None
+        )
 
         return QueryResponse(**args)
