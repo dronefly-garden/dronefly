@@ -18,6 +18,7 @@ from redbot.core.utils.predicates import MessagePredicate
 
 from inatcog.base_classes import (
     EMPTY_QUERY,
+    MARKDOWN_LINK,
     MEANS_LABEL_DESC,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
@@ -127,10 +128,12 @@ class INatEmbed(discord.Embed):
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
-        # may be in body (i.e. observations count)
-        mat = re.match(PAT_OBS_QUERY, self.description)
+        # url may be in first link of body (i.e. observations count)
+        mat = re.search(MARKDOWN_LINK, self.description)
         if mat:
-            return mat["url"]
+            mat = re.search(PAT_OBS_QUERY, mat["url"])
+            if mat:
+                return mat["url"]
         return None
 
     def get_taxon_url(self):
@@ -166,7 +169,11 @@ class INatEmbed(discord.Embed):
         content["place_id"] = self.place_id()
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
+        content["unobserved_by_user_id"] = self.unobserved_by_user_id()
+        content["ident_user_id"] = self.ident_user_id()
         content["project_id"] = self.project_id()
+        content["taxon_url"] = self.taxon_url
+        content["obs_url"] = self.obs_url
         content["params"] = self.params
         content["query"] = str(self.query())
         return content
@@ -186,12 +193,16 @@ class INatEmbed(discord.Embed):
         if not main:
             main = TaxonQuery(taxon_id=self.taxon_id())
         user = query.user or self.user_id()
+        id_by = query.id_by or self.ident_user_id()
+        unobserved_by = query.unobserved_by or self.unobserved_by_user_id()
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
         query = Query(
             main=main,
             user=user,
+            id_by=id_by,
+            unobserved_by=unobserved_by,
             place=place,
             project=project,
             controlled_term=controlled_term,
@@ -284,6 +295,16 @@ class INatEmbed(discord.Embed):
         """Return user_id(s) from embed, if present."""
         user_id = self.params.get("user_id")
         return int(user_id) if user_id else None
+
+    def unobserved_by_user_id(self):
+        """Return unobserved_by_user_id(s) from embed, if present."""
+        unobserved_by_user_id = self.params.get("unobserved_by_user_id")
+        return int(unobserved_by_user_id) if unobserved_by_user_id else None
+
+    def ident_user_id(self):
+        """Return ident_user_id(s) from embed, if present."""
+        ident_user_id = self.params.get("ident_user_id")
+        return int(ident_user_id) if ident_user_id else None
 
 
 @format_items_for_embed
@@ -839,7 +860,9 @@ class INatEmbeds(MixinMeta):
                 f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
             )
             if obs_cnt_filtered:
-                description += " matching your request"
+                obs_without_taxon = copy.copy(arg)
+                obs_without_taxon.taxon = None
+                description += f" {obs_without_taxon.obs_query_description()}"
             if means_fmtd:
                 description += f" {means_fmtd}"
             return description

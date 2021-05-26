@@ -42,6 +42,7 @@ QUERY_PAT = r"\??(?:&?[^=&]*=[^=&]*)*"
 PAT_OBS_QUERY = re.compile(
     r"(?P<url>" + WWW_URL_PAT + r"/observations" + QUERY_PAT + ")"
 )
+MARKDOWN_LINK = re.compile(r"\[.*?\]\((?P<url>.*?)\)")
 
 PLANTAE_ID = 47126
 
