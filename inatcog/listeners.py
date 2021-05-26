@@ -171,13 +171,13 @@ class Listeners(INatEmbeds, MixinMeta):
                 dispatch_commandstats(message, "react taxonomy")
             elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
-                    await self.maybe_update_member(msg, member, action)
+                    await self.maybe_update_user(msg, member=member, action=action)
                     dispatch_commandstats(message, "react self")
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member
                     )
-                    await self.maybe_update_member_by_name(ctx, msg=msg, user=member)
+                    await self.maybe_update_user_by_name(ctx, msg=msg, member=member)
                     dispatch_commandstats(message, "react user")
             if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:

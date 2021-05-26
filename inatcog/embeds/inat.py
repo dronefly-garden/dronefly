@@ -7,7 +7,7 @@ import datetime as dt
 from io import BytesIO
 import re
 import textwrap
-from typing import Union
+from typing import Optional, Union
 from urllib.parse import parse_qs, urlencode, urlsplit
 import discord
 from discord import DMChannel, File
@@ -31,10 +31,10 @@ from inatcog.base_classes import (
     WWW_BASE_URL,
 )
 from inatcog.common import LOG
-from inatcog.converters.base import MemberConverter
 from inatcog.interfaces import MixinMeta
 from inatcog.maps import INatMapURL
 from inatcog.projects import UserProject, ObserverStats
+from inatcog.users import User
 from inatcog.taxa import (
     format_place_taxon_counts,
     format_taxon_names,
@@ -1091,16 +1091,26 @@ class INatEmbeds(MixinMeta):
             taxon_id = mat["taxon_id"]
         return (taxon_id, place_id, inat_user_id)
 
-    async def maybe_update_member(
-        self, msg: discord.Message, member: discord.Member, action: str
+    async def maybe_update_user(
+        self,
+        msg: discord.Message,
+        action: str,
+        member: Optional[discord.Member] = None,
+        user: Optional[User] = None,
     ):
-        """Add or remove member count in the embed if valid."""
-        try:
-            inat_user = await self.user_table.get_user(member)
-            counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
-        except LookupError:
+        """Add or remove user count in the embed if valid."""
+        inat_user = None
+        if member:
+            try:
+                inat_user = await self.user_table.get_user(member)
+            except LookupError:
+                return
+        if user:
+            inat_user = user
+        if not inat_user:
             return
 
+        counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
         inat_embed = msg.embeds[0]
         if inat_embed.taxon_id():
             taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
@@ -1203,31 +1213,31 @@ class INatEmbeds(MixinMeta):
                 response = None
         return response
 
-    async def maybe_update_member_by_name(
-        self, ctx, msg: discord.Message, user: discord.Member
+    async def maybe_update_user_by_name(
+        self, ctx, msg: discord.Message, member: discord.Member
     ):
-        """Prompt for a member by name and update the embed if provided & valid."""
+        """Prompt for a user by name and update the embed if provided & valid."""
         try:
-            await self.user_table.get_user(user)
+            await self.user_table.get_user(member)
         except LookupError:
             return
         response = await self.query_locked(
             msg,
-            user,
-            "Add or remove which member (you have 15 seconds to answer)?",
+            member,
+            "Add or remove which user (you have 15 seconds to answer)?",
             15,
         )
         if response:
             try:
-                who = await MemberConverter.convert(ctx, response.content)
-            except discord.ext.commands.errors.BadArgument as error:
+                _user = await self.query.get_inat_user(ctx, response.content)
+            except (LookupError, discord.ext.commands.errors.BadArgument) as error:
                 error_msg = await msg.channel.send(error)
                 await asyncio.sleep(15)
                 with contextlib.suppress(discord.HTTPException):
                     await error_msg.delete()
                 return
 
-            await self.maybe_update_member(msg, who.member, "toggle")
+            await self.maybe_update_user(msg, user=_user, action="toggle")
 
     async def maybe_update_place_by_name(
         self, msg: discord.Message, user: discord.Member

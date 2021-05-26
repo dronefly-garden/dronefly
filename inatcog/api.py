@@ -310,12 +310,17 @@ class INatAPI:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    async def get_users(self, query: Union[int, str], refresh_cache=False, **kwargs):
+    async def get_users(
+        self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
+    ):
         """Get the users for the specified login, user_id, or query."""
+        request = f"/v1/users/{query}"
         if isinstance(query, int) or query.isnumeric():
             user_id = int(query)
-            request = f"/v1/users/{query}"
             key = user_id
+        elif by_login_id:
+            user_id = None
+            key = query
         else:
             user_id = None
             request = f"/v1/users/autocomplete?q={query}"
