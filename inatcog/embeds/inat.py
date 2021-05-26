@@ -181,16 +181,10 @@ class INatEmbed(discord.Embed):
     def query(self, query: Query = EMPTY_QUERY):  # Query
         """Produce a query from embed, merging new query if given."""
 
-        main = query.main
-        if main and not (
-            (main.terms and main.terms[0] != "any")
-            or main.taxon_id
-            or main.code
-            or main.phrases
-            or main.ranks
-        ):
-            main = None
-        if not main:
+        main = None
+        if query.main and query.main.terms and query.main.terms[0] == "any":
+            main = query.main
+        if not main and self.taxon_id():
             main = TaxonQuery(taxon_id=self.taxon_id())
         user = query.user or self.user_id()
         id_by = query.id_by or self.ident_user_id()
