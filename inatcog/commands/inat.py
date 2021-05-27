@@ -283,18 +283,27 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Show iNat settings."""
 
     @inat.command(name="inspect")
-    async def inat_inspect(self, ctx, message_id: Union[int, str]):
+    async def inat_inspect(self, ctx, message_id: Optional[Union[int, str]]):
         """Inspect a message and show any iNat embed contents."""
         try:
-            if isinstance(message_id, str):
-                channel_id, message_id = (
-                    int(id_num) for id_num in message_id.split("-")
-                )
-                if ctx.guild:
-                    channel = ctx.guild.get_channel(channel_id)
+            if message_id:
+                if isinstance(message_id, str):
+                    channel_id, message_id = (
+                        int(id_num) for id_num in message_id.split("-")
+                    )
+                    if ctx.guild:
+                        channel = ctx.guild.get_channel(channel_id)
+                else:
+                    channel = ctx.channel
+                message = await channel.fetch_message(message_id)
             else:
-                channel = ctx.channel
-            message = await channel.fetch_message(message_id)
+                ref = ctx.message.reference
+                if ref:
+                    message = ref.cached_message or await ctx.channel.fetch_message(
+                        ref.message_id
+                    )
+                else:
+                    ctx.send_help()
         except discord.errors.NotFound:
             await ctx.send(f"Message not found: {message_id}")
             return
