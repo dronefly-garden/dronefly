@@ -1,6 +1,6 @@
 """Module to handle controlled terms."""
 import re
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Union
 from dataclasses import dataclass
 from dataclasses_json import DataClassJsonMixin
 
@@ -34,15 +34,28 @@ class ControlledTermSelector(NamedTuple):
 
 
 def match_controlled_term(
-    controlled_terms: List[ControlledTerm], term_label: str, value_label: str
+    controlled_terms: List[ControlledTerm],
+    term_label: Union[int, str],
+    value_label: Union[int, str],
 ):
     """Match term and value matching term's label & value's label."""
+    term_id = (
+        int(term_label)
+        if isinstance(term_label, int) or term_label.isnumeric()
+        else None
+    )
+    term_value_id = (
+        int(value_label)
+        if isinstance(value_label, int) or value_label.isnumeric()
+        else None
+    )
     matched_term = next(
         iter(
             [
                 term
                 for term in controlled_terms
-                if re.match(re.escape(term_label), term.label, re.I)
+                if (term_id == term.id)
+                or re.match(re.escape(term_label), term.label, re.I)
             ]
         ),
         None,
@@ -53,7 +66,8 @@ def match_controlled_term(
                 [
                     value
                     for value in matched_term.values
-                    if re.match(re.escape(value_label), value.label, re.I)
+                    if (term_value_id == term_value_id)
+                    or re.match(re.escape(value_label), value.label, re.I)
                 ]
             ),
             None,
