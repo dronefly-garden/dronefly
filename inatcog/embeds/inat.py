@@ -142,6 +142,12 @@ class INatEmbed(discord.Embed):
             mat = re.match(PAT_TAXON_LINK, self.url)
             if mat:
                 return (mat["url"], mat["taxon_id"])
+        # url may be in first link of body (i.e. Taxon in an observations embed)
+        mat = re.search(MARKDOWN_LINK, self.description) if self.description else None
+        if mat:
+            mat = re.search(PAT_TAXON_LINK, mat["url"])
+            if mat:
+                return (mat["url"], mat["taxon_id"])
         return (None, None)
 
     def get_params(self, taxon_id=None):
