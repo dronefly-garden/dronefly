@@ -1,12 +1,14 @@
 """Module for taxon command group."""
 
 import re
+from typing import Optional
 
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
 from inatcog.converters.base import NaturalQueryConverter
+from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.embeds.common import apologize, make_embed
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -18,7 +20,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.group(aliases=["t"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def taxon(self, ctx, *, query: NaturalQueryConverter):
+    async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Show taxon best matching the query.
 
         `Aliases: [p]t`
@@ -41,14 +43,15 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
         """
+        _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
-            self.check_taxon_query(ctx, query)
+            self.check_taxon_query(ctx, _query)
         except BadArgument as err:
             await apologize(ctx, err.args[0])
             return
 
         try:
-            query_response = await self.query.get(ctx, query)
+            query_response = await self.query.get(ctx, _query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
