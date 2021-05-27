@@ -460,30 +460,39 @@ class INatEmbeds(MixinMeta):
             delim = " " if compact else ", "
             return f"{delim}{EMOJI[label]}" + (str(count) if count > 1 else "")
 
-        def format_title(taxon, obs):
-            title = ""
-            if compact:
-                title += f"{EMOJI[obs.quality_grade]} "
+        def get_taxon_name(taxon):
             if taxon:
-                taxon_str = taxon.format_name(
-                    with_rank=not compact, with_common=not compact
-                )
+                taxon_str = taxon.format_name(with_rank=not compact, with_common=False)
             else:
                 taxon_str = "Unknown"
-            if compact and with_link:
+            return taxon_str
+
+        def format_title(taxon, obs):
+            title = ""
+            taxon_str = get_taxon_name(taxon)
+            if with_link:
                 link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                 taxon_str = f"[{taxon_str}]({link_url})"
+            if compact:
+                title += f"{EMOJI[obs.quality_grade]} "
             title += taxon_str
             if not compact:
-                title += " " + EMOJI[obs.quality_grade]
+                title += f" by {user.login} " + EMOJI[obs.quality_grade]
                 if obs.faves_count:
                     title += format_count("fave", obs.faves_count)
                 if obs.comments_count:
                     title += format_count("comment", obs.comments_count)
             return title
 
-        def format_summary(user, obs, taxon_summary):
+        def format_summary(user, obs, taxon, taxon_summary):
             summary = ""
+            if not compact:
+                taxon_str = get_taxon_name(taxon)
+                if taxon:
+                    common = f" ({taxon.common})" if taxon.common else ""
+                    link_url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
+                    taxon_str = f"[{taxon_str}]({link_url}){common}"
+                summary += f"Taxon: {taxon_str}\n"
             if taxon_summary:
                 means = taxon_summary.listed_taxon
                 status = taxon_summary.conservation_status
@@ -627,7 +636,7 @@ class INatEmbeds(MixinMeta):
             ):
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
-        summary = format_summary(user, obs, taxon_summary)
+        summary = format_summary(user, obs, taxon, taxon_summary)
         title, summary = format_community_id(
             title, summary, obs, community_taxon_summary
         )
