@@ -4,8 +4,6 @@ import re
 from urllib.parse import urlencode
 from typing import NamedTuple, Optional, Union
 from .base_classes import (
-    WWW_BASE_URL,
-    RANK_LEVELS,
     ConservationStatus,
     EstablishmentMeans,
     EstablishmentMeansPartial,
@@ -13,6 +11,9 @@ from .base_classes import (
     TaxonQuery,
     User,
     Place,
+    RANK_LEVELS,
+    WWW_BASE_URL,
+    WWW_URL_PAT,
 )
 from .common import LOG
 
@@ -29,7 +30,7 @@ TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
 
 PAT_TAXON_LINK = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/taxa/(?P<taxon_id>\d+))\b", re.I
+    r"\b(?P<url>" + WWW_URL_PAT + r"/taxa/(?P<taxon_id>\d+))\b", re.I
 )
 
 
