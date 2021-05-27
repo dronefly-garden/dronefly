@@ -303,7 +303,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
             await ctx.send(f"Message has no embed: {message.jump_url}")
             return
 
+        embeds = []
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
+        embeds.append(inat_embed)
         inat_inspect = (
             f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```"
         )
@@ -311,19 +313,23 @@ class CommandsInat(INatEmbeds, MixinMeta):
             title="iNat object ids", description=inat_inspect
         )
 
-        embed_description = f"```md\n{inat_embed.description}\n```"
-        description_embed = make_embed(
-            title="Markdown formatted content", description=embed_description,
-        )
+        if inat_embed.description:
+            embed_description = f"```md\n{inat_embed.description}\n```"
+            description_embed = make_embed(
+                title="Markdown formatted content", description=embed_description,
+            )
+            embeds.append(description_embed)
+
+        embeds.append(inat_inspect_embed)
 
         embed_dict = inat_embed.to_dict()
-        del embed_dict["description"]
+        if "description" in embed_dict:
+            del embed_dict["description"]
         attributes_inspect = f"```py\n{pprint.pformat(embed_dict)}\n```"
         attributes_embed = make_embed(
             title="Embed attributes", description=attributes_inspect
         )
-
-        embeds = [inat_embed, description_embed, inat_inspect_embed, attributes_embed]
+        embeds.append(attributes_embed)
 
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
