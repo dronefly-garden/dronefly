@@ -129,7 +129,7 @@ class INatEmbed(discord.Embed):
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
         # url may be in first link of body (i.e. observations count)
-        mat = re.search(MARKDOWN_LINK, self.description)
+        mat = re.search(MARKDOWN_LINK, self.description) if self.description else None
         if mat:
             mat = re.search(PAT_OBS_QUERY, mat["url"])
             if mat:

@@ -10,7 +10,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper, LOG
-from inatcog.converters.base import MemberConverter, NaturalQueryConverter
+from inatcog.converters.base import NaturalQueryConverter
 from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.embeds.common import apologize, make_embed
 from inatcog.embeds.inat import INatEmbeds
@@ -24,7 +24,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
     @checks.bot_has_permissions(embed_links=True)
-    async def obs(self, ctx, *, query_str: str):
+    async def obs(self, ctx, *, query_str: Optional[str] = ""):
         """Observation matching query, link, or number.
 
         **query** may contain:
@@ -51,32 +51,37 @@ class CommandsObs(INatEmbeds, MixinMeta):
         - See `[p]help taxon` for help specifying optional taxa.
         """
 
-        id_or_link = None
-        if query_str.isnumeric():
-            id_or_link = query_str
-        else:
-            mat = re.search(PAT_OBS_LINK, query_str)
-            if mat and mat["url"]:
+        if query_str:
+            id_or_link = None
+            if query_str.isnumeric():
                 id_or_link = query_str
-        if id_or_link:
-            obs, url = await maybe_match_obs(self, ctx, id_or_link, id_permitted=True)
-            # Note: if the user specified an invalid or deleted id, a url is still
-            # produced (i.e. should 404).
-            if url:
-                await ctx.send(embed=await self.make_obs_embed(obs, url, preview=False))
-                if obs and obs.sounds:
-                    await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
-                return
             else:
-                await apologize(ctx, "I don't understand")
-                return
+                mat = re.search(PAT_OBS_LINK, query_str)
+                if mat and mat["url"]:
+                    id_or_link = query_str
+            if id_or_link:
+                obs, url = await maybe_match_obs(
+                    self, ctx, id_or_link, id_permitted=True
+                )
+                # Note: if the user specified an invalid or deleted id, a url is still
+                # produced (i.e. should 404).
+                if url:
+                    await ctx.send(
+                        embed=await self.make_obs_embed(obs, url, preview=False)
+                    )
+                    if obs and obs.sounds:
+                        await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                    return
+                else:
+                    await apologize(ctx, "I don't understand")
+                    return
 
         try:
-            query = await NaturalQueryConverter.convert(ctx, query_str)
+            query = await TaxonReplyConverter.convert(ctx, query_str)
             obs = await self.obs_query.query_single_obs(ctx, query)
             LOG.info(obs)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
@@ -86,7 +91,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
-    async def tabulate(self, ctx, *, query: NaturalQueryConverter):
+    async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Tabulate iNaturalist data.
 
         • Only observations can be tabulated. More kinds of table
@@ -116,16 +121,17 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 but only fish from canada are tabulated
         ```
         """
+        _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
-            query_response = await self.query.get(ctx, query)
+            query_response = await self.query.get(ctx, _query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
             self.add_obs_reaction_emojis(msg)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
     @tabulate.command(name="maverick")
-    async def tabulate_maverick(self, ctx, *, query: Optional[NaturalQueryConverter]):
+    async def tabulate_maverick(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Maverick identifications.
 
         • By default, if your iNat login is known, your own maverick
@@ -133,35 +139,36 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • The `by` qualifier can be used to display mavericks for
           another known user.
         """
-        if query and (
-            query.place
-            or query.controlled_term
-            or query.main
-            or query.unobserved_by
-            or query.id_by
-            or query.per
-            or query.project
-        ):
-            await apologize(ctx, "I can't tabulate that yet.")
-            return
         try:
-            query_user = None
-            if query and query.user:
-                query_user = query.user
-            else:
-                query_me = await NaturalQueryConverter.convert(ctx, "by me")
-                query_user = query_me.user
-            who = await MemberConverter.convert(ctx, query_user)
-            user = await self.user_table.get_user(who.member)
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            if not _query.user:
+                _query.user = "me"
+            query_response = await self.query.get(ctx, _query)
+            if not query_response.user:
+                raise BadArgument("iNat user not found")
+            if _query and (
+                _query.place
+                or _query.controlled_term
+                or _query.unobserved_by
+                or _query.id_by
+                or _query.per
+                or _query.project
+            ):
+                await apologize(ctx, "I can't tabulate that yet.")
+                return
             embed = make_embed()
-            embed.title = f"Maverick identifications by {user.display_name()}"
-            embed.url = (
-                "https://www.inaturalist.org/identifications?category=maverick"
-                f"&user_id={user.user_id}"
+            embed.title = (
+                f"Maverick identifications {query_response.obs_query_description()}"
+            )
+            ids_opt = {"category": "maverick", "user_id": query_response.user.user_id}
+            if query_response.taxon:
+                ids_opt["taxon_id"] = query_response.taxon.taxon_id
+            embed.url = f"{WWW_BASE_URL}/identifications?" + urllib.parse.urlencode(
+                ids_opt
             )
             await ctx.send(embed=embed)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
     async def _tabulate_query(self, ctx, query, view="obs"):
@@ -204,7 +211,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     f"No observations found {query_response.obs_query_description()}"
                 )
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         obs_opt["view"] = obs_opt_view

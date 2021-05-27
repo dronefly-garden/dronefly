@@ -24,5 +24,5 @@ class TaxonReplyConverter:
                     query_str = str(inat_embed.query())
 
         if not query_str:
-            raise BadArgument()
+            raise BadArgument("No query found")
         return await NaturalQueryConverter.convert(ctx, query_str)
