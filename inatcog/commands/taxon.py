@@ -50,7 +50,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon(ctx, query_response)
 
-    @taxon.command(name="query")
+    @taxon.command(name="query", hidden=True)
     async def query_help(self, ctx):
         """*Help* for taxon *query*
 
@@ -75,7 +75,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         ```
         """
 
-    @taxon.command(name="reactions")
+    @taxon.command(name="reactions", hidden=True)
     async def reactions_help(self, ctx):
         """*Help* for taxon reaction buttons
 
