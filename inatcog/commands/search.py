@@ -2,14 +2,15 @@
 
 from math import ceil
 import re
-from typing import Optional
+from typing import Optional, Union
 import urllib.parse
 
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-from inatcog.base_classes import EMPTY_QUERY
+from inatcog.base_classes import EMPTY_QUERY, Query
 from inatcog.common import grouper
 from inatcog.converters.base import NaturalQueryConverter
+from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.places import PAT_PLACE_LINK
 from inatcog.projects import PAT_PROJECT_LINK
 from inatcog.taxa import PAT_TAXON_LINK
@@ -28,7 +29,7 @@ from inatcog.obs import get_obs_fields
 class CommandsSearch(INatEmbeds, MixinMeta):
     """Mixin providing search command group."""
 
-    async def _search(self, ctx, query, keyword: Optional[str]):
+    async def _search(self, ctx, query: Union[Query, str], keyword: Optional[str]):
         async def cancel_timeout(
             ctx, pages, controls, message, page, _timeout, _reaction
         ):
@@ -362,7 +363,14 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return embeds
 
         try:
-            query_type, query_title, url, kwargs = await get_query_args(query)
+            if keyword.lower() == "obs":
+                try:
+                    _query = query or (await TaxonReplyConverter.convert(ctx, ""))
+                except commands.BadArgument:
+                    _query = EMPTY_QUERY
+            else:
+                _query = query
+            query_type, query_title, url, kwargs = await get_query_args(_query)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
@@ -372,7 +380,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             thumbnails,
             per_page,
             per_embed_page,
-        ) = await query_formatted_results(query, query_type, kwargs)
+        ) = await query_formatted_results(_query, query_type, kwargs)
         if not results:
             await apologize(
                 ctx,
@@ -491,7 +499,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
-    async def search_obs(self, ctx, *, query: NaturalQueryConverter = EMPTY_QUERY):
+    async def search_obs(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Search iNat observations.
 
         `Aliases: [p]s obs`
