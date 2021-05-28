@@ -24,5 +24,10 @@ class TaxonReplyConverter:
                     query_str = str(inat_embed.query())
 
         if not query_str:
-            raise BadArgument("No query found")
+            if ref:
+                if not msg:
+                    raise LookupError("Message replied to could not be retrieved.")
+                raise LookupError("I don't know how to reply to that kind of message.")
+            raise BadArgument("Your request is empty.")
+
         return await NaturalQueryConverter.convert(ctx, query_str)

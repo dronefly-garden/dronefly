@@ -14,6 +14,8 @@ from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.taxa import get_taxon
 
+BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
+
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
@@ -47,13 +49,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, _query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
             query_response = await self.query.get(ctx, _query)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await self.send_embed_for_taxon(ctx, query_response)
@@ -65,7 +67,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             self.check_taxon_query(ctx, query)
             query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         base_url = "http://bonap.net/MapGallery/County/"
@@ -87,6 +89,42 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
+    async def _bold4(self, ctx, query):
+        try:
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+        except BadArgument:
+            await ctx.send_help()
+            return
+        try:
+            self.check_taxon_query(ctx, _query)
+            query_response = await self.query.get(ctx, _query)
+        except (BadArgument, LookupError) as err:
+            await apologize(ctx, str(err))
+            return
+
+        taxon = query_response.taxon
+        taxon_name = taxon.name.replace(" ", "+")
+        name = taxon.format_name(with_common=False)
+        common = f" ({taxon.common})" if taxon.common else ""
+        taxon_id = taxon.taxon_id
+        taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
+        embed = make_embed(
+            title=f"BOLD v4: {name}",
+            url=f"{BOLD_BASE_URL}?searchtype=records&query={taxon_name}",
+            description=(f"iNat Taxon: [{name}]({taxon_url}){common}\n"),
+        )
+        await ctx.send(embed=embed)
+
+    @taxon.command(name="bold4")
+    async def taxon_bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Barcode records from BOLD v4 (alias `[p]bold4`)."""
+        await self._bold4(ctx, query)
+
+    @commands.command()
+    async def bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Barcode records from BOLD v4 (alias `[p]t bold4`)."""
+        await self._bold4(ctx, query)
+
     @taxon.command(name="means")
     async def taxon_means(self, ctx, place_query: str, *, query: NaturalQueryConverter):
         """Show establishment means for taxon from the specified place."""
@@ -101,7 +139,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             self.check_taxon_query(ctx, query)
             query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
         taxon = query_response.taxon
         title = taxon.format_name(with_term=True)
@@ -128,13 +166,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
             query_response = await self.query.get(ctx, query, scientific_name=True)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await self.send_embed_for_taxon(ctx, query_response)
@@ -145,13 +183,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
             query_response = await self.query.get(ctx, query, locale=locale)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await self.send_embed_for_taxon(ctx, query_response)
@@ -167,13 +205,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
             query_response = await self.query.get(ctx, query)
         except LookupError as err:
-            reason = err.args[0]
+            reason = str(err)
             await ctx.send(reason)
             return
 
@@ -211,7 +249,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
@@ -227,13 +265,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             self.check_taxon_query(ctx, taxon_query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
             query_response = await self.query.get(ctx, taxon_query)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await self.send_embed_for_taxon_image(ctx, query_response.taxon)
