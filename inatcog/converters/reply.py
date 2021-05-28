@@ -26,8 +26,10 @@ class TaxonReplyConverter:
         if not query_str:
             if ref:
                 if not msg:
-                    raise LookupError("Message replied to could not be retrieved.")
-                raise LookupError("I don't know how to reply to that kind of message.")
+                    raise BadArgument("I couldn't fetch the message for that reply.")
+                raise BadArgument(
+                    "I couldn't recognize the message content for that reply."
+                )
             raise BadArgument("Your request is empty.")
 
         return await NaturalQueryConverter.convert(ctx, query_str)

@@ -92,10 +92,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def _bold4(self, ctx, query):
         try:
             _query = query or await TaxonReplyConverter.convert(ctx, "")
-        except BadArgument:
-            await ctx.send_help()
-            return
-        try:
             self.check_taxon_query(ctx, _query)
             query_response = await self.query.get(ctx, _query)
         except (BadArgument, LookupError) as err:
