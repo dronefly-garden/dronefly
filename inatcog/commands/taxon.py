@@ -23,10 +23,39 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.group(aliases=["t"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Show taxon best matching the query.
+        """Display taxon information
 
-        `Aliases: [p]t`
-        **query** may contain:
+        - *Taxon query terms* match a single taxon to display.
+        - *Observation query terms* match observation filters.
+        - *Reply* to another display to display its taxon.
+        - The *query* is optional when that display contains a taxon.
+        **Related help topics:**
+        - `[p]help t query` for *Taxon query terms*
+        - `[p]help obs` and `[p]help tab` for *Observation query terms*
+        - `[p]help t reactions` describes the *reaction buttons*
+        - `[p]help s taxa` to search and browse matching taxa
+        """
+        _query = query or await TaxonReplyConverter.convert(ctx, "")
+        try:
+            self.check_taxon_query(ctx, _query)
+        except BadArgument as err:
+            await apologize(ctx, str(err))
+            return
+
+        try:
+            query_response = await self.query.get(ctx, _query)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
+
+        await self.send_embed_for_taxon(ctx, query_response)
+
+    @taxon.command(name="query")
+    async def query_help(self, ctx):
+        """*Help* for taxon *query*
+
+        A taxon *query* can be provided to many commands.
+        It may contain the following:
         - *id#* of the iNat taxon
         - *initial letters* of scientific or common names
         - *double-quotes* around exact words in the name
@@ -45,20 +74,19 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
         """
-        _query = query or await TaxonReplyConverter.convert(ctx, "")
-        try:
-            self.check_taxon_query(ctx, _query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
 
-        try:
-            query_response = await self.query.get(ctx, _query)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
+    @taxon.command(name="reactions")
+    async def reactions_help(self, ctx):
+        """*Help* for taxon reaction buttons
 
-        await self.send_embed_for_taxon(ctx, query_response)
+        Most reaction buttons are available only to users
+        with iNat accounts known to the bot.
+        - :hash: to count your observations and species
+        - :pencil: to write in another user to count
+        - :house: to count your home place obs and species
+        - :round_pushpin: to write in another place to count
+        - :regional_indicator_t: to toggle the taxon ancestor tree
+        """
 
     @taxon.command()
     async def bonap(self, ctx, *, query: NaturalQueryConverter):
