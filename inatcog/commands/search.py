@@ -405,8 +405,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     async def search(self, ctx, *, query):
         """Search iNat.
 
-        `Aliases: [p]s`
-
         • The results are similar to entering a query in the `Search`
           textbox on the website, matching taxa, places, projects, or users.
         • Use one of the subcommands listed below to only match one kind of
@@ -423,11 +421,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         except LookupError as err:
             await apologize(ctx, err.args[0])
 
+    @search.command(name="my")
+    @checks.bot_has_permissions(embed_links=True)
+    async def search_my(self, ctx, *, query: str):
+        """Search your observations (alias `,s obs [query] by me`)."""
+        _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
+        await (self.bot.get_command("search obs")(ctx, query=_query))
+
     @search.command(name="places", aliases=["place"])
     async def search_places(self, ctx, *, query):
         """Search iNat places.
-
-        `Aliases: [p]search place, [p]s place`
 
         • The results are similar to entering a query in the website's `Search`
           textbox, then clicking the `Places` tab.
@@ -440,8 +443,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     async def search_projects(self, ctx, *, query):
         """Search iNat projects.
 
-        `Aliases: [p]search project, [p]s project`
-
         • The results are similar to entering a query into the website's `Search`
           textbox, then clicking the `Projects` tab.
         • Project matches are indicated with the :briefcase: emoji to
@@ -452,8 +453,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @search.command(name="taxa", aliases=["taxon"])
     async def search_taxa(self, ctx, *, query):
         """Search iNat taxa.
-
-        `Aliases: [p]search taxon, [p]s taxon`
 
         • The results are similar to entering a query into the website's `Search`
           textbox, then clicking the `Taxa` tab.
@@ -467,8 +466,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @search.command(name="inactive")
     async def search_inactive(self, ctx, *, query):
         """Search iNat taxa (includes inactive).
-
-        `Aliases: [p]s inactive`
 
         • The results are similar to entering a query into
           `More > Taxa Info > Search` textbox on the website,
@@ -485,8 +482,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     async def search_users(self, ctx, *, query):
         """Search iNat users.
 
-        `Aliases: [p]search user, [p]s user` (also `person` or `people`)
-
         • The results are similar to typing a query into the website's `Search`
           textbox, then clicking the `Users` tab.
         • User matches are indicated with :bust_in_silhouette: emoji to
@@ -501,8 +496,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @search.command(name="obs", aliases=["observation", "observations"])
     async def search_obs(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Search iNat observations.
-
-        `Aliases: [p]s obs`
 
         • Command operation is similar to `[p]obs`, except multiple results are
           returned; see `[p]help obs` for more details and examples.
