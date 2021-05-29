@@ -33,27 +33,22 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         `Aliases: [p]who`
 
-        First characters of the nickname or username are matched provided
-        that user is cached by the server (e.g. if they were recently active).
-        Otherwise, the nickname or username must be exact. If there is more
-        than one username that exactly matches, append '#' plus the 4-digit
-        discriminator to disambiguate.
+        First characters of the nickname or username are matched provided that user is cached by the server (e.g. if they were recently active).
+        Otherwise, the nickname or username must be exact. If there is more than one username that exactly matches, append '#' plus the 4-digit discriminator to disambiguate.
 
         Examples:
 
         `[p]user Syn`
           matches `SyntheticBee#4951` if they spoke recently.
         `[p]user SyntheticBee`
-          matches `SyntheticBee#4951` even if not recently active, assuming
-          there is only one `SyntheticBee`.
+          matches `SyntheticBee#4951` even if not recently active, assuming there is only one `SyntheticBee`.
         `[p]user SyntheticBee#4951`
           matches `SyntheticBee#4951` even if not recently active.
 
-        If the server has defined any user_projects, then observations,
-        species, & leaf taxa stats for each project are shown. Leaf taxa are
-        explained here:
+        If the server has defined any user_projects, then observations, species, & leaf taxa stats for each project are shown.
+        Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
-        """
+        """  # noqa: E501
         if not ctx.guild:
             return
 
@@ -74,16 +69,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         `discord_user`
         - Discord user mention, ID, username, or nickname.
-        - Username and nickname must be enclosed in double quotes
-          if they contain blanks, so a mention or ID is easier.
-        - Turn on `Developer Mode` in your Discord user settings
-          to enable `Copy ID` when right-clicking/long-pressing
-          a user's PFP. Depending on your platform, the setting
-          is in `Behavior` or `Appearance > Advanced`.
+        - Username and nickname must be enclosed in double quotes if they contain blanks, so a mention or ID is easier.
+        - Turn on `Developer Mode` in your Discord user settings to enable `Copy ID` when right-clicking/long-pressing a user's PFP.
+          Depending on your platform, the setting is in `Behavior` or `Appearance > Advanced`.
 
         `inat_user`
         - iNat login id or iNat user profile URL
-        """
+        """  # noqa: E501
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
@@ -168,7 +160,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             )
 
     async def get_valid_user_config(self, ctx):
-        """Get iNat user config known in this guild."""
+        """iNat user config known in this guild."""
         user_config = self.config.user(ctx.author)
         inat_user_id = await user_config.inat_user_id()
         known_in = await user_config.known_in()
@@ -178,7 +170,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         return user_config
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
-        """Show iNat user settings."""
+        """iNat user settings."""
         if setting not in ["all", "known", "home"]:
             await ctx.send(f"Unknown setting: {setting}")
             return
@@ -375,8 +367,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def user_inatyear(self, ctx, user: str = "me", year: int = None):
         """Display the URL for the user's iNat year graphs.
 
-        Where `year` is a valid year on or after 1950, and `user` is a Discord user
-        whose iNat profile is known to the bot."""
+        Where `year` is a valid year on or after 1950, and `user` is a Discord user whose iNat profile is known to the bot.
+        """  # noqa: E501
 
         this_year = datetime.today().year
         stats_year = this_year if year is None else year
@@ -403,7 +395,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @commands.command()
     async def iuser(self, ctx, *, login: str):
-        """Show iNat user matching login.
+        """iNat user page for their login name.
 
         Examples:
 
@@ -479,5 +471,5 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def rank(
         self, ctx, project: str, *, user: str
     ):  # pylint: disable=invalid-name
-        """Show observations, species, & ranks in an iNat project for a user."""
+        """Project observations & species rank for user."""
         await (self.bot.get_command("project stats")(ctx, project, user=user))

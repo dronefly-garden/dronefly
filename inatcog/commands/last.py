@@ -23,7 +23,10 @@ class CommandsLast(INatEmbeds, MixinMeta):
     @commands.group()
     @checks.bot_has_permissions(embed_links=True)
     async def last(self, ctx):
-        """Show info for recently mentioned iNat page."""
+        """iNat info for the last message.
+
+        The subcommands of this group show iNat info for the last matching message from the channel history. See the help for each subcommand for additional info displays that can be shown.
+        """  # noqa: E501
 
     async def get_last_obs_from_history(self, ctx):
         """Get last obs from history."""
@@ -39,7 +42,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
     async def last_obs(self, ctx):
-        """Show recently mentioned iNat observation."""
+        """Last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
             await apologize(ctx, "Nothing found")
@@ -51,7 +54,16 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs.command(name="img", aliases=["image", "photo"])
     async def last_obs_img(self, ctx, number=None):
-        """Show image for recently mentioned iNat observation."""
+        """Image for last iNat observation.
+
+        An optional image *number* indicates which image to show if the taxon has more than one. The first is shown by default.
+
+        Look for the number to the right of the :camera: emoji on the observation display to see how many images it has.
+
+        For example:
+        `[p]last obs img` first image of the last observation
+        `[p]last obs img 2` second image of the last observation
+        """  # noqa: E501
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs:
             try:
@@ -87,7 +99,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
     async def last_obs_taxon(self, ctx, *, query: NaturalQueryConverter = None):
-        """Show taxon for recently mentioned iNat observation."""
+        """Taxon for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         taxon = None
         if last and last.obs and last.obs.taxon:
@@ -105,7 +117,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs_taxon.command(name="img", aliases=["image"])
     async def last_obs_taxon_image(self, ctx, number=1):
-        """Show default taxon image for recently mentioned iNat observation."""
+        """Default taxon images for last iNat observation.
+
+        Like `[p]last taxon image` except for the taxon of the last observation.
+
+        See also `[p]help last taxon image`"""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
             await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
@@ -114,7 +130,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs.command(name="map", aliases=["m"])
     async def last_obs_map(self, ctx):
-        """Show map for recently mentioned iNat observation."""
+        """Taxon range map for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
             await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
@@ -123,12 +139,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_obs_rank(self, ctx):
-        """Show the `<rank>` of the last observation (e.g. `family`).
+        """Taxon `<rank>` for last obs (e.g. `[p]last obs family`).
 
+        For example:
         `[p]last obs family`      show family of last obs
         `[p]last obs superfamily` show superfamily of last obs
-
-        Any rank known to iNat can be specified.
         """
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
@@ -160,7 +175,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
     async def last_taxon(self, ctx, *, query: NaturalQueryConverter = None):
-        """Show recently mentioned iNat taxon."""
+        """Last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         taxon = None
         if last and last.taxon:
@@ -178,7 +193,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_taxon.command(name="map", aliases=["m"])
     async def last_taxon_map(self, ctx):
-        """Show map for recently mentioned taxon."""
+        """Range map of last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
             await apologize(ctx, "Nothing found")
@@ -188,7 +203,14 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_taxon.command(name="image", aliases=["img"])
     async def last_taxon_image(self, ctx, number=1):
-        """Show image for recently mentioned taxon."""
+        """Default image for last taxon.
+
+        An optional image *number* indicates which image to show if the taxon has more than one default image.
+
+        For example:
+        `[p]last t img` default image for the last taxon
+        `[p]last t img 2` 2nd default image for the last taxon
+        """  # noqa: E501
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
             await apologize(ctx, "Nothing found")
@@ -198,12 +220,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_taxon_rank(self, ctx):
-        """Show the `<rank>` of the last taxon (e.g. `family`).
+        """Taxon `<rank>` for last taxon (e.g. `[p]last t family`).
 
-        `[p]last taxon family`      show family of last taxon
-        `[p]last taxon superfamily` show superfamily of last taxon
-
-        Any rank known to iNat can be specified.
+        For example:
+        `[p]last t family` family of last taxon
+        `[p]last t superfamily` superfamily of last taxon
         """
         rank = ctx.invoked_with
         if rank == "<rank>":

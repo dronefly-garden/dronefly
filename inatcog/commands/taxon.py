@@ -23,16 +23,16 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.group(aliases=["t"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Display taxon information
+        """Taxon information.
 
         - *Taxon query terms* match a single taxon to display.
         - *Observation query terms* match observation filters.
         - *Reply* to another display to display its taxon.
         - The *query* is optional when that display contains a taxon.
         **Related help topics:**
-        - `[p]help t query` for *Taxon query terms*
-        - `[p]help obs` and `[p]help tab` for *Observation query terms*
-        - `[p]help t reactions` describes the *reaction buttons*
+        - `[p]help query_taxon` for *taxon query* terms
+        - `[p]help query` for help with other *query* terms
+        - `[p]help reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
         _query = query or await TaxonReplyConverter.convert(ctx, "")
@@ -50,47 +50,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon(ctx, query_response)
 
-    @taxon.command(name="query", hidden=True)
-    async def query_help(self, ctx):
-        """*Help* for taxon *query*
-
-        A taxon *query* can be provided to many commands.
-        It may contain the following:
-        - *id#* of the iNat taxon
-        - *initial letters* of scientific or common names
-        - *double-quotes* around exact words in the name
-        - *rank keywords* filter by ranks (`sp`, `family`, etc.)
-        - *4-letter AOU codes* for birds
-        - *taxon* `in` *an ancestor taxon*
-        **Examples:**
-        ```
-        [p]taxon family bear
-           -> Ursidae (Bears)
-        [p]taxon prunella
-           -> Prunella (self-heals)
-        [p]taxon prunella in animals
-           -> Prunella (Accentors)
-        [p]taxon wtsp
-           -> Zonotrichia albicollis (White-throated Sparrow)
-        ```
-        """
-
-    @taxon.command(name="reactions", hidden=True)
-    async def reactions_help(self, ctx):
-        """*Help* for taxon reaction buttons
-
-        Most reaction buttons are available only to users
-        with iNat accounts known to the bot.
-        - :hash: to count your observations and species
-        - :pencil: to write in another user to count
-        - :house: to count your home place obs and species
-        - :round_pushpin: to write in another place to count
-        - :regional_indicator_t: to toggle the taxon ancestor tree
-        """
-
     @taxon.command()
     async def bonap(self, ctx, *, query: NaturalQueryConverter):
-        """Show info from bonap.net for taxon."""
+        """North American flora info from bonap.net."""
         try:
             self.check_taxon_query(ctx, query)
             query_response = await self.query.get(ctx, query)
@@ -220,9 +182,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalQueryConverter):
-        """Show taxon name best matching the query.
+        """Taxon name only.
 
-        See `[p]help taxon` for help with the query.
+        See `[p]help query_taxon` for help with the query.
         ```
         """
 
@@ -244,11 +206,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
     async def species(self, ctx, *, query: NaturalQueryConverter):
-        """Show species best matching the query.
+        """Species information. (alias `,t [query] species`)
 
-        `Aliases: [p]sp, [p]t sp`
-
-        See `[p]help taxon` for query help."""
+        See `[p]help query_taxon` for query help."""
         query_species = query
         query_species.main.ranks.append("species")
         await self.taxon(ctx, query=query_species)
@@ -263,7 +223,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         [p]related 24255,24267
         [p]related boreal chorus frog,western chorus frog
         ```
-        See `[p]help taxon` for help specifying taxa.
+        See `[p]help query_taxon` for help specifying taxa.
         """
 
         if not taxa_list:
@@ -280,20 +240,18 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, *, taxon_query: NaturalQueryConverter):
-        """Show default image for taxon query.
+    async def image(self, ctx, *, query: NaturalQueryConverter):
+        """Default image for a taxon.
 
-        `Aliases: [p]img`
-
-        See `[p]help taxon` for `taxon_query` format."""
+        See `[p]help query_taxon` for *query* help."""
         try:
-            self.check_taxon_query(ctx, taxon_query)
+            self.check_taxon_query(ctx, query)
         except BadArgument as err:
             await apologize(ctx, str(err))
             return
 
         try:
-            query_response = await self.query.get(ctx, taxon_query)
+            query_response = await self.query.get(ctx, query)
         except LookupError as err:
             await apologize(ctx, str(err))
             return

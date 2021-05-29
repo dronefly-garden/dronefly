@@ -21,12 +21,12 @@ class CommandsProject(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True)
     async def project(self, ctx, *, query):
-        """Show iNat project or abbreviation.
+        """iNat project for name, id number, or abbreviation.
 
         **query** may contain:
         - *id#* of the iNat project
         - *words* in the iNat project name
-        - *abbreviation* defined with `[p]project add`
+        - *abbreviation* defined with `[p]project add`; see `[p]help project add` for details.
         """
         try:
             project = await self.project_table.get_project(ctx.guild, query)
@@ -158,13 +158,11 @@ class CommandsProject(INatEmbeds, MixinMeta):
     @project.command(name="stats")
     @checks.bot_has_permissions(embed_links=True)
     async def project_stats(self, ctx, project: str, *, user: str = "me"):
-        """Show project stats for the named user.
+        """Project stats for the named user.
 
-        Observation & species count & rank of the user within the project
-        are shown, as well as leaf taxa, which are not ranked. Leaf taxa
-        are explained here:
+        Observation & species count & rank of the user within the project are shown, as well as leaf taxa, which are not ranked. Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
-        """
+        """  # noqa: E501
 
         if project == "":
             await ctx.send_help()

@@ -9,7 +9,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
-from inatcog.common import grouper, LOG
+from inatcog.common import grouper
 from inatcog.converters.base import NaturalQueryConverter
 from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.embeds.common import apologize, make_embed
@@ -24,41 +24,22 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["observation"])
     @checks.bot_has_permissions(embed_links=True)
-    async def obs(self, ctx, *, query_str: Optional[str] = ""):
+    async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
 
-        **query** may contain:
-        - `by [name]` to match the named resgistered user (or `me`)
-        - `from [place]` to match the named place
-        - `with [term] [value]` to matched the controlled term with the
-          given value
-        **Examples:**
-        ```
-        [p]obs by benarmstrong
-           -> most recently added observation by benarmstrong
-        [p]obs insecta by benarmstrong
-           -> most recent insecta by benarmstrong
-        [p]obs insecta from canada
-           -> most recent insecta from Canada
-        [p]obs insecta with life larva
-           -> most recent insecta with life stage = larva
-        [p]obs https://inaturalist.org/observations/#
-           -> display the linked observation
-        [p]obs #
-           -> display the observation for id #
-        ```
+        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
         - Use `[p]search obs` to find more than one observation.
-        - See `[p]help taxon` for help specifying optional taxa.
-        """
+        - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]help autoobs` for details.
+        """  # noqa: E501
 
-        if query_str:
+        if query:
             id_or_link = None
-            if query_str.isnumeric():
-                id_or_link = query_str
+            if query.isnumeric():
+                id_or_link = query
             else:
-                mat = re.search(PAT_OBS_LINK, query_str)
+                mat = re.search(PAT_OBS_LINK, query)
                 if mat and mat["url"]:
-                    id_or_link = query_str
+                    id_or_link = query
             if id_or_link:
                 obs, url = await maybe_match_obs(
                     self, ctx, id_or_link, id_permitted=True
@@ -77,9 +58,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     return
 
         try:
-            query = await TaxonReplyConverter.convert(ctx, query_str)
-            obs = await self.obs_query.query_single_obs(ctx, query)
-            LOG.info(obs)
+            _query = await TaxonReplyConverter.convert(ctx, query)
+            obs = await self.obs_query.query_single_obs(ctx, _query)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
@@ -94,18 +74,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Tabulate iNaturalist data.
 
-        • Only observations can be tabulated. More kinds of table
-          to be supported in future releases.
-        • The row contents can be `from` or `by`. If both
-          are given, what to tabulate is filtered by the
-          `from` place, and the `by` person is the first row.
+        • Only observations can be tabulated. More kinds of table to be supported in future releases.
+        • The row contents can be `from` or `by`. If both are given, what to tabulate is filtered by the `from` place, and the `by` person is the first row.
         • If no taxon is specified, all observations are searched.
-        • The `not by` qualifier counts observations / species
-          unobserved by each user in the table. It may be combined
-          with `from`, but not `by` or `id by`.
-        • The `id by` qualifier counts observations / species
-          identified by each user in the table. It may be combined
-          with `from`, but not `by` or `not by`.
+        • The `not by` qualifier counts observations / species unobserved by each user in the table. It may be combined with `from`, but not `by` or `id by`.
+        • The `id by` qualifier counts observations / species identified by each user in the table. It may be combined with `from`, but not `by` or `not by`.
         e.g.
         ```
         ,tab fish from home
@@ -117,10 +90,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         ,tab fish id by me
              -> per identified by (self listed; others react to add)
         ,tab fish from canada by me
-             -> per user (self listed; others react to add)
-                but only fish from canada are tabulated
+             -> per user (self listed; others react to add) but only fish from canada are tabulated
         ```
-        """
+        """  # noqa: E501
         _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
             query_response = await self.query.get(ctx, _query)
@@ -134,10 +106,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def tabulate_maverick(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Maverick identifications.
 
-        • By default, if your iNat login is known, your own maverick
-          identifications are displayed.
-        • The `by` qualifier can be used to display mavericks for
-          another known user.
+        • By default, if your iNat login is known, your own maverick identifications are displayed.
+        • The `by` qualifier can be used to display mavericks for another known user.
         """
         try:
             _query = query or await TaxonReplyConverter.convert(ctx, "")
@@ -267,14 +237,21 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
     async def link(self, ctx, *, query):
-        """Summary for iNaturalist link.
+        """Information and image from iNaturalist link.
+
+        For observation displays, the default observation image is shown, if it has one.
+
+        Enclose the link in angle brackets to suppress the automatic Discord preview of the image to avoid the image being shown twice.
 
         e.g.
         ```
-        [p]link https://inaturalist.org/observations/#
-           -> an embed summarizing the observation link
+        [p]link <https://inaturalist.org/observations/12345>
         ```
-        """
+
+        See also `[p]help obs` and `[p]help autoobs`.
+        - Both of those methods for showing link info do not include the image, relying instead on the Discord to preview the link.
+        - If channel permissions don't allow users to preview links, but do allow the bot to, or if you prefer the information on top, you may find this command preferable.
+        """  # noqa: E501
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
             obs_id = int(mat["obs_id"])

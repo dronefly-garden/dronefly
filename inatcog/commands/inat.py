@@ -22,12 +22,123 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def inat(self, ctx):
         """Show/change iNat settings.
 
-        See `[p]help iNat` for all `inatcog` help topics."""
+        See also `[p]help iNat` to list available `iNat` *commands* and other *Help* topics.
+        """
+
+    @commands.command(name="autoobs")
+    async def topic_autoobs(self, ctx):
+        """*Help* for automatic observation previews.
+
+        When `autoobs` is on for the channel/server:
+
+        Just include a link to an observation in your message, and it will be looked up as if you typed `[p]obs <link>`
+
+        Only the first link per message is looked up.
+
+        Server mods and owners can set this up. See:
+        `[p]help inat set autoobs server` and
+        `[p]help inat set autoobs` (channel).
+        """  # noqa: E501
+
+    @commands.command(name="dot_taxon")
+    async def topic_dot_taxon(self, ctx):
+        """*Help* for the `.taxon.` lookup feature.
+
+        When `dot_taxon` is on for the channel/server:
+
+        • Surround taxon to lookup with `.`
+        • Separate from other text with blanks
+        • Only one lookup will be performed per message
+        • Taxonomy tree is omitted for `by` or `from` lookups
+        • Show the setting with `[p]inat show dot_taxon`
+
+        **Examples:**
+        ```
+        It's .rwbl. for sure.
+        ```
+        • behaves like  `[p]taxon rwbl`
+        ```
+        Check out these .lacebugs by me. , please.
+        ```
+        • behaves like `[p]tab lacebugs by me`
+
+        Server mods and owners can set this up. See:
+        `[p]help inat set dot_taxon server` and
+        `[p]help inat set dot_taxon` (channel).
+        """
+        await ctx.send_help()
+
+    @commands.command(name="query")
+    async def topic_query(self, ctx):
+        """*Help* for observation *query* terms.
+
+        A *query* may contain *taxon query* terms and other *query* terms described below.
+
+        See: `[p]help query_taxon` for *taxon query* help.
+
+        Aside from *taxon*, other *query* terms may be:
+        - `by <name>` to match the named user; also `by me` or just `my` to match yourself
+        - `from <place>` to match the named place; also `from home` or just `home` to match observations from your *home place*
+        - `in prj <project>` to match the named *project*
+        - `with <term> <value>` to matched the *controlled term* with the given *value*
+        **Examples:**
+        ```
+        [p]obs by benarmstrong
+        -> most recently added observation by benarmstrong
+        [p]obs insecta by benarmstrong
+        -> most recent insecta by benarmstrong
+        [p]s obs insecta from canada
+        -> search for any insecta from Canada
+        [p]s obs insecta with life larva
+        -> search for insecta with life stage = larva
+        ```
+        """  # noqa: E501
+
+    @commands.command(name="query_taxon")
+    async def topic_query_taxon(self, ctx):
+        """*Help* for *taxon query* terms.
+
+        A *taxon query* matches a single taxon. It may contain the following:
+        - *id#* of the iNat taxon
+        - *initial letters* of scientific or common names
+        - *double-quotes* around exact words in the name
+        - *rank keywords* filter by ranks (`sp`, `family`, etc.)
+        - *4-letter AOU codes* for birds
+        - *taxon* `in` *an ancestor taxon*
+        - Commands can also have general *query* terms in the *query*. See `[p]help query` for details.
+        **Examples:**
+        ```
+        [p]taxon family bear
+           -> Ursidae (Bears)
+        [p]taxon prunella
+           -> Prunella (self-heals)
+        [p]taxon prunella in animals
+           -> Prunella (Accentors)
+        [p]taxon wtsp
+           -> Zonotrichia albicollis (White-throated Sparrow)
+        ```
+        """  # noqa: E501
+
+    @commands.command(name="reactions")
+    async def topic_reactions(self, ctx):
+        """*Help* for taxon reaction buttons.
+
+        Taxon reaction buttons appear on many different displays.  You may use them only if your iNat account is known in the server.
+        - :hash: to count your observations and species
+        - :pencil: to write in another user to count
+        - :house: to count your home place obs and species
+        - :round_pushpin: to write in another place to count
+        - :regional_indicator_t: to toggle the taxonomy tree
+
+        See `[p]help user set known` if you're already known in a server and want to be known on other servers.  Otherwise, ask a mod to add you.
+
+        See `[p]help user add` if you're a server owner or mod.
+        """  # noqa: E501
 
     @inat.group(name="set")
     @checks.admin_or_permissions(manage_messages=True)
     async def inat_set(self, ctx):
-        """Change iNat settings (mods)."""
+        """Change `iNat` settings (mods)."""
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
@@ -38,14 +149,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         [botname].
 
         - If *prefixes* is empty, current setting is shown.
-        - You particularly need to set *bot_prefixes* if your server has more
-          than one bot with `inatcog` loaded, otherwise it's unlikely you
-          need to set this.
-        - Set this to all prefixes of other bots separated by spaces to
-          ensure [botname] ignores commands sent to them, especially when
-          *autoobs* is enabled.
+        - You particularly need to set *bot_prefixes* if your server has more than one bot with `inatcog` loaded, otherwise it's unlikely you need to set this.
+        - Set this to all prefixes of other bots separated by spaces to ensure [botname] ignores commands sent to them, especially when *autoobs* is enabled.
         - You don't need to include any prefixes of [botname] itself.
-        """
+        """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -118,9 +225,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def set_beta_role(self, ctx, beta_role: Optional[discord.Role]):
         """Set server beta role.
 
-        The beta role grants users with the role early access to iNat bot
-        features that are not yet released for all users.
-        """
+        The beta role grants users with the role early access to `inatcog` features that are not yet released for all users.
+        """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -159,8 +265,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_set.group(invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
-    async def autoobs(self, ctx, state: InheritableBoolConverter):
+    async def set_autoobs(self, ctx, state: InheritableBoolConverter):
         """Set channel auto-observation mode (mods).
+
+        A separate subcommand sets this feature for the whole server. See `[p]help set autoobs server` for details.
 
         To set the mode for the channel:
         ```
@@ -168,9 +276,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         [p]inat set autoobs off
         [p]inat set autoobs inherit
         ```
-        When `inherit` is specified, channel mode inherits from the server
-        setting.
-        """
+        When `inherit` is specified, channel mode inherits from the server setting.
+        """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -185,15 +292,17 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
-    @autoobs.command(name="server")
+    @set_autoobs.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
-    async def autoobs_server(self, ctx, state: bool):
+    async def set_autoobs_server(self, ctx, state: bool):
         """Set server auto-observation mode (mods).
 
         ```
         [p]inat set autoobs server on
         [p]inat set autoobs server off
         ```
+
+        See `[p]help autoobs` for usage of the feature.
         """
         if ctx.author.bot or ctx.guild is None:
             return
@@ -205,33 +314,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
         )
         return
 
-    @commands.command()
-    async def dot_taxon(self, ctx):
-        """How to use the `.taxon.` lookup feature.
-
-        • Surround taxon to lookup with `.`
-        • Separate from other text with blanks
-        • Only one lookup will be performed per message
-        • Taxonomy tree is omitted for `by` or `from` lookups
-        • Show the setting with `[p]inat show dot_taxon`
-        • Set with `[p]inat set dot_taxon` (mods)
-
-        **Examples:**
-        ```
-        It's .rwbl. for sure.
-        ```
-        • behaves like  `[p]taxon rwbl`
-        ```
-        Check out these .lacebugs by me. , please.
-        ```
-        • behaves like `[p]tab lacebugs by me`
-        """
-        await ctx.send_help()
-
     @inat_set.group(invoke_without_command=True, name="dot_taxon")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_dot_taxon(self, ctx, state: InheritableBoolConverter):
         """Set channel .taxon. lookup (mods).
+
+        A separate subcommand sets this feature for the whole server. See `[p]help set dot_taxon server` for details.
 
         To set .taxon. lookup for the channel:
         ```
@@ -239,11 +327,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         [p]inat set dot_taxon off
         [p]inat set dot_taxon inherit
         ```
-        When `inherit` is specified, channel mode inherits from the server
-        setting.
+        When `inherit` is specified, channel mode inherits from the server setting.
 
         See `[p]help dot_taxon` for usage of the feature.
-        """
+        """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -344,7 +431,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_show.command(name="autoobs")
     async def show_autoobs(self, ctx):
-        """Show channel & server auto-observation mode."""
+        """Show channel & server auto-observation mode.
+
+        See `[p]help autoobs` to learn about the feature."""
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -366,7 +455,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def show_dot_taxon(self, ctx):
         """Show channel & server .taxon. lookup.
 
-        See `[p]help dot_taxon` for how to use the feature."""
+        See `[p]help dot_taxon` to learn about the feature."""
         if ctx.author.bot or ctx.guild is None:
             return
 
