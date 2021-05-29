@@ -423,10 +423,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
     @search.command(name="my")
     @checks.bot_has_permissions(embed_links=True)
-    async def search_my(self, ctx, *, query: str):
+    async def search_my(self, ctx, *, query: Optional[str] = ""):
         """Search your observations (alias `,s obs [query] by me`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
-        await (self.bot.get_command("search obs")(ctx, query=_query))
+        await self._search(ctx, _query, "obs")
 
     @search.command(name="places", aliases=["place"])
     async def search_places(self, ctx, *, query):
