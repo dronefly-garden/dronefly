@@ -89,6 +89,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         if obs and obs.sounds:
             await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
 
+    @obs.command(name="my")
+    @checks.bot_has_permissions(embed_links=True)
+    async def obs_my(self, ctx, *, query: Optional[str] = ""):
+        """Match one of your observations (alias `,obs [query] by me`)."""
+        _query = f"{query} by me"
+        await self.obs(ctx, query_str=_query)
+
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
