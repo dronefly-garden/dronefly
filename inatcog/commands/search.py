@@ -363,7 +363,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return embeds
 
         try:
-            if keyword.lower() == "obs":
+            if keyword and keyword.lower() == "obs":
                 try:
                     _query = query or (await TaxonReplyConverter.convert(ctx, ""))
                 except commands.BadArgument:
@@ -426,6 +426,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     async def search_my(self, ctx, *, query: Optional[str] = ""):
         """Search your observations (alias `,s obs [query] by me`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
+        await self._search(ctx, _query, "obs")
+
+    @search.command(name="home")
+    @checks.bot_has_permissions(embed_links=True)
+    async def search_home(self, ctx, *, query: Optional[str] = ""):
+        """Search obs from home (alias `,s obs [query] from home`)."""
+        _query = await TaxonReplyConverter.convert(ctx, f"{query} from home")
         await self._search(ctx, _query, "obs")
 
     @search.command(name="places", aliases=["place"])

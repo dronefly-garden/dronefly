@@ -256,6 +256,8 @@ QUERY_MACROS = {
     # Because there are no iconic taxa for these three taxa, they must be specifically
     # excluded in order to match only actual unknowns (Bacteria, Archaea, & Viruses):
     "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
+    "my": {"by": "me"},
+    "home": {"from": "home"},
 }
 
 
@@ -280,6 +282,8 @@ class NaturalQueryConverter(QueryConverter):
             raise BadArgument(err.args[0]) from err
         ranks = []
         opts = []
+        macro_by = ""
+        macro_from = ""
         in_opt = False
         in_rank = False
         filtered_args = []
@@ -303,6 +307,9 @@ class NaturalQueryConverter(QueryConverter):
                 macro_opts = macro.get("opt")
                 if macro_opts:
                     opts.extend(macro_opts)
+                macro_by = macro.get("by")
+                macro_from = macro.get("from")
+                if macro_opts or macro_by or macro_from:
                     continue
             elif in_opt:  # otherwise collect opts from arguments
                 opts.append(arg_lowered)
@@ -315,6 +322,10 @@ class NaturalQueryConverter(QueryConverter):
         if opts:
             filtered_args.append("--opt")
             filtered_args += opts
+        if macro_by:
+            filtered_args.append(f"--by {macro_by}")
+        if macro_from:
+            filtered_args.append(f"--from {macro_from}")
         if not re.match(r"^--", filtered_args[0]):
             filtered_args.insert(0, "--of")
         argument_normalized = " ".join(filtered_args)
