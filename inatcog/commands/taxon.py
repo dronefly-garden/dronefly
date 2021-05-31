@@ -1,15 +1,19 @@
 """Module for taxon command group."""
 
+from functools import partial
 import re
+import textwrap
 from typing import Optional
 
+# TODO: Experimental & doesn't belong here. Migrate out to api.py later.
+from pyinaturalist import get_taxa_autocomplete
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
 from inatcog.converters.base import NaturalQueryConverter
 from inatcog.converters.reply import TaxonReplyConverter
-from inatcog.embeds.common import apologize, make_embed
+from inatcog.embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
 from inatcog.taxa import get_taxon
@@ -179,6 +183,32 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         await self.send_embed_for_taxon(ctx, query_response)
+
+    @commands.command(hidden=True)
+    async def ttest(self, ctx, *, query: str):
+        """Taxon via pyinaturalist (test)."""
+        response = await ctx.bot.loop.run_in_executor(
+            None, partial(get_taxa_autocomplete, q=query)
+        )
+        if response:
+            results = response.get("results")
+            if results:
+                taxon = results[0]
+                embed = make_embed()
+                # Show enough of the record for a satisfying test.
+                embed.title = taxon["name"]
+                embed.url = f"{WWW_BASE_URL}/taxa/{taxon['id']}"
+                embed.description = (
+                    "```py\n"
+                    + textwrap.shorten(
+                        f"{repr(taxon)}",
+                        width=MAX_EMBED_DESCRIPTION_LEN
+                        - 10,  # i.e. minus the code block markup
+                        placeholder="…",
+                    )
+                    + "\n```"
+                )
+                await ctx.send(embed=embed)
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalQueryConverter):
