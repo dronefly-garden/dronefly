@@ -198,6 +198,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 # Show enough of the record for a satisfying test.
                 embed.title = taxon["name"]
                 embed.url = f"{WWW_BASE_URL}/taxa/{taxon['id']}"
+                default_photo = taxon.get("default_photo")
+                if default_photo:
+                    medium_url = default_photo.get("medium_url")
+                    if medium_url:
+                        embed.set_image(url=medium_url)
+                        embed.set_footer(text=default_photo.get("attribution"))
                 embed.description = (
                     "```py\n"
                     + textwrap.shorten(
