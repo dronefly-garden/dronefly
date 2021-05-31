@@ -6,3 +6,4 @@ inflect
 timeago
 aiolimiter
 aiohttp-retry
+pyinaturalist

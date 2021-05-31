@@ -16,8 +16,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install red-discordbot pyparsing ebird-api dataclasses-json html2markdown inflect aiolimiter aiohttp-retry
-        pip install timeago
+        pip install -r requirements.txt
     - name: Test with pytest
       run: |
         pip install pytest
