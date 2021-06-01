@@ -66,7 +66,7 @@ NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
 SHORT_DATE_PAT = re.compile(
     r"(^.*\d{1,2}:\d{2}(:\d{2})?(\s+(am|pm))?)(.*$)", flags=re.I
 )
-TAXONOMY_PAT = re.compile(r"in:(.*?(?=\n__.*$)|.*$)", re.DOTALL)
+TAXONOMY_PAT = re.compile(r"in:(?P<taxonomy>.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
 OBS_ID_PAT = re.compile(r"\(.*/observations/(?P<obs_id>\d+).*?\)")
 PLACE_ID_PAT = re.compile(
@@ -114,6 +114,7 @@ class INatEmbed(discord.Embed):
         inat_embed = super(cls, INatEmbed).from_dict(data)
         inat_embed.obs_url = inat_embed.get_observations_url()
         inat_embed.taxon_url, taxon_id = inat_embed.get_taxon_url()
+        inat_embed.taxonomy = inat_embed.get_taxonomy()
         inat_embed.params = inat_embed.get_params(taxon_id)
         return inat_embed
 
@@ -121,6 +122,7 @@ class INatEmbed(discord.Embed):
         super().__init__()
         self.obs_url = self.get_observations_url()
         self.taxon_url, taxon_id = self.get_taxon_url()
+        self.taxonomy = self.get_taxonomy()
         self.params = self.get_params(taxon_id)
 
     def get_observations_url(self):
@@ -149,6 +151,15 @@ class INatEmbed(discord.Embed):
             if mat:
                 return (mat["url"], mat["taxon_id"])
         return (None, None)
+
+    def get_taxonomy(self):
+        """Return taxonomy for the embed."""
+        if not self.description:
+            return ""
+        mat = re.search(TAXONOMY_PAT, self.description)
+        if mat:
+            return mat["taxonomy"]
+        return ""
 
     def get_params(self, taxon_id=None):
         """Return recognized params for the embed."""
@@ -181,6 +192,7 @@ class INatEmbed(discord.Embed):
         content["taxon_url"] = self.taxon_url
         content["obs_url"] = self.obs_url
         content["params"] = self.params
+        content["taxonomy"] = self.taxonomy
         content["query"] = str(self.query())
         return content
 
