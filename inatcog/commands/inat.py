@@ -263,7 +263,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         await ctx.send("Server ignored bot prefixes cleared.")
 
-    @inat_set.group(invoke_without_command=True)
+    @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs(self, ctx, state: InheritableBoolConverter):
         """Set channel auto-observation mode (mods).
