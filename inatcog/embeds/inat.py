@@ -822,7 +822,9 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(self, ctx, arg, include_ancestors=True):
+    async def make_taxa_embed(
+        self, ctx, arg: Union[QueryResponse, Taxon], include_ancestors=True
+    ):
         """Make embed describing taxa record."""
         obs_cnt_filtered = False
         if isinstance(arg, QueryResponse):
@@ -847,7 +849,7 @@ class INatEmbeds(MixinMeta):
                 if response:
                     obs_cnt_filtered = True
                     obs_cnt = response.get("total_results")
-        else:
+        elif isinstance(arg, Taxon):
             taxon = arg
             user = None
             place = None
@@ -856,6 +858,9 @@ class INatEmbeds(MixinMeta):
             obs_url = (
                 f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}&verifiable=any"
             )
+        else:
+            LOG.error("Invalid input: %s", repr(arg))
+            raise BadArgument("Invalid input.")
 
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
         p = self.p  # pylint: disable=invalid-name
