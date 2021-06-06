@@ -5,6 +5,10 @@ from inatcog.embeds.inat import INatEmbed
 from .base import NaturalQueryConverter
 
 
+class EmptyArgument(BadArgument):
+    """Argument to a command is empty."""
+
+
 class TaxonReplyConverter:
     """Use replied to bot message as query."""
 
@@ -23,6 +27,13 @@ class TaxonReplyConverter:
                 else:
                     query_str = str(inat_embed.query())
 
+        # We might want to change this at some point in future to make it consistent,
+        # i.e. the messages will be shown when the user replied with no arguments
+        # but we couldn't fetch the message or find useful content, but not if
+        # arguments were supplied. This is because BadArgument always triggers
+        # help when the converter is used in the command definition, but we catch
+        # and display the message when used in the body of the command (i.e. the
+        # "no arguments" case).
         if not query_str:
             if ref:
                 if not msg:
@@ -30,6 +41,6 @@ class TaxonReplyConverter:
                 raise BadArgument(
                     "I couldn't recognize the message content for that reply."
                 )
-            raise BadArgument("Your request is empty.")
+            raise EmptyArgument("This command requires an argument.")
 
         return await NaturalQueryConverter.convert(ctx, query_str)

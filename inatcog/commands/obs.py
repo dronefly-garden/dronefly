@@ -11,7 +11,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
 from inatcog.common import grouper
 from inatcog.converters.base import NaturalQueryConverter
-from inatcog.converters.reply import TaxonReplyConverter
+from inatcog.converters.reply import EmptyArgument, TaxonReplyConverter
 from inatcog.embeds.common import apologize, make_embed
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -60,6 +60,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             _query = await TaxonReplyConverter.convert(ctx, query)
             obs = await self.obs_query.query_single_obs(ctx, _query)
+        except EmptyArgument:
+            await ctx.send_help()
+            return
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
