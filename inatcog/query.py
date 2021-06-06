@@ -1,19 +1,15 @@
 """Module to query iNat."""
+import datetime as dt
 import re
 from redbot.core.commands import BadArgument, Context
 from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
-from .base_classes import Query, QueryResponse, TaxonQuery, User
+from .base_classes import DateSelector, Query, QueryResponse, TaxonQuery, User
 
 VALID_OBS_OPTS = [
     "captive",
-    "created_d1",
-    "created_d2",
-    "created_on",
     "day",
-    "d1",
-    "d2",
     "endemic",
     "iconic_taxa",
     "id",
@@ -22,7 +18,6 @@ VALID_OBS_OPTS = [
     "month",
     "native",
     "not_id",
-    "observed_on",
     "order",
     "order_by",
     "out_of_range",
@@ -74,6 +69,8 @@ def has_value(arg):
             or arg.ranks
             or arg.taxon_id
         )
+    elif isinstance(arg, dt.datetime):
+        return True
     else:
         return arg.lower() != "any"
 
@@ -172,5 +169,15 @@ class INatQuery:
         args["options"] = (
             _get_options(query.options) if has_value(query.options) else None
         )
+        _observed = {}
+        _observed["on"] = query.obs_on if has_value(query.obs_on) else None
+        _observed["d1"] = query.obs_d1 if has_value(query.obs_d1) else None
+        _observed["d2"] = query.obs_d2 if has_value(query.obs_d2) else None
+        args["observed"] = DateSelector(**_observed)
+        _added = {}
+        _added["on"] = query.added_on if has_value(query.added_on) else None
+        _added["d1"] = query.added_d1 if has_value(query.added_d1) else None
+        _added["d2"] = query.added_d2 if has_value(query.added_d2) else None
+        args["added"] = DateSelector(**_added)
 
         return QueryResponse(**args)

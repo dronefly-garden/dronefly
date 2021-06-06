@@ -1,7 +1,7 @@
 """Module for base classes and constants."""
 import datetime as dt
 import re
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Union
 from dataclasses import dataclass, field
 from dataclasses_json import config, DataClassJsonMixin
 from .controlled_terms import ControlledTermSelector
@@ -154,6 +154,12 @@ class Query:
     per: Optional[str] = None
     project: Optional[str] = None
     options: Optional[List] = None
+    obs_d1: Optional[List] = None
+    obs_d2: Optional[List] = None
+    obs_on: Optional[List] = None
+    added_d1: Optional[List] = None
+    added_d2: Optional[List] = None
+    added_on: Optional[List] = None
     _query: Optional[str] = None
 
     def _add_clause(self, fmt, item):
@@ -178,6 +184,12 @@ class Query:
         self._add_clause("with {}", self.controlled_term)
         self._add_clause("per {}", self.per)
         self._add_clause("opt {}", self.options)
+        self._add_clause("d1 {}", self.obs_d1)
+        self._add_clause("d2 {}", self.obs_d2)
+        self._add_clause("on {}", self.obs_on)
+        self._add_clause("added d1 {}", self.added_d1)
+        self._add_clause("added d2 {}", self.added_d2)
+        self._add_clause("added on {}", self.added_on)
         return self._query
 
 
@@ -538,6 +550,17 @@ class _Params(dict):
 
 
 @dataclass
+class DateSelector:
+    """A date selector object."""
+
+    # pylint: disable=invalid-name
+
+    d1: Optional[Union[dt.datetime, str]]
+    d2: Optional[Union[dt.datetime, str]]
+    on: Optional[Union[dt.datetime, str]]
+
+
+@dataclass
 class QueryResponse:
     """A generic query response object.
 
@@ -567,6 +590,8 @@ class QueryResponse:
     project: Optional[Project]
     options: Optional[dict]
     controlled_term: Optional[ControlledTermSelector]
+    observed: Optional[DateSelector]
+    added: Optional[DateSelector]
 
     def obs_args(self):
         """Arguments for an observations query."""
@@ -585,10 +610,33 @@ class QueryResponse:
             kwargs["term_value_id"] = self.controlled_term.value.id
         if self.options:
             kwargs = {**kwargs, **self.options}
+        if self.observed:
+            if self.observed.on:
+                kwargs["observed_on"] = str(self.observed.on.date())
+            else:
+                if self.observed.d1:
+                    kwargs["d1"] = str(self.observed.d1.date())
+                if self.observed.d2:
+                    kwargs["d2"] = str(self.observed.d2.date())
+        if self.added:
+            if self.added.on:
+                kwargs["created_on"] = str(self.added.on.date())
+            else:
+                if self.added.d1:
+                    kwargs["created_d1"] = self.added.d1.isoformat()
+                if self.added.d2:
+                    kwargs["created_d2"] = self.added.d2.isoformat()
         return kwargs
 
     def obs_query_description(self):
         """Description of an observations query."""
+
+        def _format_date(date: str):
+            return date.strftime("%b %-d, %Y")
+
+        def _format_time(time: str):
+            return time.strftime("%b %-d, %Y %h:%m %p")
+
         message = ""
         if self.taxon:
             taxon = self.taxon
@@ -603,6 +651,28 @@ class QueryResponse:
             message += " unobserved by " + self.unobserved_by.display_name()
         if self.id_by:
             message += " identified by " + self.id_by.display_name()
+        if self.observed:
+            message += " observed "
+            if self.observed.on:
+                message += f" on {_format_date(self.observed.on)}"
+            else:
+                if self.observed.d1:
+                    message += f" on or after {_format_date(self.observed.d1)}"
+                if self.observed.d2:
+                    if self.observed.d1:
+                        message += " and "
+                    message += f" on or before {_format_date(self.observed.d2)}"
+        if self.added:
+            message += " added "
+            if self.added.on:
+                message += f" on {_format_date(self.observed.on)}"
+            else:
+                if self.added.d1:
+                    message += f" on or after {_format_time(self.added.d1)}"
+                if self.added.d2:
+                    if self.added.d1:
+                        message += " and "
+                    message += f" on or before {_format_time(self.added.d2)}"
         if self.controlled_term:
             (term, term_value) = self.controlled_term
             desc = f" with {term.label}"

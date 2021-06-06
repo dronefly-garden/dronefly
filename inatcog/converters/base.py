@@ -3,6 +3,7 @@ import argparse
 import re
 import shlex
 from typing import NamedTuple
+import dateparser
 import discord
 from redbot.core.commands import (
     BadArgument,
@@ -113,6 +114,12 @@ QUERY_ARGS = {
     "per": {"nargs": "+", "dest": "per", "default": []},
     "opt": {"nargs": "+", "dest": "options", "default": []},
     "in-prj": {"nargs": "+", "dest": "project", "default": []},
+    "since": {"nargs": "+", "dest": "obs_d1", "default": []},
+    "until": {"nargs": "+", "dest": "obs_d2", "default": []},
+    "on": {"nargs": "+", "dest": "obs_on", "default": []},
+    "added-since": {"nargs": "+", "dest": "added_d1", "default": []},
+    "added-until": {"nargs": "+", "dest": "added_d2", "default": []},
+    "added-on": {"nargs": "+", "dest": "added_on", "default": []},
 }
 
 
@@ -143,6 +150,14 @@ class QueryConverter(Query):
                 elif len(terms[0]) == 4:
                     code = terms[0].upper()
             return terms, phrases, code, taxon_id
+
+        def _parse_date_arg(arg: list):
+            _arg = " ".join(arg)
+            if _arg.lower() == "any":
+                return "any"
+            return dateparser.parse(
+                " ".join(arg), settings={"PREFER_DATES_FROM": "past"}
+            )
 
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
         for arg in QUERY_ARGS:
@@ -177,6 +192,12 @@ class QueryConverter(Query):
             or vals.per
             or vals.options
             or vals.project
+            or vals.obs_d1
+            or vals.obs_d2
+            or vals.obs_on
+            or vals.added_d1
+            or vals.added_d2
+            or vals.added_on
         ):
             main = None
             ancestor = None
@@ -229,6 +250,15 @@ class QueryConverter(Query):
                 controlled_term = [term_name, term_value]
             else:
                 controlled_term = None
+            try:
+                obs_d1 = _parse_date_arg(vals.obs_d1)
+                obs_d2 = _parse_date_arg(vals.obs_d2)
+                obs_on = _parse_date_arg(vals.obs_on)
+                added_d1 = _parse_date_arg(vals.added_d1)
+                added_d2 = _parse_date_arg(vals.added_d2)
+                added_on = _parse_date_arg(vals.added_on)
+            except RuntimeError as err:
+                raise BadArgument(err) from err
             query = cls(
                 main=main,
                 ancestor=ancestor,
@@ -240,6 +270,12 @@ class QueryConverter(Query):
                 per=" ".join(vals.per),
                 project=" ".join(vals.project),
                 options=vals.options,
+                obs_d1=obs_d1,
+                obs_d2=obs_d2,
+                obs_on=obs_on,
+                added_d1=added_d1,
+                added_d2=added_d2,
+                added_on=added_on,
             )
             LOG.info(repr(query))
             return query
@@ -276,6 +312,9 @@ class NaturalQueryConverter(QueryConverter):
             )
             arg_normalized = re.sub(
                 r"((^| )in ?prj) ", r"\2in-prj ", arg_normalized, re.I
+            )
+            arg_normalized = re.sub(
+                r"((^| )added ?(on|since|until)) ", r"\2added-\3 ", arg_normalized, re.I
             )
             tokens = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
