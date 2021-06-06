@@ -2,7 +2,7 @@
 import argparse
 import re
 import shlex
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 import dateparser
 import discord
 from redbot.core.commands import (
@@ -151,13 +151,14 @@ class QueryConverter(Query):
                     code = terms[0].upper()
             return terms, phrases, code, taxon_id
 
-        def _parse_date_arg(arg: list):
+        def _parse_date_arg(arg: list, prefer_dom: Optional[str] = None):
             _arg = " ".join(arg)
             if _arg.lower() == "any":
                 return "any"
-            return dateparser.parse(
-                " ".join(arg), settings={"PREFER_DATES_FROM": "past"}
-            )
+            settings = {"PREFER_DATES_FROM": "past"}
+            if prefer_dom:
+                settings["PREFER_DAY_OF_MONTH"] = prefer_dom
+            return dateparser.parse(" ".join(arg), settings=settings)
 
         parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
         for arg in QUERY_ARGS:
@@ -251,11 +252,11 @@ class QueryConverter(Query):
             else:
                 controlled_term = None
             try:
-                obs_d1 = _parse_date_arg(vals.obs_d1)
-                obs_d2 = _parse_date_arg(vals.obs_d2)
+                obs_d1 = _parse_date_arg(vals.obs_d1, "first")
+                obs_d2 = _parse_date_arg(vals.obs_d2, "last")
                 obs_on = _parse_date_arg(vals.obs_on)
-                added_d1 = _parse_date_arg(vals.added_d1)
-                added_d2 = _parse_date_arg(vals.added_d2)
+                added_d1 = _parse_date_arg(vals.added_d1, "first")
+                added_d2 = _parse_date_arg(vals.added_d2, "last")
                 added_on = _parse_date_arg(vals.added_on)
             except RuntimeError as err:
                 raise BadArgument(err) from err
