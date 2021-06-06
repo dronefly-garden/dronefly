@@ -886,7 +886,7 @@ class INatEmbeds(MixinMeta):
                 f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
             )
             if obs_cnt_filtered:
-                obs_without_taxon = copy.copy(arg)
+                obs_without_taxon = copy.copy(title_query_response)
                 obs_without_taxon.taxon = None
                 description += f" {obs_without_taxon.obs_query_description()}"
             if means_fmtd:
