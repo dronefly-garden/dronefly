@@ -284,48 +284,74 @@ class NaturalQueryConverter(QueryConverter):
         opts = []
         macro_by = ""
         macro_from = ""
-        in_opt = False
-        in_rank = False
         filtered_args = []
+        # Special rules apply within the "--of" taxon option argument (which is
+        # implicit until the first option keyword is given):
+        # - rank keywords & macro expansions are allowed
+        filtering_taxon_args = True
         for arg in args_normalized:
             arg_lowered = arg.lower()
 
             if arg_lowered in QUERY_ARGS:
                 arg_lowered = f"--{arg_lowered}"
             if re.match(r"--", arg_lowered):
-                in_opt = arg_lowered == "--opt"
-                in_rank = arg_lowered == "--rank"
-                if in_opt or in_rank:
+                filtering_taxon_args = arg_lowered == "--of"
+                # Insert at head of explicit "opt" or "rank" any collected
+                # ranks or opt macro expansions. This allows them to be
+                # combined in the same query, e.g.
+                #   `reverse birds opt observed_on=2021-06-13` ->
+                #   `--of birds --opt order=asc observed_on=2021-06-13`
+                # or
+                #   `ssp ducks rank sp` -> `--of ducks --rank ssp sp`
+                #   - not super useful, but handled for consistency, as
+                #     rank expansion is a special kind of macro expansion
+                if arg_lowered == "--opt" and opts:
+                    filtered_args.extend(["--opt", *opts])
+                    opts = []
                     continue
-            # Whether or not in rank arguments, collect ranks
+                if arg_lowered == "--rank" and ranks:
+                    filtered_args.extend(["--rank", *ranks])
+                    ranks = []
+                    continue
+                # Discard any prior macro expansions of these; see note below
+                if arg_lowered == "--by":
+                    macro_by = ""
+                if arg_lowered == "--from":
+                    macro_from = ""
             if arg_lowered in RANK_KEYWORDS:
                 ranks.append(arg_lowered)
                 continue
-            # Whether or not in opt arguments, collect macro opts
-            if arg_lowered in QUERY_MACROS:
+            if filtering_taxon_args and arg_lowered in QUERY_MACROS:
                 macro = QUERY_MACROS[arg_lowered]
-                macro_opts = macro.get("opt")
-                if macro_opts:
-                    opts.extend(macro_opts)
-                macro_by = macro.get("by")
-                macro_from = macro.get("from")
-                if macro_opts or macro_by or macro_from:
+                if macro:
+                    # Collect any expansions and continue:
+                    _macro_opt_args = macro.get("opt")
+                    if _macro_opt_args:
+                        opts.extend(_macro_opt_args)
+                    _macro_by = macro.get("by")
+                    if _macro_by:
+                        macro_by = _macro_by
+                    _macro_from = macro.get("from")
+                    if _macro_from:
+                        macro_from = _macro_from
                     continue
-            elif in_opt:  # otherwise collect opts from arguments
-                opts.append(arg_lowered)
-                continue
             filtered_args.append(arg_lowered)
 
+        # Handle collected arguments that were not already
+        # inserted into filtered_args above by appending them:
         if ranks:
-            filtered_args.append("--rank")
-            filtered_args += ranks
+            filtered_args.extend(["--rank", *ranks])
         if opts:
-            filtered_args.append("--opt")
-            filtered_args += opts
+            filtered_args.extend(["--opt", *opts])
+        # Note: There can only be one of macro_by or macro_from until we support
+        # multiple users / places, so the last user or place given wins,
+        # superseding anything given earlier in the query.
         if macro_by:
-            filtered_args.append(f"--by {macro_by}")
+            filtered_args.extend(["--by", macro_by])
         if macro_from:
-            filtered_args.append(f"--from {macro_from}")
+            filtered_args.extend(["--from", macro_from])
+        # Treat any unexpanded args before the first option keyword
+        # argument as implicit "--of" arguments:
         if not re.match(r"^--", filtered_args[0]):
             filtered_args.insert(0, "--of")
         argument_normalized = " ".join(filtered_args)
