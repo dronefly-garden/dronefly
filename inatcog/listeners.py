@@ -118,7 +118,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(query_response)
                     )
-                    self.add_obs_reaction_emojis(msg)
+                    self.add_obs_reaction_emojis(msg, query_response)
                 else:
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(ctx, query_response)

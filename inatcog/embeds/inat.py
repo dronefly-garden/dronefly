@@ -81,19 +81,20 @@ ID_BY_USER_ID_PAT = re.compile(
 USER_ID_PAT = re.compile(r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]user_id=(?P<user_id>\d+).*?\)")
 
 REACTION_EMOJI = {
-    "self": "#️⃣",
-    "user": "📝",
-    "home": "🏠",
-    "place": "📍",
-    "taxonomy": "🇹",
+    "self": "\N{BUST IN SILHOUETTE}",
+    "user": "\N{BUSTS IN SILHOUETTE}",
+    "home": "\N{HOUSE BUILDING}",
+    "place": "\N{EARTH GLOBE EUROPE-AFRICA}",
+    "taxonomy": "\N{REGIONAL INDICATOR SYMBOL LETTER T}",
 }
-TAXON_REACTION_EMOJIS = list(
-    map(REACTION_EMOJI.get, ["self", "user", "home", "place", "taxonomy"])
+TAXON_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["self", "user", "taxonomy"]))
+NO_PARENT_TAXON_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["self", "user"]))
+TAXON_PLACE_REACTION_EMOJIS = list(
+    map(REACTION_EMOJI.get, ["home", "place", "taxonomy"])
 )
-NO_PARENT_TAXON_REACTION_EMOJIS = list(
-    map(REACTION_EMOJI.get, ["self", "user", "home", "place"])
-)
+NO_PARENT_TAXON_PLACE_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["home", "place"]))
 OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
+OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 
 
 class INatEmbed(discord.Embed):
@@ -1085,9 +1086,12 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def add_obs_reaction_emojis(self, msg):
+    def add_obs_reaction_emojis(self, msg, query_response: QueryResponse):
         """Add obs embed reaction emojis."""
-        start_adding_reactions(msg, OBS_REACTION_EMOJIS)
+        start_adding_reactions(
+            msg,
+            OBS_PLACE_REACTION_EMOJIS if query_response.place else OBS_REACTION_EMOJIS,
+        )
 
     def add_taxon_reaction_emojis(
         self, msg, query_response: Union[QueryResponse, Taxon], taxonomy=True
@@ -1098,9 +1102,17 @@ class INatEmbeds(MixinMeta):
         else:
             taxon = query_response
         if taxonomy and len(taxon.ancestor_ids) > 2:
-            reaction_emojis = TAXON_REACTION_EMOJIS
+            reaction_emojis = (
+                TAXON_PLACE_REACTION_EMOJIS
+                if query_response.place
+                else TAXON_REACTION_EMOJIS
+            )
         else:
-            reaction_emojis = NO_PARENT_TAXON_REACTION_EMOJIS
+            reaction_emojis = (
+                NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
+                if query_response.place
+                else NO_PARENT_TAXON_REACTION_EMOJIS
+            )
         start_adding_reactions(msg, reaction_emojis)
 
     async def send_embed_for_taxon_image(

@@ -100,7 +100,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             query_response = await self.query.get(ctx, _query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
-            self.add_obs_reaction_emojis(msg)
+            self.add_obs_reaction_emojis(msg, query_response)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
