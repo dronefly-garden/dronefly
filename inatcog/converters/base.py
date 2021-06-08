@@ -121,6 +121,7 @@ QUERY_ARGS = {
     "added-until": {"nargs": "+", "dest": "added_d2", "default": []},
     "added-on": {"nargs": "+", "dest": "added_on", "default": []},
 }
+REMAINING_ARGS = list(QUERY_ARGS)[1:]
 
 
 class QueryConverter(Query):
@@ -332,16 +333,24 @@ class NaturalQueryConverter(QueryConverter):
         #     the `rg` macro and `ssp` rank keyword, but `--from home`
         #     will not expand the `home` macro
         suppress_macro = False
+        arg_count = 0
+        expected_args = QUERY_ARGS
         for _token in tokens:
             tok = _token.lower()
             argument_expected = False
 
-            if tok in QUERY_ARGS:
+            if tok in expected_args:
                 tok = f"--{tok}"
             if re.match(r"--", tok):
+                arg_count += 1
                 # Every option token expects at least one argument.
                 argument_expected = True
-                suppress_macro = tok != "--of"
+                if tok == "--of":
+                    # Ignore "--of" after it is explicitly inserted.
+                    expected_args = REMAINING_ARGS
+                    suppress_macro = False
+                else:
+                    suppress_macro = True
                 # Insert at head of explicit "opt" or "rank" any collected
                 # ranks or opt macro expansions. This allows them to be
                 # combined in the same query, e.g.
@@ -382,10 +391,16 @@ class NaturalQueryConverter(QueryConverter):
                         if _macro_from:
                             macro_from = _macro_from
                         continue
-            # if no expansions, just add the arg
+            # If it's an ordinary word token appearing before all other args,
+            # then it's treated implicitly as first word of the "--of" argument,
+            # which is inserted here.
+            if arg_count == 0:
+                arg_count += 1
+                expanded_tokens.append("--of")
+                expected_args = REMAINING_ARGS
+            # Append the ordinary word token:
             expanded_tokens.append(tok)
-            # Macros allowed again after first non-option token (i.e. option
-            # argument token) is consumed:
+            # Macros allowed again after first non-ARGS token is consumed:
             if not argument_expected:
                 suppress_macro = False
 
