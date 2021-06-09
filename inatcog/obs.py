@@ -181,7 +181,8 @@ def get_formatted_user_counts(
 
     if view == "ids":
         identifier_links = [
-            format_identifier_link(identifier) for identifier in user_counts["results"]
+            "{}) {}".format(rank + 1, format_identifier_link(ider))
+            for rank, ider in enumerate(user_counts["results"])
         ]
         return identifier_links
 
@@ -194,6 +195,7 @@ def get_formatted_user_counts(
     else:
         sorted_observers = user_counts["results"]
     observer_links = [
-        format_observer_link(observer, species_only) for observer in sorted_observers
+        "{}) {}".format(rank + 1, format_observer_link(observer, species_only))
+        for rank, observer in enumerate(sorted_observers)
     ]
     return observer_links
