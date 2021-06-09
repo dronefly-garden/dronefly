@@ -335,6 +335,12 @@ def format_taxon_title(rec):
     return title
 
 
+def _add_place_emojis(query_response: QueryResponse):
+    if not query_response:
+        return False
+    return query_response.place and not query_response.user
+
+
 EMOJI = {
     "research": ":white_check_mark:",
     "needs_id": ":large_orange_diamond:",
@@ -1090,7 +1096,9 @@ class INatEmbeds(MixinMeta):
         """Add obs embed reaction emojis."""
         start_adding_reactions(
             msg,
-            OBS_PLACE_REACTION_EMOJIS if query_response.place else OBS_REACTION_EMOJIS,
+            OBS_PLACE_REACTION_EMOJIS
+            if _add_place_emojis(query_response)
+            else OBS_REACTION_EMOJIS,
         )
 
     def add_taxon_reaction_emojis(
@@ -1099,18 +1107,20 @@ class INatEmbeds(MixinMeta):
         """Add taxon embed reaction emojis."""
         if isinstance(query_response, QueryResponse):
             taxon = query_response.taxon
-            place = query_response.place
         else:
             taxon = query_response
-            place = None
+            query_response = None
+        add_place_emojis = _add_place_emojis(query_response)
         if taxonomy and len(taxon.ancestor_ids) > 2:
             reaction_emojis = (
-                TAXON_PLACE_REACTION_EMOJIS if place else TAXON_REACTION_EMOJIS
+                TAXON_PLACE_REACTION_EMOJIS
+                if add_place_emojis
+                else TAXON_REACTION_EMOJIS
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
-                if place
+                if add_place_emojis
                 else NO_PARENT_TAXON_REACTION_EMOJIS
             )
         start_adding_reactions(msg, reaction_emojis)
