@@ -1099,18 +1099,18 @@ class INatEmbeds(MixinMeta):
         """Add taxon embed reaction emojis."""
         if isinstance(query_response, QueryResponse):
             taxon = query_response.taxon
+            place = query_response.place
         else:
             taxon = query_response
+            place = None
         if taxonomy and len(taxon.ancestor_ids) > 2:
             reaction_emojis = (
-                TAXON_PLACE_REACTION_EMOJIS
-                if query_response.place
-                else TAXON_REACTION_EMOJIS
+                TAXON_PLACE_REACTION_EMOJIS if place else TAXON_REACTION_EMOJIS
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
-                if query_response.place
+                if place
                 else NO_PARENT_TAXON_REACTION_EMOJIS
             )
         start_adding_reactions(msg, reaction_emojis)
