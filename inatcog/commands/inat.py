@@ -124,10 +124,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """*Help* for taxon reaction buttons.
 
         Taxon reaction buttons appear on many different displays.  You may use them only if your iNat account is known in the server.
-        - :hash: to count your observations and species
-        - :pencil: to write in another user to count
+        - :bust_in_silhouette: to count your observations and species
+        - :busts_in_silhouette: to write in another user to count
         - :house: to count your home place obs and species
-        - :round_pushpin: to write in another place to count
+        - :earth_africa: to write in another place to count
         - :regional_indicator_t: to toggle the taxonomy tree
 
         See `[p]help user set known` if you're already known in a server and want to be known on other servers.  Otherwise, ask a mod to add you.
