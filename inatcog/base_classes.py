@@ -651,7 +651,7 @@ class QueryResponse:
             message += " unobserved by " + self.unobserved_by.display_name()
         if self.id_by:
             message += " identified by " + self.id_by.display_name()
-        if self.observed:
+        if self.observed and self.observed.on or self.observed.d1 or self.observed.d2:
             message += " observed "
             if self.observed.on:
                 message += f" on {_format_date(self.observed.on)}"
@@ -662,7 +662,7 @@ class QueryResponse:
                     if self.observed.d1:
                         message += " and "
                     message += f" on or before {_format_date(self.observed.d2)}"
-        if self.added:
+        if self.added and self.added.on or self.added.d1 or self.added.d2:
             message += " added "
             if self.added.on:
                 message += f" on {_format_date(self.observed.on)}"
