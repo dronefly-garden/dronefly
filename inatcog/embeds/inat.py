@@ -1454,16 +1454,19 @@ class INatEmbeds(MixinMeta):
                         "No more room for additional users in this display."
                     )
                 inat_embed.description = description
-                if not inat_embed.has_not_by_users() and re.search(
-                    r"\*total\*", inat_embed.description
-                ):
-                    inat_embed.set_footer(
-                        text="User counts may not add up to "
-                        "the total if they changed since they were added. "
-                        "Remove, then add them again to update their counts."
-                    )
-                else:
-                    inat_embed.set_footer(text="")
+                # Image embeds use the footer for photo attribution.
+                if not inat_embed.image:
+                    if not inat_embed.has_not_by_users() and re.search(
+                        r"\*total\*", inat_embed.description
+                    ):
+                        inat_embed.set_footer(
+                            text="User counts may not add up to "
+                            "the total if they changed since they were added. "
+                            "Remove, then add them again to update their counts."
+                        )
+                    else:
+                        if not inat_embed.image:
+                            inat_embed.set_footer(text="")
                 await msg.edit(embed=inat_embed)
 
     async def update_place_totals(
