@@ -119,6 +119,19 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ```
         """  # noqa: E501
 
+    @commands.command(name="glossary")
+    async def topic_counts(self, ctx):
+        """*Help* with terminology and abbreviations.
+
+        __**Obs.** = observations__
+        __**Leaf taxa** = distinct taxa counted__ (per observer, place, etc.)
+        - This is the default way that iNaturalist counts taxa. It is explained here: https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
+        __**Spp.** = species *or* leaf taxa__ depending on how they are counted on the related website page.
+        - In leaderboard commands like `,topobs`, actual species are counted.
+        - In commands counting just a single user like `,my`, *Spp* (species) and *Leaf taxa* are shown.
+        - But otherwise, when a display has a *#spp* heading, it refers to *leaf taxa* by default.
+        """  # noqa: E501
+
     @commands.command(name="reactions")
     async def topic_reactions(self, ctx):
         """*Help* for taxon reaction buttons.
