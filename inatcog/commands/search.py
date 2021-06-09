@@ -83,7 +83,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     if obs and obs.sounds:
                         await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
                     controls = {"❌": DEFAULT_CONTROLS["❌"], "✅": cancel_timeout}
-                    await menu(ctx, [embed], controls)
+                    await menu(ctx, [embed], controls, timeout=10)
                     return
                 await apologize(ctx, "Not found")
                 return
@@ -398,7 +398,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         # - TODO: use a menu class (from vendored menu) and make this an attribute.
         selected_index = [0]
 
-        await menu(ctx, embeds, controls)
+        await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
