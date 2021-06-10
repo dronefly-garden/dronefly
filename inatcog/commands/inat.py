@@ -68,17 +68,38 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """
         await ctx.send_help()
 
+    @commands.command(name="macros")
+    async def topic_macros(self, ctx):
+        """*Help* for *query* macros.
+
+        A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
+
+        See also: `[p]help query` for *query* help and `[p]help query_taxon` for *taxon query* help.
+
+        `Macro     Expands to`
+        `-----     ----------`
+        `rg        opt quality_grade=research`
+        `nid       opt quality_grade=needs_id`
+        `oldest    opt order=asc order_by=observed_on`
+        `newest    opt order=desc order_by=observed_on`
+        `reverse   opt order_by=asc`
+        `unknown   opt iconic_taxa=unknown without_taxon_id=67333,151817,131236`
+        `my        by me`
+        `home      from home`
+        `faves     opt popular order_by=votes`
+        """  # noqa: E501
+
     @commands.command(name="query")
     async def topic_query(self, ctx):
         """*Help* for observation *query* terms.
 
-        A *query* may contain *taxon query* terms and other *query* terms described below.
+        A *query* may contain *taxon query* terms, *macros*, and other *query* terms described below.
 
-        See: `[p]help query_taxon` for *taxon query* help.
+        See also: `[p]help query_taxon` for *taxon query* help and `[p]help macros` for *macro* help.
 
         Aside from *taxon*, other *query* terms may be:
-        - `by <name>` to match the named user; also `by me` or just `my` to match yourself
-        - `from <place>` to match the named place; also `from home` or just `home` to match observations from your *home place*
+        - `by <name>` to match the named user; also `by me` or just `my` (a *macro*) to match yourself
+        - `from <place>` to match the named place; also `from home` or just `home` (a *macro*) to match observations from your *home place*
         - `in prj <project>` to match the named *project*
         - `with <term> <value>` to matched the *controlled term* with the given *value*
         **Examples:**
@@ -98,6 +119,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def topic_query_taxon(self, ctx):
         """*Help* for *taxon query* terms.
 
+        See also: `[p]help query` and `[p]help macros` to specify what is also shown about a taxon.
+
         A *taxon query* matches a single taxon. It may contain the following:
         - *id#* of the iNat taxon
         - *initial letters* of scientific or common names
@@ -105,7 +128,6 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - *rank keywords* filter by ranks (`sp`, `family`, etc.)
         - *4-letter AOU codes* for birds
         - *taxon* `in` *an ancestor taxon*
-        - Commands can also have general *query* terms in the *query*. See `[p]help query` for details.
         **Examples:**
         ```
         [p]taxon family bear
