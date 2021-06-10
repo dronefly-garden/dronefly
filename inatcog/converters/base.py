@@ -296,6 +296,7 @@ QUERY_MACROS = {
     "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
     "my": {"by": "me"},
     "home": {"from": "home"},
+    "faves": {"opt": ["popular", "order_by=votes"]},
 }
 
 
