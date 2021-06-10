@@ -76,17 +76,20 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See also: `[p]help query` for *query* help and `[p]help query_taxon` for *taxon query* help.
 
-        `Macro     Expands to`
-        `-----     ----------`
-        `rg        opt quality_grade=research`
-        `nid       opt quality_grade=needs_id`
-        `oldest    opt order=asc order_by=observed_on`
-        `newest    opt order=desc order_by=observed_on`
-        `reverse   opt order_by=asc`
-        `unknown   opt iconic_taxa=unknown without_taxon_id=67333,151817,131236`
-        `my        by me`
-        `home      from home`
-        `faves     opt popular order_by=votes`
+        __**`Macro`**__`  `__`Expands to`__
+        **`my`**`      by me`
+        **`home`**`    from home`
+        **`rg`**`      opt quality_grade=research`
+        **`nid`**`     opt quality_grade=needs_id`
+        **`oldest`**`  opt order=asc`
+        **`      `**`      order_by=observed_on`
+        **`newest`**`  opt order=desc`
+        **`      `**`      order_by=observed_on`
+        **`reverse`**` opt order_by=asc`
+        **`faves`**`   opt popular order_by=votes`
+        **`unknown`**` opt iconic_taxa=unknown`
+        **`       `**`     without_taxon_id=`
+        **`       `**`     67333,151817,131236`
         """  # noqa: E501
 
     @commands.command(name="query")
