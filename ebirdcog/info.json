@@ -8,5 +8,5 @@
   "requirements" : ["ebird-api"],
   "tags": ["ebird", "bird", "birder", "naturalist", "nature"],
   "hidden": false,
-  "min_bot_version": "3.1.5"
+  "min_bot_version": "3.4.1"
 }

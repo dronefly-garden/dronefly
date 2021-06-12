@@ -8,5 +8,5 @@
   "requirements" : ["dataclasses-json", "html2markdown", "inflect", "timeago", "aiolimiter", "aiohttp-retry", "pyinaturalist", "dateparser"],
   "tags": ["inaturalist", "naturalist", "nature"],
   "hidden": false,
-  "min_bot_version": "3.1.5"
+  "min_bot_version": "3.4.6"
 }
