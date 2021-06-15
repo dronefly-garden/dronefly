@@ -845,8 +845,6 @@ class INatEmbeds(MixinMeta):
                 title_query_response.place = None
             obs_args = title_query_response.obs_args()
             filter_args = copy.copy(obs_args)
-            if str(filter_args["verifiable"]) == "any":
-                del filter_args["verifiable"]
             del filter_args["taxon_id"]
             obs_cnt = taxon.observations
             obs_url = "?".join((f"{WWW_BASE_URL}/observations", urlencode(obs_args)))
@@ -860,11 +858,9 @@ class INatEmbeds(MixinMeta):
             taxon = arg
             user = None
             place = None
-            obs_args = {"taxon_id": taxon.taxon_id, "verifiable": "any"}
+            obs_args = {"taxon_id": taxon.taxon_id}
             obs_cnt = taxon.observations
-            obs_url = (
-                f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}&verifiable=any"
-            )
+            obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}"
         else:
             LOG.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")

@@ -11,7 +11,7 @@ from redbot.core.commands import (
     Converter,
     MemberConverter as RedMemberConverter,
 )
-from inatcog.common import DEQUOTE, LOG
+from inatcog.common import DEQUOTE
 from inatcog.base_classes import (
     Query,
     PAT_OBS_LINK,
@@ -279,7 +279,6 @@ class QueryConverter(Query):
                 added_d2=added_d2,
                 added_on=added_on,
             )
-            LOG.info(repr(query))
             return query
 
         return argument

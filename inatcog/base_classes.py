@@ -596,7 +596,7 @@ class QueryResponse:
     def obs_args(self):
         """Arguments for an observations query."""
 
-        kwargs = _Params({"verifiable": "any"})
+        kwargs = _Params({"verifiable": "true"})
         kwargs.set_from(self.taxon, "taxon_id")
         kwargs.set_from(self.user, "user_id")
         kwargs.set_from(self.project, "project_id")
@@ -608,6 +608,27 @@ class QueryResponse:
         if self.controlled_term:
             kwargs["term_id"] = self.controlled_term.term.id
             kwargs["term_value_id"] = self.controlled_term.value.id
+        # In three cases, we need to allow verifiable=any:
+        # 1. when a project is given, let the project rules sort it out, otherwise
+        #    we interfere with searching for observations in projects that allow
+        #    unverifiable observations
+        # 2. when a user is given, which is like pressing "View All" on a taxon
+        #    page, we want to match that feature on the website, i.e. users will
+        #    be confused if they asked for their observations and none were given
+        #    even though they know they have some
+        # 3. same with 'id by' and for the same reason as =any for user
+        #
+        # - 'not by' is not the same. It's the target species a user will
+        #   be looking for and it is undesirable to include unverifiable observations.
+        # - if these defaults don't work for corner cases, they can be
+        #   overridden in the query with: opt verifiable=<value> (i.e.
+        #   self.options overrides are applied below)
+        if (
+            kwargs.get("project_id")
+            or kwargs.get("user_id")
+            or kwargs.get("ident_user_id")
+        ):
+            kwargs["verifiable"] = "any"
         if self.options:
             kwargs = {**kwargs, **self.options}
         if self.observed:
