@@ -66,7 +66,7 @@ def match_controlled_term(
                 [
                     value
                     for value in matched_term.values
-                    if (term_value_id == term_value_id)
+                    if (term_value_id == value.id)
                     or re.match(re.escape(value_label), value.label, re.I)
                 ]
             ),
