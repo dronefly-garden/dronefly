@@ -182,25 +182,7 @@ class QueryConverter(Query):
                 ]
             )
 
-        if (
-            vals.main
-            or vals.ancestor
-            or vals.user
-            or vals.place
-            or vals.rank
-            or vals.controlled_term
-            or vals.unobserved_by
-            or vals.id_by
-            or vals.per
-            or vals.options
-            or vals.project
-            or vals.obs_d1
-            or vals.obs_d2
-            or vals.obs_on
-            or vals.added_d1
-            or vals.added_d2
-            or vals.added_on
-        ):
+        if any(vars(vals).values()):
             main = None
             ancestor = None
             if vals.main:
