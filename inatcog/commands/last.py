@@ -50,7 +50,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
         await ctx.send(embed=await self.make_last_obs_embed(last))
         if last.obs.sounds:
-            await self.maybe_send_sound_url(ctx.channel, last.obs.sounds[0])
+            await self.maybe_send_sound(ctx.channel, last.obs.sounds)
 
     @last_obs.command(name="img", aliases=["image", "photo"])
     async def last_obs_img(self, ctx, number=None):

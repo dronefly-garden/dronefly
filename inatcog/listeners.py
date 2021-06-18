@@ -91,7 +91,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     embed=await self.make_obs_embed(obs, url, preview=False)
                 )
                 if obs and obs.sounds:
-                    await self.maybe_send_sound_url(channel, obs.sounds[0])
+                    await self.maybe_send_sound(channel, obs.sounds)
                 self.bot.dispatch("commandstats_action", ctx)
 
         channel_dot_taxon = await self.config.channel(channel).dot_taxon()

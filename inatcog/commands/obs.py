@@ -51,7 +51,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         embed=await self.make_obs_embed(obs, url, preview=False)
                     )
                     if obs and obs.sounds:
-                        await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                        await self.maybe_send_sound(ctx.channel, obs.sounds)
                     return
                 else:
                     await apologize(ctx, "I don't understand")
@@ -70,7 +70,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
         await ctx.send(embed=await self.make_obs_embed(obs, url, preview=True))
         if obs and obs.sounds:
-            await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+            await self.maybe_send_sound(ctx.channel, obs.sounds)
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
@@ -269,7 +269,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             obs = get_obs_fields(results[0]) if results else None
             await ctx.send(embed=await self.make_obs_embed(obs, url))
             if obs and obs.sounds:
-                await self.maybe_send_sound_url(ctx.channel, obs.sounds[0])
+                await self.maybe_send_sound(ctx.channel, obs.sounds)
             return
 
         mat = re.search(PAT_TAXON_LINK, query)
