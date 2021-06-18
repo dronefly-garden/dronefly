@@ -420,10 +420,13 @@ class INatEmbeds(MixinMeta):
         if not sounds:
             return
         sound = sounds[index]
-        url_only = (
-            not isinstance(channel, DMChannel)
-            and not channel.permissions_for(channel.guild.me).attach_files
-        )
+        if isinstance(channel, DMChannel):
+            url_only = False
+            max_embed_file_size = MAX_EMBED_FILE_LEN
+        else:
+            url_only = not channel.permissions_for(channel.guild.me).attach_files
+            # Boosts could make this > default 8M maximum (95% due to overhead)
+            max_embed_file_size = channel.guild.filesize_limit * 0.95
         sound_io = None
 
         async with self.api.session.get(sound.url) as response:
@@ -445,7 +448,7 @@ class INatEmbeds(MixinMeta):
         embed.set_footer(text=sound.attribution)
 
         if not url_only:
-            if len(sound_bytes) <= MAX_EMBED_FILE_LEN:
+            if len(sound_bytes) <= max_embed_file_size:
                 sound_io = BytesIO(sound_bytes)
 
             if sound_io:
