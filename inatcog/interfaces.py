@@ -2,9 +2,12 @@
 
 from abc import ABC
 from asyncio import Event
+from typing import DefaultDict, Tuple
+
 from inflect import engine
 from redbot.core import Config
 from redbot.core.bot import Red
+from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
 from .obs_query import INatObsQuery
 from .places import INatPlaceTable
@@ -37,4 +40,5 @@ class MixinMeta(ABC):
         self.taxon_query: INatTaxonQuery
         self.query: INatQuery
         self.user_cache_init: dict
+        self.member_as: DefaultDict[Tuple[int, int], AntiSpam]
         self._ready_event: Event

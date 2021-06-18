@@ -215,6 +215,8 @@ class Listeners(INatEmbeds, MixinMeta):
         member = guild.get_member(payload.user_id)
         if member is None or member.bot:
             raise ValueError("User is not a guild member.")
+        if self.member_as[(guild.id, member.id)].spammy:
+            raise ValueError("Member is being spammy")
         channel = self.bot.get_channel(payload.channel_id)
         try:
             message = next(

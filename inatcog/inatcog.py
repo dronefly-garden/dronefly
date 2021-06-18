@@ -1,9 +1,14 @@
 """A cog for using the iNaturalist platform."""
-from abc import ABC
-import re
 import asyncio
+import re
+from abc import ABC
+from datetime import timedelta
+from functools import partial
+from typing import DefaultDict, Tuple
+
 import inflect
 from redbot.core import commands, Config
+from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
@@ -54,6 +59,13 @@ class INatCog(
 ):
     """Commands provided by `inatcog`."""
 
+    spam_intervals = [
+        # spamming rapidly
+        (timedelta(seconds=5), 3),
+        # spamming lengthily
+        (timedelta(minutes=1), 30),
+    ]
+
     def __init__(self, bot):
         super().__init__()
         self.bot = bot
@@ -70,6 +82,9 @@ class INatCog(
         self.user_cache_init = {}
         self.reaction_locks = {}
         self.predicate_locks = {}
+        self.member_as: DefaultDict[Tuple[int, int], AntiSpam] = DefaultDict(
+            partial(AntiSpam, self.spam_intervals)
+        )
 
         self.config.register_global(home=97394, schema_version=1)  # North America
         self.config.register_guild(
