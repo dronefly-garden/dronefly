@@ -417,10 +417,12 @@ class INatEmbeds(MixinMeta):
 
     async def maybe_send_sound(self, channel, sounds: list, index=0):
         """Given a URL to a sound file, send the file if possible, or else just the url."""
+        if not sounds:
+            return
         sound = sounds[index]
         url_only = (
-            isinstance(channel, DMChannel)
-            or not channel.permissions_for(channel.guild.me).attach_files
+            not isinstance(channel, DMChannel)
+            and not channel.permissions_for(channel.guild.me).attach_files
         )
         sound_io = None
 
