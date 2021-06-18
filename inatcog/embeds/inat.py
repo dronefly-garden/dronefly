@@ -58,6 +58,7 @@ from inatcog.embeds.common import (
     format_items_for_embed,
     make_embed,
     MAX_EMBED_DESCRIPTION_LEN,
+    MAX_EMBED_FILE_LEN,
     NoRoomInDisplay,
 )
 
@@ -414,23 +415,43 @@ class INatEmbeds(MixinMeta):
         url = await inat_map_url.get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
-    async def maybe_send_sound_url(self, channel, sound):
-        """Given a URL to a sound, send it if it can be retrieved."""
-        if (
-            not isinstance(channel, DMChannel)
-            and not channel.permissions_for(channel.guild.me).attach_files
-        ):
-            return
+    async def maybe_send_sound(self, channel, sounds: list, index=0):
+        """Given a URL to a sound file, send the file if possible, or else just the url."""
+        sound = sounds[index]
+        url_only = (
+            isinstance(channel, DMChannel)
+            or not channel.permissions_for(channel.guild.me).attach_files
+        )
+        sound_io = None
+
         async with self.api.session.get(sound.url) as response:
             try:
-                sound_io = BytesIO(await response.read())
+                filename = response.url.name
+                sound_bytes = await response.read()
             except OSError:
-                sound_io = None
-        if sound_io:
-            filename = response.url.name
-            embed = make_embed()
-            embed.set_footer(text=sound.attribution)
-            await channel.send(embed=embed, file=File(sound_io, filename=filename))
+                filename = None
+                sound_bytes = None
+
+        embed = make_embed()
+        title = "Sound recording"
+        if len(sounds) > 1:
+            title += f" ({index + 1} of {len(sounds)})"
+        if filename:
+            title += f": {filename}"
+        embed.title = title
+        embed.url = sound.url
+        embed.set_footer(text=sound.attribution)
+
+        if not url_only:
+            if len(sound_bytes) <= MAX_EMBED_FILE_LEN:
+                sound_io = BytesIO(sound_bytes)
+
+            if sound_io:
+                await channel.send(embed=embed, file=File(sound_io, filename=filename))
+                sound_io.close()
+                return
+
+        await channel.send(embed=embed)
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
