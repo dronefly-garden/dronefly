@@ -6,7 +6,7 @@ from typing import Optional, Union
 
 import discord
 from redbot.core import checks, commands
-from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
 
 from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters.base import InheritableBoolConverter
@@ -177,6 +177,14 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @checks.admin_or_permissions(manage_messages=True)
     async def inat_set(self, ctx):
         """Change `iNat` settings (mods)."""
+
+    @inat.command(name="test", hidden=True)
+    async def inat_test(self, ctx):
+        """Test command."""
+        msg = await ctx.send(
+            embed=make_embed(title="Test", description="Reactions test.")
+        )
+        start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)

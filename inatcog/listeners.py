@@ -216,6 +216,13 @@ class Listeners(INatEmbeds, MixinMeta):
         if member is None or member.bot:
             raise ValueError("User is not a guild member.")
         if self.member_as[(guild.id, member.id)].spammy:
+            LOG.info(
+                "Spammy: %d-%d-%d; ignored reaction: %s",
+                guild.id,
+                payload.channel_id,
+                member.id,
+                payload.emoji,
+            )
             raise ValueError("Member is being spammy")
         channel = self.bot.get_channel(payload.channel_id)
         try:
@@ -231,6 +238,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 ) from err
         if message.author != self.bot.user:
             raise ValueError("Reaction is not to our own message.")
+        self.member_as[(guild.id, member.id)].stamp()
         return (member, message)
 
     @commands.Cog.listener()

@@ -60,10 +60,12 @@ class INatCog(
     """Commands provided by `inatcog`."""
 
     spam_intervals = [
-        # spamming rapidly
-        (timedelta(seconds=5), 3),
-        # spamming lengthily
-        (timedelta(minutes=1), 30),
+        # spamming too fast is > 1 reaction a second for 3 seconds
+        (timedelta(seconds=3), 5),
+        # spamming too long is > 1 reaction every two seconds for 20 seconds
+        (timedelta(seconds=20), 10),
+        # spamming high volume is > 1 reaction every 4 seconds for 3 minutes
+        (timedelta(minutes=3), 45),
     ]
 
     def __init__(self, bot):
