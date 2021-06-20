@@ -1,5 +1,4 @@
 """Tests for query module."""
-
 from ..query.query import Query, TaxonQuery
 
 

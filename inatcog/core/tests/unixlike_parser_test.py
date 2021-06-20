@@ -1,5 +1,4 @@
 """Tests for UnixlikeParser."""
-
 from ..parsers.unixlike import UnixlikeParser
 
 
