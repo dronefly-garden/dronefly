@@ -134,7 +134,8 @@ class TaxonQuery:
         self._query = ""
         self._add_term(self.taxon_id)
         self._add_term(self.terms)
-        self._add_term(self.phrases)
+        # See core/query/query.py where issues with this will be worked out
+        # self._add_term(self.phrases)
         self._add_term(self.ranks)
         self._add_term(self.code)
         return self._query

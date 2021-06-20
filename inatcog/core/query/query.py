@@ -26,7 +26,10 @@ class TaxonQuery:
         self._query = ""
         self._add_term(self.taxon_id)
         self._add_term(self.terms)
-        self._add_term(self.phrases)
+        # TODO: support mixture of terms and phrases better
+        # - currently all phrases will be rendered unquoted as terms,
+        #   so we lose information that was present in the input
+        # self._add_term(self.phrases)
         self._add_term(self.ranks)
         self._add_term(self.code)
         return self._query
