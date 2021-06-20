@@ -32,3 +32,5 @@ class TestQuery:
             main=TaxonQuery(terms=["prunella"]), ancestor=TaxonQuery(terms=["animals"])
         )
         assert str(query) == "prunella in animals"
+
+    # FIXME: missing tests for remaining properties
