@@ -6,6 +6,7 @@ from typing import Optional
 import shlex
 import dateparser
 
+# FIXME: no imports above core, as it is supposed to be independent
 from inatcog.base_classes import RANK_EQUIVALENTS
 from inatcog.core.query.query import Query, TaxonQuery
 
