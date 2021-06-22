@@ -906,9 +906,12 @@ class INatEmbeds(MixinMeta):
                     status.description(),
                 ).split()[0]
                 article = p.a(first_word).split()[0]
-                descriptor = (
-                    f"{article} [{status.description()}]({status.url}) {rec.rank}"
+                status = (
+                    "[{}]({})".format(status.description(), status.url)
+                    if status.url
+                    else status.description()
                 )
+                descriptor = " ".join([article, status, rec.rank])
             else:
                 descriptor = p.a(rec.rank)
             description = (
