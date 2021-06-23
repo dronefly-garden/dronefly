@@ -144,11 +144,11 @@ class Query:
         self._add_clause("with {}", self.controlled_term)
         self._add_clause("per {}", self.per)
         self._add_clause("opt {}", self.options)
-        self._add_clause("d1 {}", self.obs_d1)
-        self._add_clause("d2 {}", self.obs_d2)
+        self._add_clause("since {}", self.obs_d1)
+        self._add_clause("until {}", self.obs_d2)
         self._add_clause("on {}", self.obs_on)
-        self._add_clause("added d1 {}", self.added_d1)
-        self._add_clause("added d2 {}", self.added_d2)
+        self._add_clause("added since {}", self.added_d1)
+        self._add_clause("added until {}", self.added_d2)
         self._add_clause("added on {}", self.added_on)
         return self._query
 
