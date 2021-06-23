@@ -53,6 +53,33 @@ MACROS = {
     "home": {"from": "home"},
     "faves": {"opt": ["popular", "order_by=votes"]},
 }
+# TODO: handle opt value here instead of in query
+VALID_OBS_OPTS = [
+    "captive",
+    "day",
+    "endemic",
+    "iconic_taxa",
+    "id",
+    "identified",
+    "introduced",
+    "month",
+    "native",
+    "not_id",
+    "order",
+    "order_by",
+    "out_of_range",
+    "page",
+    "pcid",
+    "photos",
+    "popular",
+    "quality_grade",
+    "reviewed",
+    "sounds",
+    "threatened",
+    "verifiable",
+    "without_taxon_id",
+    "year",
+]
 
 
 def _detect_terms_phrases_code_id(terms_and_phrases: list):
