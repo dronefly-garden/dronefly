@@ -20,6 +20,9 @@ class NoExitParser(argparse.ArgumentParser):
         raise RuntimeError("Argument not understood") from None
 
 
+# TODO: consider using a subparser for of and in to make --in invalid
+# unless paired with --of
+# - see https://docs.python.org/3/library/argparse.html#sub-commands
 ARGPARSE_ARGS = {
     "of": {"nargs": "+", "dest": "main", "default": []},
     "in": {"nargs": "+", "dest": "ancestor", "default": []},
