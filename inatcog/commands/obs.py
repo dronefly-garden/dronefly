@@ -8,15 +8,16 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import PAT_OBS_LINK, RANK_LEVELS, WWW_BASE_URL
-from inatcog.common import grouper
-from inatcog.converters.base import NaturalQueryConverter
-from inatcog.converters.reply import EmptyArgument, TaxonReplyConverter
-from inatcog.embeds.common import apologize, make_embed
-from inatcog.embeds.inat import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
-from inatcog.taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
+from ..base_classes import PAT_OBS_LINK, WWW_BASE_URL
+from ..common import grouper
+from ..converters.base import NaturalQueryConverter
+from ..converters.reply import EmptyArgument, TaxonReplyConverter
+from ..core.models.taxon import RANK_LEVELS
+from ..embeds.common import apologize, make_embed
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
+from ..taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
 
 
 class CommandsObs(INatEmbeds, MixinMeta):

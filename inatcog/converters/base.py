@@ -3,6 +3,7 @@ import argparse
 import re
 import shlex
 from typing import NamedTuple, Optional
+
 import dateparser
 import discord
 from redbot.core.commands import (
@@ -11,14 +12,10 @@ from redbot.core.commands import (
     Converter,
     MemberConverter as RedMemberConverter,
 )
-from inatcog.common import DEQUOTE
-from inatcog.base_classes import (
-    Query,
-    PAT_OBS_LINK,
-    TaxonQuery,
-    RANK_EQUIVALENTS,
-    RANK_KEYWORDS,
-)
+
+from ..base_classes import Query, PAT_OBS_LINK, TaxonQuery
+from ..common import DEQUOTE
+from ..core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
 
 
 class MemberConverter(NamedTuple):

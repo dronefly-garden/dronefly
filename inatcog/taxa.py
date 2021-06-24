@@ -1,8 +1,9 @@
 """Module to work with iNat taxa."""
 import copy
 import re
-from urllib.parse import urlencode
 from typing import NamedTuple, Optional, Union
+from urllib.parse import urlencode
+
 from .base_classes import (
     ConservationStatus,
     EstablishmentMeans,
@@ -11,11 +12,11 @@ from .base_classes import (
     TaxonQuery,
     User,
     Place,
-    RANK_LEVELS,
     WWW_BASE_URL,
     WWW_URL_PAT,
 )
 from .common import LOG
+from .core.models.taxon import RANK_LEVELS
 
 
 TAXON_ID_LIFE = 48460

@@ -2,19 +2,14 @@
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import (
-    Query,
-    TaxonQuery,
-    Taxon,
-    RANK_EQUIVALENTS,
-    RANK_KEYWORDS,
-)
-from inatcog.converters.base import NaturalQueryConverter
-from inatcog.embeds.common import apologize
-from inatcog.embeds.inat import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.last import INatLinkMsg
-from inatcog.taxa import get_taxon
+from ..base_classes import Query, TaxonQuery, Taxon
+from ..converters.base import NaturalQueryConverter
+from ..core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
+from ..embeds.common import apologize
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..last import INatLinkMsg
+from ..taxa import get_taxon
 
 
 class CommandsLast(INatEmbeds, MixinMeta):

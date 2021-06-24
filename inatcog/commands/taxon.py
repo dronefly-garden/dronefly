@@ -10,9 +10,10 @@ from pyinaturalist import get_taxa_autocomplete
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import PLANTAE_ID, WWW_BASE_URL
+from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters.base import NaturalQueryConverter
 from inatcog.converters.reply import TaxonReplyConverter
+from inatcog.core.models.taxon import PLANTAE_ID
 from inatcog.embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
