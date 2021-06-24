@@ -16,27 +16,25 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 
-from inatcog.base_classes import (
-    EMPTY_QUERY,
+from ..base_classes import (
     MARKDOWN_LINK,
     MEANS_LABEL_DESC,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
     Place,
-    Query,
     QueryResponse,
     Taxon,
-    TaxonQuery,
     TaxonSummary,
     WWW_BASE_URL,
 )
-from inatcog.common import LOG
-from inatcog.interfaces import MixinMeta
-from inatcog.maps import INatMapURL
-from inatcog.projects import UserProject, ObserverStats
-from inatcog.users import User
-from inatcog.taxa import (
+from ..common import LOG
+from ..core.query.query import EMPTY_QUERY, Query, TaxonQuery
+from ..interfaces import MixinMeta
+from ..maps import INatMapURL
+from ..projects import UserProject, ObserverStats
+from ..users import User
+from ..taxa import (
     format_place_taxon_counts,
     format_taxon_names,
     format_user_taxon_counts,
@@ -54,7 +52,7 @@ from inatcog.taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
-from inatcog.embeds.common import (
+from ..embeds.common import (
     format_items_for_embed,
     make_embed,
     MAX_EMBED_DESCRIPTION_LEN,

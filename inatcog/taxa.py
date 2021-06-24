@@ -9,7 +9,6 @@ from .base_classes import (
     EstablishmentMeans,
     EstablishmentMeansPartial,
     Taxon,
-    TaxonQuery,
     User,
     Place,
     WWW_BASE_URL,
@@ -17,6 +16,7 @@ from .base_classes import (
 )
 from .common import LOG
 from .core.models.taxon import RANK_LEVELS
+from .core.query.query import TaxonQuery
 
 
 TAXON_ID_LIFE = 48460

@@ -3,8 +3,8 @@ from redbot.core.commands import BadArgument
 
 from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .base_classes import Query, TaxonQuery
 from .core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS
+from .core.query.query import Query, TaxonQuery
 
 
 class INatTaxonQuery:

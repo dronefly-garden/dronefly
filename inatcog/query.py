@@ -1,11 +1,13 @@
 """Module to query iNat."""
 import datetime as dt
 import re
+
 from redbot.core.commands import BadArgument, Context
 from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
-from .base_classes import DateSelector, Query, QueryResponse, TaxonQuery, User
+from .base_classes import DateSelector, QueryResponse, User
+from .core.query.query import Query, TaxonQuery
 
 VALID_OBS_OPTS = [
     "captive",

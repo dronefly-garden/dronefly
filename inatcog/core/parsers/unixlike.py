@@ -116,8 +116,9 @@ def _parse_date_arg(arg: list, prefer_dom: Optional[str] = None):
 class UnixlikeParser:
     """Unixlike argument parser."""
 
-    def __init__(self):
+    def __init__(self, return_class=Query):
         self.parser = NoExitParser(description="Unixlike Query", add_help=False)
+        self.return_class = return_class
         for arg in ARGPARSE_ARGS:
             self.parser.add_argument(f"--{arg}", **ARGPARSE_ARGS[arg])
 
@@ -142,8 +143,8 @@ class UnixlikeParser:
             )
 
         if any(vars(vals).values()):
-            main = {}
-            ancestor = {}
+            main = None
+            ancestor = None
             if vals.main:
                 terms, phrases, code, taxon_id = _detect_terms_phrases_code_id(
                     vals.main
@@ -158,13 +159,13 @@ class UnixlikeParser:
                             "Taxon IDs are unique. Retry without `in <taxon2>`."
                         )
                 if terms:
-                    main = {
-                        "taxon_id": taxon_id,
-                        "terms": terms,
-                        "phrases": phrases,
-                        "ranks": ranks,
-                        "code": code,
-                    }
+                    main = TaxonQuery(
+                        taxon_id=taxon_id,
+                        terms=terms,
+                        phrases=phrases,
+                        ranks=ranks,
+                        code=code,
+                    )
             if vals.ancestor:
                 if not vals.main:
                     raise ValueError(
@@ -174,13 +175,13 @@ class UnixlikeParser:
                     vals.ancestor
                 )
                 if terms:
-                    ancestor = {
-                        "taxon_id": taxon_id,
-                        "terms": terms,
-                        "phrases": phrases,
-                        "ranks": [],
-                        "code": code,
-                    }
+                    ancestor = TaxonQuery(
+                        taxon_id=taxon_id,
+                        terms=terms,
+                        phrases=phrases,
+                        ranks=[],
+                        code=code,
+                    )
             if vals.controlled_term:
                 term_name = vals.controlled_term[0]
                 term_value = " ".join(vals.controlled_term[1:])
@@ -201,9 +202,9 @@ class UnixlikeParser:
             # them internally into TaxonQuery and str if that's what is desired.
             # - alternatively, have the Action subclasses construct the desired
             #   types directly
-            return Query(
-                main=TaxonQuery(**main),
-                ancestor=TaxonQuery(**ancestor),
+            return self.return_class(
+                main=main,
+                ancestor=ancestor,
                 user=" ".join(vals.user),
                 place=" ".join(vals.place),
                 controlled_term=controlled_term,

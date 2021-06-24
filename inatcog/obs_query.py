@@ -1,5 +1,5 @@
 """Module to query iNat observations."""
-from .base_classes import Query
+from .core.query.query import Query
 from .obs import get_obs_fields
 
 

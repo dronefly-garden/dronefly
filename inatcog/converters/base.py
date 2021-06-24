@@ -2,9 +2,8 @@
 import argparse
 import re
 import shlex
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
-import dateparser
 import discord
 from redbot.core.commands import (
     BadArgument,
@@ -13,9 +12,11 @@ from redbot.core.commands import (
     MemberConverter as RedMemberConverter,
 )
 
-from ..base_classes import Query, PAT_OBS_LINK, TaxonQuery
+from ..base_classes import PAT_OBS_LINK
 from ..common import DEQUOTE
-from ..core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
+from ..core.models.taxon import RANK_KEYWORDS
+from ..core.parsers.unixlike import UnixlikeParser
+from ..core.query.query import Query
 
 
 class MemberConverter(NamedTuple):
@@ -129,138 +130,8 @@ class QueryConverter(Query):
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
-        def detect_terms_phrases_code_id(terms_and_phrases: list):
-            """Detect terms, phrases, code, and id."""
-            ungroup_phrases = re.sub("'", "\\'", " ".join(list(terms_and_phrases)))
-            terms = list(
-                re.sub("\\\\'", "'", term) for term in shlex.split(ungroup_phrases)
-            )
-            phrases = [
-                mat[1].split()
-                for phrase in terms_and_phrases
-                if (mat := re.match(r'^"(.*)"$', phrase))
-            ]
-            code = None
-            taxon_id = None
-            if not phrases and len(terms) == 1:
-                if terms[0].isnumeric():
-                    taxon_id = terms[0]
-                elif len(terms[0]) == 4:
-                    code = terms[0].upper()
-            return terms, phrases, code, taxon_id
-
-        def _parse_date_arg(arg: list, prefer_dom: Optional[str] = None):
-            _arg = " ".join(arg)
-            if _arg.lower() == "any":
-                return "any"
-            settings = {"PREFER_DATES_FROM": "past"}
-            if prefer_dom:
-                settings["PREFER_DAY_OF_MONTH"] = prefer_dom
-            return dateparser.parse(" ".join(arg), settings=settings)
-
-        parser = NoExitParser(description="Taxon Query Syntax", add_help=False)
-        for arg in QUERY_ARGS:
-            parser.add_argument(f"--{arg}", **QUERY_ARGS[arg])
-
-        try:
-            vals = parser.parse_args(shlex.split(argument, posix=False))
-        except ValueError as err:
-            raise BadArgument(err.args[0]) from err
-        ranks = []
-        if vals.rank:
-            parsed_ranks = shlex.shlex(vals.rank)
-            parsed_ranks.whitespace += ","
-            parsed_ranks.whitespace_split = True
-            ranks_with_equivalents = list(parsed_ranks)
-            ranks = list(
-                [
-                    RANK_EQUIVALENTS[rank] if rank in RANK_EQUIVALENTS else rank
-                    for rank in ranks_with_equivalents
-                ]
-            )
-
-        if any(vars(vals).values()):
-            main = None
-            ancestor = None
-            if vals.main:
-                try:
-                    terms, phrases, code, taxon_id = detect_terms_phrases_code_id(
-                        vals.main
-                    )
-                except ValueError as err:
-                    raise BadArgument(err.args[0]) from err
-                if taxon_id:
-                    if ranks:
-                        raise BadArgument(
-                            "Taxon IDs are unique. Retry without any ranks: `sp`, `genus`, etc."
-                        )
-                    if vals.ancestor:
-                        raise BadArgument(
-                            "Taxon IDs are unique. Retry without `in <taxon2>`."
-                        )
-                if terms:
-                    main = TaxonQuery(
-                        taxon_id=taxon_id,
-                        terms=terms,
-                        phrases=phrases,
-                        ranks=ranks,
-                        code=code,
-                    )
-            if vals.ancestor:
-                if not vals.main:
-                    raise BadArgument(
-                        "Missing `<taxon1>` for `<taxon1> in <taxon2>` search."
-                    )
-                try:
-                    terms, phrases, code, taxon_id = detect_terms_phrases_code_id(
-                        vals.ancestor
-                    )
-                except ValueError as err:
-                    raise BadArgument(err.args[0]) from err
-                if terms:
-                    ancestor = TaxonQuery(
-                        taxon_id=taxon_id,
-                        terms=terms,
-                        phrases=phrases,
-                        ranks=[],
-                        code=code,
-                    )
-            if vals.controlled_term:
-                term_name = vals.controlled_term[0]
-                term_value = " ".join(vals.controlled_term[1:])
-                controlled_term = [term_name, term_value]
-            else:
-                controlled_term = None
-            try:
-                obs_d1 = _parse_date_arg(vals.obs_d1, "first")
-                obs_d2 = _parse_date_arg(vals.obs_d2, "last")
-                obs_on = _parse_date_arg(vals.obs_on)
-                added_d1 = _parse_date_arg(vals.added_d1, "first")
-                added_d2 = _parse_date_arg(vals.added_d2, "last")
-                added_on = _parse_date_arg(vals.added_on)
-            except RuntimeError as err:
-                raise BadArgument(err) from err
-            query = cls(
-                main=main,
-                ancestor=ancestor,
-                user=" ".join(vals.user),
-                place=" ".join(vals.place),
-                controlled_term=controlled_term,
-                unobserved_by=" ".join(vals.unobserved_by),
-                id_by=" ".join(vals.id_by),
-                per=" ".join(vals.per),
-                project=" ".join(vals.project),
-                options=vals.options,
-                obs_d1=obs_d1,
-                obs_d2=obs_d2,
-                obs_on=obs_on,
-                added_d1=added_d1,
-                added_d2=added_d2,
-                added_on=added_on,
-            )
-            return query
-
-        return argument
+        parser = UnixlikeParser(return_class=cls)
+        return parser.parse(argument)
 
 
 QUERY_MACROS = {

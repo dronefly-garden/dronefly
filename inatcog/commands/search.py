@@ -7,14 +7,14 @@ import urllib.parse
 
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-from inatcog.base_classes import EMPTY_QUERY, Query
-from inatcog.common import grouper
-from inatcog.converters.base import NaturalQueryConverter
-from inatcog.converters.reply import TaxonReplyConverter
-from inatcog.places import PAT_PLACE_LINK
-from inatcog.projects import PAT_PROJECT_LINK
-from inatcog.taxa import PAT_TAXON_LINK
-from inatcog.users import PAT_USER_LINK
+from ..common import grouper
+from ..converters.base import NaturalQueryConverter
+from ..converters.reply import TaxonReplyConverter
+from ..core.query.query import EMPTY_QUERY, Query
+from ..places import PAT_PLACE_LINK
+from ..projects import PAT_PROJECT_LINK
+from ..taxa import PAT_TAXON_LINK
+from ..users import PAT_USER_LINK
 
 from inatcog.base_classes import (
     PAT_OBS_LINK,
