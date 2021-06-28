@@ -1,4 +1,7 @@
 """Taxon model module."""
+from dataclasses import dataclass
+from typing import Optional
+
 PLANTAE_ID = 47126
 
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
@@ -75,3 +78,34 @@ TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 #     made chat-platform-agnostic for core.
 #   - Other output formats will likely be desired soon: plain text, ANSI
 #     colored text, html.
+
+
+@dataclass
+class TaxonBase:
+    """Base class for standard fields of Taxon."""
+
+    name: str
+    taxon_id: int
+    term: str
+    rank: str
+    ancestor_ids: list
+    observations: int
+    ancestor_ranks: list
+    active: bool
+    listed_taxa: list
+    names: list
+
+
+@dataclass
+class TaxonDefaultsBase:
+    """Base class for optional fields of Taxon."""
+
+    common: Optional[str] = None
+    thumbnail: Optional[str] = None
+    image: Optional[str] = None
+    image_attribution: Optional[str] = None
+
+
+@dataclass
+class Taxon(TaxonDefaultsBase, TaxonBase):
+    """Public class for Taxon model."""

@@ -6,7 +6,9 @@ from dataclasses import dataclass, field
 
 from dataclasses_json import config, DataClassJsonMixin
 
+
 from .controlled_terms import ControlledTermSelector
+from .core import models
 from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
 from .photos import Photo
 from .sounds import Sound
@@ -242,25 +244,21 @@ class ConservationStatus(DataClassJsonMixin):
 
 
 @dataclass
-class Taxon:
-    """A taxon."""
+class _TaxonBase(models.taxon.TaxonBase):
+    """Base class for standard fields of cog Taxon."""
 
-    name: str
-    taxon_id: int
-    common: Optional[str]
-    term: str
-    thumbnail: Optional[str]
-    image: Optional[str]
-    image_attribution: Optional[str]
-    rank: str
-    ancestor_ids: list
-    observations: int
-    ancestor_ranks: list
-    active: bool
-    listed_taxa: list
-    names: list
-    establishment_means: Optional[EstablishmentMeansPartial]
-    conservation_status: Optional[ConservationStatus]
+
+@dataclass
+class _TaxonDefaultsBase(models.taxon.TaxonDefaultsBase):
+    """Base class for optional fields of cog Taxon."""
+
+    establishment_means: Optional[EstablishmentMeansPartial] = None
+    conservation_status: Optional[ConservationStatus] = None
+
+
+@dataclass
+class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
+    """Public class for taxon with cog-specific behaviours."""
 
     def format_name(
         self, with_term=False, hierarchy=False, with_rank=True, with_common=True

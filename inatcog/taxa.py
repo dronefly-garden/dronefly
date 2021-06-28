@@ -197,22 +197,22 @@ def get_taxon_fields(record):
         conservation_status = None
     preferred_common_name = record.get("preferred_common_name")
     taxon = Taxon(
-        record["name"],
-        taxon_id,
-        preferred_common_name,
-        record.get("matched_term") or preferred_common_name,
-        thumbnail,
-        image,
-        attribution,
-        record["rank"],
-        record["ancestor_ids"],
-        record["observations_count"],
-        ancestor_ranks,
-        record["is_active"],
-        listed_taxa,
-        record.get("names"),
-        establishment_means,
-        conservation_status,
+        name=record["name"],
+        taxon_id=taxon_id,
+        term=record.get("matched_term") or preferred_common_name,
+        rank=record["rank"],
+        ancestor_ids=record["ancestor_ids"],
+        observations=record["observations_count"],
+        ancestor_ranks=ancestor_ranks,
+        active=record["is_active"],
+        listed_taxa=listed_taxa,
+        names=record.get("names"),
+        common=preferred_common_name,
+        thumbnail=thumbnail,
+        image=image,
+        image_attribution=attribution,
+        establishment_means=establishment_means,
+        conservation_status=conservation_status,
     )
     return taxon
 
