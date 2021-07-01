@@ -428,7 +428,17 @@ async def format_place_taxon_counts(
     else:
         name = place.display_name
     obs_opt = copy.copy(kwargs)
-    obs_opt["verifiable"] = "true"
+    # TODO: Refactor. See same logic in obs_args in taxa.py and comment
+    # explaining why we use verifiable=any in these cases.
+    # - we don't have a QueryResponse here, but perhaps should
+    #   synthesize one from the embed
+    # - however, updating embeds is due to be rewritten soon, so it
+    #   should probably be sorted out in the rewrite
+    count_unverifiable_observations = (
+        kwargs.get("project_id") or kwargs.get("user_id") or kwargs.get("ident_user_id")
+    )
+    if count_unverifiable_observations:
+        obs_opt["verifiable"] = "any"
     observations = await cog.api.get_observations(per_page=0, **obs_opt)
     species = await cog.api.get_observations("species_counts", per_page=0, **obs_opt)
     if observations:
@@ -453,6 +463,17 @@ async def format_user_taxon_counts(
     else:
         login = user.login
     obs_opt = copy.copy(kwargs)
+    # TODO: Refactor. See same logic in obs_args in taxa.py and comment
+    # explaining why we use verifiable=any in these cases.
+    # - we don't have a QueryResponse here, but perhaps should
+    #   synthesize one from the embed
+    # - however, updating embeds is due to be rewritten soon, so it
+    #   should probably be sorted out in the rewrite
+    count_unverifiable_observations = (
+        kwargs.get("project_id") or kwargs.get("user_id") or kwargs.get("ident_user_id")
+    )
+    if count_unverifiable_observations:
+        obs_opt["verifiable"] = "any"
     species_opt = copy.copy(kwargs)
     if kwargs.get("unobserved_by_user_id"):
         obs_opt["lrank"] = "species"
