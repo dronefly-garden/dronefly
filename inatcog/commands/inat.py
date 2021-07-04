@@ -1,6 +1,7 @@
 """Module for inat command group."""
 
 import asyncio
+import json
 import pprint
 from typing import Optional, Union
 
@@ -475,7 +476,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         embed_dict = inat_embed.to_dict()
         if "description" in embed_dict:
             del embed_dict["description"]
-        attributes_inspect = f"```py\n{pprint.pformat(embed_dict)}\n```"
+        attributes_inspect = (
+            f"```json\n{json.dumps(embed_dict, indent=4, sort_keys=True)}\n```"
+        )
         attributes_embed = make_embed(
             title="Embed attributes", description=attributes_inspect
         )
