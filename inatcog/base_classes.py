@@ -30,6 +30,9 @@ WWW_URL_PAT = (
     r")"
     r")"
 )
+STATIC_URL_PAT = (
+    r"https?://(static\.inaturalist\.org|inaturalist-open-data\.s3\.amazonaws\.com)"
+)
 
 # Match observation URL or command.
 PAT_OBS_LINK = re.compile(

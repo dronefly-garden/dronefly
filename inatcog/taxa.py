@@ -11,6 +11,7 @@ from .base_classes import (
     Taxon,
     User,
     Place,
+    STATIC_URL_PAT,
     WWW_BASE_URL,
     WWW_URL_PAT,
 )
@@ -153,7 +154,7 @@ def get_taxon_fields(record):
         # Though default_photo only contains small versions of the image,
         # the original can be obtained for self-hosted images via this
         # transform on the thumbnail image:
-        if re.search(r"https?://static\.inaturalist\.org", thumbnail):
+        if re.search(STATIC_URL_PAT, thumbnail):
             image = re.sub("/square", "/original", thumbnail)
             attribution = photo.get("attribution")
         else:
