@@ -624,7 +624,7 @@ class INatEmbeds(MixinMeta):
             if (
                 not compact
                 and obs.community_taxon
-                and obs.community_taxon.taxon_id != obs.taxon.id
+                and obs.community_taxon.id != obs.taxon.id
             ):
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
@@ -683,7 +683,7 @@ class INatEmbeds(MixinMeta):
         community_taxon_summary = None
         if not compact:
             taxon_summary = await get_taxon_summary(obs)
-            if obs.community_taxon and obs.community_taxon.taxon_id != obs.taxon.id:
+            if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
@@ -808,7 +808,7 @@ class INatEmbeds(MixinMeta):
 
     async def make_image_embed(self, rec, index=1):
         """Make embed showing default image for taxon."""
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.taxon_id}")
+        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.id}")
 
         title = format_taxon_title(rec)
         image = None
@@ -828,7 +828,7 @@ class INatEmbeds(MixinMeta):
                 # - In either case, we retrieve the full record via taxon_id so
                 #   the image will be set from the full-quality original in
                 #   taxon_photos.
-                response = await self.api.get_taxa(rec.taxon_id)
+                response = await self.api.get_taxa(rec.id)
                 try:
                     taxon_photos_raw = response["results"][0]["taxon_photos"]
                 except (TypeError, KeyError, IndexError):
