@@ -426,6 +426,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
                     )
                     if ctx.guild:
                         channel = ctx.guild.get_channel(channel_id)
+                        if not channel:
+                            raise LookupError
                 else:
                     channel = ctx.channel
                 message = await channel.fetch_message(message_id)
@@ -439,6 +441,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
                     ctx.send_help()
         except discord.errors.NotFound:
             await ctx.send(f"Message not found: {message_id}")
+            return
+        except LookupError:
+            await ctx.send(f"Channel not found: {channel_id}")
+            return
+        except ValueError:
+            await ctx.send("Invalid argument")
             return
 
         if not message.embeds:
