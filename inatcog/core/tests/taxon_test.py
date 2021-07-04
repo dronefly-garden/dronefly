@@ -10,7 +10,7 @@ class TestTaxon:
         taxon = Taxon(
             id=3,
             name="Birds",
-            term="Birds",
+            matched_term="Birds",
             rank="class",
             ancestor_ids=[48460, 1, 2, 355675, 3],
             observations_count=11645562,

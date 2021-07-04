@@ -199,7 +199,7 @@ def get_taxon_fields(record):
     taxon = Taxon(
         name=record["name"],
         id=taxon_id,
-        term=record.get("matched_term") or preferred_common_name,
+        matched_term=record.get("matched_term") or preferred_common_name,
         rank=record["rank"],
         ancestor_ids=record["ancestor_ids"],
         observations_count=record["observations_count"],
@@ -271,7 +271,7 @@ def match_pat(record, pat, scientific_name=False, locale=None):
                 return NameMatch(mat, None, mat,)
         return NO_NAME_MATCH
     return NameMatch(
-        re.search(pat, record.term),
+        re.search(pat, record.matched_term),
         re.search(pat, record.name),
         re.search(pat, record.preferred_common_name)
         if record.preferred_common_name
@@ -372,7 +372,7 @@ def score_match(
         else:
             score = -1
     else:
-        if taxon_query.code and (taxon_query.code == record.term):
+        if taxon_query.code and (taxon_query.code == record.matched_term):
             score = 300
         elif matched.name or matched.common:
             score = 210

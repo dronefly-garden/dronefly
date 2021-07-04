@@ -85,14 +85,14 @@ TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 class TaxonBase:
     """Base class for standard fields of Taxon."""
 
-    name: str
     id: int
-    term: str
+    is_active: bool
+    matched_term: str
+    name: str
+    observations_count: int
     rank: str
     ancestor_ids: list
-    observations_count: int
     ancestor_ranks: list
-    is_active: bool
     listed_taxa: list
     names: list
 

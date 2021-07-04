@@ -328,7 +328,7 @@ def format_taxon_names_for_embed(*args, **kwargs):
 def format_taxon_title(rec):
     """Format taxon title."""
     title = rec.format_name()
-    matched = rec.term
+    matched = rec.matched_term
     if matched not in (rec.name, rec.preferred_common_name):
         title += f" ({matched})"
     return title

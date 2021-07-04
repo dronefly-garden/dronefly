@@ -295,8 +295,8 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
         if with_common:
             if with_term:
                 common = (
-                    self.term
-                    if self.term not in (self.name, self.preferred_common_name)
+                    self.matched_term
+                    if self.matched_term not in (self.name, self.preferred_common_name)
                     else self.preferred_common_name
                 )
             else:
