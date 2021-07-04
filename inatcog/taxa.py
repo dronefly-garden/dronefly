@@ -202,7 +202,7 @@ def get_taxon_fields(record):
         term=record.get("matched_term") or preferred_common_name,
         rank=record["rank"],
         ancestor_ids=record["ancestor_ids"],
-        observations=record["observations_count"],
+        observations_count=record["observations_count"],
         ancestor_ranks=ancestor_ranks,
         active=record["is_active"],
         listed_taxa=listed_taxa,

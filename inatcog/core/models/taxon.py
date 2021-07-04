@@ -90,7 +90,7 @@ class TaxonBase:
     term: str
     rank: str
     ancestor_ids: list
-    observations: int
+    observations_count: int
     ancestor_ranks: list
     active: bool
     listed_taxa: list

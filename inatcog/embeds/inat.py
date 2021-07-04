@@ -867,9 +867,9 @@ class INatEmbeds(MixinMeta):
             obs_args = title_query_response.obs_args()
             filter_args = copy.copy(obs_args)
             del filter_args["taxon_id"]
-            obs_cnt = taxon.observations
+            obs_cnt = taxon.observations_count
             obs_url = "?".join((f"{WWW_BASE_URL}/observations", urlencode(obs_args)))
-            # i.e. any args other than the ones accounted for in rec.observations
+            # i.e. any args other than the ones accounted for in rec.observations_count
             if filter_args:
                 response = await self.api.get_observations(per_page=0, **obs_args)
                 if response:
@@ -880,7 +880,7 @@ class INatEmbeds(MixinMeta):
             user = None
             place = None
             obs_args = {"taxon_id": taxon.id}
-            obs_cnt = taxon.observations
+            obs_cnt = taxon.observations_count
             obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.id}"
         else:
             LOG.error("Invalid input: %s", repr(arg))
