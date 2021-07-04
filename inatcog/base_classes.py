@@ -296,14 +296,14 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
             if with_term:
                 common = (
                     self.term
-                    if self.term not in (self.name, self.common)
-                    else self.common
+                    if self.term not in (self.name, self.preferred_common_name)
+                    else self.preferred_common_name
                 )
             else:
                 if hierarchy:
                     common = None
                 else:
-                    common = self.common
+                    common = self.preferred_common_name
         else:
             common = None
         name = self.name

@@ -101,7 +101,7 @@ class TaxonBase:
 class TaxonDefaultsBase:
     """Base class for optional fields of Taxon."""
 
-    common: Optional[str] = None
+    preferred_common_name: Optional[str] = None
     thumbnail: Optional[str] = None
     image: Optional[str] = None
     image_attribution: Optional[str] = None

@@ -96,7 +96,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon = query_response.taxon
         taxon_name = taxon.name.replace(" ", "+")
         name = taxon.format_name(with_common=False)
-        common = f" ({taxon.common})" if taxon.common else ""
+        common = (
+            f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
+        )
         taxon_id = taxon.id
         taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
         embed = make_embed(

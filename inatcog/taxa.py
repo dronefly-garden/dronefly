@@ -207,7 +207,7 @@ def get_taxon_fields(record):
         active=record["is_active"],
         listed_taxa=listed_taxa,
         names=record.get("names"),
-        common=preferred_common_name,
+        preferred_common_name=preferred_common_name,
         thumbnail=thumbnail,
         image=image,
         image_attribution=attribution,
@@ -273,7 +273,9 @@ def match_pat(record, pat, scientific_name=False, locale=None):
     return NameMatch(
         re.search(pat, record.term),
         re.search(pat, record.name),
-        re.search(pat, record.common) if record.common else None,
+        re.search(pat, record.preferred_common_name)
+        if record.preferred_common_name
+        else None,
     )
 
 

@@ -329,7 +329,7 @@ def format_taxon_title(rec):
     """Format taxon title."""
     title = rec.format_name()
     matched = rec.term
-    if matched not in (rec.name, rec.common):
+    if matched not in (rec.name, rec.preferred_common_name):
         title += f" ({matched})"
     return title
 
@@ -538,7 +538,11 @@ class INatEmbeds(MixinMeta):
             if not compact:
                 taxon_str = get_taxon_name(taxon)
                 if taxon:
-                    common = f" ({taxon.common})" if taxon.common else ""
+                    common = (
+                        f" ({taxon.preferred_common_name})"
+                        if taxon.preferred_common_name
+                        else ""
+                    )
                     link_url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
                     taxon_str = f"[{taxon_str}]({link_url}){common}"
                 summary += f"Taxon: {taxon_str}\n"
