@@ -8,14 +8,14 @@ from ..models.taxon import Taxon
 class TestTaxon:
     def test_taxon_is_a_taxon(self):
         taxon = Taxon(
+            id=3,
             name="Birds",
-            taxon_id=3,
             term="Birds",
             rank="class",
             ancestor_ids=[48460, 1, 2, 355675, 3],
-            observations=11645562,
+            observations_count=11645562,
             ancestor_ranks=["stateofmatter", "kingdom", "phylum", "class"],
-            active=True,
+            is_active=True,
             listed_taxa=[
                 {
                     "id": 5756493,
