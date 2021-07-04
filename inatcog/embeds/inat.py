@@ -539,7 +539,7 @@ class INatEmbeds(MixinMeta):
                 taxon_str = get_taxon_name(taxon)
                 if taxon:
                     common = f" ({taxon.common})" if taxon.common else ""
-                    link_url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
+                    link_url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
                     taxon_str = f"[{taxon_str}]({link_url}){common}"
                 summary += f"Taxon: {taxon_str}\n"
             if taxon_summary:
@@ -620,7 +620,7 @@ class INatEmbeds(MixinMeta):
             if (
                 not compact
                 and obs.community_taxon
-                and obs.community_taxon.taxon_id != obs.taxon.taxon_id
+                and obs.community_taxon.taxon_id != obs.taxon.id
             ):
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
@@ -679,10 +679,7 @@ class INatEmbeds(MixinMeta):
         community_taxon_summary = None
         if not compact:
             taxon_summary = await get_taxon_summary(obs)
-            if (
-                obs.community_taxon
-                and obs.community_taxon.taxon_id != obs.taxon.taxon_id
-            ):
+            if obs.community_taxon and obs.community_taxon.taxon_id != obs.taxon.id:
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
@@ -882,14 +879,14 @@ class INatEmbeds(MixinMeta):
             taxon = arg
             user = None
             place = None
-            obs_args = {"taxon_id": taxon.taxon_id}
+            obs_args = {"taxon_id": taxon.id}
             obs_cnt = taxon.observations
-            obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.taxon_id}"
+            obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.id}"
         else:
             LOG.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
 
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}")
+        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
         p = self.p  # pylint: disable=invalid-name
 
         async def format_description(
@@ -937,9 +934,7 @@ class INatEmbeds(MixinMeta):
         if place:
             preferred_place_id = place.place_id
         full_record = (
-            await self.api.get_taxa(
-                taxon.taxon_id, preferred_place_id=preferred_place_id
-            )
+            await self.api.get_taxa(taxon.id, preferred_place_id=preferred_place_id)
         )["results"][0]
         full_taxon = get_taxon_fields(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)

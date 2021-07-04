@@ -80,12 +80,13 @@ TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
 #     colored text, html.
 
 
+# pylint: disable=invalid-name disable=too-many-instance-attributes
 @dataclass
 class TaxonBase:
     """Base class for standard fields of Taxon."""
 
     name: str
-    taxon_id: int
+    id: int
     term: str
     rank: str
     ancestor_ids: list

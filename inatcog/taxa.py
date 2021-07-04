@@ -109,7 +109,7 @@ async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
         full_taxon = (
             taxon
             if taxon.listed_taxa
-            else await get_taxon(bot, taxon.taxon_id, preferred_place_id=int(home))
+            else await get_taxon(bot, taxon.id, preferred_place_id=int(home))
         )
     except (AttributeError, LookupError):
         return None
@@ -198,7 +198,7 @@ def get_taxon_fields(record):
     preferred_common_name = record.get("preferred_common_name")
     taxon = Taxon(
         name=record["name"],
-        taxon_id=taxon_id,
+        id=taxon_id,
         term=record.get("matched_term") or preferred_common_name,
         rank=record["rank"],
         ancestor_ids=record["ancestor_ids"],

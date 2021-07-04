@@ -74,7 +74,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     async def query_from_last_taxon(self, ctx, taxon: Taxon, query: Query):
         """Query constructed from last taxon and arguments."""
-        taxon_id = taxon.taxon_id
+        taxon_id = taxon.id
         if query.main:
             raise BadArgument("Taxon search terms can't be used here.")
         if query.controlled_term:
@@ -156,7 +156,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if last.obs.taxon.rank == rank_keyword:
                 await self.send_embed_for_taxon(ctx, last.obs.taxon)
             else:
-                full_record = await get_taxon(self, last.obs.taxon.taxon_id)
+                full_record = await get_taxon(self, last.obs.taxon.id)
                 ancestor = await self.taxon_query.get_taxon_ancestor(
                     full_record, rank_keyword
                 )
@@ -236,7 +236,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last.taxon.rank == rank_keyword:
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
-            full_record = await get_taxon(self, last.taxon.taxon_id)
+            full_record = await get_taxon(self, last.taxon.id)
             ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )

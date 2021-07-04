@@ -447,7 +447,7 @@ class QueryResponse:
         """Arguments for an observations query."""
 
         kwargs = _Params({"verifiable": "true"})
-        kwargs.set_from(self.taxon, "taxon_id")
+        kwargs.set_from(self.taxon, "id", "taxon_id")
         kwargs.set_from(self.user, "user_id")
         kwargs.set_from(self.project, "project_id")
         kwargs.set_from(self.place, "place_id")

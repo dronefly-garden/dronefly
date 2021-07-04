@@ -172,7 +172,7 @@ class INatTaxonQuery:
                 query_response = await self.cog.query.get(ctx, query)
                 if query_response.taxon:
                     taxon = query_response.taxon
-                    taxa[str(taxon.taxon_id)] = taxon
+                    taxa[str(taxon.id)] = taxon
             except (BadArgument, LookupError):
                 pass
 

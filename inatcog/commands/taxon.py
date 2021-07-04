@@ -97,7 +97,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon_name = taxon.name.replace(" ", "+")
         name = taxon.format_name(with_common=False)
         common = f" ({taxon.common})" if taxon.common else ""
-        taxon_id = taxon.taxon_id
+        taxon_id = taxon.id
         taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
         embed = make_embed(
             title=f"BOLD v4: {name}",
@@ -134,8 +134,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
         taxon = query_response.taxon
         title = taxon.format_name(with_term=True)
-        url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
-        full_taxon = await get_taxon(self, taxon.taxon_id, preferred_place_id=place_id)
+        url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
+        full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"
         try:
             place_id = full_taxon.establishment_means.place.id
