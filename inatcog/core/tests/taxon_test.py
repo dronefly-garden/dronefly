@@ -86,7 +86,7 @@ class TestTaxon:
                 {"is_valid": True, "name": "Vögel", "position": 5, "locale": "de"},
                 {"is_valid": True, "name": "Птицы", "position": 6, "locale": "ru"},
             ],
-            common="Birds",
+            preferred_common_name="Birds",
             thumbnail="https://inaturalist-open-data.s3.amazonaws.com/photos/222/square.jpg?1553973240",  # noqa: E501
             image="https://inaturalist-open-data.s3.amazonaws.com/photos/222/original.jpg?1553973240",  # noqa: E501
             image_attribution="(c) Kenny P., some rights reserved (CC BY-NC)",
