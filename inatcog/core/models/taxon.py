@@ -92,7 +92,7 @@ class TaxonBase:
     ancestor_ids: list
     observations_count: int
     ancestor_ranks: list
-    active: bool
+    is_active: bool
     listed_taxa: list
     names: list
 

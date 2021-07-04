@@ -326,7 +326,7 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
                     # Note: name already italicized, so close/reopen italics around insertion.
                     name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
         full_name = f"{name} ({common})" if common else name
-        if not self.active:
+        if not self.is_active:
             full_name += " :exclamation: Inactive Taxon"
         return full_name
 
