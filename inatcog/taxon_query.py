@@ -139,7 +139,7 @@ class INatTaxonQuery:
                 try:
                     taxon = await self.maybe_match_taxon(
                         query.main,
-                        ancestor_id=ancestor.taxon_id,
+                        ancestor_id=ancestor.id,
                         preferred_place_id=preferred_place_id,
                         scientific_name=scientific_name,
                         locale=locale,
