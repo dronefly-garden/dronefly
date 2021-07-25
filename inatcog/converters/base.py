@@ -13,7 +13,6 @@ from redbot.core.commands import (
 
 from ..common import DEQUOTE
 from ..core.parsers.natural import NaturalParser
-from ..core.parsers.unixlike import UnixlikeParser
 from ..core.query.query import Query
 
 
@@ -98,22 +97,11 @@ class NoExitParser(argparse.ArgumentParser):
         raise BadArgument("Query not understood") from None
 
 
-class QueryConverter(Query):
-    """Convert query via argparse."""
-
-    @classmethod
-    # pylint: disable=unused-argument
-    async def convert(cls, ctx: Context, argument: str):
-        """Parse argument into compound taxon query."""
-
-        parser = UnixlikeParser(return_class=cls)
-        return parser.parse(argument)
-
-
-class NaturalQueryConverter(QueryConverter):
+class NaturalQueryConverter(Query):
     """Convert query with natural language filters via argparse."""
 
     @classmethod
+    # pylint: disable=unused-argument
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
