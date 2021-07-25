@@ -8,6 +8,7 @@ import dateparser
 
 from ..models.taxon import RANK_EQUIVALENTS
 from ..query.query import Query, TaxonQuery
+from .constants import ARGPARSE_ARGS
 
 
 class NoExitParser(argparse.ArgumentParser):
@@ -23,66 +24,8 @@ class NoExitParser(argparse.ArgumentParser):
 # TODO: consider using a subparser for of and in to make --in invalid
 # unless paired with --of
 # - see https://docs.python.org/3/library/argparse.html#sub-commands
-ARGPARSE_ARGS = {
-    "of": {"nargs": "+", "dest": "main", "default": []},
-    "in": {"nargs": "+", "dest": "ancestor", "default": []},
-    "by": {"nargs": "+", "dest": "user", "default": []},
-    "not-by": {"nargs": "+", "dest": "unobserved_by", "default": []},
-    "id-by": {"nargs": "+", "dest": "id_by", "default": []},
-    "from": {"nargs": "+", "dest": "place", "default": []},
-    "rank": {"dest": "rank", "default": ""},
-    "with": {"nargs": "+", "dest": "controlled_term"},
-    "per": {"nargs": "+", "dest": "per", "default": []},
-    "opt": {"nargs": "+", "dest": "options", "default": []},
-    "in-prj": {"nargs": "+", "dest": "project", "default": []},
-    "since": {"nargs": "+", "dest": "obs_d1", "default": []},
-    "until": {"nargs": "+", "dest": "obs_d2", "default": []},
-    "on": {"nargs": "+", "dest": "obs_on", "default": []},
-    "added-since": {"nargs": "+", "dest": "added_d1", "default": []},
-    "added-until": {"nargs": "+", "dest": "added_d2", "default": []},
-    "added-on": {"nargs": "+", "dest": "added_on", "default": []},
-}
 # TODO: handle macros here instead of in natural query parser
-MACROS = {
-    "rg": {"opt": ["quality_grade=research"]},
-    "nid": {"opt": ["quality_grade=needs_id"]},
-    "oldest": {"opt": ["order=asc", "order_by=observed_on"]},
-    "newest": {"opt": ["order=desc", "order_by=observed_on"]},
-    "reverse": {"opt": ["order=asc"]},
-    # Because there are no iconic taxa for these three taxa, they must be specifically
-    # excluded in order to match only actual unknowns (Bacteria, Archaea, & Viruses):
-    "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
-    "my": {"by": "me"},
-    "home": {"from": "home"},
-    "faves": {"opt": ["popular", "order_by=votes"]},
-}
 # TODO: handle opt value here instead of in query
-VALID_OBS_OPTS = [
-    "captive",
-    "day",
-    "endemic",
-    "iconic_taxa",
-    "id",
-    "identified",
-    "introduced",
-    "month",
-    "native",
-    "not_id",
-    "order",
-    "order_by",
-    "out_of_range",
-    "page",
-    "pcid",
-    "photos",
-    "popular",
-    "quality_grade",
-    "reviewed",
-    "sounds",
-    "threatened",
-    "verifiable",
-    "without_taxon_id",
-    "year",
-]
 
 
 def _detect_terms_phrases_code_id(terms_and_phrases: list):
