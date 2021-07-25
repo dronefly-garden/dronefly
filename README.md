@@ -1,5 +1,6 @@
 [![Red cogs](https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg)](https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
+[![ReadTheDocs](https://img.shields.io/readthedocs/dronefly/latest?label=documentation)](https://dronefly.readthedocs.io)
 
 # Dronefly bot
 
