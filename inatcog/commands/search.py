@@ -426,7 +426,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           instead.
         • See subcommand help topics for more information on each kind
           of result, e.g. `[p]help search taxa` describes taxa results,
-          whether from `[p] search` or `[p]search taxa`.
+          whether from `[p]search` or `[p]search taxa`.
         """
         try:
             await self._search(ctx, query, None)
