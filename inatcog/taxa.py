@@ -477,7 +477,7 @@ async def format_user_taxon_counts(
     )
     if count_unverifiable_observations:
         obs_opt["verifiable"] = "any"
-    species_opt = copy.copy(kwargs)
+    species_opt = copy.copy(obs_opt)
     if kwargs.get("unobserved_by_user_id"):
         obs_opt["lrank"] = "species"
     observations = await cog.api.get_observations(per_page=0, **obs_opt)
