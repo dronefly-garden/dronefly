@@ -382,12 +382,20 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             per_embed_page,
         ) = await query_formatted_results(_query, query_type, kwargs)
         if not results:
-            await apologize(
-                ctx,
-                "Nothing matches that query. "
-                "Check for mistakes in spelling or syntax.\n"
-                f"Type `{ctx.clean_prefix}help search` for help.",
-            )
+            if isinstance(_query, str) and "in" in _query.split():
+                await apologize(
+                    ctx,
+                    "The `in` keyword is not supported by this command.\n"
+                    "Try `[p]taxon` instead or omit the `in` clause.\n"
+                    f"Type `{ctx.clean_prefix}help search` for help.",
+                )
+            else:
+                await apologize(
+                    ctx,
+                    "Nothing matches that query. "
+                    "Check for mistakes in spelling or syntax.\n"
+                    f"Type `{ctx.clean_prefix}help search` for help.",
+                )
             return
 
         (buttons, controls) = get_button_controls(results, query_type)
@@ -412,6 +420,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         • Use the arrow reaction buttons to see more pages.
         • Press a lettered reaction button to display the result in more
           detail.
+        • Matching a taxon within another taxon via `in` is only supported
+          in `[p]search obs` and not in `[p]search` or its other subcommands.
+          Use `[p]t` with `in` to match a single taxon within another taxon
+          instead.
         • See subcommand help topics for more information on each kind
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p] search` or `[p]search taxa`.
@@ -424,14 +436,14 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @search.command(name="my")
     @checks.bot_has_permissions(embed_links=True)
     async def search_my(self, ctx, *, query: Optional[str] = ""):
-        """Search your observations (alias `,s obs [query] by me`)."""
+        """Search your observations (alias `[p]s obs [query] by me`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
         await self._search(ctx, _query, "obs")
 
     @search.command(name="home")
     @checks.bot_has_permissions(embed_links=True)
     async def search_home(self, ctx, *, query: Optional[str] = ""):
-        """Search obs from home (alias `,s obs [query] from home`)."""
+        """Search obs from home (alias `[p]s obs [query] from home`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} from home")
         await self._search(ctx, _query, "obs")
 
