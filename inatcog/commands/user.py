@@ -93,7 +93,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             user_query = inat_user
 
         user = None
-        response = await self.api.get_users(user_query, refresh_cache=True)
+        try:
+            response = await self.api.get_users(user_query, refresh_cache=True)
+        except LookupError:
+            pass
         if response and response["results"]:
             user = User.from_dict(response["results"][0])
             mat_login = user_query.lower()
@@ -405,7 +408,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return
 
         found = None
-        response = await self.api.get_users(login, refresh_cache=True)
+        try:
+            response = await self.api.get_users(login, refresh_cache=True)
+        except LookupError:
+            pass
         if response and response["results"]:
             found = next(
                 (

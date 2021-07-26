@@ -66,7 +66,10 @@ class INatUserTable:
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:
-                    user_json = await self.cog.api.get_users(inat_user_id)
+                    try:
+                        user_json = await self.cog.api.get_users(inat_user_id)
+                    except LookupError:
+                        continue
             if user_json:
                 results = user_json["results"]
                 if results:
