@@ -59,8 +59,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
 
-        embed = await self.make_user_embed(ctx, member, user)
-        await ctx.send(embed=embed)
+        async with ctx.typing():
+            embed = await self.make_user_embed(ctx, member, user)
+            await ctx.send(embed=embed)
 
     @user.command(name="add")
     @checks.admin_or_permissions(manage_roles=True)
