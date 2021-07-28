@@ -166,19 +166,20 @@ class CommandsProject(INatEmbeds, MixinMeta):
 
         if project == "":
             await ctx.send_help()
-        try:
-            proj = await self.project_table.get_project(ctx.guild, project)
-        except LookupError as err:
-            await ctx.send(err)
-            return
+        async with ctx.typing():
+            try:
+                proj = await self.project_table.get_project(ctx.guild, project)
+            except LookupError as err:
+                await ctx.send(err)
+                return
 
-        try:
-            ctx_member = await MemberConverter.convert(ctx, user)
-            member = ctx_member.member
-            user = await self.user_table.get_user(member)
-        except (BadArgument, LookupError) as err:
-            await ctx.send(err)
-            return
+            try:
+                ctx_member = await MemberConverter.convert(ctx, user)
+                member = ctx_member.member
+                user = await self.user_table.get_user(member)
+            except (BadArgument, LookupError) as err:
+                await ctx.send(err)
+                return
 
-        embed = await self.make_stats_embed(member, user, proj)
-        await ctx.send(embed=embed)
+            embed = await self.make_stats_embed(member, user, proj)
+            await ctx.send(embed=embed)
