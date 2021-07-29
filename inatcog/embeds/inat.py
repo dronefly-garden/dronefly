@@ -985,7 +985,9 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def get_user_project_stats(self, project_id, user, category: str = "obs"):
+    async def get_user_project_stats(
+        self, project_id, user, category: str = "obs", with_rank: bool = True
+    ):
         """Get user's ranked obs & spp stats for a project."""
 
         async def get_unranked_count(*args, **kwargs):
@@ -996,11 +998,14 @@ class INatEmbeds(MixinMeta):
                 return response["total_results"]
             return "unknown"
 
-        rank = "unranked"
+        stats = None
+        rank = None
         count = 0
 
         if category == "taxa":
             count = await get_unranked_count("species_counts")
+            if with_rank:
+                rank = "unranked"
             return (count, rank)
 
         kwargs = {}
@@ -1008,32 +1013,36 @@ class INatEmbeds(MixinMeta):
             kwargs["order_by"] = "species_count"
         # TODO: cache for a short while so users can compare stats but not
         # have to worry about stale data.
-        response = await self.api.get_project_observers_stats(
-            project_id=project_id, **kwargs
-        )
-        stats = [ObserverStats.from_dict(observer) for observer in response["results"]]
-        if stats:
-            rank = next(
-                (
-                    index + 1
-                    for (index, d) in enumerate(stats)
-                    if d.user_id == user.user_id
-                ),
-                None,
+        if with_rank:
+            response = await self.api.get_project_observers_stats(
+                project_id=project_id, **kwargs
             )
-            if rank:
-                ranked = stats[rank - 1]
-                count = (
-                    ranked.species_count
-                    if category == "spp"
-                    else ranked.observation_count
+            stats = [
+                ObserverStats.from_dict(observer) for observer in response["results"]
+            ]
+            if stats:
+                rank = next(
+                    (
+                        index + 1
+                        for (index, d) in enumerate(stats)
+                        if d.user_id == user.user_id
+                    ),
+                    None,
                 )
+                if rank:
+                    ranked = stats[rank - 1]
+                    count = (
+                        ranked.species_count
+                        if category == "spp"
+                        else ranked.observation_count
+                    )
+        if not (with_rank and rank):
+            if category == "spp":
+                count = await get_unranked_count("species_counts", hrank="species")
             else:
-                if category == "spp":
-                    count = await get_unranked_count("species_counts", hrank="species")
-                else:
-                    count = await get_unranked_count()  # obs
-                rank = ">500" if count > 0 else "unranked"
+                count = await get_unranked_count()  # obs
+        if with_rank and not rank:
+            rank = ">500" if count > 0 else "unranked"
         return (count, rank)
 
     async def get_user_server_projects_stats(self, ctx, user):
@@ -1048,12 +1057,14 @@ class INatEmbeds(MixinMeta):
             user_project = UserProject.from_dict(projects[project_id]["results"][0])
             if user.user_id in user_project.observed_by_ids():
                 abbrev = user_projects[str(project_id)]
-                obs_stats = await self.get_user_project_stats(project_id, user)
+                obs_stats = await self.get_user_project_stats(
+                    project_id, user, with_rank=False
+                )
                 spp_stats = await self.get_user_project_stats(
-                    project_id, user, category="spp"
+                    project_id, user, category="spp", with_rank=False
                 )
                 taxa_stats = await self.get_user_project_stats(
-                    project_id, user, category="taxa"
+                    project_id, user, category="taxa", with_rank=False
                 )
                 stats.append((project_id, abbrev, obs_stats, spp_stats, taxa_stats))
         return stats
