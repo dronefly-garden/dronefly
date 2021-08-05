@@ -35,6 +35,7 @@ class NaturalParser(UnixlikeParser):
         opts = []
         macro_by = ""
         macro_from = ""
+        macro_of = ""
         expanded_tokens = []
         # - rank keywords & macro expansions are allowed anywhere in the
         #   taxon argument, but otherwise only when not immediately after
@@ -83,6 +84,8 @@ class NaturalParser(UnixlikeParser):
                     macro_by = ""
                 if tok == "--from":
                     macro_from = ""
+                if tok == "--of":
+                    macro_of = ""
             if not suppress_macro:
                 if tok in RANK_KEYWORDS:
                     ranks.append(tok)
@@ -100,6 +103,9 @@ class NaturalParser(UnixlikeParser):
                         _macro_from = macro.get("from")
                         if _macro_from:
                             macro_from = _macro_from
+                        _macro_of = macro.get("of")
+                        if _macro_of:
+                            macro_of = _macro_of
                         continue
             # If it's an ordinary word token appearing before all other args,
             # then it's treated implicitly as first word of the "--of" argument,
@@ -107,6 +113,7 @@ class NaturalParser(UnixlikeParser):
             if arg_count == 0:
                 arg_count += 1
                 expanded_tokens.append("--of")
+                macro_of = ""
                 expected_args = REMAINING_ARGS
             # Append the ordinary word token:
             expanded_tokens.append(tok)
@@ -120,13 +127,15 @@ class NaturalParser(UnixlikeParser):
             expanded_tokens.extend(["--rank", *ranks])
         if opts:
             expanded_tokens.extend(["--opt", *opts])
-        # Note: There can only be one of macro_by or macro_from until we support
-        # multiple users / places, so the last user or place given wins,
+        # Note: There can only be one of macro_by, macro_from, or macro_of until we support
+        # multiple users / places / taxa, so the last user, place, or taxon given wins,
         # superseding anything given earlier in the query.
         if macro_by:
             expanded_tokens.extend(["--by", macro_by])
         if macro_from:
             expanded_tokens.extend(["--from", macro_from])
+        if macro_of:
+            expanded_tokens.extend(["--of", macro_of])
         # Treat any unexpanded args before the first option keyword
         # argument as implicit "--of" option arguments:
         if not re.match(r"^--", expanded_tokens[0]):
