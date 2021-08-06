@@ -515,6 +515,20 @@ class QueryResponse:
         if self.taxon:
             taxon = self.taxon
             message += " of " + taxon.format_name(with_term=True)
+        if self.options:
+            without_taxon_id = self.options.get("without_taxon_id")
+            iconic_taxa = self.options.get("iconic_taxa")
+            if iconic_taxa == "unknown":
+                message += " of Unknown"
+            else:
+                message += " without "
+                # TODO: support generally; hardwired cases are for waspsonly & mothsonly
+                if without_taxon_id == "47336,630955":
+                    message += "Formicidae, Anthophila"
+                elif without_taxon_id == "47224":
+                    message += "Papilionoidea"
+                else:
+                    message += "taxon #" + without_taxon_id.replace(",", ", ")
         if self.project:
             message += " in " + self.project.title
         if self.place:
