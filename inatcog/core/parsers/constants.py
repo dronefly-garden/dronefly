@@ -33,6 +33,7 @@ MACROS = {
     "home": {"from": "home"},
     "faves": {"opt": ["popular", "order_by=votes"]},
     "waspsonly": {"of": "apocrita", "opt": ["without_taxon_id=47336,630955"]},
+    "mothsonly": {"of": "lepidoptera", "opt": ["without_taxon_id=47224"]},
 }
 VALID_OBS_OPTS = [
     "captive",
@@ -55,7 +56,6 @@ VALID_OBS_OPTS = [
     "quality_grade",
     "reviewed",
     "sounds",
-    "taxon_id",
     "threatened",
     "verifiable",
     "without_taxon_id",
