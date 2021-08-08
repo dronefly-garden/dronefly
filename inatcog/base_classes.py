@@ -520,7 +520,7 @@ class QueryResponse:
             iconic_taxa = self.options.get("iconic_taxa")
             if iconic_taxa == "unknown":
                 message += " of Unknown"
-            else:
+            elif without_taxon_id:
                 message += " without "
                 # TODO: support generally; hardwired cases are for waspsonly & mothsonly
                 if without_taxon_id == "47336,630955":
