@@ -521,17 +521,14 @@ class QueryResponse:
             if iconic_taxa == "unknown":
                 message += " of Unknown"
             else:
-                taxon_id = self.options.get("taxon_id")
-                # Note: if taxon_id is given with "of" clause, it will not yield a
-                # useful result. Either it will prevent the already determined
-                # "of" taxon from being shown (if it is not an ancestor of it)
-                # or else it will just be ignored. In either case the description
-                # remains unaffected.
-                if taxon_id and not self.taxon:
-                    if taxon_id == "20978,26036":
+                taxon_ids = self.options.get("taxon_ids")
+                # Note: if taxon_ids is given with "of" clause (taxon_id), then
+                # taxon_ids is simply ignored, so we don't handle that case here.
+                if taxon_ids and not self.taxon:
+                    if taxon_ids == "20978,26036":
                         message += " of Amphibia, Reptilia (Herps)"
                     else:
-                        message += " of taxon #" + taxon_id.replace(",", ", ")
+                        message += " of taxon #" + taxon_ids.replace(",", ", ")
                 if without_taxon_id:
                     message += " without "
                     # TODO: support generally; hardwired cases are for waspsonly & mothsonly

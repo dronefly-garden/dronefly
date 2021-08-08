@@ -96,7 +96,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`       `**`     47336,630955`
         **`mothsonly`**` lepidoptera opt`
         **`       `**`     without_taxon_id=47224`
-        **`herps`**`   opt taxon_id=20978,26036`
+        **`herps`**`   opt taxon_ids=20978,26036`
         """  # noqa: E501
 
     @commands.command(name="query")

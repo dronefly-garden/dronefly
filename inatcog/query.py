@@ -30,7 +30,7 @@ VALID_OBS_OPTS = [
     "quality_grade",
     "reviewed",
     "sounds",
-    "taxon_id",
+    "taxon_ids",
     "threatened",
     "verifiable",
     "without_taxon_id",
