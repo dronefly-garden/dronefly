@@ -91,6 +91,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`unknown`**` opt iconic_taxa=unknown`
         **`       `**`     without_taxon_id=`
         **`       `**`     67333,151817,131236`
+        **`waspsonly`**` apocrita opt`
+        **`       `**`     without_taxon_id=`
+        **`       `**`     47336,630955`
+        **`mothsonly`**` lepidoptera opt`
+        **`       `**`     without_taxon_id=47224`
+        **`herps`**`   opt taxon_id=20978,26036`
         """  # noqa: E501
 
     @commands.command(name="query")
