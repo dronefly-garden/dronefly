@@ -527,6 +527,15 @@ class QueryResponse:
                 if taxon_ids and not self.taxon:
                     if taxon_ids == "20978,26036":
                         message += " of Amphibia, Reptilia (Herps)"
+                    elif (
+                        taxon_ids
+                        == "152028,791197,54743,152030,175541,127378,117881,117869"
+                    ):
+                        message += (
+                            " of Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
+                            " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
+                            "Verrucariales (Lichenized Fungi)"
+                        )
                     else:
                         message += " of taxon #" + taxon_ids.replace(",", ", ")
                 if without_taxon_id:
@@ -536,6 +545,8 @@ class QueryResponse:
                         message += "Formicidae, Anthophila"
                     elif without_taxon_id == "47224":
                         message += "Papilionoidea"
+                    elif without_taxon_id == "352459":
+                        message += "Stictis radiata"
                     else:
                         message += "taxon #" + without_taxon_id.replace(",", ", ")
         if self.project:

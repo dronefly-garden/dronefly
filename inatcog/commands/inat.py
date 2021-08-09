@@ -75,7 +75,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
 
-        See also: `[p]help query` for *query* help and `[p]help query_taxon` for *taxon query* help.
+        See also: `[p]help query`, `[p]help query_taxon`, and `[p]help groups`.
 
         __**`Macro`**__`  `__`Expands to`__
         **`my`**`      by me`
@@ -88,15 +88,28 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`      `**`      order_by=observed_on`
         **`reverse`**` opt order_by=asc`
         **`faves`**`   opt popular order_by=votes`
-        **`unknown`**` opt iconic_taxa=unknown`
-        **`       `**`     without_taxon_id=`
-        **`       `**`     67333,151817,131236`
-        **`waspsonly`**` apocrita opt`
-        **`       `**`     without_taxon_id=`
-        **`       `**`     47336,630955`
-        **`mothsonly`**` lepidoptera opt`
-        **`       `**`     without_taxon_id=47224`
-        **`herps`**`   opt taxon_ids=20978,26036`
+        """  # noqa: E501
+
+    @commands.command(name="groups")
+    async def topic_groups(self, ctx):
+        """*Help* for *query* macros that are *taxonomic groups*.
+
+        See also: `[p]help macros`, and `[p]help query`.
+
+        **`herps`**`       opt taxon_ids=`
+        **`       `**`       20978,26036`
+        **`lichenish`**`   opt taxon_ids=`
+        **`       `**`       152028,791197,54743,152030,`
+        **`       `**`       175541,127378,117881,117869`
+        **`       `**`       without_taxon_id=352459`
+        **`mothsonly`**`   lepidoptera opt`
+        **`       `**`       without_taxon_id=47224`
+        **`unknown`**`     opt iconic_taxa=unknown`
+        **`       `**`       without_taxon_id=`
+        **`       `**`       67333,151817,131236`
+        **`waspsonly`**`   apocrita opt`
+        **`       `**`       without_taxon_id=`
+        **`       `**`       47336,630955`
         """  # noqa: E501
 
     @commands.command(name="query")

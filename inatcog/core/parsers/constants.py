@@ -35,6 +35,12 @@ MACROS = {
     "waspsonly": {"of": "apocrita", "opt": ["without_taxon_id=47336,630955"]},
     "mothsonly": {"of": "lepidoptera", "opt": ["without_taxon_id=47224"]},
     "herps": {"opt": ["taxon_ids=20978,26036"]},
+    "lichenish": {
+        "opt": [
+            "taxon_ids=152028,791197,54743,152030,175541,127378,117881,117869",
+            "without_taxon_id=352459",
+        ]
+    },
 }
 VALID_OBS_OPTS = [
     "captive",
