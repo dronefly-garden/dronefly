@@ -457,8 +457,8 @@ Tabulate subcommands
 
 - Additionally...
     - double-quotes can be used around exact words in the name
-    - rank keywords will filter by rank (species, family, etc.)
-      - Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
+    - rank keywords will filter by rank (``rank species``, ``rank family``, etc.)
+      - Note: Dronefly supports ``,species`` (``,sp``) as an alias for ``,t ... rank species``.
     - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
    
 Taxon subcommands
