@@ -148,7 +148,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - *id#* of the iNat taxon
         - *initial letters* of scientific or common names
         - *double-quotes* around exact words in the name
-        - *rank keywords* filter by ranks (`sp`, `family`, etc.)
+        - `rank` *keyword(s)* filter by ranks (`rank sp spp`, `rank family`, etc.)
         - *4-letter AOU codes* for birds
         - *taxon* `in` *an ancestor taxon*
         **Examples:**

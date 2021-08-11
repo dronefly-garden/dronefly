@@ -5,7 +5,6 @@ import shlex
 from redbot.core.commands import BadArgument
 
 from ...base_classes import PAT_OBS_LINK
-from ...core.models.taxon import RANK_KEYWORDS
 from ...core.parsers.constants import ARGPARSE_ARGS, MACROS, REMAINING_ARGS
 from .unixlike import UnixlikeParser
 
@@ -37,11 +36,9 @@ class NaturalParser(UnixlikeParser):
         macro_from = ""
         macro_of = ""
         expanded_tokens = []
-        # - rank keywords & macro expansions are allowed anywhere in the
-        #   taxon argument, but otherwise only when not immediately after
-        #   an option token
-        #   - e.g. `--of rg birds` or `--of ssp mallard` will expand
-        #     the `rg` macro and `ssp` rank keyword, but `--from home`
+        # - macro expansions are allowed anywhere in the taxon argument, but
+        #   otherwise only when not immediately after an option token
+        #   - e.g. `--of rg birds` will expand the `rg` macro, but `--from home`
         #     will not expand the `home` macro
         suppress_macro = False
         arg_count = 0
@@ -67,14 +64,12 @@ class NaturalParser(UnixlikeParser):
                 # combined in the same query, e.g.
                 #   `reverse birds opt observed_on=2021-06-13` ->
                 #   `--of birds --opt order=asc observed_on=2021-06-13`
-                # or
-                #   `ssp ducks rank sp` -> `--of ducks --rank ssp sp`
-                #   - not super useful, but handled for consistency, as
-                #     rank expansion is a special kind of macro expansion
                 if tok == "--opt" and opts:
                     expanded_tokens.extend(["--opt", *opts])
                     opts = []
                     continue
+                # See "Disable rank expansion" comment below. This can probably
+                # be reverted if we make that change permanent.
                 if tok == "--rank" and ranks:
                     expanded_tokens.extend(["--rank", *ranks])
                     ranks = []
@@ -87,9 +82,15 @@ class NaturalParser(UnixlikeParser):
                 if tok == "--of":
                     macro_of = ""
             if not suppress_macro:
-                if tok in RANK_KEYWORDS:
-                    ranks.append(tok)
-                    continue
+                # Disable rank expansion here to see if this has any impact:
+                # - solves "from united kingdom" being incorrectly read
+                #   as "--from united --rank kingdom"
+                # - if nobody uses it, we're probably better off without it
+                # - use "rank kingdom" instead
+                #
+                # if tok in RANK_KEYWORDS:
+                #    ranks.append(tok)
+                #    continue
                 if tok in MACROS:
                     macro = MACROS[tok]
                     if macro:
