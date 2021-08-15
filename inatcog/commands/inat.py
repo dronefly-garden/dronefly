@@ -88,6 +88,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`      `**`      order_by=observed_on`
         **`reverse`**` opt order_by=asc`
         **`faves`**`   opt popular order_by=votes`
+        **`spp`**`     opt hrank=species` (alias `species`)
         """  # noqa: E501
 
     @commands.command(name="groups")
@@ -118,7 +119,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         A *query* may contain *taxon query* terms, *macros*, and other *query* terms described below.
 
-        See also: `[p]help query_taxon` for *taxon query* help and `[p]help macros` for *macro* help.
+        See also: `[p]help query_taxon`, `[p]help advanced`, and `[p]help macros`.
 
         Aside from *taxon*, other *query* terms may be:
         - `by <name>` to match the named user; also `by me` or just `my` (a *macro*) to match yourself
@@ -138,6 +139,29 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ```
         """  # noqa: E501
 
+    @commands.command(name="advanced")
+    async def topic_advanced(self, ctx):
+        """*Help* for `opt` *advanced query* options.
+
+        Shortcuts for the most commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
+
+        See also: `[p]help macros`, and `[p]help query`.
+
+        **Boolean options:**
+
+        `captive` `endemic` `identified` `introduced` `native` `out_of_range` `pcid` `photos` `popular` `sounds` `threatened` `verifiable`
+
+        Boolean options without a parameter default to `=true`, e.g. `,tab my verifiable` means `,tab my verifiable=true`. Other values can be `=false` or `=any`.
+
+        **Options that always require a parameter:**
+
+        `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `iconic_taxa` `taxon_ids` `without_taxon_id`
+
+        **Documentation & limitations:**
+
+        See the [get observations API documentation](https://api.inaturalist.org/v1/docs/#!/Observations/get_observations) for detailed descriptions of these options and what parameter values are allowed. Not all options make sense for all queries/commands.
+        """  # noqa: E501
+
     @commands.command(name="query_taxon")
     async def topic_query_taxon(self, ctx):
         """*Help* for *taxon query* terms.
@@ -148,7 +172,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - *id#* of the iNat taxon
         - *initial letters* of scientific or common names
         - *double-quotes* around exact words in the name
-        - `rank` *keyword(s)* filter by ranks (`rank sp spp`, `rank family`, etc.)
+        - `rank` *keyword* filter by rank (`rank subspecies`, etc.)
         - *4-letter AOU codes* for birds
         - *taxon* `in` *an ancestor taxon*
         **Examples:**
