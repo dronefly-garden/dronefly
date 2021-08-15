@@ -42,6 +42,7 @@ MACROS = {
         ]
     },
     "spp": {"opt": ["hrank=species"]},
+    "species": {"opt": ["hrank=species"]},
 }
 VALID_OBS_OPTS = [
     "captive",
