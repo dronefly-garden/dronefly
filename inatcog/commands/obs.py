@@ -193,7 +193,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         taxon = query_response.taxon
         species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
         user_links = get_formatted_user_counts(users, url, species_only, view)
-        full_title = obs_opt_view.capitalize() + query_response.obs_query_description()
+        full_title = "{} {}".format(
+            obs_opt_view.capitalize(), query_response.obs_query_description()
+        )
         pages = format_pages(user_links, users_count, obs_opt, view)
 
         embeds = [

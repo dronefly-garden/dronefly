@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 
 from dataclasses_json import config, DataClassJsonMixin
 
-
 from .controlled_terms import ControlledTermSelector
 from .core import models
 from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
@@ -586,7 +585,21 @@ class QueryResponse:
             desc = f" with {term.label}"
             desc += f" {term_value.label}"
             message += desc
-        return message
+        kwargs = self.obs_args()
+        hrank = kwargs.get("hrank")
+        lrank = kwargs.get("lrank")
+        if lrank or hrank:
+            with_or_and = "with" if not self.controlled_term else "and"
+            if lrank and hrank:
+                message += " {} rank from {} through {}".format(
+                    with_or_and, lrank, hrank
+                )
+            else:
+                higher_or_lower = "higher" if lrank else "lower"
+                message += " {} rank {} or {}".format(
+                    with_or_and, hrank or lrank, higher_or_lower
+                )
+        return re.sub(r"^ ", "", message)
 
 
 class Obs(NamedTuple):

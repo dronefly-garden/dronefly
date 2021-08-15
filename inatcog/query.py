@@ -7,35 +7,8 @@ from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
 from .base_classes import DateSelector, QueryResponse, User
+from .core.parsers.constants import VALID_OBS_OPTS
 from .core.query.query import Query, TaxonQuery
-
-VALID_OBS_OPTS = [
-    "captive",
-    "day",
-    "endemic",
-    "iconic_taxa",
-    "id",
-    "identified",
-    "introduced",
-    "month",
-    "native",
-    "not_id",
-    "order",
-    "order_by",
-    "out_of_range",
-    "page",
-    "pcid",
-    "photos",
-    "popular",
-    "quality_grade",
-    "reviewed",
-    "sounds",
-    "taxon_ids",
-    "threatened",
-    "verifiable",
-    "without_taxon_id",
-    "year",
-]
 
 
 def _get_options(query_options: list):
