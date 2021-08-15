@@ -41,6 +41,7 @@ MACROS = {
             "without_taxon_id=352459",
         ]
     },
+    "spp": {"opt": ["hrank=species"]},
 }
 VALID_OBS_OPTS = [
     "captive",
