@@ -235,6 +235,12 @@ class ConservationStatus(DataClassJsonMixin):
             return status_lowered
         if self.status_name:
             return f"{self.status_name} ({self.status.upper()})"
+        # Avoid "shouting" status codes when no name is given and
+        # they are long (i.e. they're probably names, not actual
+        # status codes)
+        # - e.g. "EXTINCT" or "THREATENED"
+        if len(self.status) > 6:
+            return self.status.lower()
         return self.status.upper()
 
     def description(self):
