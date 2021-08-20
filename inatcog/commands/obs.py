@@ -79,10 +79,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Tabulate iNaturalist data.
 
         • Only observations can be tabulated. More kinds of table to be supported in future releases.
-        • The row contents can be `from` or `by`. If both are given, what to tabulate is filtered by the `from` place, and the `by` person is the first row.
-        • If no taxon is specified, all observations are searched.
-        • The `not by` qualifier counts observations / species unobserved by each user in the table. It may be combined with `from`, but not `by` or `id by`.
-        • The `id by` qualifier counts observations / species identified by each user in the table. It may be combined with `from`, but not `by` or `not by`.
+        • The *per row* can be: `from`, `id by`, `not by`, or `by`, and breaks down the count of observations in the table topic into per name (of place or user) in the table.
+        • When more than one eligible filter is given, the first in order in the list above, is the table topic, and the second in order above is the *per row* count.
+        • All remaining filters beyond those, including any that can't be used as *per row* values, e.g. `in prj`, `rg`, etc. are applied to the table topic.
         e.g.
         ```
         ,tab fish from home

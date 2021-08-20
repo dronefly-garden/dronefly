@@ -126,6 +126,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - `from <place>` to match the named place; also `from home` or just `home` (a *macro*) to match observations from your *home place*
         - `in prj <project>` to match the named *project*
         - `with <term> <value>` to matched the *controlled term* with the given *value*
+        - `not by <name>` to match obs unobserved by the user
+        - `id by <name>` to match obs ided by the user
         **Examples:**
         ```
         [p]obs by benarmstrong

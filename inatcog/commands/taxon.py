@@ -245,7 +245,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
     async def species(self, ctx, *, query: NaturalQueryConverter):
-        """Species information. (alias `,t [query] species`)
+        """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]help query_taxon` for query help."""
         query_species = query

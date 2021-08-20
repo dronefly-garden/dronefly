@@ -441,35 +441,39 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @known_inat_user()
     @checks.bot_has_permissions(embed_links=True)
     async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name
-        """Show your observations, species, & ranks for an iNat project."""
+        """Your rank in *project* (alias `[p]rank` *project* `me`).
+
+        Use `[p]my` subcommands below to show other iNat info
+        for your account.
+        """
         await (self.bot.get_command("project stats")(ctx, project, user="me"))
 
     @my.command(name="inatyear")
     @known_inat_user()
     async def my_inatyear(self, ctx, year: int = None):
-        """Display the URL for your iNat year graphs.
+        """URL for your iNat year graphs.
 
-        Where `year` is a valid year on or after 1950."""
+        Where *year* is a valid year on or after 1950."""
         await self.user_inatyear(ctx, user="me", year=year)
 
     @my.command(name="obs")
     @known_inat_user()
     async def my_obs(self, ctx, *, query=""):
-        """Search your observations."""
+        """Search your observations (alias `[p]s obs my`)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
         await (self.bot.get_command("search obs")(ctx, query=my_query))
 
     @my.command(name="map")
     @known_inat_user()
     async def my_map(self, ctx, *, query=""):
-        """Display a map of your observations."""
+        """Map observations by you (alias `[p]map obs my` *query*)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
         await (self.bot.get_command("map obs")(ctx, query=my_query))
 
     @my.command(name="idmap")
     @known_inat_user()
     async def my_idmap(self, ctx, *, query=""):
-        """Display a map of observations identified by you."""
+        """Map ided by you (alias `[p]map obs` *query* `id by me`)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} id by me")
         await (self.bot.get_command("map obs")(ctx, query=my_query))
 
@@ -478,5 +482,5 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def rank(
         self, ctx, project: str, *, user: str
     ):  # pylint: disable=invalid-name
-        """Project observations & species rank for user."""
+        """Rank in *project* (alias `[p]prj stats `*project* *user*)."""
         await (self.bot.get_command("project stats")(ctx, project, user=user))

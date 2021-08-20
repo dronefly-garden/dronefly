@@ -19,7 +19,7 @@ from inatcog.places import RESERVED_PLACES
 class CommandsProject(INatEmbeds, MixinMeta):
     """Mixin providing project command group."""
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True, aliases=["prj"])
     async def project(self, ctx, *, query):
         """iNat project for name, id number, or abbreviation.
 
