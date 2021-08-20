@@ -226,8 +226,13 @@ class ConservationStatus(DataClassJsonMixin):
 
     def status_description(self):
         """Return a reasonable description of status giving various possible inputs."""
-        if self.status.lower() in ("extinct", "ex"):
-            return "extinct"
+        status_lowered = self.status.lower()
+        # Avoid cases where showing both the name and code
+        # adds no new information, e.g.
+        # - "extinct (EXTINCT)" and "threatened (THREATENED)"
+        # - return "extinct" or "threatened" instead
+        if status_lowered == self.status_name.lower():
+            return status_lowered
         if self.status_name:
             return f"{self.status_name} ({self.status.upper()})"
         return self.status.upper()
