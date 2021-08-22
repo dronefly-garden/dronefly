@@ -73,15 +73,11 @@ class UnixlikeParser:
         # TODO: implement the following as argparse.Action subclasses, so that all
         # we need to do is the parse_args call above, and return the result.
         ranks = []
-        if vals.rank:
-            parsed_ranks = shlex.shlex(vals.rank)
-            parsed_ranks.whitespace += ","
-            parsed_ranks.whitespace_split = True
-            ranks_with_equivalents = list(parsed_ranks)
+        if vals.ranks:
             ranks = list(
                 [
                     RANK_EQUIVALENTS[rank] if rank in RANK_EQUIVALENTS else rank
-                    for rank in ranks_with_equivalents
+                    for rank in vals.ranks
                 ]
             )
 

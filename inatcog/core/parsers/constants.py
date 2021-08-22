@@ -7,7 +7,7 @@ ARGPARSE_ARGS = {
     "not-by": {"nargs": "+", "dest": "unobserved_by", "default": []},
     "id-by": {"nargs": "+", "dest": "id_by", "default": []},
     "from": {"nargs": "+", "dest": "place", "default": []},
-    "rank": {"dest": "rank", "default": ""},
+    "rank": {"nargs": "+", "dest": "ranks", "default": []},
     "with": {"nargs": "+", "dest": "controlled_term"},
     "per": {"nargs": "+", "dest": "per", "default": []},
     "opt": {"nargs": "+", "dest": "options", "default": []},

@@ -30,7 +30,6 @@ class NaturalParser(UnixlikeParser):
             tokens = shlex.split(arg_normalized, posix=False)
         except ValueError as err:
             raise BadArgument(err.args[0]) from err
-        ranks = []
         opts = []
         macro_by = ""
         macro_from = ""
@@ -59,20 +58,14 @@ class NaturalParser(UnixlikeParser):
                     suppress_macro = False
                 else:
                     suppress_macro = True
-                # Insert at head of explicit "opt" or "rank" any collected
-                # ranks or opt macro expansions. This allows them to be
-                # combined in the same query, e.g.
+                # Insert at head of explicit "opt" any collected opt macro
+                # expansions. This allows them to be combined in the same query,
+                # e.g.
                 #   `reverse birds opt observed_on=2021-06-13` ->
                 #   `--of birds --opt order=asc observed_on=2021-06-13`
                 if tok == "--opt" and opts:
                     expanded_tokens.extend(["--opt", *opts])
                     opts = []
-                    continue
-                # See "Disable rank expansion" comment below. This can probably
-                # be reverted if we make that change permanent.
-                if tok == "--rank" and ranks:
-                    expanded_tokens.extend(["--rank", *ranks])
-                    ranks = []
                     continue
                 # Discard any prior macro expansions of these; see note below
                 if tok == "--by":
@@ -82,15 +75,6 @@ class NaturalParser(UnixlikeParser):
                 if tok == "--of":
                     macro_of = ""
             if not suppress_macro:
-                # Disable rank expansion here to see if this has any impact:
-                # - solves "from united kingdom" being incorrectly read
-                #   as "--from united --rank kingdom"
-                # - if nobody uses it, we're probably better off without it
-                # - use "rank kingdom" instead
-                #
-                # if tok in RANK_KEYWORDS:
-                #    ranks.append(tok)
-                #    continue
                 if tok in MACROS:
                     macro = MACROS[tok]
                     if macro:
@@ -124,8 +108,6 @@ class NaturalParser(UnixlikeParser):
 
         # Handle collected arguments that were not already
         # inserted into filtered_args above by appending them:
-        if ranks:
-            expanded_tokens.extend(["--rank", *ranks])
         if opts:
             expanded_tokens.extend(["--opt", *opts])
         # Note: There can only be one of macro_by, macro_from, or macro_of until we support
