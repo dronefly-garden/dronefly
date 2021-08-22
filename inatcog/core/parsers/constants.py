@@ -65,6 +65,7 @@ VALID_OBS_OPTS = [
     "photos",
     "popular",
     "quality_grade",
+    "rank",
     "sounds",
     "taxon_ids",
     "threatened",
