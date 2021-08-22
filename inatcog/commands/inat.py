@@ -157,7 +157,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         **Options that always require a parameter:**
 
-        `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `iconic_taxa` `taxon_ids` `without_taxon_id`
+        `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id`
 
         **Documentation & limitations:**
 
