@@ -10,10 +10,10 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
+from ..core.parsers.url import PAT_TAXON_LINK
 from ..core.query.query import EMPTY_QUERY, Query
 from ..places import PAT_PLACE_LINK
 from ..projects import PAT_PROJECT_LINK
-from ..taxa import PAT_TAXON_LINK
 from ..users import PAT_USER_LINK
 
 from inatcog.base_classes import (

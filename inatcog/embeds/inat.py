@@ -29,6 +29,7 @@ from ..base_classes import (
     WWW_BASE_URL,
 )
 from ..common import LOG
+from ..core.parsers.url import PAT_TAXON_LINK
 from ..core.query.query import EMPTY_QUERY, Query, TaxonQuery
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
@@ -41,7 +42,6 @@ from ..taxa import (
     get_taxon,
     get_taxon_fields,
     get_taxon_preferred_establishment_means,
-    PAT_TAXON_LINK,
     TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,

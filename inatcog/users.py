@@ -2,7 +2,8 @@
 import re
 from typing import AsyncIterator, Tuple
 import discord
-from .base_classes import WWW_URL_PAT, User
+from .base_classes import User
+from .core.parsers.url import WWW_URL_PAT
 
 # Match user profile link from any partner site.
 PAT_USER_LINK = re.compile(

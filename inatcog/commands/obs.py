@@ -13,11 +13,12 @@ from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..core.models.taxon import RANK_LEVELS
+from ..core.parsers.url import PAT_TAXON_LINK
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
-from ..taxa import PAT_TAXON_LINK, TAXON_COUNTS_HEADER
+from ..taxa import TAXON_COUNTS_HEADER
 
 
 class CommandsObs(INatEmbeds, MixinMeta):

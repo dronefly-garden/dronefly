@@ -13,7 +13,6 @@ from .base_classes import (
     Place,
     STATIC_URL_PAT,
     WWW_BASE_URL,
-    WWW_URL_PAT,
 )
 from .common import LOG
 from .core.models.taxon import RANK_LEVELS
@@ -30,10 +29,6 @@ TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
-
-PAT_TAXON_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/taxa/(?P<taxon_id>\d+))\b", re.I
-)
 
 
 def format_taxon_names(

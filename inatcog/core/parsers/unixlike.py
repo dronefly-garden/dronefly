@@ -7,6 +7,7 @@ import shlex
 import dateparser
 
 from ..models.taxon import RANK_EQUIVALENTS
+from ..parsers.url import PAT_TAXON_LINK
 from ..query.query import Query, TaxonQuery
 from .constants import ARGPARSE_ARGS
 
@@ -43,6 +44,11 @@ def _detect_terms_phrases_code_id(terms_and_phrases: list):
             taxon_id = terms[0]
         elif len(terms[0]) == 4:
             code = terms[0].upper()
+        else:
+            mat = re.search(PAT_TAXON_LINK, terms[0])
+            if mat and mat["taxon_id"]:
+                taxon_id = mat["taxon_id"]
+
     return terms, phrases, code, taxon_id
 
 

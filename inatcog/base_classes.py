@@ -9,26 +9,12 @@ from dataclasses_json import config, DataClassJsonMixin
 from .controlled_terms import ControlledTermSelector
 from .core import models
 from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
+from .core.parsers.url import WWW_URL_PAT
 from .photos import Photo
 from .sounds import Sound
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
-# Match any iNaturalist partner URL
-# See https://www.inaturalist.org/pages/network
-WWW_URL_PAT = (
-    r"https?://("
-    r"((www|colombia|costarica|panama|ecuador|israel|greece|uk|guatemala)\.)?inaturalist\.org"
-    r"|inaturalist\.ala\.org\.au"
-    r"|(www\.)?("
-    r"inaturalist\.(ca|lu|nz|se)"
-    r"|naturalista\.mx"
-    r"|biodiversity4all\.org"
-    r"|argentinat\.org"
-    r"|inaturalist\.laji\.fi"
-    r")"
-    r")"
-)
 STATIC_URL_PAT = (
     r"https?://(static\.inaturalist\.org|inaturalist-open-data\.s3\.amazonaws\.com)"
 )

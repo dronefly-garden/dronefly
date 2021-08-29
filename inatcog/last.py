@@ -7,8 +7,9 @@ from discord import User
 import timeago
 
 from .base_classes import WWW_BASE_URL, PAT_OBS_LINK
+from .core.parsers.url import PAT_TAXON_LINK
 from .obs import get_obs_fields
-from .taxa import get_taxon, PAT_TAXON_LINK
+from .taxa import get_taxon
 
 
 class ObsLinkMsg(NamedTuple):

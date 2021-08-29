@@ -1,8 +1,9 @@
 """Module to handle users."""
 import re
 from typing import Union
-from .base_classes import Place, WWW_URL_PAT
+from .base_classes import Place
 from .converters.base import QuotedContextMemberConverter
+from .core.parsers.url import WWW_URL_PAT
 
 # Match place link from any partner site.
 PAT_PLACE_LINK = re.compile(

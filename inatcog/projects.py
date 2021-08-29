@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 import re
 from typing import List, Union
 from dataclasses_json import config, DataClassJsonMixin
-from .base_classes import WWW_URL_PAT, Project
+from .base_classes import Project
+from .core.parsers.url import WWW_URL_PAT
 
 
 # Match project link from any partner site.

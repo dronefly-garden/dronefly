@@ -86,3 +86,15 @@ class TestUnixlikeParser:
     def test_added_on(self, parser):
         parsed = parser.parse("added on today")
         assert bool(re.match(r"added on \d{4}", str(parsed)))
+
+    def test_code(self, parser):
+        parsed = parser.parse("wtsp")
+        assert parsed.main.code == "WTSP"
+
+    def test_id(self, parser):
+        parsed = parser.parse("12345")
+        assert parsed.main.taxon_id == "12345"
+
+    def test_url(self, parser):
+        parsed = parser.parse("https://www.inaturalist.org/taxa/1-Animalia")
+        assert parsed.main.taxon_id == "1"
