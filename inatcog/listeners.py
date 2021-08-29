@@ -87,11 +87,8 @@ class Listeners(INatEmbeds, MixinMeta):
             obs, url = await maybe_match_obs(self, ctx, message.content)
             # Only output if an observation is found
             if obs:
-                await message.channel.send(
-                    embed=await self.make_obs_embed(obs, url, preview=False)
-                )
-                if obs and obs.sounds:
-                    await self.maybe_send_sound(channel, obs.sounds)
+                embed = await self.make_obs_embed(obs, url, preview=True)
+                await self.send_obs_embed(ctx, embed, obs)
                 self.bot.dispatch("commandstats_action", ctx)
 
         channel_dot_taxon = await self.config.channel(channel).dot_taxon()
@@ -118,12 +115,12 @@ class Listeners(INatEmbeds, MixinMeta):
                     msg = await channel.send(
                         embed=await self.make_obs_counts_embed(query_response)
                     )
-                    self.add_obs_reaction_emojis(msg, query_response)
+                    await self.add_obs_reaction_emojis(ctx, msg, query_response)
                 else:
                     msg = await channel.send(
                         embed=await self.make_taxa_embed(ctx, query_response)
                     )
-                    self.add_taxon_reaction_emojis(msg, query_response)
+                    await self.add_taxon_reaction_emojis(ctx, msg, query_response)
                 self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(

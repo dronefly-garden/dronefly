@@ -44,9 +44,8 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await ctx.send(embed=await self.make_last_obs_embed(last))
-        if last.obs.sounds:
-            await self.maybe_send_sound(ctx.channel, last.obs.sounds)
+        embed = await self.make_last_obs_embed(last)
+        await self.send_obs_embed(ctx, embed, last.obs)
 
     @last_obs.command(name="img", aliases=["image", "photo"])
     async def last_obs_img(self, ctx, number=None):
@@ -66,9 +65,8 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 num = 1 if number is None else int(number)
             except ValueError:
                 num = 0
-            await ctx.send(
-                embed=await self.make_obs_embed(last.obs, last.url, preview=num)
-            )
+            embed = await self.make_obs_embed(last.obs, last.url, preview=num)
+            await self.send_obs_embed(ctx, embed, last.obs)
         else:
             await apologize(ctx, "Nothing found")
 

@@ -49,11 +49,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 # Note: if the user specified an invalid or deleted id, a url is still
                 # produced (i.e. should 404).
                 if url:
-                    await ctx.send(
-                        embed=await self.make_obs_embed(obs, url, preview=False)
-                    )
-                    if obs and obs.sounds:
-                        await self.maybe_send_sound(ctx.channel, obs.sounds)
+                    embed = await self.make_obs_embed(obs, url, preview=False)
+                    await self.send_obs_embed(ctx, embed, obs)
                     return
                 else:
                     await apologize(ctx, "I don't understand")
@@ -70,9 +67,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
-        await ctx.send(embed=await self.make_obs_embed(obs, url, preview=True))
-        if obs and obs.sounds:
-            await self.maybe_send_sound(ctx.channel, obs.sounds)
+        embed = await self.make_obs_embed(obs, url, preview=True)
+        await self.send_obs_embed(ctx, embed, obs)
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
@@ -101,7 +97,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         try:
             query_response = await self.query.get(ctx, _query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
-            self.add_obs_reaction_emojis(msg, query_response)
+            await self.add_obs_reaction_emojis(ctx, msg, query_response)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
@@ -270,9 +266,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
             )["results"]
             obs = get_obs_fields(results[0]) if results else None
-            await ctx.send(embed=await self.make_obs_embed(obs, url))
-            if obs and obs.sounds:
-                await self.maybe_send_sound(ctx.channel, obs.sounds)
+            embed = await self.make_obs_embed(obs, url)
+            await self.send_obs_embed(ctx, embed, obs)
             return
 
         mat = re.search(PAT_TAXON_LINK, query)

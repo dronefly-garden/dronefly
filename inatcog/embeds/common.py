@@ -2,8 +2,12 @@
 import asyncio
 import contextlib
 from functools import wraps
+from typing import Iterable, Union
 
 import discord
+from redbot.core.commands import Context
+from redbot.core.utils.predicates import ReactionPredicate
+from redbot.core.utils.menus import start_adding_reactions
 
 from inatcog.common import make_decorator
 
@@ -56,3 +60,29 @@ def make_embed(**kwargs):
 def sorry(apology="I don't understand", title="Sorry"):
     """Notify user their request could not be satisfied."""
     return make_embed(title=title, description=apology)
+
+
+async def add_reactions_with_cancel(
+    ctx: Context,
+    msg: discord.Message,
+    emojis: Iterable[Union[str, discord.Emoji]],
+    timeout: int = 10,
+):
+    """Add reactions with, for a limited time, author-only cancel."""
+    _emojis = [emojis] if isinstance(emojis, str) else list(emojis)
+    cancel = "\N{CROSS MARK}"
+    _emojis.append(cancel)
+    start_adding_reactions(msg, _emojis)
+    pred = ReactionPredicate.with_emojis([cancel], msg, user=ctx.author)
+
+    try:
+        await ctx.bot.wait_for("reaction_add", check=pred, timeout=timeout)
+        if pred.result == 0:
+            with contextlib.suppress(discord.HTTPException):
+                await msg.delete()
+                return True
+    except asyncio.TimeoutError:
+        pass
+    with contextlib.suppress(discord.HTTPException):
+        await msg.clear_reaction(cancel)
+    return False

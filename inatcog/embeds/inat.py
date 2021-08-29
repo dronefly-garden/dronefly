@@ -13,7 +13,6 @@ import discord
 from discord import DMChannel, File
 import html2markdown
 from redbot.core.commands import BadArgument
-from redbot.core.utils.menus import start_adding_reactions
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
@@ -53,6 +52,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..embeds.common import (
+    add_reactions_with_cancel,
     format_items_for_embed,
     make_embed,
     MAX_EMBED_DESCRIPTION_LEN,
@@ -450,11 +450,13 @@ class INatEmbeds(MixinMeta):
                 sound_io = BytesIO(sound_bytes)
 
             if sound_io:
-                await channel.send(embed=embed, file=File(sound_io, filename=filename))
+                msg = await channel.send(
+                    embed=embed, file=File(sound_io, filename=filename)
+                )
                 sound_io.close()
-                return
+                return msg
 
-        await channel.send(embed=embed)
+        return await channel.send(embed=embed)
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
@@ -1125,17 +1127,17 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    def add_obs_reaction_emojis(self, msg, query_response: QueryResponse):
+    async def add_obs_reaction_emojis(self, ctx, msg, query_response: QueryResponse):
         """Add obs embed reaction emojis."""
-        start_adding_reactions(
-            msg,
+        reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS,
+            else OBS_REACTION_EMOJIS
         )
+        await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
-    def add_taxon_reaction_emojis(
-        self, msg, query_response: Union[QueryResponse, Taxon], taxonomy=True
+    async def add_taxon_reaction_emojis(
+        self, ctx, msg, query_response: Union[QueryResponse, Taxon], taxonomy=True
     ):
         """Add taxon embed reaction emojis."""
         if isinstance(query_response, QueryResponse):
@@ -1156,7 +1158,7 @@ class INatEmbeds(MixinMeta):
                 if add_place_emojis
                 else NO_PARENT_TAXON_REACTION_EMOJIS
             )
-        start_adding_reactions(msg, reaction_emojis)
+        await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
     async def send_embed_for_taxon_image(
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1
@@ -1169,7 +1171,7 @@ class INatEmbeds(MixinMeta):
         #   display with taxonomy instead, if they need it.
         # - Note: a tester may still manually add the :regional_indicator_t:
         #   reaction to test the feature in its current, broken state.
-        self.add_taxon_reaction_emojis(msg, query_response, taxonomy=False)
+        await self.add_taxon_reaction_emojis(ctx, msg, query_response, taxonomy=False)
 
     async def send_embed_for_taxon(self, ctx, query_response, include_ancestors=True):
         """Make embed for taxon & send."""
@@ -1178,7 +1180,19 @@ class INatEmbeds(MixinMeta):
                 ctx, query_response, include_ancestors=include_ancestors
             )
         )
-        self.add_taxon_reaction_emojis(msg, query_response)
+        await self.add_taxon_reaction_emojis(ctx, msg, query_response)
+
+    async def send_obs_embed(self, ctx, embed, obs):
+        """Send observation embed and sound."""
+        msg = await ctx.channel.send(embed=embed)
+        if obs and obs.sounds:
+            sound_msg = await self.maybe_send_sound(ctx.channel, obs.sounds)
+        else:
+            sound_msg = None
+        cancelled = await add_reactions_with_cancel(ctx, msg, [])
+        if cancelled and sound_msg:
+            with contextlib.suppress(discord.HTTPException):
+                await sound_msg.delete()
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
