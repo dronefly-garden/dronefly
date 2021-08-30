@@ -1,5 +1,4 @@
 """Module to handle iNat embed concerns."""
-
 import asyncio
 import contextlib
 import copy
@@ -9,6 +8,7 @@ import re
 import textwrap
 from typing import Optional, Union
 from urllib.parse import parse_qs, urlencode, urlsplit
+
 import discord
 from discord import DMChannel, File
 import html2markdown
@@ -16,11 +16,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
-    MARKDOWN_LINK,
     MEANS_LABEL_DESC,
-    PAT_OBS_LINK,
-    PAT_OBS_QUERY,
-    PAT_OBS_TAXON_LINK,
     Place,
     QueryResponse,
     Taxon,
@@ -28,12 +24,25 @@ from ..base_classes import (
     WWW_BASE_URL,
 )
 from ..common import LOG
-from ..core.parsers.url import PAT_TAXON_LINK
+from ..core.parsers.url import (
+    MARKDOWN_LINK,
+    PAT_OBS_LINK,
+    PAT_OBS_QUERY,
+    PAT_OBS_TAXON_LINK,
+    PAT_TAXON_LINK,
+)
 from ..core.query.query import EMPTY_QUERY, Query, TaxonQuery
+from ..embeds.common import (
+    add_reactions_with_cancel,
+    format_items_for_embed,
+    make_embed,
+    MAX_EMBED_DESCRIPTION_LEN,
+    MAX_EMBED_FILE_LEN,
+    NoRoomInDisplay,
+)
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
 from ..projects import UserProject, ObserverStats
-from ..users import User
 from ..taxa import (
     format_place_taxon_counts,
     format_taxon_names,
@@ -51,14 +60,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
-from ..embeds.common import (
-    add_reactions_with_cancel,
-    format_items_for_embed,
-    make_embed,
-    MAX_EMBED_DESCRIPTION_LEN,
-    MAX_EMBED_FILE_LEN,
-    NoRoomInDisplay,
-)
+from ..users import User
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)

@@ -1,41 +1,19 @@
 """Module for base classes and constants."""
+from dataclasses import dataclass, field
 import datetime as dt
 import re
 from typing import List, NamedTuple, Optional, Union
-from dataclasses import dataclass, field
 
 from dataclasses_json import config, DataClassJsonMixin
 
 from .controlled_terms import ControlledTermSelector
 from .core import models
 from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
-from .core.parsers.url import WWW_URL_PAT
 from .photos import Photo
 from .sounds import Sound
 
 API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
-STATIC_URL_PAT = (
-    r"https?://(static\.inaturalist\.org|inaturalist-open-data\.s3\.amazonaws\.com)"
-)
-
-# Match observation URL or command.
-PAT_OBS_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))\b", re.I
-)
-# Match observation URL from `obs` embed generated for observations matching a
-# specific taxon_id and filtered by optional place_id and/or user_id.
-PAT_OBS_TAXON_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/observations"
-    r"\?taxon_id=(?P<taxon_id>\d+)(&place_id=(?P<place_id>\d+))?(&user_id=(?P<user_id>\d+))?)\b",
-    re.I,
-)
-
-QUERY_PAT = r"\??(?:&?[^=&]*=[^=&]*)*"
-PAT_OBS_QUERY = re.compile(
-    r"(?P<url>" + WWW_URL_PAT + r"/observations" + QUERY_PAT + ")"
-)
-MARKDOWN_LINK = re.compile(r"\[.*?\]\((?P<url>.*?)\)")
 
 
 @dataclass

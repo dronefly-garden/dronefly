@@ -1,17 +1,8 @@
 """Module to handle users."""
-import re
 from typing import Union
+
 from .base_classes import Place
 from .converters.base import QuotedContextMemberConverter
-from .core.parsers.url import WWW_URL_PAT
-
-# Match place link from any partner site.
-PAT_PLACE_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/places"
-    r"/((?P<place_id>\d+)|(?P<place_slug>[a-z][-_a-z0-9]{2,39}))"
-    r")\b",
-    re.I,
-)
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 

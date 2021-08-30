@@ -1,17 +1,9 @@
 """Module to handle users."""
-import re
 from typing import AsyncIterator, Tuple
-import discord
-from .base_classes import User
-from .core.parsers.url import WWW_URL_PAT
 
-# Match user profile link from any partner site.
-PAT_USER_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/(people|users)"
-    r"/((?P<user_id>\d+)|(?P<login>[a-z][-_a-z0-9]{2,39}))"
-    r")\b",
-    re.I,
-)
+import discord
+
+from .base_classes import User
 
 
 class INatUserTable:

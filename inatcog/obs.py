@@ -1,10 +1,10 @@
 """Module to work with iNat observations."""
-
 import datetime as dt
 from operator import itemgetter
 import re
 
-from .base_classes import WWW_BASE_URL, Obs, PAT_OBS_LINK, User
+from .base_classes import WWW_BASE_URL, Obs, User
+from .core.parsers.url import PAT_OBS_LINK
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields

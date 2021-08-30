@@ -11,11 +11,11 @@ from .base_classes import (
     Taxon,
     User,
     Place,
-    STATIC_URL_PAT,
     WWW_BASE_URL,
 )
 from .common import LOG
 from .core.models.taxon import RANK_LEVELS
+from .core.parsers.url import STATIC_URL_PAT
 from .core.query.query import TaxonQuery
 
 

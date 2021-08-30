@@ -1,13 +1,13 @@
 """Module for handling recent history."""
-from typing import NamedTuple
 from datetime import datetime
 import re
-from discord import User
+from typing import NamedTuple
 
+from discord import User
 import timeago
 
-from .base_classes import WWW_BASE_URL, PAT_OBS_LINK
-from .core.parsers.url import PAT_TAXON_LINK
+from .base_classes import WWW_BASE_URL
+from .core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from .obs import get_obs_fields
 from .taxa import get_taxon
 

@@ -1,5 +1,4 @@
 """Module for user command group."""
-
 from datetime import datetime
 import re
 
@@ -8,19 +7,19 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import User
-from inatcog.checks import known_inat_user
-from inatcog.common import DEQUOTE, grouper
-from inatcog.converters.base import (
+from ..base_classes import User
+from ..checks import known_inat_user
+from ..common import DEQUOTE, grouper
+from ..converters.base import (
     MemberConverter,
     QuotedContextMemberConverter,
     NaturalQueryConverter,
 )
-from inatcog.embeds.common import apologize, make_embed
-from inatcog.embeds.inat import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.projects import UserProject
-from inatcog.users import PAT_USER_LINK
+from ..core.parsers.url import PAT_USER_LINK
+from ..embeds.common import apologize, make_embed
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..projects import UserProject
 
 
 class CommandsUser(INatEmbeds, MixinMeta):

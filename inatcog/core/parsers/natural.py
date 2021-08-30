@@ -4,8 +4,8 @@ import shlex
 
 from redbot.core.commands import BadArgument
 
-from ...base_classes import PAT_OBS_LINK
 from ...core.parsers.constants import ARGPARSE_ARGS, MACROS, REMAINING_ARGS
+from ...core.parsers.url import PAT_OBS_LINK
 from .unixlike import UnixlikeParser
 
 
