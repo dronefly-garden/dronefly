@@ -2,6 +2,7 @@
 from time import time
 from types import SimpleNamespace
 from typing import Union
+
 from aiohttp import (
     ClientConnectorError,
     ClientSession,
@@ -14,9 +15,10 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from .common import LOG
-from .base_classes import API_BASE_URL
 
+from .common import LOG
+
+API_BASE_URL = "https://api.inaturalist.org"
 RETRY_EXCEPTIONS = [
     ServerDisconnectedError,
     ConnectionResetError,

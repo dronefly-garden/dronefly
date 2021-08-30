@@ -12,7 +12,6 @@ from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
 from .photos import Photo
 from .sounds import Sound
 
-API_BASE_URL = "https://api.inaturalist.org"
 WWW_BASE_URL = "https://www.inaturalist.org"
 
 
