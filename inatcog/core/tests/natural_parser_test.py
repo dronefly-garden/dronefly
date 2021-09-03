@@ -98,3 +98,7 @@ class TestUnixlikeParser:
     def test_url(self, parser):
         parsed = parser.parse("https://www.inaturalist.org/taxa/1-Animalia")
         assert parsed.main.taxon_id == "1"
+
+    def test_change_only_arg_keyword_case(self, parser):
+        parsed = parser.parse("BY SyntheticBee")
+        assert str(parsed) == "by SyntheticBee"
