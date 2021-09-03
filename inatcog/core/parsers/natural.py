@@ -46,9 +46,11 @@ class NaturalParser(UnixlikeParser):
             tok = _token.lower()
             argument_expected = False
 
+            is_unix_arg = False
             if tok in expected_args:
                 tok = f"--{tok}"
             if re.match(r"--", tok):
+                is_unix_arg = True
                 arg_count += 1
                 # Every option token expects at least one argument.
                 argument_expected = True
@@ -100,8 +102,8 @@ class NaturalParser(UnixlikeParser):
                 expanded_tokens.append("--of")
                 macro_of = ""
                 expected_args = REMAINING_ARGS
-            # Append the ordinary word token:
-            expanded_tokens.append(tok)
+            # Append the unix option token (downcased) or ordinary word
+            expanded_tokens.append(tok if is_unix_arg else _token)
             # Macros allowed again after first non-ARGS token is consumed:
             if not argument_expected:
                 suppress_macro = False
