@@ -4,11 +4,11 @@ import re
 from typing import NamedTuple
 
 import discord
+from discord.ext.commands import MemberConverter as DiscordMemberConverter
 from redbot.core.commands import (
     BadArgument,
     Context,
     Converter,
-    MemberConverter as RedMemberConverter,
 )
 
 from ..common import DEQUOTE
@@ -33,7 +33,7 @@ class MemberConverter(NamedTuple):
 
         # Prefer exact match:
         try:
-            match = await RedMemberConverter().convert(ctx, arg)
+            match = await DiscordMemberConverter().convert(ctx, arg)
             return cls(match)
         except BadArgument:
             match = None
