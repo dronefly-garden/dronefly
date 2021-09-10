@@ -247,7 +247,11 @@ def match_pat(record, pat, scientific_name=False, locale=None):
         A tuple of search results for the pat for each name in the record.
     """
     if scientific_name:
-        return NameMatch(None, re.search(pat, record.name), None,)
+        return NameMatch(
+            None,
+            re.search(pat, record.name),
+            None,
+        )
     if locale:
         names = [
             name["name"]
@@ -264,7 +268,11 @@ def match_pat(record, pat, scientific_name=False, locale=None):
             mat = re.search(pat, name)
             if mat:
                 LOG.info("match=%s", pat)
-                return NameMatch(mat, None, mat,)
+                return NameMatch(
+                    mat,
+                    None,
+                    mat,
+                )
         return NO_NAME_MATCH
     return NameMatch(
         re.search(pat, record.matched_term),
@@ -418,7 +426,10 @@ def match_taxon(taxon_query: TaxonQuery, records, scientific_name=False, locale=
 
 
 async def format_place_taxon_counts(
-    cog, place: Union[Place, str], taxon: Taxon = None, **kwargs,
+    cog,
+    place: Union[Place, str],
+    taxon: Taxon = None,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
@@ -453,7 +464,10 @@ async def format_place_taxon_counts(
 
 
 async def format_user_taxon_counts(
-    cog, user: Union[User, str], taxon: Taxon = None, **kwargs,
+    cog,
+    user: Union[User, str],
+    taxon: Taxon = None,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):

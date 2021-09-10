@@ -841,7 +841,10 @@ class INatEmbeds(MixinMeta):
                     photos = (entry.get("photo") for entry in taxon_photos_raw)
                     (image, attribution) = next(
                         (
-                            (photo.get("original_url"), photo.get("attribution", ""),)
+                            (
+                                photo.get("original_url"),
+                                photo.get("attribution", ""),
+                            )
                             for i, photo in enumerate(photos, 1)
                             if i == index
                         ),
@@ -1368,7 +1371,10 @@ class INatEmbeds(MixinMeta):
         except LookupError:
             return
         response = await self.query_locked(
-            msg, user, "Add or remove which place (you have 15 seconds to answer)?", 15,
+            msg,
+            user,
+            "Add or remove which place (you have 15 seconds to answer)?",
+            15,
         )
         if response:
             try:
@@ -1403,7 +1409,10 @@ class INatEmbeds(MixinMeta):
                 formatted_names = format_taxon_names(ancestors, hierarchy=True)
                 hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
                 new_description = re.sub(
-                    NO_TAXONOMY_PAT, " in:\n" + hierarchy + r"\1", description, 1,
+                    NO_TAXONOMY_PAT,
+                    " in:\n" + hierarchy + r"\1",
+                    description,
+                    1,
                 )
             else:
                 return
@@ -1411,7 +1420,13 @@ class INatEmbeds(MixinMeta):
         await message.edit(embed=inat_embed)
 
     async def update_totals(
-        self, description, taxon, inat_user, action, inat_embed, counts_pat,
+        self,
+        description,
+        taxon,
+        inat_user,
+        action,
+        inat_embed,
+        counts_pat,
     ):
         """Update the totals for the embed."""
         unobserved = inat_embed.has_not_by_users()
@@ -1455,27 +1470,39 @@ class INatEmbeds(MixinMeta):
             else:
                 count_params["user_id"] = user_id
             formatted_counts = await format_user_taxon_counts(
-                self, inat_user, taxon, **count_params,
+                self,
+                inat_user,
+                taxon,
+                **count_params,
             )
             description += "\n" + formatted_counts
 
         if not (unobserved or ident):
             matches = re.findall(
-                r"\n\[[0-9 \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+)*?\)", description,
+                r"\n\[[0-9 \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+)*?\)",
+                description,
             )
             # Total added only if more than one user:
             if len(matches) > 1:
                 user_ids = ",".join(matches)
                 count_params["user_id"] = user_ids
                 formatted_counts = await format_user_taxon_counts(
-                    self, user_ids, taxon, **count_params,
+                    self,
+                    user_ids,
+                    taxon,
+                    **count_params,
                 )
                 description += f"\n{formatted_counts}"
                 return description
         return description
 
     async def edit_totals_locked(
-        self, msg, taxon, inat_user, action, counts_pat,
+        self,
+        msg,
+        taxon,
+        inat_user,
+        action,
+        counts_pat,
     ):
         """Update totals for message locked."""
         if msg.id not in self.reaction_locks:
@@ -1496,7 +1523,12 @@ class INatEmbeds(MixinMeta):
 
             if (mat and (action == "remove")) or (not mat and (action == "add")):
                 description = await self.update_totals(
-                    description, taxon, inat_user, action, inat_embed, counts_pat,
+                    description,
+                    taxon,
+                    inat_user,
+                    action,
+                    inat_embed,
+                    counts_pat,
                 )
                 if len(description) > MAX_EMBED_DESCRIPTION_LEN:
                     raise NoRoomInDisplay(
@@ -1537,18 +1569,25 @@ class INatEmbeds(MixinMeta):
             if not matches:
                 description += "\n" + TAXON_PLACES_HEADER
             formatted_counts = await format_place_taxon_counts(
-                self, place, taxon, **count_params,
+                self,
+                place,
+                taxon,
+                **count_params,
             )
             description += "\n" + formatted_counts
 
         matches = re.findall(
-            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)", description,
+            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)",
+            description,
         )
         # Total added only if more than one place:
         if len(matches) > 1:
             place_ids = ",".join(matches)
             formatted_counts = await format_place_taxon_counts(
-                self, place_ids, taxon, **count_params,
+                self,
+                place_ids,
+                taxon,
+                **count_params,
             )
             description += f"\n{formatted_counts}"
             return description

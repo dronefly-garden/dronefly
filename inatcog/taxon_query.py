@@ -107,7 +107,11 @@ class INatTaxonQuery:
         return taxon
 
     async def maybe_match_taxon_compound(
-        self, query: Query, preferred_place_id=None, scientific_name=False, locale=None,
+        self,
+        query: Query,
+        preferred_place_id=None,
+        scientific_name=False,
+        locale=None,
     ):
         """Get one or more taxa and return a match, if any.
 

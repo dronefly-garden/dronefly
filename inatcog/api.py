@@ -44,7 +44,8 @@ class INatAPI:
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
         self.session = RetryClient(
-            raise_for_status=False, trace_configs=[trace_config],
+            raise_for_status=False,
+            trace_configs=[trace_config],
         )
         self.request_time = time()
         self.places_cache = {}
@@ -68,7 +69,10 @@ class INatAPI:
         LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
             # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, and finally give up
-            retry_options = ExponentialRetry(attempts=4, exceptions=RETRY_EXCEPTIONS,)
+            retry_options = ExponentialRetry(
+                attempts=4,
+                exceptions=RETRY_EXCEPTIONS,
+            )
             try:
                 async with self.session.get(
                     full_url, params=kwargs, retry_options=retry_options
