@@ -41,4 +41,4 @@ jobs:
 
     - name: Test with pytest
       run: |
-        poetry run pytest -n auto
+        poetry run pytest
