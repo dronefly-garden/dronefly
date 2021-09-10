@@ -19,5 +19,5 @@ repos:
   rev: v1.0.5
   hooks:
   - id: python-bandit-vulnerability-check
-    args: [-l, --recursive, -x, tests]
+    args: [-l, --recursive, -x, tests, .]
     files: .py$
