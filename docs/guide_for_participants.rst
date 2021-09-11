@@ -276,7 +276,7 @@ Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
 
-`Dronefly <https://github.com/synrg/dronefly/>`__ (``,``) - Accesses
+`Dronefly <https://github.com/dronefly-garden/dronefly/>`__ (``,``) - Accesses
 iNaturalist and other naturalist-related web platforms.
 
 Dumbo (``-``) - For general purpose admin & info functions, not strictly

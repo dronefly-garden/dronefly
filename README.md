@@ -216,7 +216,7 @@ If you have not already, load the Red V3 downloader cog:
 Then add the Dronefly repo and install the desired cog(s) as per:
 
 ```
-[p]repo add Dronefly https://github.com/synrg/dronefly
+[p]repo add Dronefly https://github.com/dronefly-garden/dronefly
 [p]cog install Dronefly [cog-name]
 ```
 
@@ -290,4 +290,4 @@ An example command to verify the alias works:
 
 ## TODO
 
-Check the [Issues](https://github.com/synrg/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
+Check the [Issues](https://github.com/dronefly-garden/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
