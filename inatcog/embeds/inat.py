@@ -101,8 +101,9 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 class INatEmbed(discord.Embed):
     """Base class for INat embeds."""
 
-    taxon_url: None
-    obs_url: None
+    taxon_url: str = None
+    obs_url: str = None
+    taxonomy: str = None
     params: dict = {}
 
     @classmethod
@@ -114,6 +115,8 @@ class INatEmbed(discord.Embed):
     def from_dict(cls, data: dict):
         """Create an iNat embed from a dict."""
         inat_embed = super(cls, INatEmbed).from_dict(data)
+        # pylint: disable=no-member, assigning-non-slot
+        # - See https://github.com/PyCQA/pylint/issues/981
         inat_embed.obs_url = inat_embed.get_observations_url()
         inat_embed.taxon_url, taxon_id = inat_embed.get_taxon_url()
         inat_embed.taxonomy = inat_embed.get_taxonomy()
