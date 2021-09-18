@@ -89,7 +89,12 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 query = await NaturalQueryConverter.convert(ctx, mat["taxon_id"])
-                await (self.bot.get_command("taxon")(ctx, query=query))
+                try:
+                    query_response = await self.query.get(ctx, query)
+                except LookupError as err:
+                    await apologize(ctx, str(err))
+                    return
+                await self.send_embed_for_taxon(ctx, query_response, with_keep=True)
                 return
             mat = re.search(PAT_USER_LINK, result)
             if mat:

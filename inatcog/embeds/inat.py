@@ -1142,7 +1142,12 @@ class INatEmbeds(MixinMeta):
         await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
     async def add_taxon_reaction_emojis(
-        self, ctx, msg, query_response: Union[QueryResponse, Taxon], taxonomy=True
+        self,
+        ctx,
+        msg,
+        query_response: Union[QueryResponse, Taxon],
+        taxonomy=True,
+        with_keep=False,
     ):
         """Add taxon embed reaction emojis."""
         if isinstance(query_response, QueryResponse):
@@ -1163,10 +1168,10 @@ class INatEmbeds(MixinMeta):
                 if add_place_emojis
                 else NO_PARENT_TAXON_REACTION_EMOJIS
             )
-        await add_reactions_with_cancel(ctx, msg, reaction_emojis)
+        await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
 
     async def send_embed_for_taxon_image(
-        self, ctx, query_response: Union[QueryResponse, Taxon], index=1
+        self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
     ):
         """Make embed for taxon image & send."""
         msg = await ctx.send(embed=await self.make_image_embed(query_response, index))
@@ -1176,16 +1181,22 @@ class INatEmbeds(MixinMeta):
         #   display with taxonomy instead, if they need it.
         # - Note: a tester may still manually add the :regional_indicator_t:
         #   reaction to test the feature in its current, broken state.
-        await self.add_taxon_reaction_emojis(ctx, msg, query_response, taxonomy=False)
+        await self.add_taxon_reaction_emojis(
+            ctx, msg, query_response, taxonomy=False, with_keep=with_keep
+        )
 
-    async def send_embed_for_taxon(self, ctx, query_response, include_ancestors=True):
+    async def send_embed_for_taxon(
+        self, ctx, query_response, include_ancestors=True, with_keep=False
+    ):
         """Make embed for taxon & send."""
         msg = await ctx.send(
             embed=await self.make_taxa_embed(
                 ctx, query_response, include_ancestors=include_ancestors
             )
         )
-        await self.add_taxon_reaction_emojis(ctx, msg, query_response)
+        await self.add_taxon_reaction_emojis(
+            ctx, msg, query_response, with_keep=with_keep
+        )
 
     async def send_obs_embed(self, ctx, embed, obs):
         """Send observation embed and sound."""

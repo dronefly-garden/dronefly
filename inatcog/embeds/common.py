@@ -67,13 +67,20 @@ async def add_reactions_with_cancel(
     msg: discord.Message,
     emojis: Iterable[Union[str, discord.Emoji]],
     timeout: int = 30,
+    with_keep: bool = False,
 ):
     """Add reactions with, for a limited time, author-only cancel."""
     _emojis = [emojis] if isinstance(emojis, str) else list(emojis)
+    extra_emojis = []
     cancel = "\N{CROSS MARK}"
     _emojis.append(cancel)
+    extra_emojis.append(cancel)
+    if with_keep:
+        keep = "\N{WHITE HEAVY CHECK MARK}"
+        _emojis.append(keep)
+        extra_emojis.append(keep)
     start_adding_reactions(msg, _emojis)
-    pred = ReactionPredicate.with_emojis([cancel], msg, user=ctx.author)
+    pred = ReactionPredicate.with_emojis(extra_emojis, msg, user=ctx.author)
 
     try:
         await ctx.bot.wait_for("reaction_add", check=pred, timeout=timeout)
@@ -84,5 +91,6 @@ async def add_reactions_with_cancel(
     except asyncio.TimeoutError:
         pass
     with contextlib.suppress(discord.HTTPException):
-        await msg.clear_reaction(cancel)
+        for emoji in extra_emojis:
+            await msg.clear_reaction(emoji)
     return False
