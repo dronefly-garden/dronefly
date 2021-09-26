@@ -343,7 +343,9 @@ def format_taxon_title(rec):
 def _add_place_emojis(query_response: QueryResponse):
     if not query_response:
         return False
-    return query_response.place and not query_response.user
+    return query_response.place and not (
+        query_response.user or query_response.id_by or query_response.unobserved_by
+    )
 
 
 EMOJI = {
