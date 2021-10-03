@@ -105,5 +105,8 @@ class NaturalQueryConverter(Query):
     async def convert(cls, ctx: Context, argument: str):
         """Parse argument into compound taxon query."""
 
-        parser = NaturalParser(return_class=cls)
-        return parser.parse(argument)
+        try:
+            parser = NaturalParser(return_class=cls)
+            return parser.parse(argument)
+        except ValueError as err:
+            raise BadArgument(str(err)) from err

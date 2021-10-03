@@ -19,7 +19,7 @@ class NoExitParser(argparse.ArgumentParser):
     """
 
     def error(self, message):
-        raise RuntimeError("Argument not understood") from None
+        raise ValueError("Argument not understood") from None
 
 
 # TODO: consider using a subparser for of and in to make --in invalid

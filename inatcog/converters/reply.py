@@ -4,6 +4,9 @@ from redbot.core.commands import BadArgument, Context
 from inatcog.embeds.inat import INatEmbed
 from .base import NaturalQueryConverter
 
+# pylint: disable=no-member, assigning-non-slot
+# - See https://github.com/PyCQA/pylint/issues/981
+
 
 class EmptyArgument(BadArgument):
     """Argument to a command is empty."""
