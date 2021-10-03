@@ -8,13 +8,21 @@ from .base_classes import Project
 
 
 @dataclass
+class CollectionProjectRule(DataClassJsonMixin):
+    """A collection project rule."""
+
+    operand_id: int
+    operator: str
+
+
+@dataclass
 class UserProject(DataClassJsonMixin):
     """A collection project for observations by specific users."""
 
     project_id: int = field(metadata=config(field_name="id"))
     title: str
-    user_ids: List
-    project_observation_rules: List
+    user_ids: List[int]
+    project_observation_rules: List[CollectionProjectRule]
     project_type: str
 
     def __post_init__(self):
@@ -24,9 +32,9 @@ class UserProject(DataClassJsonMixin):
     def observed_by_ids(self):
         """The 'must be observed by' rule user ids."""
         return [
-            rule["operand_id"]
+            rule.operand_id
             for rule in self.project_observation_rules
-            if rule["operator"] == "observed_by_user?"
+            if rule.operator == "observed_by_user?"
         ]
 
 
