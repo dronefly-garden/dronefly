@@ -1094,7 +1094,7 @@ class INatEmbeds(MixinMeta):
                 f"{WWW_BASE_URL}/observations?project_id={project_id}"
                 f"&user_id={user.user_id}"
             )
-            obs_url = f"{url}&view=observations"
+            obs_url = f"{url}&view=observations&verifiable=any"
             spp_url = f"{url}&view=species&verifiable=any&hrank=species"
             taxa_url = f"{url}&view=species&verifiable=any"
             fmt = (
@@ -1126,7 +1126,7 @@ class INatEmbeds(MixinMeta):
             f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
             f"&user_id={user.user_id}"
         )
-        obs_url = f"{url}&view=observations"
+        obs_url = f"{url}&view=observations&verifiable=any"
         spp_url = f"{url}&view=species&verifiable=any&hrank=species"
         taxa_url = f"{url}&view=species&verifiable=any"
         fmt = (
