@@ -5,6 +5,7 @@ import re
 from typing import List, NamedTuple, Optional, Union
 
 from dataclasses_json import config, DataClassJsonMixin
+from discord.utils import escape_markdown
 
 from .controlled_terms import ControlledTermSelector
 from .core import models
@@ -329,7 +330,9 @@ class User(DataClassJsonMixin):
 
     def display_name(self):
         """Name to include in displays."""
-        return f"{self.name} ({self.login})" if self.name else self.login
+        if self.name:
+            return f"{escape_markdown(self.name)} ({escape_markdown(self.login)})"
+        return escape_markdown(self.login)
 
     def profile_url(self):
         """User profile url."""
