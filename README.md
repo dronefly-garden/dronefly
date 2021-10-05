@@ -13,7 +13,7 @@ are welcome to join our community using this invite link:
 https://discord.gg/uskv2yx
 
 Join the Dronefly support Discord server with this invite
-https://discord.gg/jWUq7Dg if:
+https://discord.gg/pUbZFDbDdD if:
 
 - you own a Discord server and want Dronefly on it
 - you already use Dronefly and need support
