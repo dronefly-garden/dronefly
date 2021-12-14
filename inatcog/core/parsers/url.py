@@ -9,7 +9,7 @@ WWW_URL_PAT = (
     r"|inaturalist\.ala\.org\.au"
     r"|(www\.)?("
     r"inaturalist\.(ca|lu|nz|se)"
-    r"|naturalista\.mx"
+    r"|naturalista\.(mx|uy)"
     r"|biodiversity4all\.org"
     r"|argentinat\.org"
     r"|inaturalist\.laji\.fi"
