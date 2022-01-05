@@ -141,13 +141,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     async def _tabulate_query(self, ctx, query, view="obs"):
-        def format_pages(user_links, users_count, obs_opt, view):
+        def format_pages(user_links, users_count, entity_counted, view):
             pages = []
             pages_len = int((len(user_links) - 1) / 10) + 1
             for page, links in enumerate(grouper(user_links, 10), start=1):
                 header = "**{} top {}{}{}**".format(
                     "First 500" if users_count > 500 else users_count,
-                    obs_opt["view"],
+                    entity_counted,
                     " by species" if view == "spp" else "",
                     f" (page {page} of {pages_len})" if pages_len > 1 else "",
                 )
@@ -161,6 +161,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
             obs_opt_view = "identifiers" if view == "ids" else "observers"
             obs_opt = query_response.obs_args()
             users = await self.api.get_observations(obs_opt_view, **obs_opt)
+            # We count identifications when we tabulate identifiers, but link
+            # to the observations tab on the web to show the observations
+            # they identified, as there's no tidy way to link directly
+            # to the identifications instead.
+            if view == "ids":
+                obs_opt_view = "observations"
             users_count = users.get("total_results")
             if not users_count:
                 raise LookupError(
@@ -175,10 +181,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         taxon = query_response.taxon
         species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
         user_links = get_formatted_user_counts(users, url, species_only, view)
-        full_title = "{} {}".format(
-            obs_opt_view.capitalize(), query_response.obs_query_description()
-        )
-        pages = format_pages(user_links, users_count, obs_opt, view)
+        query_description = query_response.obs_query_description()
+        if view == "ids":
+            entity_counted = "identifiers"
+        else:
+            entity_counted = obs_opt_view
+        full_title = f"{entity_counted.capitalize()} {query_description}"
+        pages = format_pages(user_links, users_count, entity_counted, view)
 
         embeds = [
             make_embed(title=full_title, url=url, description=page) for page in pages

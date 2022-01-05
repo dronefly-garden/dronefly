@@ -175,7 +175,7 @@ def get_formatted_user_counts(
         user_id = identifier["user"]["id"]
         observation_count = identifier["count"]
         login = identifier["user"]["login"]
-        identifier_url = base_url + f"&ident_user_id={user_id}"
+        identifier_url = base_url + f"&ident_user_id={user_id}&not_user_id={user_id}"
         identifier_link = f"[{observation_count}]({identifier_url}) {login}"
         return identifier_link
 
