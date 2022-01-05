@@ -141,19 +141,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     async def _tabulate_query(self, ctx, query, view="obs"):
-        def get_view_url(obs_opt, view):
-            if view == "ids":
-                ids_opt = obs_opt.copy()
-                del ids_opt["view"]
-                # TODO: there are a bunch more observations parameters that could be deleted:
-                # - they'll just be ignored on this page.
-                url = (
-                    f"{WWW_BASE_URL}/identifications?{urllib.parse.urlencode(ids_opt)}"
-                )
-            else:
-                url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
-            return url
-
         def format_pages(user_links, users_count, obs_opt, view):
             pages = []
             pages_len = int((len(user_links) - 1) / 10) + 1
@@ -184,7 +171,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         obs_opt["view"] = obs_opt_view
-        url = get_view_url(obs_opt, view)
+        url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
         taxon = query_response.taxon
         species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
         user_links = get_formatted_user_counts(users, url, species_only, view)
