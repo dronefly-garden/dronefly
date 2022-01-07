@@ -28,7 +28,7 @@ from .search import INatSiteSearch
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
 _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
 _INAT_GUILD_ID = 525711945270296587
 SPOILER_PAT = re.compile(r"\|\|")
@@ -88,18 +88,19 @@ class INatCog(
             partial(AntiSpam, self.spam_intervals)
         )
 
-        self.config.register_global(home=97394, schema_version=1)  # North America
+        self.config.register_global(home=97394, schema_version=3)  # North America
         self.config.register_guild(
             autoobs=False,
             dot_taxon=False,
             active_role=None,
             bot_prefixes=[],
             inactive_role=None,
-            user_projects={},
+            user_projects={},  # deprecated (schema <=2); superseded by event_projects
+            event_projects={},
             places={},
             home=97394,  # North America
             projects={},
-            project_emojis={},
+            project_emojis={},  # deprecated
         )
         self.config.register_channel(autoobs=None, dot_taxon=None)
         self.config.register_user(
@@ -136,6 +137,28 @@ class INatCog(
                             [_INAT_GUILD_ID]
                         )
             await self.config.schema_version.set(2)
+
+        if from_version < 3 <= to_version:
+            # User projects have been renamed to event projects, have changed
+            # from a single string value to dict, are keyed by abbrev instead of
+            # project id, and have optional creds and role attributes.
+            # - see Issue #161
+            all_guilds = await self.config.all_guilds()
+            for (guild_id, guild_value) in all_guilds.items():
+                user_projects = guild_value["user_projects"]
+                if user_projects:
+                    await self.config.guild_from_id(int(guild_id)).user_projects.clear()
+                    await self.config.guild_from_id(int(guild_id)).event_projects.set(
+                        {
+                            user_projects[project_id]: {
+                                "project_id": project_id,
+                                "creds": None,
+                                "role": None,
+                            }
+                            for project_id in user_projects
+                        }
+                    )
+            await self.config.schema_version.set(3)
 
     def cog_unload(self):
         """Cleanup when the cog unloads."""

@@ -1,6 +1,5 @@
 """Module for inat command group."""
 
-import asyncio
 import json
 import pprint
 from typing import Optional, Union
@@ -9,7 +8,6 @@ import discord
 from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
 
-from inatcog.base_classes import WWW_BASE_URL
 from inatcog.converters.base import InheritableBoolConverter
 from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
@@ -502,6 +500,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         embeds = []
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
         embeds.append(inat_embed)
+        # pylint: disable=no-member
         inat_inspect = (
             f"```py\n{pprint.pformat(inat_embed.inat_content_as_dict())}\n```"
         )
@@ -609,46 +608,56 @@ class CommandsInat(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
 
-    @inat_set.command(name="user_project")
+    @inat_set.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
-    async def set_user_project(
-        self, ctx, project_id: int, emoji: Union[str, discord.Emoji]
+    async def set_event(
+        self,
+        ctx,
+        project_abbrev: str,
+        project_id: str,
+        creds: Optional[str],
+        role: Optional[discord.Role],
     ):
-        """Add a server user project (mods)."""
+        """Add a server event project (mods)."""
         config = self.config.guild(ctx.guild)
-        user_projects = await config.user_projects()
-        project_id_str = str(project_id)
-        if project_id_str in user_projects:
-            await ctx.send("iNat user project already known.")
-            return
+        event_projects = await config.event_projects()
+        _event_project = event_projects.get(project_abbrev)
+        event_project = _event_project or {}
 
-        user_projects[project_id_str] = str(emoji)
-        await config.user_projects.set(user_projects)
-        await ctx.send("iNat user project added.")
-
-    @inat_clear.command(name="user_project")
-    @checks.admin_or_permissions(manage_roles=True)
-    async def clear_user_project(self, ctx, project_id: int):
-        """Clear a server user project (mods)."""
-        config = self.config.guild(ctx.guild)
-        user_projects = await config.user_projects()
-        project_id_str = str(project_id)
-
-        if project_id_str not in user_projects:
-            await ctx.send("iNat user project not known.")
-            return
-
-        del user_projects[project_id_str]
-        await config.user_projects.set(user_projects)
-        await ctx.send("iNat user project removed.")
-
-    @inat_show.command(name="user_projects")
-    async def show_user_projects(self, ctx):
-        """Show server user projects."""
-        config = self.config.guild(ctx.guild)
-        user_projects = await config.user_projects()
-        for project_id in user_projects:
+        if _event_project:
             await ctx.send(
-                f"{user_projects[project_id]} {WWW_BASE_URL}/projects/{project_id}"
+                f"event project {project_abbrev} was:\n```py\n{repr(event_project)}\n```"
             )
-            await asyncio.sleep(1)
+
+        event_project["project_id"] = project_id
+        event_projects[project_abbrev] = event_project
+        if creds or not _event_project:
+            event_project["creds"] = creds
+        if role or not _event_project:
+            event_project["role"] = role
+        await config.event_projects.set(event_projects)
+        await ctx.send(
+            f"event project {project_abbrev} is now:\n```py\n{repr(event_project)}\n```"
+        )
+
+    @inat_clear.command(name="event")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def clear_event(self, ctx, project_abbrev: str):
+        """Clear a server event project (mods)."""
+        config = self.config.guild(ctx.guild)
+        event_projects = await config.event_projects()
+
+        if project_abbrev not in event_projects:
+            await ctx.send("event project not known.")
+            return
+
+        del event_projects[project_abbrev]
+        await config.event_projects.set(event_projects)
+        await ctx.send("event project removed.")
+
+    @inat_show.command(name="events")
+    async def show_events(self, ctx):
+        """Show server event projects."""
+        config = self.config.guild(ctx.guild)
+        event_projects = await config.event_projects()
+        await ctx.send(f"```py\n{repr(event_projects)}\n```")

@@ -44,7 +44,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user SyntheticBee#4951`
           matches `SyntheticBee#4951` even if not recently active.
 
-        If the server has defined any user_projects, then observations, species, & leaf taxa stats for each project are shown.
+        If the server has defined any event_projects, then observations, species, & leaf taxa stats for each project are shown.
         Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """  # noqa: E501
@@ -288,7 +288,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # already just to get # of pages of member users:
         all_users = await self.config.all_users()
         config = self.config.guild(ctx.guild)
-        user_projects = await config.user_projects()
+        event_projects = await config.event_projects()
         filter_role = None
         filter_role_id = None
         if with_role:
@@ -316,8 +316,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
                 return
 
+        event_project_ids = {
+            int(event_projects[prj]["project_id"]): prj for prj in event_projects
+        }
         responses = [
-            await self.api.get_projects(int(project_id)) for project_id in user_projects
+            await self.api.get_projects(prj_id) for prj_id in event_project_ids
         ]
         projects = [
             UserProject.from_dict(response["results"][0])
@@ -326,20 +329,20 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ]
 
         if not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(user_projects.keys())
+            await self.api.get_observers_from_projects(list(event_project_ids.keys()))
             self.user_cache_init[ctx.guild.id] = True
 
-        def emojis(user_id: int):
-            emojis = [
-                user_projects[str(project.project_id)]
+        def abbrevs(user_id: int):
+            abbrevs = [
+                event_project_ids[int(project.project_id)]
                 for project in projects
                 if user_id in project.observed_by_ids()
             ]
-            return " ".join(emojis)
+            return " ".join(abbrevs)
 
         # TODO: Support lazy loading of pages of users (issues noted in comments below).
         all_names = [
-            f"{dmember.mention} is {iuser.profile_link()} {emojis(iuser.user_id)}"
+            f"{dmember.mention} is {iuser.profile_link()} {abbrevs(iuser.user_id)}"
             async for (dmember, iuser) in self.user_table.get_member_pairs(
                 ctx.guild, all_users
             )

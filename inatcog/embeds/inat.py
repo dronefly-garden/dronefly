@@ -1059,17 +1059,21 @@ class INatEmbeds(MixinMeta):
         return (count, rank)
 
     async def get_user_server_projects_stats(self, ctx, user):
-        """Get a user's stats for the server's user projects."""
-        user_projects = await self.config.guild(ctx.guild).user_projects() or {}
-        project_ids = list(map(int, user_projects))
-        projects = await self.api.get_projects(project_ids, refresh_cache=True)
+        """Get a user's stats for the server's event projects."""
+        event_projects = await self.config.guild(ctx.guild).event_projects() or {}
+        project_ids = {
+            int(event_projects[prj]["project_id"]): prj for prj in event_projects
+        }
+        projects = await self.api.get_projects(
+            list(project_ids.keys()), refresh_cache=True
+        )
         stats = []
         for project_id in project_ids:
             if project_id not in projects:
                 continue
             user_project = UserProject.from_dict(projects[project_id]["results"][0])
             if user.user_id in user_project.observed_by_ids():
-                abbrev = user_projects[str(project_id)]
+                abbrev = project_ids[int(project_id)]
                 obs_stats = await self.get_user_project_stats(
                     project_id, user, with_rank=False
                 )
