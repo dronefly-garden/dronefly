@@ -340,9 +340,11 @@ def format_taxon_title(rec):
     return title
 
 
-def _add_place_emojis(query_response: QueryResponse):
+def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = False):
     if not query_response:
         return False
+    if is_taxon_embed:
+        return query_response.place and not query_response.user
     return query_response.place and not (
         query_response.user or query_response.id_by or query_response.unobserved_by
     )
@@ -1165,7 +1167,7 @@ class INatEmbeds(MixinMeta):
         else:
             taxon = query_response
             query_response = None
-        add_place_emojis = _add_place_emojis(query_response)
+        add_place_emojis = _add_place_emojis(query_response, True)
         if taxonomy and len(taxon.ancestor_ids) > 2:
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
