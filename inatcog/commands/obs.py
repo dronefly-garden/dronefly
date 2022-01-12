@@ -1,5 +1,7 @@
 """Module for obs command group."""
 import re
+from collections import namedtuple
+from contextlib import asynccontextmanager
 from typing import Optional
 import urllib.parse
 
@@ -14,25 +16,24 @@ from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..core.models.taxon import RANK_LEVELS
 from ..core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from ..embeds.common import apologize, make_embed
-from ..embeds.inat import INatEmbeds
+from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
+
+ObsResult = namedtuple("Singleobs", "obs url preview")
 
 
 class CommandsObs(INatEmbeds, MixinMeta):
     """Mixin providing obs command group."""
 
-    @commands.group(invoke_without_command=True, aliases=["observation"])
-    @checks.bot_has_permissions(embed_links=True)
-    async def obs(self, ctx, *, query: Optional[str] = ""):
-        """Observation matching query, link, or number.
+    @asynccontextmanager
+    async def _single_obs(self, ctx, query):
+        """Return a single observation, its URL, and whether to preview it.
 
-        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
-        - Use `[p]search obs` to find more than one observation.
-        - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]help autoobs` for details.
-        """  # noqa: E501
-
+        Image preview is only desired if it wasn't already auto-previewed
+        by Discord itself (i.e. the user pasted a URL).
+        """
         if query:
             id_or_link = None
             if query.isnumeric():
@@ -48,26 +49,79 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 # Note: if the user specified an invalid or deleted id, a url is still
                 # produced (i.e. should 404).
                 if url:
-                    embed = await self.make_obs_embed(obs, url, preview=False)
-                    await self.send_obs_embed(ctx, embed, obs)
+                    yield ObsResult(obs, url, False)
                     return
                 else:
                     await apologize(ctx, "I don't understand")
+                    yield
                     return
 
         try:
+            ref = ctx.message.reference
+            if ref:
+                # It's a reply. Try to get an observation from the message.
+                # TODO: Lifted from TaxonReplyConverter; don't know where this belongs yet.
+                msg = ref.cached_message or await ctx.channel.fetch_message(
+                    ref.message_id
+                )
+                if msg and msg.embeds:
+                    inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
+                    # pylint: disable=no-member, assigning-non-slot
+                    # - See https://github.com/PyCQA/pylint/issues/981
+                    # Replying to observation display:
+                    if inat_embed.obs_url:
+                        mat = re.search(PAT_OBS_LINK, inat_embed.obs_url)
+                        # Try to get single observation for the display:
+                        if mat and mat["url"]:
+                            obs, url = await maybe_match_obs(
+                                self, ctx, inat_embed.obs_url, id_permitted=False
+                            )
+                            if url:
+                                yield ObsResult(obs, url, False)
+                                return
+            # Otherwise try to get other usable info from reply
+            # to make a new observation query.
             _query = await TaxonReplyConverter.convert(ctx, query)
             obs = await self.obs_query.query_single_obs(ctx, _query)
         except EmptyArgument:
             await ctx.send_help()
+            yield
             return
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
+            yield
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
-        embed = await self.make_obs_embed(obs, url, preview=True)
-        await self.send_obs_embed(ctx, embed, obs)
+        yield ObsResult(obs, url, True)
+
+    @commands.group(invoke_without_command=True, aliases=["observation"])
+    @checks.bot_has_permissions(embed_links=True)
+    async def obs(self, ctx, *, query: Optional[str] = ""):
+        """Observation matching query, link, or number.
+
+        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
+        - Use `[p]search obs` to find more than one observation.
+        - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]help autoobs` for details.
+        """  # noqa: E501
+        async with self._single_obs(ctx, query) as res:
+            if res:
+                embed = await self.make_obs_embed(res.obs, res.url, preview=res.preview)
+                await self.send_obs_embed(ctx, embed, res.obs)
+
+    @obs.command(name="img", aliases=["image", "photo"])
+    @checks.bot_has_permissions(embed_links=True)
+    async def obs_img(self, ctx, number: Optional[int], *, query: Optional[str] = ""):
+        """Image for observation.
+
+        - Shows the image indicated by `number`, or if number is omitted, the first image.
+        - Command may be a *Reply* to an observation display instead of a query.
+        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
+        """  # noqa: E501
+        async with self._single_obs(ctx, query) as res:
+            if res:
+                embed = await self.make_obs_embed(res.obs, res.url, preview=number or 1)
+                await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
