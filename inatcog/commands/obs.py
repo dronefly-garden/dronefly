@@ -100,7 +100,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
 
-        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
+        - See `[p]help query` and `[p]help taxon_query` for help with *query* terms.
         - Use `[p]search obs` to find more than one observation.
         - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]help autoobs` for details.
         """  # noqa: E501
@@ -116,7 +116,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         - Shows the image indicated by `number`, or if number is omitted, the first image.
         - Command may be a *Reply* to an observation display instead of a query.
-        - See `[p]help query` and `[p]help query_taxon` for help with *query* terms.
+        - See `[p]help query` and `[p]help taxon_query` for help with *query* terms.
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:

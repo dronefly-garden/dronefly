@@ -136,7 +136,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @commands.command(name="macros", aliases=["macro"])
     async def topic_macros(self, ctx):
-        """\u200b*Macro query* terms.
+        """\u200b*Macro* query terms.
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
 
@@ -210,9 +210,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="advanced_query", aliases=["advanced_queries", "advanced"])
-    async def topic_advanced_query(self, ctx):
-        """\u200b*Advanced query* options (`opt`).
+    @commands.command(name="advanced")
+    async def topic_advanced(self, ctx):
+        """\u200b*Advanced* query options via `opt`.
 
         Shortcuts for the most commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
 
