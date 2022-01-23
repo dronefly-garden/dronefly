@@ -386,7 +386,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 await apologize(
                     ctx,
                     "The `in` keyword is not supported by this command.\n"
-                    "Try `[p]taxon` instead or omit the `in` clause.\n"
+                    f"Try `{ctx.clean_prefix}taxon` instead or omit the `in` clause.\n"
                     f"Type `{ctx.clean_prefix}help search` for help.",
                 )
             else:
