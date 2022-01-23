@@ -40,7 +40,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="cheatsheet")
+    @commands.command(name="cheatsheet", aliases=["commands"])
     async def topic_cheatsheet(self, ctx):
         """\u200b*Common commands.*
 
@@ -67,8 +67,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="date", aliases=["dates"])
-    async def topic_date(self, ctx):
+    @commands.command(name="dates", aliases=["date"])
+    async def topic_dates(self, ctx):
         """\u200b*Date filters* and *sort order*.
 
         See also: `[p]query`, `[p]macros`, `[p]advanced`.
@@ -134,13 +134,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """
         await ctx.send_help()
 
-    @commands.command(name="macros")
+    @commands.command(name="macros", aliases=["macro"])
     async def topic_macros(self, ctx):
         """\u200b*Macro query* terms.
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
 
-        See also: `[p]query`, `[p]query_taxon`, and `[p]groups`.
+        See also: `[p]query`, `[p]taxon_query`, and `[p]groups`.
 
         __**`Macro`**__`  `__`Expands to`__
         **`my`**`      by me`
@@ -157,7 +157,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="groups")
+    @commands.command(name="groups", aliases=["group"])
     async def topic_groups(self, ctx):
         """\u200b*Query* macros that are *taxonomic groups*.
 
@@ -180,13 +180,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="query")
+    @commands.command(name="query", aliases=["queries"])
     async def topic_query(self, ctx):
         """\u200b*Observation query* terms.
 
         A *query* may contain *taxon query* terms, *macros*, and other *query* terms described below.
 
-        See also: `[p]query_taxon`, `[p]date`, `[p]advanced`, `[p]macros`.
+        See also: `[p]taxon_query`, `[p]dates`, `[p]advanced`, `[p]macros`.
 
         Aside from *taxon*, other *query* terms may be:
         - `by <name>` for named user's observations; also `by me` or just `my` (a *macro*) for yourself
@@ -195,7 +195,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - `with <term> <value>` for *controlled term* with the given *value*
         - `not by <name>` for obs unobserved by the user
         - `id by <name>` for obs ided by the user
-        - `[added] since <date>`, `[added] until <date>`, `[added] on <date>`; see `[p]help date` for details
+        - `[added] since <date>`, `[added] until <date>`, `[added] on <date>`; see `[p]dates` for details
         **Examples:**
         ```
         [p]obs by benarmstrong
@@ -210,8 +210,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="advanced")
-    async def topic_advanced(self, ctx):
+    @commands.command(name="advanced_query", aliases=["advanced_queries", "advanced"])
+    async def topic_advanced_query(self, ctx):
         """\u200b*Advanced query* options (`opt`).
 
         Shortcuts for the most commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
@@ -234,8 +234,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="query_taxon")
-    async def topic_query_taxon(self, ctx):
+    @commands.command(name="taxon_query", aliases=["taxon_queries", "query_taxon"])
+    async def topic_taxon_query(self, ctx):
         """\u200b*Taxon query* terms.
 
         See also: `[p]query` and `[p]macros` to specify what is also shown about a taxon.
@@ -261,7 +261,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="glossary")
+    @commands.command(
+        name="glossary", aliases=["term", "terms", "abbrevation", "abbreviations"]
+    )
     async def topic_counts(self, ctx):
         """\u200b*Glossary* of terms and abbreviations.
 
@@ -275,7 +277,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="reactions")
+    @commands.command(name="reactions", aliases=["reaction"])
     async def topic_reactions(self, ctx):
         """\u200bTaxon *reaction* buttons.
 
