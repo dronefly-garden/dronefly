@@ -263,16 +263,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             results = []
             thumbnails = []
             if query_type == "obs":
-                try:
-                    (
-                        observations,
-                        total_results,
-                        per_page,
-                    ) = await self.obs_query.query_observations(ctx, query)
-                except LookupError:
-                    observations = []
-                    total_results = 0
-                    per_page = 0
+                (
+                    observations,
+                    total_results,
+                    per_page,
+                ) = await self.obs_query.query_observations(ctx, query)
                 for obs in observations:
                     results.append(
                         "".join(
@@ -376,16 +371,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             else:
                 _query = query
             query_type, query_title, url, kwargs = await get_query_args(_query)
+            (
+                total_results,
+                results,
+                thumbnails,
+                per_page,
+                per_embed_page,
+            ) = await query_formatted_results(_query, query_type, kwargs)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
-        (
-            total_results,
-            results,
-            thumbnails,
-            per_page,
-            per_embed_page,
-        ) = await query_formatted_results(_query, query_type, kwargs)
         if not results:
             if isinstance(_query, str) and "in" in _query.split():
                 await apologize(
