@@ -58,8 +58,8 @@ class INatHelp(RedHelpFormatter):
     async def make_and_send_embeds(self, ctx, emb, help_settings: HelpSettings):
         embed = emb["embed"]
         # The horrors! This only works for help embeds and not help as text.
-        # Also the removal of the empty "Syntax:" box is also highly dependent
-        # on the implementation of Red's formatting or the pattern won't match.
+        # Also the removal of the empty "Syntax:" box is highly dependent on the
+        # implementation of Red's formatting or the pattern won't match.
         _emb = {
             **emb,
             "embed": {
