@@ -38,6 +38,46 @@ class CommandsInat(INatEmbeds, MixinMeta):
         `[p]help inat set autoobs server` and
         `[p]help inat set autoobs` (channel).
         """  # noqa: E501
+        await ctx.send_help()
+
+    @commands.command(name="date", aliases=["dates"])
+    async def topic_date(self, ctx):
+        """*Help* for *date* filters and sort order.
+
+        See also: `[p]query`, `[p]macros`, `[p]advanced`.
+
+        **Date filters:**
+        • `since <date>` - observed on or after the date
+        • `until <date>` - observed on or before the date
+        • `on <date>` - observed on the date
+        • `added since <date>` - added on or after the date
+        • `added until <date>` - added on or before the date
+        • `added on <date>` - added on the date
+        • `opt month=#` `opt year=#` `opt day=#` - observed this month, year, or day of month (use commas if more than one)
+
+        **Sort order:**
+        • newest to oldest added is the default
+        • `reverse` - oldest to newest added
+        • `newest` - newest to oldest observed
+        • `oldest` - oldest to newest observed
+
+        **Examples:**
+        ```
+        [p]obs my gcki on march 13
+        -> My Golden-crowned kinglet observed March 13
+        [p]obs gcki since 2021 newest
+        -> First GCKI of the year
+        [p]s obs gcki until mar
+        -> On or before the month end
+        [p]s obs gcki since feb until mar
+        -> From Feb through Mar
+        [p]s obs gcki added since tue
+        -> Added on or after Tue
+        [p]s obs gcki opt month=2,3
+        -> Observed in Feb or Mar of any year
+        ```
+        """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="dot_taxon")
     async def topic_dot_taxon(self, ctx):
@@ -73,7 +113,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
 
-        See also: `[p]help query`, `[p]help query_taxon`, and `[p]help groups`.
+        See also: `[p]query`, `[p]query_taxon`, and `[p]groups`.
 
         __**`Macro`**__`  `__`Expands to`__
         **`my`**`      by me`
@@ -88,12 +128,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`faves`**`   opt popular order_by=votes`
         **`spp`**`     opt hrank=species` (alias `species`)
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="groups")
     async def topic_groups(self, ctx):
         """*Help* for *query* macros that are *taxonomic groups*.
 
-        See also: `[p]help macros`, and `[p]help query`.
+        See also: `[p]macros`, and `[p]query`.
 
         **`herps`**`       opt taxon_ids=`
         **`       `**`       20978,26036`
@@ -110,6 +151,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`       `**`       without_taxon_id=`
         **`       `**`       47336,630955`
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="query")
     async def topic_query(self, ctx):
@@ -117,15 +159,16 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         A *query* may contain *taxon query* terms, *macros*, and other *query* terms described below.
 
-        See also: `[p]help query_taxon`, `[p]help advanced`, and `[p]help macros`.
+        See also: `[p]query_taxon`, `[p]date`, `[p]advanced`, `[p]macros`.
 
         Aside from *taxon*, other *query* terms may be:
-        - `by <name>` to match the named user; also `by me` or just `my` (a *macro*) to match yourself
-        - `from <place>` to match the named place; also `from home` or just `home` (a *macro*) to match observations from your *home place*
-        - `in prj <project>` to match the named *project*
-        - `with <term> <value>` to matched the *controlled term* with the given *value*
-        - `not by <name>` to match obs unobserved by the user
-        - `id by <name>` to match obs ided by the user
+        - `by <name>` for named user's observations; also `by me` or just `my` (a *macro*) for yourself
+        - `from <place>` for named place; also `from home` or just `home` (a *macro*) for your *home place*
+        - `in prj <project>` for named *project*
+        - `with <term> <value>` for *controlled term* with the given *value*
+        - `not by <name>` for obs unobserved by the user
+        - `id by <name>` for obs ided by the user
+        - `[added] since <date>`, `[added] until <date>`, `[added] on <date>`; see `[p]help date` for details
         **Examples:**
         ```
         [p]obs by benarmstrong
@@ -138,6 +181,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         -> search for insecta with life stage = larva
         ```
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="advanced")
     async def topic_advanced(self, ctx):
@@ -145,7 +189,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         Shortcuts for the most commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
 
-        See also: `[p]help macros`, and `[p]help query`.
+        See also: `[p]macros`, and `[p]query`.
 
         **Boolean options:**
 
@@ -161,12 +205,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See the [get observations API documentation](https://api.inaturalist.org/v1/docs/#!/Observations/get_observations) for detailed descriptions of these options and what parameter values are allowed. Not all options make sense for all queries/commands.
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="query_taxon")
     async def topic_query_taxon(self, ctx):
         """*Help* for *taxon query* terms.
 
-        See also: `[p]help query` and `[p]help macros` to specify what is also shown about a taxon.
+        See also: `[p]query` and `[p]macros` to specify what is also shown about a taxon.
 
         A *taxon query* matches a single taxon. It may contain the following:
         - *id#* of the iNat taxon
@@ -187,6 +232,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
            -> Zonotrichia albicollis (White-throated Sparrow)
         ```
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="glossary")
     async def topic_counts(self, ctx):
@@ -200,6 +246,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - In commands counting just a single user like `,my`, *Spp* (species) and *Leaf taxa* are shown.
         - But otherwise, when a display has a *#spp* heading, it refers to *leaf taxa* by default.
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="reactions")
     async def topic_reactions(self, ctx):
