@@ -7,7 +7,7 @@ from .inatcog import INatCog
 
 __red_end_user_data_statement__ = get_end_user_data_statement(__file__)
 
-CATEGORY_TAG = "*Help*"
+CATEGORY_TAG = "\u200b"  # invisible help-only marker
 CATEGORY_NAME = "iNat features, terms, and syntax"
 
 
