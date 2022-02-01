@@ -92,7 +92,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ```
         [p]obs my gcki on march 13
         -> My Golden-crowned kinglet observed March 13
-        [p]obs gcki since 2021 newest
+        [p]obs gcki since jan 2021 newest
         -> First GCKI of the year
         [p]s obs gcki until mar
         -> On or before the month end
