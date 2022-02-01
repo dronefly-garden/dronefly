@@ -24,6 +24,7 @@ from ..base_classes import (
     WWW_BASE_URL,
 )
 from ..common import LOG
+from ..core.models.taxon import RANK_LEVELS
 from ..core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -501,8 +502,28 @@ class INatEmbeds(MixinMeta):
             )
             title_query_response.place = None
             header = TAXON_PLACES_HEADER
+        summary_counts = ""
+        title_query_args = title_query_response.obs_args()
+        observations = await self.api.get_observations(per_page=0, **title_query_args)
+        if observations:
+            species = await self.api.get_observations(
+                "species_counts", per_page=0, **title_query_args
+            )
+            observations_count = observations["total_results"]
+            species_count = species["total_results"]
+            url = f"{WWW_BASE_URL}/observations?" + urlencode(title_query_args)
+            species_url = url + "&view=species"
+            if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+                summary_counts = f"Total: [{observations_count:,}]({url})"
+            else:
+                summary_counts = (
+                    f"Total: [{observations_count:,}]({url}) "
+                    f"Species: [{species_count:,}]({species_url})"
+                )
         if formatted_counts:
-            description = f"\n{header}\n{formatted_counts}"
+            description = f"\n{summary_counts}\n{header}\n{formatted_counts}"
+        else:
+            description = summary_counts
 
         url = f"{WWW_BASE_URL}/observations"
         title_args = title_query_response.obs_args()
@@ -911,7 +932,7 @@ class INatEmbeds(MixinMeta):
         async def format_description(
             rec, status, means_fmtd, obs_cnt, obs_url, obs_cnt_filtered
         ):
-            obs_fmt = "[%d](%s)" % (obs_cnt, obs_url)
+            obs_fmt = f"[{obs_cnt:,}]({obs_url})"
             if status:
                 # inflect statuses with single digits in them correctly
                 first_word = re.sub(

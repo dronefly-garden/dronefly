@@ -449,15 +449,17 @@ async def format_place_taxon_counts(
     if count_unverifiable_observations:
         obs_opt["verifiable"] = "any"
     observations = await cog.api.get_observations(per_page=0, **obs_opt)
-    species = await cog.api.get_observations("species_counts", per_page=0, **obs_opt)
     if observations:
+        species = await cog.api.get_observations(
+            "species_counts", per_page=0, **obs_opt
+        )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
         url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-            link = f"[{observations_count}]({url}) {name}"
+            link = f"[{observations_count:,}]({url}) {name}"
         else:
-            link = f"[{observations_count} ({species_count})]({url}) {name}"
+            link = f"[{observations_count:,} ({species_count:,})]({url}) {name}"
         return f"{link} "
 
     return ""
@@ -490,17 +492,17 @@ async def format_user_taxon_counts(
     if kwargs.get("unobserved_by_user_id"):
         obs_opt["lrank"] = "species"
     observations = await cog.api.get_observations(per_page=0, **obs_opt)
-    species = await cog.api.get_observations(
-        "species_counts", per_page=0, **species_opt
-    )
     if observations:
+        species = await cog.api.get_observations(
+            "species_counts", per_page=0, **species_opt
+        )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
         url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-            link = f"[{observations_count}]({url}) {login}"
+            link = f"[{observations_count:,}]({url}) {login}"
         else:
-            link = f"[{observations_count} ({species_count})]({url}) {login}"
+            link = f"[{observations_count:,} ({species_count:,})]({url}) {login}"
         return f"{link} "
 
     return ""
