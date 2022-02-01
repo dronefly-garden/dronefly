@@ -243,8 +243,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
         full_title = f"{entity_counted.capitalize()} {query_description}"
         pages = format_pages(user_links, users_count, entity_counted, view)
 
+        summary_counts = await self.summarize_obs_spp_counts(taxon, obs_opt)
         embeds = [
-            make_embed(title=full_title, url=url, description=page) for page in pages
+            make_embed(
+                title=full_title, url=url, description=f"{summary_counts}\n{page}"
+            )
+            for page in pages
         ]
         if len(pages) > 1:
             await menu(ctx, embeds, DEFAULT_CONTROLS)

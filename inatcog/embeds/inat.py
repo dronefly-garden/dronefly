@@ -469,6 +469,26 @@ class INatEmbeds(MixinMeta):
 
         return await channel.send(embed=embed)
 
+    async def summarize_obs_spp_counts(self, taxon, obs_args):
+        observations = await self.api.get_observations(per_page=0, **obs_args)
+        if observations:
+            species = await self.api.get_observations(
+                "species_counts", per_page=0, **obs_args
+            )
+            observations_count = observations["total_results"]
+            species_count = species["total_results"]
+            url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_args)
+            species_url = url + "&view=species"
+            if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
+                summary_counts = f"Total: [{observations_count:,}]({url})"
+            else:
+                summary_counts = (
+                    f"Total: [{observations_count:,}]({url}) "
+                    f"Species: [{species_count:,}]({species_url})"
+                )
+            return summary_counts
+        return ""
+
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
         formatted_counts = ""
@@ -504,22 +524,7 @@ class INatEmbeds(MixinMeta):
             header = TAXON_PLACES_HEADER
         summary_counts = ""
         title_query_args = title_query_response.obs_args()
-        observations = await self.api.get_observations(per_page=0, **title_query_args)
-        if observations:
-            species = await self.api.get_observations(
-                "species_counts", per_page=0, **title_query_args
-            )
-            observations_count = observations["total_results"]
-            species_count = species["total_results"]
-            url = f"{WWW_BASE_URL}/observations?" + urlencode(title_query_args)
-            species_url = url + "&view=species"
-            if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-                summary_counts = f"Total: [{observations_count:,}]({url})"
-            else:
-                summary_counts = (
-                    f"Total: [{observations_count:,}]({url}) "
-                    f"Species: [{species_count:,}]({species_url})"
-                )
+        summary_counts = await self.summarize_obs_spp_counts(taxon, title_query_args)
         if formatted_counts:
             description = f"\n{summary_counts}\n{header}\n{formatted_counts}"
         else:
