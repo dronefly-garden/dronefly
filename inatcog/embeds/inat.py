@@ -72,13 +72,13 @@ TAXONOMY_PAT = re.compile(r"in:(?P<taxonomy>.*?(?=\n__.*$)|.*$)", re.DOTALL)
 
 OBS_ID_PAT = re.compile(r"\(.*/observations/(?P<obs_id>\d+).*?\)")
 PLACE_ID_PAT = re.compile(
-    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]place_id=(?P<place_id>\d+).*?\)"
+    r"\n\[[0-9, \(\)]+\]\(.*?[\?\&]place_id=(?P<place_id>\d+).*?\)"
 )
 UNOBSERVED_BY_USER_ID_PAT = re.compile(
-    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]unobserved_by_user_id=(?P<unobserved_by_user_id>\d+).*?\)",
+    r"\n\[[0-9, \(\)]+\]\(.*?[\?\&]unobserved_by_user_id=(?P<unobserved_by_user_id>\d+).*?\)",
 )
 ID_BY_USER_ID_PAT = re.compile(
-    r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]ident_user_id=(?P<ident_user_id>\d+).*?\)",
+    r"\n\[[0-9, \(\)]+\]\(.*?[\?\&]ident_user_id=(?P<ident_user_id>\d+).*?\)",
 )
 USER_ID_PAT = re.compile(r"\n\[[0-9 \(\)]+\]\(.*?[\?\&]user_id=(?P<user_id>\d+).*?\)")
 
@@ -1125,14 +1125,14 @@ class INatEmbeds(MixinMeta):
             spp_url = f"{url}&view=species&verifiable=any&hrank=species"
             taxa_url = f"{url}&view=species&verifiable=any"
             fmt = (
-                f"[{obs_count}]({obs_url}) / [{spp_count}]({spp_url}) / "
-                f"[{taxa_count}]({taxa_url})"
+                f"[{obs_count:,}]({obs_url}) / [{spp_count:,}]({spp_url}) / "
+                f"[{taxa_count:,}]({taxa_url})"
             )
             embed.add_field(
                 name=f"Obs / Spp / Leaf taxa ({abbrev})", value=fmt, inline=True
             )
         ids = user.identifications_count
-        url = f"[{ids}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
+        url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
         embed.add_field(name="Ids", value=url, inline=True)
         return embed
 
@@ -1157,8 +1157,9 @@ class INatEmbeds(MixinMeta):
         spp_url = f"{url}&view=species&verifiable=any&hrank=species"
         taxa_url = f"{url}&view=species&verifiable=any"
         fmt = (
-            f"[{obs_count}]({obs_url}) (#{obs_rank}) / [{spp_count}]({spp_url}) (#{spp_rank}) / "
-            f"[{taxa_count}]({taxa_url})"
+            f"[{obs_count:,}]({obs_url}) (#{obs_rank}) / "
+            f"[{spp_count:,}]({spp_url}) (#{spp_rank}) / "
+            f"[{taxa_count:,}]({taxa_url})"
         )
         embed.add_field(
             name="Obs (rank) / Spp (rank) / Leaf taxa", value=fmt, inline=True
@@ -1277,7 +1278,7 @@ class INatEmbeds(MixinMeta):
         if not inat_user:
             return
 
-        counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + inat_user.login
+        counts_pat = r"(\n|^)\[[0-9, \(\)]+\]\(.*?\) " + inat_user.login
         inat_embed = msg.embeds[0]
         if inat_embed.taxon_id():
             taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
@@ -1314,7 +1315,7 @@ class INatEmbeds(MixinMeta):
             update_place = place
 
         inat_embed = msg.embeds[0]
-        place_counts_pat = r"(\n|^)\[[0-9 \(\)]+\]\(.*?\) " + re.escape(
+        place_counts_pat = r"(\n|^)\[[0-9, \(\)]+\]\(.*?\) " + re.escape(
             update_place.display_name
         )
         if inat_embed.taxon_id():
@@ -1478,11 +1479,11 @@ class INatEmbeds(MixinMeta):
         if not (unobserved or ident):
             # Add/remove always results in a change to totals, so remove:
             description = re.sub(
-                r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description
+                r"\n\[[0-9, \(\)]+?\]\(.*?\) \*total\*", "", description
             )
 
         matches = re.findall(
-            r"\n\[[0-9 \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
+            r"\n\[[0-9, \(\)]+\]\(.*?\) (?P<user_id>[-_a-z0-9]+)", description
         )
         count_params = {**inat_embed.params}
         if action == "remove":
@@ -1523,7 +1524,7 @@ class INatEmbeds(MixinMeta):
 
         if not (unobserved or ident):
             matches = re.findall(
-                r"\n\[[0-9 \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+)*?\)",
+                r"\n\[[0-9, \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+)*?\)",
                 description,
             )
             # Total added only if more than one user:
@@ -1599,9 +1600,9 @@ class INatEmbeds(MixinMeta):
     ):
         """Update the place totals for the embed."""
         # Add/remove always results in a change to totals, so remove:
-        description = re.sub(r"\n\[[0-9 \(\)]+?\]\(.*?\) \*total\*", "", description)
+        description = re.sub(r"\n\[[0-9, \(\)]+?\]\(.*?\) \*total\*", "", description)
 
-        matches = re.findall(r"\n\[[0-9 \(\)]+\]\(.*?\) (.*?)(?=\n|$)", description)
+        matches = re.findall(r"\n\[[0-9, \(\)]+\]\(.*?\) (.*?)(?=\n|$)", description)
         count_params = {**inat_embed.params, "place_id": place.place_id}
         if action == "remove":
             # Remove the header if last one and the place's count:
@@ -1621,7 +1622,7 @@ class INatEmbeds(MixinMeta):
             description += "\n" + formatted_counts
 
         matches = re.findall(
-            r"\n\[[0-9 \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)",
+            r"\n\[[0-9, \(\)]+\]\(.*?\?place_id=(?P<place_id>\d+)&.*?\)",
             description,
         )
         # Total added only if more than one place:

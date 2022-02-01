@@ -164,10 +164,10 @@ def get_formatted_user_counts(
         login = observer["user"]["login"]
         observer_url = base_url + f"&user_id={user_id}"
         if species_only:
-            observer_link = f"[{observation_count}]({observer_url}) {login}"
+            observer_link = f"[{observation_count:,}]({observer_url}) {login}"
         else:
             observer_link = (
-                f"[{observation_count} ({species_count})]({observer_url}) {login}"
+                f"[{observation_count:,} ({species_count:,})]({observer_url}) {login}"
             )
         return observer_link
 
@@ -176,7 +176,7 @@ def get_formatted_user_counts(
         observation_count = identifier["count"]
         login = identifier["user"]["login"]
         identifier_url = base_url + f"&ident_user_id={user_id}&not_user_id={user_id}"
-        identifier_link = f"[{observation_count}]({identifier_url}) {login}"
+        identifier_link = f"[{observation_count:,}]({identifier_url}) {login}"
         return identifier_link
 
     if view == "ids":
