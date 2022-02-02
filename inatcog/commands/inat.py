@@ -222,7 +222,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         `captive` `endemic` `identified` `introduced` `native` `out_of_range` `pcid` `photos` `popular` `sounds` `threatened` `verifiable`
 
-        Boolean options without a parameter default to `=true`, e.g. `,tab my verifiable` means `,tab my verifiable=true`. Other values can be `=false` or `=any`.
+        Boolean options without a parameter default to `=true`, e.g. `,tab my opt verifiable` means `,tab my opt verifiable=true`. Other values can be `=false` or `=any`.
 
         **Options that always require a parameter:**
 
