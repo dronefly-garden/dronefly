@@ -28,7 +28,7 @@ from .search import INatSiteSearch
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
-_SCHEMA_VERSION = 3
+_SCHEMA_VERSION = 4
 _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
 _INAT_GUILD_ID = 525711945270296587
 SPOILER_PAT = re.compile(r"\|\|")
@@ -88,7 +88,9 @@ class INatCog(
             partial(AntiSpam, self.spam_intervals)
         )
 
-        self.config.register_global(home=97394, schema_version=3)  # North America
+        self.config.register_global(
+            home=97394, schema_version=_SCHEMA_VERSION
+        )  # North America
         self.config.register_guild(
             autoobs=False,
             dot_taxon=False,
@@ -159,6 +161,30 @@ class INatCog(
                         }
                     )
             await self.config.schema_version.set(3)
+
+        if from_version < 4 <= to_version:
+            # - The short-lived "creds" attribute has been removed, as authenticated project
+            #   updates are yet supported in iNaturalist API. Thus, the feature that was
+            #   planned to use it can't be written yet.
+            # - A new boolean "main" has been added. All existing events are set to main=True,
+            #   but event projects added hereafter via `[p]inat set event` default to main=False.
+            # - A new string "teams" has been added to support team events.
+            all_guilds = await self.config.all_guilds()
+            for (guild_id, guild_value) in all_guilds.items():
+                event_projects = guild_value["event_projects"]
+                if event_projects:
+                    await self.config.guild_from_id(int(guild_id)).event_projects.set(
+                        {
+                            abbrev: {
+                                "project_id": event_projects[abbrev]["project_id"],
+                                "main": True,
+                                "role": event_projects[abbrev]["role"],
+                                "teams": None,
+                            }
+                            for abbrev in event_projects
+                        }
+                    )
+            await self.config.schema_version.set(4)
 
     def cog_unload(self):
         """Cleanup when the cog unloads."""

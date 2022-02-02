@@ -1087,10 +1087,12 @@ class INatEmbeds(MixinMeta):
         return (count, rank)
 
     async def get_user_server_projects_stats(self, ctx, user):
-        """Get a user's stats for the server's event projects."""
+        """Get a user's stats for the server's main event projects."""
         event_projects = await self.config.guild(ctx.guild).event_projects() or {}
         project_ids = {
-            int(event_projects[prj]["project_id"]): prj for prj in event_projects
+            int(event_projects[prj]["project_id"]): prj
+            for prj in event_projects
+            if event_projects[prj].get("main")
         }
         projects = await self.api.get_projects(
             list(project_ids.keys()), refresh_cache=True

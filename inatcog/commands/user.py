@@ -278,8 +278,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @user.command(name="list")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def user_list(self, ctx, with_role: str = None):
-        """List members with known iNat ids (mods only)."""
+    async def user_list(self, ctx, abbrev: str = None):
+        """List members with known iNat ids (mods only).
+
+        `abbrev` can be `active`, `inactive`, or an abbrev of an `event`, and will filter the user list and only show users with the associated role.
+
+        See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
+        """  # noqa: E501
         if not ctx.guild:
             return
 
@@ -291,16 +296,18 @@ class CommandsUser(INatEmbeds, MixinMeta):
         event_projects = await config.event_projects()
         filter_role = None
         filter_role_id = None
-        if with_role:
-            if with_role == "active":
+        if abbrev:
+            if abbrev == "active":
                 filter_role_id = await config.active_role()
-            elif with_role == "inactive":
+            elif abbrev == "inactive":
                 filter_role_id = await config.inactive_role()
+            elif abbrev in event_projects:
+                filter_role_id = event_projects[abbrev]["role"]
             else:
                 await ctx.send_help()
                 return
-        if with_role and not filter_role_id:
-            await ctx.send(embed=make_embed(description=f"No {with_role} role set."))
+        if abbrev and not filter_role_id:
+            await ctx.send(embed=make_embed(description=f"No {abbrev} role set."))
             return
 
         if filter_role_id:
@@ -310,7 +317,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if not filter_role:
                 await ctx.send(
                     embed=make_embed(
-                        description=f"The {with_role} role is not a guild role: "
+                        description=f"The {abbrev} role is not a guild role: "
                         f"<@&{filter_role_id}>."
                     )
                 )

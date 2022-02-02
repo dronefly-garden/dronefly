@@ -695,10 +695,30 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ctx,
         project_abbrev: str,
         project_id: str,
-        creds: Optional[str],
-        role: Optional[discord.Role],
+        main: Optional[bool] = False,
+        role: Optional[discord.Role] = None,
+        teams: Optional[str] = None,
     ):
-        """Add a server event project (mods)."""
+        """Add a server event project (mods).
+
+        - `project_abbrev` uniquely identifies this project.
+        - `project_id` Use `[p]prj` or `[p]s prj` to look it up for the project.
+        - `main` is a main event for the server, listed in the `[p]user` / `[p]me` display. Please define no more than two of these.
+        - `role` identifies a user as a participant of the event project.
+        - `teams` one or more *event project abbreviations* for other teams of this event, separated by commas.
+
+        *Examples:*
+        To define two main server projects:
+
+        `[p]inat set event ever 48611 True`
+        `[p]inat set event year 124254 True`
+
+        To define "Team Crustaceans" vs. "Team Cetaceans" bioblitz event:
+
+        `[p]inat set event crustaceans 122951 False "Team Crustaceans" cetaceans`
+        `[p]inat set event cetaceans 122952 False "Team Cetaceans" crustaceans`
+        """  # noqa: E501
+
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
         _event_project = event_projects.get(project_abbrev)
@@ -711,10 +731,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         event_project["project_id"] = project_id
         event_projects[project_abbrev] = event_project
-        if creds or not _event_project:
-            event_project["creds"] = creds
+        event_project["main"] = main
         if role or not _event_project:
-            event_project["role"] = role
+            event_project["role"] = role.id if role else None
+        if teams or not _event_project:
+            event_project["teams"] = teams
         await config.event_projects.set(event_projects)
         await ctx.send(
             f"event project {project_abbrev} is now:\n```py\n{repr(event_project)}\n```"
