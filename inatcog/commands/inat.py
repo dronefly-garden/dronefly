@@ -177,6 +177,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`waspsonly`**`   apocrita opt`
         **`       `**`       without_taxon_id=`
         **`       `**`       47336,630955`
+        **`nonflowering`**` plantae opt`
+        **`       `**`       without_taxon_id=47125`
+        **`nonvascular`**` plantae opt`
+        **`       `**`       without_taxon_id=211194`
         """  # noqa: E501
         await ctx.send_help()
 

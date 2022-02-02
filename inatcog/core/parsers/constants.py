@@ -41,6 +41,14 @@ MACROS = {
             "without_taxon_id=352459",
         ]
     },
+    "nonflowering": {
+        "of": "plantae",
+        "opt": ["without_taxon_id=47125"],
+    },
+    "nonvascular": {
+        "of": "plantae",
+        "opt": ["without_taxon_id=211194"],
+    },
     "spp": {"opt": ["hrank=species"]},
     "species": {"opt": ["hrank=species"]},
 }

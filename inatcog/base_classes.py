@@ -523,6 +523,10 @@ class QueryResponse:
                         message += "Papilionoidea"
                     elif without_taxon_id == "352459":
                         message += "Stictis radiata"
+                    elif without_taxon_id == "47125":
+                        message += "Angiospermae"
+                    elif without_taxon_id == "211194":
+                        message += "Tracheophyta"
                     else:
                         message += "taxon #" + without_taxon_id.replace(",", ", ")
         if self.project:
