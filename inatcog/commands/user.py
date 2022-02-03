@@ -323,11 +323,27 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
                 return
 
-        event_project_ids = {
-            int(event_projects[prj]["project_id"]): prj for prj in event_projects
-        }
+        if abbrev in event_projects:
+            prj = event_projects[abbrev]
+            prj_id = int(prj["project_id"])
+            event_project_ids = {}
+            event_project_ids[prj_id] = abbrev
+            teams = prj["teams"]
+            team_abbrevs = teams.split(",") if teams else []
+            for team_abbrev in team_abbrevs:
+                if team_abbrev in event_projects:
+                    prj = event_projects[team_abbrev]
+                    prj_id = int(prj["project_id"])
+                    event_project_ids[prj_id] = team_abbrev
+        else:
+            event_project_ids = {
+                int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
+                for prj_abbrev in event_projects
+                if event_projects[prj_abbrev]["main"]
+            }
         responses = [
-            await self.api.get_projects(prj_id) for prj_id in event_project_ids
+            await self.api.get_projects(prj_id, refresh_cache=True)
+            for prj_id in event_project_ids
         ]
         projects = [
             UserProject.from_dict(response["results"][0])
@@ -335,26 +351,32 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if response
         ]
 
-        if not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(list(event_project_ids.keys()))
+        # Only do the extra work to initially cache all the observers when
+        # listing all users.
+        # - TODO: review caching and make it a little less magic
+        if not abbrev and not self.user_cache_init.get(ctx.guild.id):
+            await self.api.get_observers_from_projects(list(event_project_ids))
             self.user_cache_init[ctx.guild.id] = True
 
         def abbrevs(user_id: int):
-            abbrevs = [
+            return [
                 event_project_ids[int(project.project_id)]
                 for project in projects
                 if user_id in project.observed_by_ids()
             ]
-            return " ".join(abbrevs)
 
-        # TODO: Support lazy loading of pages of users (issues noted in comments below).
-        all_names = [
-            f"{dmember.mention} is {iuser.profile_link()} {abbrevs(iuser.user_id)}"
-            async for (dmember, iuser) in self.user_table.get_member_pairs(
-                ctx.guild, all_users
-            )
-            if not filter_role or filter_role in dmember.roles
-        ]
+        all_names = []
+        async for (dmember, iuser) in self.user_table.get_member_pairs(
+            ctx.guild, all_users
+        ):
+            project_abbrevs = abbrevs(iuser.user_id)
+            line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
+            if filter_role:
+                if abbrev not in project_abbrevs and filter_role not in dmember.roles:
+                    continue
+                if filter_role in dmember.roles:
+                    line += f" {filter_role.mention}"
+            all_names.append(line)
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
 
