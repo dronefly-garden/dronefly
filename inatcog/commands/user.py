@@ -323,6 +323,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
                 return
 
+        main_event_project_ids = {
+            int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
+            for prj_abbrev in event_projects
+            if event_projects[prj_abbrev]["main"]
+        }
         if abbrev in event_projects:
             prj = event_projects[abbrev]
             prj_id = int(prj["project_id"])
@@ -336,11 +341,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     prj_id = int(prj["project_id"])
                     event_project_ids[prj_id] = team_abbrev
         else:
-            event_project_ids = {
-                int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
-                for prj_abbrev in event_projects
-                if event_projects[prj_abbrev]["main"]
-            }
+            event_project_ids = main_event_project_ids
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
@@ -354,8 +355,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # Only do the extra work to initially cache all the observers when
         # listing all users.
         # - TODO: review caching and make it a little less magic
-        if not abbrev and not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(list(event_project_ids))
+        if not self.user_cache_init.get(ctx.guild.id):
+            await self.api.get_observers_from_projects(list(main_event_project_ids))
             self.user_cache_init[ctx.guild.id] = True
 
         def abbrevs(user_id: int):
