@@ -417,21 +417,32 @@ class INatAPI:
         if not project_ids:
             return
 
-        response = await self.get_observations(
-            "observers", project_id=",".join(map(str, project_ids))
-        )
-        users = []
-        results = response.get("results") or []
-        for observer in results:
-            user = observer.get("user")
-            if user:
-                user_id = user.get("id")
-                if user_id:
-                    # Synthesize a single result as if returned by a get_users
-                    # lookup of a single user_id, and cache it:
-                    user_json = {}
-                    user_json["results"] = [user]
-                    self.users_cache[user_id] = user_json
-                    self.users_login_cache[user["login"]] = user_id
+        page = 1
+        more = True
+        user_json = {}
+        while more:
+            response = await self.get_observations(
+                "observers",
+                project_id=",".join(map(str, project_ids)),
+                page=page,
+            )
+            results = response.get("results") or []
+            for observer in results:
+                user = observer.get("user")
+                if user:
+                    user_id = user.get("id")
+                    if user_id:
+                        # Synthesize a single result as if returned by a get_users
+                        # lookup of a single user_id, and cache it:
+                        user_json["results"] = [user]
+                        self.users_cache[user_id] = user_json
+                        self.users_login_cache[user["login"]] = user_id
+            # default values provided defensively to exit loop if missing
+            per_page = response.get("per_page") or len(results)
+            total_results = response.get("total_results") or len(results)
+            if results and (page * per_page < total_results):
+                page += 1
+            else:
+                more = False
 
-        return users
+        return user_json
