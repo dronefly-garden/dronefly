@@ -8,7 +8,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..base_classes import User
-from ..checks import known_inat_user
+from ..checks import can_manage_users, known_inat_user
 from ..common import DEQUOTE, grouper
 from ..converters.base import (
     MemberConverter,
@@ -63,9 +63,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(embed=embed)
 
     @user.command(name="add")
-    @checks.admin_or_permissions(manage_roles=True)
+    @can_manage_users()
     async def user_add(self, ctx, discord_user: discord.User, inat_user):
-        """Add user as an iNat user (mods only).
+        """Add user as an iNat user for this server.
 
         `discord_user`
         - Discord user mention, ID, username, or nickname.
@@ -129,9 +129,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
         )
 
     @user.command(name="remove")
-    @checks.admin_or_permissions(manage_roles=True)
+    @can_manage_users()
     async def user_remove(self, ctx, discord_user: discord.User):
-        """Remove user as an iNat user (mods only).
+        """Remove user as an iNat user for this server.
 
         `discord_user`
         - Discord username or nickname
@@ -276,10 +276,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await self.user_show_settings(ctx, config, "known")
 
     @user.command(name="list")
-    @checks.admin_or_permissions(manage_roles=True)
+    @can_manage_users()
     @checks.bot_has_permissions(embed_links=True)
     async def user_list(self, ctx, abbrev: str = None):
-        """List members with known iNat ids (mods only).
+        """List members with known iNat ids on this server.
 
         `abbrev` can be `active`, `inactive`, or an abbrev of an `event`, and will filter the user list and only show users with the associated role.
 

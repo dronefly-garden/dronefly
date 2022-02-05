@@ -389,6 +389,36 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 msg = "not set"
         await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
 
+    @inat_set.command(name="manage_users_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_users_role(
+        self, ctx, manage_users_role: Optional[discord.Role]
+    ):
+        """Set manage users role."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if manage_users_role:
+            msg = manage_users_role.mention
+            await config.manage_users_role.set(manage_users_role.id)
+        else:
+            find = await config.manage_users_role()
+            if find:
+                manage_users_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = (
+                    manage_users_role.mention
+                    if manage_users_role
+                    else f"missing role: <@&{find}>"
+                )
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Manage users role: {msg}"))
+
     @inat_set.command(name="beta_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)

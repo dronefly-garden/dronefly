@@ -97,6 +97,7 @@ class INatCog(
             active_role=None,
             bot_prefixes=[],
             inactive_role=None,
+            manage_users_role=None,
             user_projects={},  # deprecated (schema <=2); superseded by event_projects
             event_projects={},
             places={},
