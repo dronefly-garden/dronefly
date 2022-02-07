@@ -419,7 +419,10 @@ class INatAPI:
 
         page = 1
         more = True
-        user_json = {}
+        users = []
+        # Note: This will only handle up to 10,000 users. Anything more
+        # needs to set id_above and id_below. With luck, we won't ever
+        # need to deal with projects this big!
         while more:
             response = await self.get_observations(
                 "observers",
@@ -434,7 +437,9 @@ class INatAPI:
                     if user_id:
                         # Synthesize a single result as if returned by a get_users
                         # lookup of a single user_id, and cache it:
+                        user_json = {}
                         user_json["results"] = [user]
+                        users.append(user)
                         self.users_cache[user_id] = user_json
                         self.users_login_cache[user["login"]] = user_id
             # default values provided defensively to exit loop if missing
@@ -445,4 +450,10 @@ class INatAPI:
             else:
                 more = False
 
-        return user_json
+        # return all user results as a single page
+        return {
+            "total_results": len(users),
+            "pages": 1,
+            "per_page": len(users),
+            "results": users,
+        }
