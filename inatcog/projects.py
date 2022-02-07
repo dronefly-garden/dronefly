@@ -22,6 +22,7 @@ class UserProject(DataClassJsonMixin):
     project_id: int = field(metadata=config(field_name="id"))
     title: str
     user_ids: List[int]
+    prefers_user_trust: bool
     project_observation_rules: List[CollectionProjectRule]
     project_type: str
 
@@ -30,7 +31,18 @@ class UserProject(DataClassJsonMixin):
             raise TypeError
 
     def observed_by_ids(self):
-        """The 'must be observed by' rule user ids."""
+        """Valid observer user ids for the project.
+
+        There are two kinds of user projects:
+
+        1. prefers_user_trust projects are "Members only", and any user can join and
+           become a member
+        2. "observed_by_user?" projects only include observations from users added to
+           the project by the project admins
+        """
+        if self.prefers_user_trust:
+            return self.user_ids
+
         return [
             rule.operand_id
             for rule in self.project_observation_rules
