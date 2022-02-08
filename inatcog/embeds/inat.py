@@ -1032,9 +1032,14 @@ class INatEmbeds(MixinMeta):
         """Get user's ranked obs & spp stats for a project."""
 
         async def get_unranked_count(*args, **kwargs):
-            response = await self.api.get_observations(
-                *args, project_id=project_id, user_id=user.user_id, per_page=0, **kwargs
-            )
+            _kwargs = {
+                "user_id": user.user_id,
+                "per_page": 0,
+                **kwargs,
+            }
+            if project_id:
+                _kwargs["project_id"] = project_id
+            response = await self.api.get_observations(*args, **_kwargs)
             if response:
                 return response["total_results"]
             return "unknown"
@@ -1055,9 +1060,9 @@ class INatEmbeds(MixinMeta):
         # TODO: cache for a short while so users can compare stats but not
         # have to worry about stale data.
         if with_rank:
-            response = await self.api.get_project_observers_stats(
-                project_id=project_id, **kwargs
-            )
+            if project_id:
+                kwargs["project_id"] = project_id
+            response = await self.api.get_observers_stats(**kwargs)
             stats = [
                 ObserverStats.from_dict(observer) for observer in response["results"]
             ]
@@ -1089,21 +1094,30 @@ class INatEmbeds(MixinMeta):
     async def get_user_server_projects_stats(self, ctx, user):
         """Get a user's stats for the server's main event projects."""
         event_projects = await self.config.guild(ctx.guild).event_projects() or {}
-        project_ids = {
+        projects_by_id = {
             int(event_projects[prj]["project_id"]): prj
             for prj in event_projects
             if event_projects[prj].get("main")
         }
-        projects = await self.api.get_projects(
-            list(project_ids.keys()), refresh_cache=True
-        )
+        project_ids = [project_id for project_id in projects_by_id if project_id]
+        projects = await self.api.get_projects(project_ids, refresh_cache=True)
         stats = []
-        for project_id in project_ids:
-            if project_id not in projects:
+        for project_id in projects_by_id:
+            if project_id and project_id not in projects:
                 continue
-            user_project = UserProject.from_dict(projects[project_id]["results"][0])
-            if user.user_id in user_project.observed_by_ids():
-                abbrev = project_ids[int(project_id)]
+            # Project id 0 is a pseudo-project consisting of just one person
+            # - this allows a server to define user's all-time stats to put in
+            #   `,me` without a project to track them
+            # - set up this special stats item with:
+            #   `,inat set event ever 0 true`
+            # - note that
+            if project_id:
+                user_project = UserProject.from_dict(projects[project_id]["results"][0])
+                is_member = user.user_id in user_project.observed_by_ids()
+            else:
+                is_member = True
+            if is_member:
+                abbrev = projects_by_id[int(project_id)]
                 obs_stats = await self.get_user_project_stats(
                     project_id, user, with_rank=False
                 )
@@ -1124,10 +1138,9 @@ class INatEmbeds(MixinMeta):
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
             taxa_count, _taxa_rank = taxa_stats
-            url = (
-                f"{WWW_BASE_URL}/observations?project_id={project_id}"
-                f"&user_id={user.user_id}"
-            )
+            url = f"{WWW_BASE_URL}/observations?user_id={user.user_id}"
+            if int(project_id):
+                url += f"&project_id={project_id}"
             obs_url = f"{url}&view=observations&verifiable=any"
             spp_url = f"{url}&view=species&verifiable=any&hrank=species"
             taxa_url = f"{url}&view=species&verifiable=any"

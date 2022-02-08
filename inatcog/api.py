@@ -300,11 +300,11 @@ class INatAPI:
             return self.projects_cache[first_project_id]
         return None
 
-    async def get_project_observers_stats(self, **kwargs):
-        """Query API for user counts & rankings in a project."""
+    async def get_observers_stats(self, **kwargs):
+        """Query API for user counts & rankings."""
         request = "/v1/observations/observers"
         # TODO: validate kwargs includes project_id
-        # TODO: support projects with > 500 observers (one page, default)
+        # TODO: support queries with > 500 observers (one page, default)
         full_url = f"{API_BASE_URL}{request}"
         return await self._get_rate_limited(full_url, **kwargs)
 

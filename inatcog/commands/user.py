@@ -327,14 +327,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
             int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
             for prj_abbrev in event_projects
             if event_projects[prj_abbrev]["main"]
+            and int(event_projects[prj_abbrev]["project_id"])
         }
         if abbrev in event_projects:
             prj = event_projects[abbrev]
             prj_id = int(prj["project_id"])
             event_project_ids = {}
-            event_project_ids[prj_id] = abbrev
-            teams = prj["teams"]
-            team_abbrevs = teams.split(",") if teams else []
+            if prj_id:
+                event_project_ids[prj_id] = abbrev
+                teams = prj["teams"]
+                team_abbrevs = teams.split(",") if teams else []
             for team_abbrev in team_abbrevs:
                 if team_abbrev in event_projects:
                     prj = event_projects[team_abbrev]
@@ -355,7 +357,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # Only do the extra work to initially cache all the observers when
         # listing all users.
         # - TODO: review caching and make it a little less magic
-        if not self.user_cache_init.get(ctx.guild.id):
+        if main_event_project_ids and not self.user_cache_init.get(ctx.guild.id):
             await self.api.get_observers_from_projects(list(main_event_project_ids))
             self.user_cache_init[ctx.guild.id] = True
 
