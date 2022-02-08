@@ -3,16 +3,20 @@ import re
 
 # Match any iNaturalist partner URL
 # See https://www.inaturalist.org/pages/network
+# - each partner domain matches one of the four schemes below
 WWW_URL_PAT = (
     r"https?://("
+    # <partner>.inaturalist.org and the main site [www.]inaturalist.org
     r"((www|colombia|costarica|panama|ecuador|israel|greece|uk|guatemala)\.)?inaturalist\.org"
-    r"|inaturalist\.ala\.org\.au"
+    # inaturalist.<partner>.<tld>
+    r"|inaturalist\.(ala\.org\.au|laji\.fi|mma\.gob\.cl)"
     r"|(www\.)?("
+    # [www.]inaturalist.<tld>
     r"inaturalist\.(ca|lu|nz|se)"
+    # [www.]<partner>.<tld>
     r"|naturalista\.(mx|uy)"
     r"|biodiversity4all\.org"
     r"|argentinat\.org"
-    r"|inaturalist\.laji\.fi"
     r")"
     r")"
 )
