@@ -17,7 +17,18 @@ class CollectionProjectRule(DataClassJsonMixin):
 
 @dataclass
 class UserProject(DataClassJsonMixin):
-    """A collection project for observations by specific users."""
+    """A collection project for observations by specific users.
+
+    There are two basic kinds of UserProject. Both are collection projects,
+    and both are "Members only" with the following differences:
+
+    1. prefers_user_trust projects are "Members only" with an open membership.
+        i.e. any user can join and become a member, and only their observations
+        are included.
+    2. "observed_by_user?" projects are "Members only" with a closed membership.
+        i.e. users added to the project by the project admins, and only their
+        observations will be included.
+    """
 
     project_id: int = field(metadata=config(field_name="id"))
     title: str
@@ -33,21 +44,32 @@ class UserProject(DataClassJsonMixin):
     def observed_by_ids(self):
         """Valid observer user ids for the project.
 
-        There are two kinds of user projects:
+        TODO: clarify what the iNat code actually does for these cases and fix
+        as needed. we implement, based on some reasonable assumptions:
 
-        1. prefers_user_trust projects are "Members only", and any user can join and
-           become a member
-        2. "observed_by_user?" projects only include observations from users added to
-           the project by the project admins
+        - for closed membership projects, exclude any user that has both
+          an included rule (observed_by_user?) and an excluded rule
+          (not_observed_by_user?)
+        - for open membership projects, ignore any included user rules
+          and only obey excluded user rules
         """
-        if self.prefers_user_trust:
-            return self.user_ids
-
-        return [
+        exclude_user_ids = [
             rule.operand_id
             for rule in self.project_observation_rules
-            if rule.operator == "observed_by_user?"
+            if rule.operator == "not_observed_by_user?"
         ]
+        if self.prefers_user_trust:
+            include_user_ids = [
+                user_id for user_id in self.user_ids if user_id not in exclude_user_ids
+            ]
+        else:
+            include_user_ids = [
+                rule.operand_id
+                for rule in self.project_observation_rules
+                if rule.operator == "observed_by_user?"
+                and rule.operand_id not in exclude_user_ids
+            ]
+        return include_user_ids
 
 
 @dataclass
