@@ -1544,7 +1544,7 @@ class INatEmbeds(MixinMeta):
 
         if not (unobserved or ident):
             matches = re.findall(
-                r"\n\[[0-9, \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+)*?\)",
+                r"\n\[[0-9, \(\)]+\]\(.*?[?&]user_id=(?P<user_id>\d+).*?\)",
                 description,
             )
             # Total added only if more than one user:
