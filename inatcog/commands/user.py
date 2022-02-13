@@ -296,6 +296,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         event_projects = await config.event_projects()
         filter_role = None
         filter_role_id = None
+        team_roles = []
         if abbrev:
             if abbrev == "active":
                 filter_role_id = await config.active_role()
@@ -342,6 +343,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     prj = event_projects[team_abbrev]
                     prj_id = int(prj["project_id"])
                     event_project_ids[prj_id] = team_abbrev
+                    team_role_id = prj["role"]
+                    team_role = next(
+                        (role for role in ctx.guild.roles if role.id == team_role_id),
+                        None,
+                    )
+                    if team_role:
+                        team_roles.append(team_role)
+
         else:
             event_project_ids = main_event_project_ids
         responses = [
@@ -377,8 +386,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if filter_role:
                 if abbrev not in project_abbrevs and filter_role not in dmember.roles:
                     continue
-                if filter_role in dmember.roles:
-                    line += f" {filter_role.mention}"
+                for role in [filter_role, *team_roles]:
+                    if role in dmember.roles:
+                        line += f" {role.mention}"
             all_names.append(line)
 
         pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
