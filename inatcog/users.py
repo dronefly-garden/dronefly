@@ -55,9 +55,8 @@ class INatUserTable:
             inat_user = None
 
             discord_member = guild.get_member(discord_id)
-            if (
-                discord_member
-                and guild.id in users[discord_id].get("known_in")
+            if discord_member and (
+                guild.id in users[discord_id].get("known_in")
                 or users[discord_id].get("known_all")
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
