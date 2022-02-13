@@ -4,7 +4,6 @@ from typing import AsyncIterator, Tuple
 import discord
 
 from .base_classes import User
-from .common import LOG
 
 
 class INatUserTable:
@@ -75,7 +74,6 @@ class INatUserTable:
                 pass
 
         for (discord_member, inat_user_id) in known_users:
-            LOG.info("discord id: %d inat user id: %d", discord_member.id, inat_user_id)
             try:
                 user_json = await self.cog.api.get_users(inat_user_id)
             except LookupError:
