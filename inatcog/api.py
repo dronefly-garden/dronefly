@@ -1,7 +1,7 @@
 """Module to access iNaturalist API."""
 from time import time
 from types import SimpleNamespace
-from typing import Union
+from typing import List, Optional, Union
 
 from aiohttp import (
     ClientConnectorError,
@@ -407,14 +407,19 @@ class INatAPI:
             return self.users_cache[user_id]
         return None
 
-    async def get_observers_from_projects(self, project_ids: list):
+    async def get_observers_from_projects(
+        self, project_ids: Optional[List] = None, user_ids: Optional[List] = None
+    ):
         """Get observers for a list of project ids.
 
         Since the cache is filled as a side effect, this method can be
         used to prime the cache prior to fetching multiple users at once
         by id.
+
+        Users may also be specified, and in that case, project ids may be
+        omitted. The cache will then be primed from a list of user ids.
         """
-        if not project_ids:
+        if not (project_ids or user_ids):
             return
 
         page = 1
@@ -424,11 +429,12 @@ class INatAPI:
         # needs to set id_above and id_below. With luck, we won't ever
         # need to deal with projects this big!
         while more:
-            response = await self.get_observations(
-                "observers",
-                project_id=",".join(map(str, project_ids)),
-                page=page,
-            )
+            params = {"page": page}
+            if project_ids:
+                params["project_id"] = ",".join(map(str, project_ids))
+            if user_ids:
+                params["user_id"] = ",".join(map(str, user_ids))
+            response = await self.get_observations("observers", **params)
             results = response.get("results") or []
             for observer in results:
                 user = observer.get("user")
