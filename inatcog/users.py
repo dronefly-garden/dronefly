@@ -64,7 +64,7 @@ class INatUserTable:
                 if inat_user_id:
                     if inat_user_id not in self.cog.api.users_cache:
                         uncached_known_user_ids.append(inat_user_id)
-                    known_users.append([discord_id, inat_user_id])
+                    known_users.append([discord_member, inat_user_id])
 
         if uncached_known_user_ids:
             try:
@@ -75,8 +75,8 @@ class INatUserTable:
             except LookupError:
                 pass
 
-        for (discord_id, inat_user_id) in known_users:
-            LOG.info("discord id: %d inat user id: %d", discord_id, inat_user_id)
+        for (discord_member, inat_user_id) in known_users:
+            LOG.info("discord id: %d inat user id: %d", discord_member.id, inat_user_id)
             try:
                 user_json = await self.cog.api.get_users(inat_user_id)
             except LookupError:
@@ -86,5 +86,4 @@ class INatUserTable:
                 if results:
                     inat_user = User.from_dict(results[0])
             if inat_user:
-                discord_member = guild.get_member(discord_id)
                 yield (discord_member, inat_user)
