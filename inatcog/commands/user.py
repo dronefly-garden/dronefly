@@ -377,7 +377,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if user_id in project.observed_by_ids()
             ]
 
-        all_names = []
+        matching_names = []
+        non_matching_names = []
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
@@ -386,12 +387,32 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if filter_role:
                 if abbrev not in project_abbrevs and filter_role not in dmember.roles:
                     continue
+                has_opposite_team_role = False
                 for role in [filter_role, *team_roles]:
                     if role in dmember.roles:
                         line += f" {role.mention}"
-            all_names.append(line)
+                        if role in team_roles:
+                            has_opposite_team_role = True
+                role_strictly_matches_project = (
+                    abbrev in project_abbrevs
+                    and abbrev not in team_abbrevs
+                    and filter_role in dmember.roles
+                    and not has_opposite_team_role
+                )
+            else:
+                role_strictly_matches_project = True
+            if role_strictly_matches_project:
+                matching_names.append(line)
+            else:
+                non_matching_names.append(line)
 
-        pages = ["\n".join(filter(None, names)) for names in grouper(all_names, 10)]
+        # Placing non matching names first allows an event manager to easily
+        # spot and correct mismatches. See role_strictly_matches_project above
+        # for what constititutes a mismatch.
+        pages = [
+            "\n".join(filter(None, names))
+            for names in grouper([*non_matching_names, *matching_names], 10)
+        ]
 
         if pages:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
