@@ -281,7 +281,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def user_list(self, ctx, abbrev: str = None):
         """List members with known iNat ids on this server.
 
-        `abbrev` can be `active`, `inactive`, or an abbrev of an `event`, and will filter the user list and only show users with the associated role.
+        The `abbrev` can be `active`, `inactive`, or an *event* abbreviation. The user list will only show known users with the associated role and/or in the event project. Discrepancies will be listed first.
+
+        Note: If a user not known in the server holds an event role, or is added to an event project, those discrepancies won't be reported.
 
         See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
         """  # noqa: E501
