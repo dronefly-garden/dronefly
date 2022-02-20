@@ -2,9 +2,9 @@ name: Dronefly
 
 on: 
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 env:
   LATEST_PY_VERSION: '3.9'
 
