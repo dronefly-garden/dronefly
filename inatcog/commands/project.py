@@ -2,18 +2,20 @@
 
 import re
 
+import html2markdown
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import WWW_BASE_URL
-from inatcog.checks import known_inat_user
-from inatcog.common import grouper
-from inatcog.converters.base import MemberConverter
-from inatcog.embeds.common import apologize, make_embed
-from inatcog.embeds.inat import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.places import RESERVED_PLACES
+from ..base_classes import WWW_BASE_URL
+from ..checks import known_inat_user
+from ..common import grouper
+from ..converters.base import MemberConverter
+from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..places import RESERVED_PLACES
+from ..utils import get_valid_user_config
 
 
 class CommandsProject(INatEmbeds, MixinMeta):
@@ -30,7 +32,42 @@ class CommandsProject(INatEmbeds, MixinMeta):
         """
         try:
             project = await self.project_table.get_project(ctx.guild, query)
-            await ctx.send(project.url)
+            embed = make_embed(
+                title=project.title,
+                url=project.url,
+                description=html2markdown.convert(
+                    " " + project.description[:MAX_EMBED_DESCRIPTION_LEN]
+                ),
+            )
+            if project.banner_color:
+                embed.color = int(project.banner_color.replace("#", "0x"), 16)
+            if project.icon:
+                embed.set_thumbnail(url=project.icon)
+            embed.add_field(name="Project number", value=project.project_id)
+            if ctx.guild:
+                guild_config = self.config.guild(ctx.guild)
+                projects = await guild_config.projects()
+                proj_abbrevs = [
+                    abbrev
+                    for abbrev in projects
+                    if projects[abbrev] == project.project_id
+                ]
+                if proj_abbrevs:
+                    abbrevs = ",".join(proj_abbrevs)
+                else:
+                    abbrevs = "*none*"
+                    try:
+                        can_add_projects = bool(await get_valid_user_config(self, ctx))
+                    except LookupError:
+                        can_add_projects = False
+                    if can_add_projects:
+                        embed.set_footer(
+                            text=f"Add an abbreviation with {ctx.clean_prefix}project add"
+                        )
+                embed.add_field(
+                    name=self.p.plural("Abbreviation", len(proj_abbrevs)), value=abbrevs
+                )
+            await ctx.send(embed=embed)
         except LookupError as err:
             await ctx.send(err)
 

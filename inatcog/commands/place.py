@@ -5,13 +5,14 @@ import re
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import WWW_BASE_URL
-from inatcog.checks import known_inat_user
-from inatcog.common import grouper
-from inatcog.embeds.common import apologize, make_embed
-from inatcog.embeds.inat import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.places import RESERVED_PLACES
+from ..base_classes import WWW_BASE_URL
+from ..checks import known_inat_user
+from ..common import grouper
+from ..embeds.common import apologize, make_embed
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..places import RESERVED_PLACES
+from ..utils import get_valid_user_config
 
 
 class CommandsPlace(INatEmbeds, MixinMeta):
@@ -28,7 +29,31 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         """
         try:
             place = await self.place_table.get_place(ctx.guild, query, ctx.author)
-            await ctx.send(place.url)
+            embed = make_embed(title=place.display_name, url=place.url)
+            embed.add_field(name="Place number", value=place.place_id)
+            if ctx.guild:
+                guild_config = self.config.guild(ctx.guild)
+                places = await guild_config.places()
+                place_abbrevs = [
+                    abbrev for abbrev in places if places[abbrev] == place.place_id
+                ]
+                if place_abbrevs:
+                    abbrevs = ",".join(place_abbrevs)
+                else:
+                    abbrevs = "*none*"
+                    try:
+                        can_add_places = bool(await get_valid_user_config(self, ctx))
+                    except LookupError:
+                        can_add_places = False
+                    if can_add_places:
+                        embed.set_footer(
+                            text=f"Add an abbreviation with {ctx.clean_prefix}place add"
+                        )
+                embed.add_field(
+                    name=self.p.plural("Abbreviation", len(place_abbrevs)),
+                    value=abbrevs,
+                )
+            await ctx.send(embed=embed)
         except LookupError as err:
             await ctx.send(err)
 

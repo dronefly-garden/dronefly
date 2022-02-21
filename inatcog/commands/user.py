@@ -20,6 +20,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
+from ..utils import get_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -162,16 +163,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 "iNat user was added on another server and can only be removed there."
             )
 
-    async def get_valid_user_config(self, ctx):
-        """iNat user config known in this guild."""
-        user_config = self.config.user(ctx.author)
-        inat_user_id = await user_config.inat_user_id()
-        known_in = await user_config.known_in()
-        known_all = await user_config.known_all()
-        if not (inat_user_id and known_all or ctx.guild.id in known_in):
-            raise LookupError("Ask a moderator to add your iNat profile link.")
-        return user_config
-
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """iNat user settings."""
         if setting not in ["all", "known", "home"]:
@@ -204,7 +195,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(f"Unknown setting: {arg}")
             return
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -221,7 +212,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home [place]` set your home place
         """
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -254,7 +245,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set known true` set known on other servers
         """
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx)
         except LookupError as err:
             await ctx.send(err)
             return

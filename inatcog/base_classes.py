@@ -363,6 +363,9 @@ class Project(DataClassJsonMixin):
     project_id: int = field(metadata=config(field_name="id"))
     title: str
     url: str = field(init=False)
+    description: str
+    icon: str
+    banner_color: str
 
     def __post_init__(self):
         """URL for project."""
