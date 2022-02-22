@@ -2,7 +2,6 @@
 import copy
 import re
 from typing import NamedTuple, Optional, Union
-from urllib.parse import urlencode
 
 from .base_classes import (
     ConservationStatus,
@@ -11,12 +10,12 @@ from .base_classes import (
     Taxon,
     User,
     Place,
-    WWW_BASE_URL,
 )
 from .common import LOG
 from .core.models.taxon import RANK_LEVELS
 from .core.parsers.url import STATIC_URL_PAT
 from .core.query.query import TaxonQuery
+from .utils import obs_url_from_v1
 
 
 TAXON_ID_LIFE = 48460
@@ -455,7 +454,7 @@ async def format_place_taxon_counts(
         )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count:,}]({url}) {name}"
         else:
@@ -498,7 +497,7 @@ async def format_user_taxon_counts(
         )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count:,}]({url}) {login}"
         else:

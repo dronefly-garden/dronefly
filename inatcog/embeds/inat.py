@@ -7,7 +7,7 @@ from io import BytesIO
 import re
 import textwrap
 from typing import Optional, Union
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
@@ -62,6 +62,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..users import User
+from ..utils import obs_url_from_v1
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -477,8 +478,8 @@ class INatEmbeds(MixinMeta):
             )
             observations_count = observations["total_results"]
             species_count = species["total_results"]
-            url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_args)
-            species_url = url + "&view=species"
+            url = obs_url_from_v1(obs_args)
+            species_url = obs_url_from_v1({**obs_args, "view": "species"})
             if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
                 summary_counts = f"Total: [{observations_count:,}]({url})"
             else:
@@ -530,10 +531,8 @@ class INatEmbeds(MixinMeta):
         else:
             description = summary_counts
 
-        url = f"{WWW_BASE_URL}/observations"
         title_args = title_query_response.obs_args()
-        if title_args:
-            url += "?" + urlencode(title_args)
+        url = obs_url_from_v1(title_args)
         full_title = f"Observations {title_query_response.obs_query_description()}"
         embed = make_embed(url=url, title=full_title, description=description)
         return embed
@@ -913,7 +912,7 @@ class INatEmbeds(MixinMeta):
             filter_args = copy.copy(obs_args)
             del filter_args["taxon_id"]
             obs_cnt = taxon.observations_count
-            obs_url = "?".join((f"{WWW_BASE_URL}/observations", urlencode(obs_args)))
+            obs_url = obs_url_from_v1(obs_args)
             # i.e. any args other than the ones accounted for in rec.observations_count
             if filter_args:
                 response = await self.api.get_observations(per_page=0, **obs_args)
@@ -926,7 +925,7 @@ class INatEmbeds(MixinMeta):
             place = None
             obs_args = {"taxon_id": taxon.id}
             obs_cnt = taxon.observations_count
-            obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.id}"
+            obs_url = obs_url_from_v1(obs_args)
         else:
             LOG.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
@@ -1138,12 +1137,18 @@ class INatEmbeds(MixinMeta):
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
             taxa_count, _taxa_rank = taxa_stats
-            url = f"{WWW_BASE_URL}/observations?user_id={user.user_id}"
+            obs_args = {"user_id": user.user_id}
             if int(project_id):
-                url += f"&project_id={project_id}"
-            obs_url = f"{url}&view=observations&verifiable=any"
-            spp_url = f"{url}&view=species&verifiable=any&hrank=species"
-            taxa_url = f"{url}&view=species&verifiable=any"
+                obs_args["project_id"] = project_id
+            obs_url = obs_url_from_v1(
+                {**obs_args, "view": "observations", "verifiable": "any"}
+            )
+            spp_url = obs_url_from_v1(
+                {**obs_args, "view": "species", "verifiable": "any", "hrank": "species"}
+            )
+            taxa_url = obs_url_from_v1(
+                {**obs_args, "view": "species", "verifiable": "any"}
+            )
             fmt = (
                 f"[{obs_count:,}]({obs_url}) / [{spp_count:,}]({spp_url}) / "
                 f"[{taxa_count:,}]({taxa_url})"
@@ -1169,13 +1174,14 @@ class INatEmbeds(MixinMeta):
         taxa_count, _taxa_rank = await self.get_user_project_stats(
             project_id, user, category="taxa"
         )
-        url = (
-            f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
-            f"&user_id={user.user_id}"
+        obs_args = {"project_id": project.project_id, "user_id": user.user_id}
+        obs_url = obs_url_from_v1(
+            {**obs_args, "view": "observations", "verifiable": "any"}
         )
-        obs_url = f"{url}&view=observations&verifiable=any"
-        spp_url = f"{url}&view=species&verifiable=any&hrank=species"
-        taxa_url = f"{url}&view=species&verifiable=any"
+        spp_url = obs_url_from_v1(
+            {**obs_args, "view": "species", "verifiable": "any", "hrank": "species"}
+        )
+        taxa_url = obs_url_from_v1({**obs_args, "view": "species", "verifiable": "any"})
         fmt = (
             f"[{obs_count:,}]({obs_url}) (#{obs_rank}) / "
             f"[{spp_count:,}]({spp_url}) (#{spp_rank}) / "

@@ -23,6 +23,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields
+from ..utils import obs_url_from_v1
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):
@@ -237,7 +238,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 query_title += f" identified by {query_response.id_by.login}"
             if query_response.place:
                 query_title += f" from {query_response.place.display_name}"
-            url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
+            url = obs_url_from_v1(kwargs)
             kwargs["per_page"] = 200
             return (query_title, url, kwargs)
 

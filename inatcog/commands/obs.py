@@ -20,6 +20,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
+from ..utils import obs_url_from_v1
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 
@@ -231,7 +232,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         obs_opt["view"] = obs_opt_view
-        url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
+        url = obs_url_from_v1(obs_opt)
         taxon = query_response.taxon
         species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
         user_links = get_formatted_user_counts(users, url, species_only, view)
