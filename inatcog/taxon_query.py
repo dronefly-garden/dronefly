@@ -119,28 +119,29 @@ class INatTaxonQuery:
         and one child taxon.
         """
         if query.ancestor:
-            ancestor = await self.maybe_match_taxon(
-                query.ancestor,
-                preferred_place_id=preferred_place_id,
-                scientific_name=scientific_name,
-                locale=locale,
-            )
-            if ancestor:
-                if query.main.ranks:
-                    max_query_rank_level = max(
-                        [RANK_LEVELS[rank] for rank in query.main.ranks]
-                    )
-                    ancestor_rank_level = RANK_LEVELS[ancestor.rank]
-                    if max_query_rank_level >= ancestor_rank_level:
-                        raise LookupError(
-                            "Child rank%s: `%s` must be below ancestor rank: `%s`"
-                            % (
-                                "s" if len(query.main.ranks) > 1 else "",
-                                ",".join(query.main.ranks),
-                                ancestor.rank,
-                            )
+            ancestor = None
+            try:
+                ancestor = await self.maybe_match_taxon(
+                    query.ancestor,
+                    preferred_place_id=preferred_place_id,
+                    scientific_name=scientific_name,
+                    locale=locale,
+                )
+                if ancestor:
+                    if query.main.ranks:
+                        max_query_rank_level = max(
+                            [RANK_LEVELS[rank] for rank in query.main.ranks]
                         )
-                try:
+                        ancestor_rank_level = RANK_LEVELS[ancestor.rank]
+                        if max_query_rank_level >= ancestor_rank_level:
+                            raise LookupError(
+                                "Child rank%s: `%s` must be below ancestor rank: `%s`"
+                                % (
+                                    "s" if len(query.main.ranks) > 1 else "",
+                                    ",".join(query.main.ranks),
+                                    ancestor.rank,
+                                )
+                            )
                     taxon = await self.maybe_match_taxon(
                         query.main,
                         ancestor_id=ancestor.id,
@@ -148,12 +149,16 @@ class INatTaxonQuery:
                         scientific_name=scientific_name,
                         locale=locale,
                     )
-                except LookupError as err:
-                    reason = (
-                        str(err) + "\nPerhaps instead of `in` (ancestor), you meant\n"
-                        "`from` (place) or `in prj` (project)?"
-                    )
-                    raise LookupError(reason) from err
+            except LookupError as err:
+                reason = (
+                    str(err) + "\nPerhaps instead of `in` (ancestor), you meant\n"
+                    "`from` (place) or `in prj` (project)?"
+                )
+                if ancestor:
+                    reason = f"{reason}\n\nAncestor taxon: {ancestor.format_name(with_term=True)}"
+                else:
+                    reason = f"{reason}\n\nAncestor taxon not found."
+                raise LookupError(reason) from err
         else:
             taxon = await self.maybe_match_taxon(
                 query.main,
