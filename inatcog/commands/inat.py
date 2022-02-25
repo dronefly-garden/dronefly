@@ -638,6 +638,28 @@ class CommandsInat(INatEmbeds, MixinMeta):
             title="Embed attributes", description=attributes_inspect
         )
         embeds.append(attributes_embed)
+        reactions = message.reactions
+        if reactions:
+            reactions_table = ""
+            all_users = await self.config.all_users()
+            for reaction in reactions:
+                reactions_table += f"{reaction.emoji}: {reaction.count}\n"
+                known_users = []
+                unknown_users = []
+                async for user in reaction.users():
+                    if not user.bot:
+                        if user.id in all_users:
+                            known_users.append(f"`{user.id}`")
+                        else:
+                            unknown_users.append(f"`{user.id}`")
+                if known_users:
+                    reactions_table += "\n".join(known_users) + "\n"
+                if unknown_users:
+                    reactions_table += "*unknown:*\n" + "\n".join(unknown_users) + "\n"
+            reactions_embed = make_embed(
+                title="Message reactions", description=reactions_table
+            )
+            embeds.append(reactions_embed)
 
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
