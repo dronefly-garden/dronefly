@@ -7,6 +7,7 @@ from typing import Optional, Union
 import discord
 from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
+from redbot.core.utils.chat_formatting import pagify
 
 from inatcog.converters.base import InheritableBoolConverter
 from inatcog.embeds.common import make_embed
@@ -656,10 +657,15 @@ class CommandsInat(INatEmbeds, MixinMeta):
                     reactions_table += "\n".join(known_users) + "\n"
                 if unknown_users:
                     reactions_table += "*unknown:*\n" + "\n".join(unknown_users) + "\n"
-            reactions_embed = make_embed(
-                title="Message reactions", description=reactions_table
-            )
-            embeds.append(reactions_embed)
+            pages = [page for page in pagify(reactions_table, page_length=500)]
+            page_number = 0
+            for page in pages:
+                page_number += 1
+                reactions_embed = make_embed(
+                    title=f"Message reactions (page {page_number} of {len(pages)})",
+                    description=page,
+                )
+                embeds.append(reactions_embed)
 
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
