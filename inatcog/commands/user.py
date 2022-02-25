@@ -7,7 +7,7 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..base_classes import User
+from ..base_classes import User, WWW_BASE_URL
 from ..checks import can_manage_users, known_inat_user
 from ..common import DEQUOTE, grouper
 from ..converters.base import (
@@ -350,11 +350,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
         ]
-        projects = [
-            UserProject.from_dict(response["results"][0])
+        projects = {
+            response["results"][0]["id"]: UserProject.from_dict(response["results"][0])
             for response in responses
             if response
-        ]
+        }
 
         # Only do the extra work to initially cache all the observers when
         # listing all users.
@@ -365,13 +365,20 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         def abbrevs(user_id: int):
             return [
-                event_project_ids[int(project.project_id)]
-                for project in projects
-                if user_id in project.observed_by_ids()
+                event_project_ids[int(project_id)]
+                for project_id in projects
+                if user_id in projects[int(project_id)].observed_by_ids()
             ]
 
         matching_names = []
         non_matching_names = []
+        member_user_ids = []
+        if filter_role and abbrev in event_projects:
+            all_user_ids = projects[
+                int(event_projects[abbrev]["project_id"])
+            ].observed_by_ids()
+        else:
+            all_user_ids = []
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
@@ -380,6 +387,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if filter_role:
                 if abbrev not in project_abbrevs and filter_role not in dmember.roles:
                     continue
+                member_user_ids.append(iuser.user_id)
                 has_opposite_team_role = False
                 for role in [filter_role, *team_roles]:
                     if role in dmember.roles:
@@ -399,6 +407,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 non_matching_names.append(line)
 
+        for user_id in all_user_ids:
+            if user_id not in member_user_ids:
+                line = (
+                    ":ghost: *(unknown user)* is "
+                    f"[`{user_id}`]({WWW_BASE_URL}/users/{user_id})\n{abbrev}"
+                )
+                non_matching_names.append(line)
         # Placing non matching names first allows an event manager to easily
         # spot and correct mismatches. See role_strictly_matches_project above
         # for what constititutes a mismatch.
