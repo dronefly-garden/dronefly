@@ -746,6 +746,20 @@ class CommandsInat(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
 
+    @staticmethod
+    def format_event(abbrev, event):
+        """Format an event description."""
+        main = {True: " (main)", False: ""}[event["main"]]
+        project_id = event["project_id"]
+        line = f"**Abbrev:** {abbrev}{main} **Project id:** {project_id}"
+        role = event["role"]
+        if role:
+            line += f" **Role:** <@&{role}>"
+        teams = event["teams"]
+        if teams:
+            line += f" **Teams:** {teams}"
+        return line
+
     @inat_set.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
     async def set_event(
@@ -782,10 +796,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         _event_project = event_projects.get(project_abbrev)
         event_project = _event_project or {}
 
+        description = ""
         if _event_project:
-            await ctx.send(
-                f"event project {project_abbrev} was:\n```py\n{repr(event_project)}\n```"
-            )
+            line = self.format_event(project_abbrev, event_project)
+            description = f"was:\n{line}\n"
 
         event_project["project_id"] = project_id
         event_projects[project_abbrev] = event_project
@@ -795,9 +809,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         if teams or not _event_project:
             event_project["teams"] = teams
         await config.event_projects.set(event_projects)
-        await ctx.send(
-            f"event project {project_abbrev} is now:\n```py\n{repr(event_project)}\n```"
-        )
+        line = self.format_event(project_abbrev, event_project)
+        if _event_project:
+            description += f"now:\n{line}"
+        else:
+            description = line
+        embed = make_embed(title="Event project", description=description)
+        await ctx.send(embed=embed)
 
     @inat_clear.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
@@ -819,4 +837,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Show server event projects."""
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
-        await ctx.send(f"```py\n{repr(event_projects)}\n```")
+        embed = make_embed(title="Event projects")
+        description = ""
+        for abbrev in event_projects:
+            event = event_projects[abbrev]
+            line = self.format_event(abbrev, event)
+            description += line + "\n"
+        embed.description = description
+        await ctx.send(embed=embed)
