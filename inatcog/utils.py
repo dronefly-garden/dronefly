@@ -4,14 +4,22 @@ from urllib.parse import urlencode
 from .base_classes import WWW_BASE_URL
 
 
-async def get_valid_user_config(cog, ctx):
-    """iNat user config known in this guild."""
+async def get_valid_user_config(cog, ctx, anywhere=False):
+    """Return iNat user config if known in this server.
+
+    Note: Even if the user is known in another guild, they
+    are not considered known anywhere until they permit it
+    with `,user set known True`.
+    """
     user_config = cog.config.user(ctx.author)
     inat_user_id = await user_config.inat_user_id()
     known_in = await user_config.known_in()
-    known_all = await user_config.known_all()
-    if not (inat_user_id and known_all or ctx.guild.id in known_in):
-        raise LookupError("Ask a moderator to add your iNat profile link.")
+    known = inat_user_id and (
+        ctx.guild.id in known_in or anywhere and await user_config.known_all()
+    )
+    if not known:
+        where = "" if anywhere else " in this server"
+        raise LookupError(f"iNat user not known{where}.")
     return user_config
 
 

@@ -80,10 +80,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
-        known_all = await config.known_all()
         known_in = await config.known_in()
-        if inat_user_id and known_all or ctx.guild.id in known_in:
-            await ctx.send("iNat user already known.")
+        if inat_user_id and ctx.guild.id in known_in:
+            await ctx.send("iNat user already known here.")
             return
 
         mat_link = re.search(PAT_USER_LINK, inat_user)
@@ -195,7 +194,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(f"Unknown setting: {arg}")
             return
         try:
-            config = await get_valid_user_config(self, ctx)
+            config = await get_valid_user_config(self, ctx, True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -212,7 +211,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home [place]` set your home place
         """
         try:
-            config = await get_valid_user_config(self, ctx)
+            config = await get_valid_user_config(self, ctx, True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -245,7 +244,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set known true` set known on other servers
         """
         try:
-            config = await get_valid_user_config(self, ctx)
+            config = await get_valid_user_config(self, ctx, True)
         except LookupError as err:
             await ctx.send(err)
             return

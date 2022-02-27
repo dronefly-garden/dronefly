@@ -8,7 +8,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..base_classes import WWW_BASE_URL
-from ..checks import known_inat_user
+from ..checks import known_inat_user_here
 from ..common import grouper
 from ..converters.base import MemberConverter
 from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
@@ -71,7 +71,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
 
-    @known_inat_user()
+    @known_inat_user_here()
     @project.command(name="add")
     async def project_add(self, ctx, abbrev: str, project_number: int):
         """Add project abbreviation for server."""
@@ -173,7 +173,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         else:
             await apologize(ctx, "Nothing found")
 
-    @known_inat_user()
+    @known_inat_user_here()
     @project.command(name="remove")
     async def project_remove(self, ctx, abbrev: str):
         """Remove project abbreviation for server."""

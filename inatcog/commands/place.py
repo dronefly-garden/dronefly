@@ -6,7 +6,7 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..base_classes import WWW_BASE_URL
-from ..checks import known_inat_user
+from ..checks import known_inat_user_here
 from ..common import grouper
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
@@ -57,7 +57,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
 
-    @known_inat_user()
+    @known_inat_user_here()
     @place.command(name="add")
     async def place_add(self, ctx, abbrev: str, place_number: int):
         """Add place abbreviation for server."""
@@ -159,7 +159,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         else:
             await apologize(ctx, "Nothing found")
 
-    @known_inat_user()
+    @known_inat_user_here()
     @place.command(name="remove")
     async def place_remove(self, ctx, abbrev: str):
         """Remove place abbreviation for server."""
