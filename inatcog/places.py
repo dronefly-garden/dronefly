@@ -3,6 +3,7 @@ from typing import Union
 
 from .base_classes import Place
 from .converters.base import QuotedContextMemberConverter
+from .utils import get_valid_user_config
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 
@@ -24,8 +25,11 @@ class INatPlaceTable:
         if isinstance(query, str):
             abbrev = query.lower()
             if abbrev == "home" and user:
-                user_config = self.cog.config.user(user)
-                home_id = await user_config.home()
+                try:
+                    user_config = await get_valid_user_config(user)
+                    home_id = await user_config.home()
+                except LookupError:
+                    pass
         if home_id or isinstance(query, int) or query.isnumeric():
             place_id = home_id or query
             response = await self.cog.api.get_places(int(place_id))

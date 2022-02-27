@@ -107,7 +107,10 @@ class INatCog(
         )
         self.config.register_channel(autoobs=None, dot_taxon=None)
         self.config.register_user(
-            home=None, inat_user_id=None, known_in=[], known_all=False
+            home=None,
+            inat_user_id=None,
+            known_in=[],
+            known_all=False,
         )
         self._cleaned_up = False
         self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())

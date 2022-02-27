@@ -1,4 +1,6 @@
 """Module for user command group."""
+import asyncio
+import contextlib
 from datetime import datetime
 import re
 
@@ -8,6 +10,7 @@ from discord.ext.commands import MemberConverter as DiscordMemberConverter, Comm
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import User, WWW_BASE_URL
 from ..checks import can_manage_users, known_inat_user
@@ -68,11 +71,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @user.command(name="add")
     @can_manage_users()
     async def user_add(self, ctx, discord_user: str, inat_user: str):
-        """Add user as an iNat user for this server.
+        """Add user in this server, or `me` to add yourself.
 
         `discord_user`
         - `me`, Discord user mention, ID, username, or nickname.
-        - The special value `me` is only accepted in DM and adds the user who types it.
+        - You can only add yourself in DM.
         - Username and nickname must be enclosed in double quotes if they contain blanks, so a mention or ID is easier.
         - Turn on `Developer Mode` in your Discord user settings to enable `Copy ID` when right-clicking/long-pressing a user's PFP.
           Depending on your platform, the setting is in `Behavior` or `Appearance > Advanced`.
@@ -83,14 +86,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if discord_user == "me":
             if ctx.guild:
                 await ctx.send(
-                    "Ask a mod to add you in this server, or send this command as a DM."
+                    f"`{ctx.clean_prefix}user add me` is only supported in DM with the bot.\n"
+                    "To be added in this server, a mod must add you by your Discord username."
                 )
                 return
             discord_user = ctx.author
         else:
             if not ctx.guild:
                 await ctx.send(
-                    "You can only add yourself in DM with `{ctx.clean_prefix}user add me`."
+                    f"Add yourself with `{ctx.clean_prefix}user add me`.\n"
+                    "Other users cannot be added in DM."
                 )
                 return
             try:
@@ -151,41 +156,98 @@ class CommandsUser(INatEmbeds, MixinMeta):
             f"{discord_user.display_name} is added as {user.display_name()}."
         )
 
+    @staticmethod
+    async def _user_clear(ctx, config):
+        # Removal from last server removes all traces of the user:
+        await config.inat_user_id.clear()
+        await config.known_all.clear()
+        await config.known_in.clear()
+        await ctx.send("iNat user completely removed.")
+
     @user.command(name="remove")
     @can_manage_users()
-    async def user_remove(self, ctx, discord_user: discord.User):
-        """Remove user as an iNat user for this server.
+    async def user_remove(self, ctx, discord_user: str):
+        """Remove user in this server, or `me` to remove yourself.
 
         `discord_user`
-        - Discord username or nickname
+        - `me`, Discord user mention, ID, username, or nickname.
+        - You can only remove yourself in DM.
         - enclose in double-quotes if it contains blanks
         - for this reason, a mention is easier
         """
+
+        if discord_user == "me":
+            if ctx.guild:
+                await ctx.send(
+                    f"`{ctx.clean_prefix}user remove me` is only supported in DM with the bot.\n"
+                    "To be removed in this server, a mod must remove you by your Discord username."
+                )
+                return
+            discord_user = ctx.author
+        else:
+            if not ctx.guild:
+                await ctx.send(
+                    f"Remove yourself with `{ctx.clean_prefix}user remove me`.\n"
+                    "Other users cannot be added or removed in DM."
+                )
+                return
+            try:
+                ctx_member = await DiscordMemberConverter().convert(ctx, discord_user)
+                discord_user = ctx_member
+            except (BadArgument, CommandError):
+                await ctx.send("Invalid or unknown Discord member.")
+                return
         config = self.config.user(discord_user)
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
         known_all = await config.known_all()
+        # User can only be removed from servers where they were added unless
+        # in a DM (special value 0).
         guild_id = ctx.guild.id if ctx.guild else 0
         if not inat_user_id or not (known_all or guild_id in known_in):
             await ctx.send("iNat user not known.")
             return
-        # User can only be removed from servers where they were added:
-        # - the special value 0 is for DMs
-        if guild_id in known_in:
-            known_in.remove(guild_id)
-            await config.known_in.set(known_in)
-            if known_in:
-                await ctx.send("iNat user removed from this server.")
-            else:
-                # Removal from last server removes all traces of the user:
-                await config.inat_user_id.clear()
-                await config.known_all.clear()
-                await config.known_in.clear()
-                await ctx.send("iNat user removed.")
-        elif known_in and known_all:
-            await ctx.send(
-                "iNat user was added on another server and can only be removed there."
+
+        # DMs are a special case:
+        if not guild_id:
+            query = await ctx.send(
+                "This action is irrevocable and will remove all your settings"
+                " including on any servers where you may have been added.\n\n"
+                "If you really want to remove yourself completely, type:\n"
+                "  `I understand`"
             )
+            try:
+                response = await self.bot.wait_for(
+                    "message_without_command",
+                    check=MessagePredicate.same_context(
+                        channel=ctx.channel, user=ctx.author
+                    ),
+                    timeout=30,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+                    return
+            if response.content.lower() == "i understand":
+                await self._user_clear(ctx, config)
+            return
+
+        if known_in:
+            if guild_id in known_in:
+                known_in.remove(guild_id)
+                await config.known_in.set(known_in)
+                if known_in:
+                    await ctx.send("iNat user removed from this server.")
+                else:
+                    # Removal from last server removes all traces of the user:
+                    # - note: if they added themself via DM, only they can
+                    #   completely remove themself because "server" 0 will
+                    #   be in their DM
+                    await self._user_clear(ctx, config)
+            elif known_all:
+                await ctx.send(
+                    "iNat user was added on another server or in DM and can only be removed there."
+                )
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """iNat user settings."""
@@ -205,6 +267,36 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     await ctx.send(f"Non-existent place ({home_id})")
             else:
                 await ctx.send("home: none")
+
+    @user.command(name="remove_all")
+    @checks.is_owner()
+    async def user_remove_all(self, ctx, discord_user: discord.User):
+        """Remove a user's settings for all servers."""
+        config = self.config.user(discord_user)
+        query = await ctx.send(
+            "This action is irrevocable and will remove all of this user's"
+            " settings on all servers. Only do this if the user requested it.\n"
+            "Settings removal does not prevent the user from later being re-added"
+            " or from accessing other bot functions. To do that, ban them with"
+            f" `{ctx.clean_prefix}userlocalblocklist add`.\n\n"
+            f"If you really want to remove {discord_user.mention} completely, type:\n"
+            "  `I understand`"
+        )
+        try:
+            response = await self.bot.wait_for(
+                "message_without_command",
+                check=MessagePredicate.same_context(
+                    channel=ctx.channel, user=ctx.author
+                ),
+                timeout=30,
+            )
+        except asyncio.TimeoutError:
+            with contextlib.suppress(discord.HTTPException):
+                await query.delete()
+                return
+        if response and response.content.lower() == "i understand":
+            await self._user_clear(ctx, config)
+        return
 
     @user.group(name="set", invoke_without_command=True)
     @known_inat_user()
@@ -292,7 +384,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="list")
     @can_manage_users()
-    @checks.bot_has_permissions(embed_links=True)
+    @commands.bot_has_guild_permissions(embed_links=True)
     async def user_list(self, ctx, abbrev: str = None):
         """List members with known iNat ids on this server.
 

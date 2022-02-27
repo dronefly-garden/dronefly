@@ -38,6 +38,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Server mods and owners can set this up. See:
         `[p]help inat set autoobs server` and
         `[p]help inat set autoobs` (channel).
+
+        In DM with the bot, `autoobs` is always on and cannot be changed.
         """  # noqa: E501
         await ctx.send_help()
 
@@ -132,6 +134,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Server mods and owners can set this up. See:
         `[p]help inat set dot_taxon server` and
         `[p]help inat set dot_taxon` (channel).
+
+        In DM with the bot, `dot_taxon` is always on and cannot be changed.
         """
         await ctx.send_help()
 
@@ -567,10 +571,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         return
 
     @inat.group(name="show")
+    @commands.bot_has_guild_permissions(read_messages=True)
     async def inat_show(self, ctx):
         """Show iNat settings."""
 
+    # TODO: make this command work in DMs
     @inat.command(name="inspect")
+    @commands.bot_has_guild_permissions(read_messages=True)
     async def inat_inspect(self, ctx, message_id: Optional[Union[int, str]]):
         """Inspect a message and show any iNat embed contents."""
         try:
