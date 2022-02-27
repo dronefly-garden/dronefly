@@ -1,9 +1,10 @@
 """Module to handle users."""
-from typing import AsyncIterator, Tuple
+from typing import AsyncIterator, Tuple, Union
 
 import discord
 
 from .base_classes import User
+from .utils import get_valid_user_config
 
 
 class INatUserTable:
@@ -12,17 +13,16 @@ class INatUserTable:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_user(self, member: discord.Member, refresh_cache=False):
+    async def get_user(
+        self, member: Union[discord.Member, discord.User], refresh_cache=False
+    ):
         """Get user for Discord member."""
         inat_user_id = None
         user = None
-        user_config = self.cog.config.user(member)
-
-        if (
-            member.guild.id in await user_config.known_in()
-            or await user_config.known_all()
-        ):
+        user_config = await get_valid_user_config(self.cog, member, anywhere=True)
+        if user_config:
             inat_user_id = await user_config.inat_user_id()
+
         if not inat_user_id:
             raise LookupError("iNat user not known.")
 

@@ -19,6 +19,9 @@ from .obs import maybe_match_obs
 # must not be preceded by a space.
 DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
 
+# pylint: disable=no-member, assigning-non-slot
+# - See https://github.com/PyCQA/pylint/issues/981
+
 
 class PartialAuthor(NamedTuple):
     """Partial Author to satisfy bot check."""
@@ -52,29 +55,32 @@ class Listeners(INatEmbeds, MixinMeta):
     async def on_message_without_command(self, message: discord.Message) -> None:
         """Handle links to iNat."""
         await self._ready_event.wait()
-        if message.author.bot or message.guild is None:
+        if message.author.bot:
             return
 
         guild = message.guild
         channel = message.channel
 
         # Autoobs and dot_taxon features both need embed_links:
-        if not channel.permissions_for(guild.me).embed_links:
-            return
-        guild_config = self.config.guild(guild)
-
-        # - on_message_without_command only ignores bot prefixes for this instance
-        # - implementation as suggested by Trusty:
-        #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
-        bot_prefixes = await guild_config.bot_prefixes()
-
-        if bot_prefixes:
-            prefixes = r"|".join(re.escape(bot_prefix) for bot_prefix in bot_prefixes)
-            prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
-            if re.match(prefix_pattern, message.content):
+        if guild:
+            if not channel.permissions_for(guild.me).embed_links:
                 return
+            guild_config = self.config.guild(guild)
 
-        channel_autoobs = await self.config.channel(channel).autoobs()
+            # - on_message_without_command only ignores bot prefixes for this instance
+            # - implementation as suggested by Trusty:
+            #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
+            bot_prefixes = await guild_config.bot_prefixes()
+
+            if bot_prefixes:
+                prefixes = r"|".join(
+                    re.escape(bot_prefix) for bot_prefix in bot_prefixes
+                )
+                prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
+                if re.match(prefix_pattern, message.content):
+                    return
+
+        channel_autoobs = not guild or await self.config.channel(channel).autoobs()
         if channel_autoobs is None:
             autoobs = await guild_config.autoobs()
         else:
@@ -91,7 +97,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 await self.send_obs_embed(ctx, embed, obs)
                 self.bot.dispatch("commandstats_action", ctx)
 
-        channel_dot_taxon = await self.config.channel(channel).dot_taxon()
+        channel_dot_taxon = not guild or await self.config.channel(channel).dot_taxon()
         if channel_dot_taxon is None:
             dot_taxon = await guild_config.dot_taxon()
         else:
@@ -206,16 +212,22 @@ class Listeners(INatEmbeds, MixinMeta):
     ) -> Tuple[discord.Member, discord.Message]:
         """Return reaction member & message if valid."""
         await self._ready_event.wait()
-        if not payload.guild_id:
-            raise ValueError("Reaction is not on a guild channel.")
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-        if member is None or member.bot:
-            raise ValueError("User is not a guild member.")
-        if self.member_as[(guild.id, member.id)].spammy:
+        guild_id = payload.guild_id or 0
+        if not guild_id:
+            # in DM
+            member = self.bot.get_user(payload.user_id)
+        else:
+            guild = self.bot.get_guild(payload.guild_id)
+            member = guild.get_member(payload.user_id)
+            # defensive: not possible?
+            if member is None:
+                raise ValueError("User is not a guild member.")
+        if member.bot:
+            raise ValueError("User is a bot.")
+        if self.member_as[(guild_id, member.id)].spammy:
             LOG.info(
                 "Spammy: %d-%d-%d; ignored reaction: %s",
-                guild.id,
+                guild_id,
                 payload.channel_id,
                 member.id,
                 payload.emoji,
@@ -235,7 +247,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 ) from err
         if message.author != self.bot.user:
             raise ValueError("Reaction is not to our own message.")
-        self.member_as[(guild.id, member.id)].stamp()
+        self.member_as[(guild_id, member.id)].stamp()
         return (member, message)
 
     @commands.Cog.listener()

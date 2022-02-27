@@ -57,7 +57,9 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 else:
                     abbrevs = "*none*"
                     try:
-                        can_add_projects = bool(await get_valid_user_config(self, ctx))
+                        can_add_projects = bool(
+                            await get_valid_user_config(self, ctx.author)
+                        )
                     except LookupError:
                         can_add_projects = False
                     if can_add_projects:

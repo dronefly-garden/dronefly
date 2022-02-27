@@ -1092,7 +1092,12 @@ class INatEmbeds(MixinMeta):
 
     async def get_user_server_projects_stats(self, ctx, user):
         """Get a user's stats for the server's main event projects."""
-        event_projects = await self.config.guild(ctx.guild).event_projects() or {}
+        event_projects = None
+        if ctx.guild:
+            event_projects = await self.config.guild(ctx.guild).event_projects()
+        if not event_projects:
+            # No projects defined; implicit `ever` project for all-time stats
+            event_projects = {"ever": {"project_id": 0, "main": True}}
         projects_by_id = {
             int(event_projects[prj]["project_id"]): prj
             for prj in event_projects

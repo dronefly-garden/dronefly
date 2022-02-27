@@ -136,7 +136,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 selected_index[0] = per_embed_page - 1
                 target_page = (page - 1) % len(pages)
                 pages = update_selected(pages, target_page, selected_index[0])
-                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                if (
+                    ctx.guild
+                    and ctx.channel.permissions_for(ctx.guild.me).manage_messages
+                ):
                     await message.remove_reaction(reaction, ctx.author)
                 prev_reaction = DEFAULT_CONTROLS["⬅️"]
             else:
@@ -167,7 +170,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, selected_index[0])
             if result:
                 await _display_selected(result)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -178,7 +181,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -197,7 +200,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 

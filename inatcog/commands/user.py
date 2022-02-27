@@ -3,6 +3,8 @@ from datetime import datetime
 import re
 
 import discord
+from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
+
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -49,7 +51,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """  # noqa: E501
-        if not ctx.guild:
+        if not (ctx.guild or (ctx.author == who.member)):
             return
 
         member = who.member
@@ -65,11 +67,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="add")
     @can_manage_users()
-    async def user_add(self, ctx, discord_user: discord.User, inat_user):
+    async def user_add(self, ctx, discord_user: str, inat_user: str):
         """Add user as an iNat user for this server.
 
         `discord_user`
-        - Discord user mention, ID, username, or nickname.
+        - `me`, Discord user mention, ID, username, or nickname.
+        - The special value `me` is only accepted in DM and adds the user who types it.
         - Username and nickname must be enclosed in double quotes if they contain blanks, so a mention or ID is easier.
         - Turn on `Developer Mode` in your Discord user settings to enable `Copy ID` when right-clicking/long-pressing a user's PFP.
           Depending on your platform, the setting is in `Behavior` or `Appearance > Advanced`.
@@ -77,12 +80,32 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `inat_user`
         - iNat login id or iNat user profile URL
         """  # noqa: E501
+        if discord_user == "me":
+            if ctx.guild:
+                await ctx.send(
+                    "Ask a mod to add you in this server, or send this command as a DM."
+                )
+                return
+            discord_user = ctx.author
+        else:
+            if not ctx.guild:
+                await ctx.send(
+                    "You can only add yourself in DM with `{ctx.clean_prefix}user add me`."
+                )
+                return
+            try:
+                ctx_member = await DiscordMemberConverter().convert(ctx, discord_user)
+                discord_user = ctx_member
+            except (BadArgument, CommandError):
+                await ctx.send("Invalid or unknown Discord member.")
+                return
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
-        if inat_user_id and ctx.guild.id in known_in:
-            await ctx.send("iNat user already known here.")
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if inat_user_id and guild_id in known_in:
+            await ctx.send("iNat user already added.")
             return
 
         mat_link = re.search(PAT_USER_LINK, inat_user)
@@ -121,7 +144,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         else:
             await config.inat_user_id.set(user.user_id)
 
-        known_in.append(ctx.guild.id)
+        known_in.append(guild_id)
         await config.known_in.set(known_in)
 
         await ctx.send(
@@ -142,12 +165,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
         known_all = await config.known_all()
-        if not inat_user_id or not (known_all or ctx.guild.id in known_in):
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if not inat_user_id or not (known_all or guild_id in known_in):
             await ctx.send("iNat user not known.")
             return
         # User can only be removed from servers where they were added:
-        if ctx.guild.id in known_in:
-            known_in.remove(ctx.guild.id)
+        # - the special value 0 is for DMs
+        if guild_id in known_in:
+            known_in.remove(guild_id)
             await config.known_in.set(known_in)
             if known_in:
                 await ctx.send("iNat user removed from this server.")
@@ -194,7 +219,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(f"Unknown setting: {arg}")
             return
         try:
-            config = await get_valid_user_config(self, ctx, True)
+            config = await get_valid_user_config(self, ctx.author, True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -211,7 +236,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home [place]` set your home place
         """
         try:
-            config = await get_valid_user_config(self, ctx, True)
+            config = await get_valid_user_config(self, ctx.author, True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -244,7 +269,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set known true` set known on other servers
         """
         try:
-            config = await get_valid_user_config(self, ctx, True)
+            config = await get_valid_user_config(self, ctx.author, True)
         except LookupError as err:
             await ctx.send(err)
             return

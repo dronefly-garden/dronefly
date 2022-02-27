@@ -1,23 +1,34 @@
 """Utilities module."""
+from typing import Union
 from urllib.parse import urlencode
+
+import discord
 
 from .base_classes import WWW_BASE_URL
 
 
-async def get_valid_user_config(cog, ctx, anywhere=False):
+async def get_valid_user_config(
+    cog, user=Union[discord.Member, discord.User], anywhere=False
+):
     """Return iNat user config if known in this server.
 
     Note: Even if the user is known in another guild, they
     are not considered known anywhere until they permit it
     with `,user set known True`.
     """
-    user_config = cog.config.user(ctx.author)
+    user_config = cog.config.user(user)
     inat_user_id = await user_config.inat_user_id()
+    if not inat_user_id:
+        return False
     known_in = await user_config.known_in()
-    known = inat_user_id and (
-        ctx.guild.id in known_in or anywhere and await user_config.known_all()
-    )
-    if not known:
+    if isinstance(user, discord.Member):
+        known_here = user.guild.id in known_in
+        if anywhere and not known_here:
+            known_here = bool(await user_config.known_all())
+    else:
+        # always known in DM so long as `,user add` has been performed anywhere
+        known_here = bool(known_in)
+    if not known_here:
         where = "" if anywhere else " in this server"
         raise LookupError(f"iNat user not known{where}.")
     return user_config

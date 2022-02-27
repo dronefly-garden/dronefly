@@ -4,15 +4,13 @@ from .utils import get_valid_user_config
 
 
 async def _known_inat_user(ctx, anywhere):
-    if not ctx.guild:
-        return False
     cog = ctx.bot.get_cog("iNat")
     if not cog:
         return False
 
     user_config = None
     try:
-        user_config = await get_valid_user_config(cog, ctx, anywhere=anywhere)
+        user_config = await get_valid_user_config(cog, ctx.author, anywhere=anywhere)
     except LookupError:
         pass
     return bool(user_config)
@@ -54,7 +52,9 @@ def can_manage_users():
             return False
         guild = ctx.guild
         if not guild:
-            return False
+            # Everyone is a user manager in their own DM with the bot, but
+            # the only user they can manage is themself.
+            return True
 
         member = ctx.author
         if (
