@@ -43,7 +43,9 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     abbrevs = "*none*"
                     try:
                         can_add_places = bool(
-                            await get_valid_user_config(self, ctx.author)
+                            await get_valid_user_config(
+                                self, ctx.author, anywhere=False
+                            )
                         )
                     except LookupError:
                         can_add_places = False

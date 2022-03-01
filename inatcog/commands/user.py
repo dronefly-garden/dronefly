@@ -311,7 +311,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(f"Unknown setting: {arg}")
             return
         try:
-            config = await get_valid_user_config(self, ctx.author, True)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -328,7 +328,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home [place]` set your home place
         """
         try:
-            config = await get_valid_user_config(self, ctx.author, True)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -361,7 +361,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set known true` set known on other servers
         """
         try:
-            config = await get_valid_user_config(self, ctx.author, True)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
