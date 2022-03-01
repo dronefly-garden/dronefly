@@ -1333,13 +1333,8 @@ class INatEmbeds(MixinMeta):
 
         update_place = None
         if place is None:
-            config = self.config.user(user)
-            home = await config.home()
-            if not home:
-                return
-
             try:
-                update_place = await self.place_table.get_place(msg.guild, home, user)
+                update_place = await self.place_table.get_place(msg.guild, "home", user)
             except LookupError:
                 return
         else:
