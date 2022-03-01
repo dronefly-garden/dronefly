@@ -26,7 +26,7 @@ class INatPlaceTable:
             abbrev = query.lower()
             if abbrev == "home" and user:
                 try:
-                    user_config = await get_valid_user_config(user)
+                    user_config = await get_valid_user_config(self.cog, user)
                     home_id = await user_config.home()
                 except LookupError:
                     pass
