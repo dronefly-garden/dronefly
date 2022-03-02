@@ -963,7 +963,9 @@ class INatEmbeds(MixinMeta):
             if obs_cnt_filtered:
                 obs_without_taxon = copy.copy(title_query_response)
                 obs_without_taxon.taxon = None
-                description += f" {obs_without_taxon.obs_query_description()}"
+                description += (
+                    f" {obs_without_taxon.obs_query_description(with_adjectives=False)}"
+                )
             if means_fmtd:
                 description += f" {means_fmtd}"
             return description

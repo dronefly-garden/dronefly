@@ -506,7 +506,7 @@ class QueryResponse:
                     kwargs["created_d2"] = self.added.d2.isoformat()
         return kwargs
 
-    def obs_query_description(self):
+    def obs_query_description(self, with_adjectives: bool = True):
         """Description of an observations query."""
 
         def _format_date(date: str):
@@ -559,7 +559,7 @@ class QueryResponse:
         _taxa_description = []
         if of_taxa_description:
             _of = ["of"]
-            if self.adjectives:
+            if with_adjectives and self.adjectives:
                 _of.append(", ".join(self.adjectives))
             _of.append(of_taxa_description)
             _taxa_description.append(" ".join(_of))
@@ -567,17 +567,17 @@ class QueryResponse:
             _without = []
             # If we only have "without" =>
             #   "of [adjectives] taxa without [taxa]":
-            if not of_taxa_description:
+            if not of_taxa_description and with_adjectives:
                 _without.append("of")
-                if self.adjectives:
+                if with_adjectives and self.adjectives:
                     _without.append(", ".join(self.adjectives))
                 _without.append("taxa")
             _without.append("without")
             _without.append(without_taxa_description)
             _taxa_description.append(" ".join(_without))
-        if not _taxa_description:
+        if with_adjectives and not _taxa_description:
             _of = ["of"]
-            if self.adjectives:
+            if with_adjectives and self.adjectives:
                 _of.append(", ".join(self.adjectives))
             _of.append("taxa")
             _taxa_description.append(" ".join(_of))
