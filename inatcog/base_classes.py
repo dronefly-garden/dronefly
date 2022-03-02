@@ -424,6 +424,31 @@ class QueryResponse:
     controlled_term: Optional[ControlledTermSelector]
     observed: Optional[DateSelector]
     added: Optional[DateSelector]
+    adjectives: Optional[List[str]] = field(init=False)
+
+    def __post_init__(self):
+        adjectives = []
+        if self.options:
+            quality_grade = (self.options.get("quality_grade") or "").split(",")
+            verifiable = self.options.get("verifiable")
+            if "any" not in quality_grade:
+                research = "research" in quality_grade
+                needsid = "needs_id" in quality_grade
+            # If specified, will override any quality_grade set already:
+            if verifiable:
+                if verifiable in ["true", ""]:
+                    research = True
+                    needsid = True
+            if verifiable == "false":
+                adjectives.append("not verifiable")
+            elif research and needsid:
+                adjectives.append("verifiable")
+            else:
+                if research:
+                    adjectives.append("research grade")
+                if needsid:
+                    adjectives.append("needs ID")
+        self.adjectives = adjectives
 
     def obs_args(self):
         """Arguments for an observations query."""
@@ -491,47 +516,72 @@ class QueryResponse:
             return time.strftime("%b %-d, %Y %h:%m %p")
 
         message = ""
+        of_taxa_description = ""
+        without_taxa_description = ""
         if self.taxon:
             taxon = self.taxon
-            message += " of " + taxon.format_name(with_term=True)
+            of_taxa_description = taxon.format_name(with_term=True)
         if self.options:
             without_taxon_id = self.options.get("without_taxon_id")
             iconic_taxa = self.options.get("iconic_taxa")
             if iconic_taxa == "unknown":
-                message += " of Unknown"
+                of_taxa_description = "Unknown"
             else:
                 taxon_ids = self.options.get("taxon_ids")
                 # Note: if taxon_ids is given with "of" clause (taxon_id), then
                 # taxon_ids is simply ignored, so we don't handle that case here.
                 if taxon_ids and not self.taxon:
-                    if taxon_ids == "20978,26036":
-                        message += " of Amphibia, Reptilia (Herps)"
-                    elif (
-                        taxon_ids
-                        == "152028,791197,54743,152030,175541,127378,117881,117869"
-                    ):
-                        message += (
-                            " of Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
+                    # TODO: support generally; hardwired cases here are for herps
+                    # and lichenish
+                    of_taxa_description = {
+                        "20978,26036": "Amphibia, Reptilia (Herps)",
+                        # Note: the list is getting a bit ridiculously long - maybe
+                        # just call this grouping "Probably lichens"?
+                        "152028,791197,54743,152030,175541,127378,117881,117869": (
+                            "Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
                             " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
                             "Verrucariales (Lichenized Fungi)"
-                        )
-                    else:
-                        message += " of taxon #" + taxon_ids.replace(",", ", ")
+                        ),
+                    }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
                 if without_taxon_id:
-                    message += " without "
-                    # TODO: support generally; hardwired cases are for waspsonly & mothsonly
-                    if without_taxon_id == "47336,630955":
-                        message += "Formicidae, Anthophila"
-                    elif without_taxon_id == "47224":
-                        message += "Papilionoidea"
-                    elif without_taxon_id == "352459":
-                        message += "Stictis radiata"
-                    elif without_taxon_id == "47125":
-                        message += "Angiospermae"
-                    elif without_taxon_id == "211194":
-                        message += "Tracheophyta"
-                    else:
-                        message += "taxon #" + without_taxon_id.replace(",", ", ")
+                    # TODO: support generally; hardwired cases here are for
+                    # waspsonly, mothsonly, lichenish, etc.
+                    without_taxa_description = {
+                        "47336,630955": "Formicidae, Anthophila",
+                        "47224": "Papilionoidea",
+                        "352459": "Stictis radiata",
+                        "47125": "Angiospermae",
+                        "211194": "Tracheophyta",
+                    }.get(without_taxon_id) or "taxon #" + without_taxon_id.replace(
+                        ",", ", "
+                    )
+
+        _taxa_description = []
+        if of_taxa_description:
+            _of = ["of"]
+            if self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append(of_taxa_description)
+            _taxa_description.append(" ".join(_of))
+        if without_taxa_description:
+            _without = []
+            # If we only have "without" =>
+            #   "of [adjectives] taxa without [taxa]":
+            if not of_taxa_description:
+                _without.append("of")
+                if self.adjectives:
+                    _without.append(", ".join(self.adjectives))
+                _without.append("taxa")
+            _without.append("without")
+            _without.append(without_taxa_description)
+            _taxa_description.append(" ".join(_without))
+        if not _taxa_description:
+            _of = ["of"]
+            if self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append("taxa")
+            _taxa_description.append(" ".join(_of))
+        message += " ".join(_taxa_description)
         if self.project:
             message += " in " + self.project.title
         if self.place:

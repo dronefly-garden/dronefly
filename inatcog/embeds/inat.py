@@ -899,6 +899,7 @@ class INatEmbeds(MixinMeta):
     ):
         """Make embed describing taxa record."""
         obs_cnt_filtered = False
+        adjectives = []
         if isinstance(arg, QueryResponse):
             taxon = arg.taxon
             user = arg.user
@@ -919,6 +920,7 @@ class INatEmbeds(MixinMeta):
                 if response:
                     obs_cnt_filtered = True
                     obs_cnt = response.get("total_results")
+            adjectives = arg.adjectives
         elif isinstance(arg, Taxon):
             taxon = arg
             user = None
@@ -953,9 +955,11 @@ class INatEmbeds(MixinMeta):
                 descriptor = " ".join([article, status, rec.rank])
             else:
                 descriptor = p.a(rec.rank)
-            description = (
-                f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
-            )
+            _observations = []
+            if adjectives:
+                _observations.append(", ".join(adjectives))
+            _observations.append(p.plural("observation", obs_cnt))
+            description = f"is {descriptor} with {obs_fmt} {' '.join(_observations)}"
             if obs_cnt_filtered:
                 obs_without_taxon = copy.copy(title_query_response)
                 obs_without_taxon.taxon = None
