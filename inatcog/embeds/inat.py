@@ -425,9 +425,11 @@ class INatEmbeds(MixinMeta):
         url = await inat_map_url.get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
-    async def maybe_send_sound(self, channel, sounds: list, index=0):
-        """Given a URL to a sound file, send the file if possible, or else just the url."""
+    @contextlib.asynccontextmanager
+    async def sound_message_params(self, channel, sounds: list, embed: discord.Embed, index=0):
+        """Given a sound URL, yield params to send embed with file (if possible) or just URL."""
         if not sounds:
+            yield None
             return
         sound = sounds[index]
         if isinstance(channel, DMChannel):
@@ -447,28 +449,29 @@ class INatEmbeds(MixinMeta):
                 filename = None
                 sound_bytes = None
 
-        embed = make_embed()
+        _embed = make_embed()
         title = "Sound recording"
         if len(sounds) > 1:
             title += f" ({index + 1} of {len(sounds)})"
         if filename:
             title += f": {filename}"
-        embed.title = title
-        embed.url = sound.url
-        embed.set_footer(text=sound.attribution)
+        _embed.title = title
+        _embed.url = sound.url
+        _embed.set_footer(text=sound.attribution)
+        embeds = [embed, _embed]
+        _params = { "embeds": embeds }
 
         if not url_only:
             if len(sound_bytes) <= max_embed_file_size:
                 sound_io = BytesIO(sound_bytes)
 
             if sound_io:
-                msg = await channel.send(
-                    embed=embed, file=File(sound_io, filename=filename)
-                )
+                _params["file"] = File(sound_io, filename=filename)
+                yield _params
                 sound_io.close()
-                return msg
+                return
 
-        return await channel.send(embed=embed)
+        yield _params
 
     async def summarize_obs_spp_counts(self, taxon, obs_args):
         observations = await self.api.get_observations(per_page=0, **obs_args)
@@ -1271,15 +1274,14 @@ class INatEmbeds(MixinMeta):
 
     async def send_obs_embed(self, ctx, embed, obs):
         """Send observation embed and sound."""
-        msg = await ctx.channel.send(embed=embed)
         if obs and obs.sounds:
-            sound_msg = await self.maybe_send_sound(ctx.channel, obs.sounds)
-        else:
-            sound_msg = None
-        cancelled = await add_reactions_with_cancel(ctx, msg, [])
-        if cancelled and sound_msg:
-            with contextlib.suppress(discord.HTTPException):
-                await sound_msg.delete()
+            async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
+                if params:
+                    msg = await ctx.send(**params)
+        if not msg:
+            msg = await ctx.send(embed=embed)
+
+        await add_reactions_with_cancel(ctx, msg, [])
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""

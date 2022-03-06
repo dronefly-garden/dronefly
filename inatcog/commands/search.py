@@ -80,10 +80,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     embed = await self.make_obs_embed(
                         obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
-                    if obs and obs.sounds:
-                        await self.maybe_send_sound(ctx.channel, obs.sounds)
-                    controls = {"❌": DEFAULT_CONTROLS["❌"], "✅": cancel_timeout}
-                    await menu(ctx, [embed], controls, timeout=10)
+                    await self.send_obs_embed(ctx, embed, obs)
                     return
                 await apologize(ctx, "Not found")
                 return
