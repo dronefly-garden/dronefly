@@ -1274,6 +1274,7 @@ class INatEmbeds(MixinMeta):
 
     async def send_obs_embed(self, ctx, embed, obs, **reaction_params):
         """Send observation embed and sound."""
+        msg = None
         if obs and obs.sounds:
             async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
                 if params:
