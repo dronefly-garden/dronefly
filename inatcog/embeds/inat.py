@@ -1278,9 +1278,9 @@ class INatEmbeds(MixinMeta):
         if obs and obs.sounds:
             async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
                 if params:
-                    msg = await ctx.send(**params)
+                    msg = await ctx.channel.send(**params)
         if not msg:
-            msg = await ctx.send(embed=embed)
+            msg = await ctx.channel.send(embed=embed)
 
         await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
 
