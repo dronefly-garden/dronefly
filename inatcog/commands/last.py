@@ -26,13 +26,13 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     async def get_last_obs_from_history(self, ctx):
         """Get last obs from history."""
-        msgs = await ctx.history(limit=100).flatten()
+        msgs = [msg async for msg in ctx.history(limit=100)]
         inat_link_msg = INatLinkMsg(self)
         return await inat_link_msg.get_last_obs_msg(ctx, msgs)
 
     async def get_last_taxon_from_history(self, ctx):
         """Get last taxon from history."""
-        msgs = await ctx.history(limit=100).flatten()
+        msgs = [msg async for msg in ctx.history(limit=100)]
         inat_link_msg = INatLinkMsg(self)
         return await inat_link_msg.get_last_taxon_msg(ctx, msgs)
 

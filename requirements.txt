@@ -1,4 +1,4 @@
-red-discordbot
+git+https://github.com/Cog-Creators/Red-DiscordBot@V3/dpy2_unstable#egg=Red-DiscordBot
 dataclasses-json
 ebird-api
 html2markdown
