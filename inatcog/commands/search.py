@@ -80,7 +80,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     embed = await self.make_obs_embed(
                         obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
-                    await self.send_obs_embed(ctx, embed, obs)
+                    await self.send_obs_embed(ctx, embed, obs, timeout=10, with_keep=True)
                     return
                 await apologize(ctx, "Not found")
                 return

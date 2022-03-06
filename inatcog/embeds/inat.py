@@ -1272,7 +1272,7 @@ class INatEmbeds(MixinMeta):
             ctx, msg, query_response, with_keep=with_keep
         )
 
-    async def send_obs_embed(self, ctx, embed, obs):
+    async def send_obs_embed(self, ctx, embed, obs, **reaction_params):
         """Send observation embed and sound."""
         if obs and obs.sounds:
             async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
@@ -1281,7 +1281,7 @@ class INatEmbeds(MixinMeta):
         if not msg:
             msg = await ctx.send(embed=embed)
 
-        await add_reactions_with_cancel(ctx, msg, [])
+        await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
