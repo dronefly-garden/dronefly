@@ -67,7 +67,6 @@ class Listeners(INatEmbeds, MixinMeta):
                 return
             guild_config = self.config.guild(guild)
             server_listen_scope = await guild_config.listen()
-            LOG.info(message.flags)
             if server_listen_scope is False or (server_listen_scope is None and not isinstance(message.channel, discord.Thread)):
                 return
 

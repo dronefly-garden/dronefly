@@ -11,7 +11,6 @@ from .base_classes import (
     User,
     Place,
 )
-from .common import LOG
 from .core.models.taxon import RANK_LEVELS
 from .core.parsers.url import STATIC_URL_PAT
 from .core.query.query import TaxonQuery
@@ -186,7 +185,6 @@ def get_taxon_fields(record):
         establishment_means = None
     conservation_status_raw = record.get("conservation_status")
     if conservation_status_raw:
-        LOG.info(conservation_status_raw)
         conservation_status = ConservationStatus.from_dict(conservation_status_raw)
     else:
         conservation_status = None
@@ -266,7 +264,6 @@ def match_pat(record, pat, scientific_name=False, locale=None):
         for name in names:
             mat = re.search(pat, name)
             if mat:
-                LOG.info("match=%s", pat)
                 return NameMatch(
                     mat,
                     None,
