@@ -90,6 +90,20 @@ class InheritableBoolConverter(Converter):
         raise BadArgument(f'{argument} is not a recognized boolean option or "inherit"')
 
 
+class ServerScopeConverter(Converter):
+    """Convert server scope to True, False, or None (threads)."""
+
+    async def convert(self, ctx, argument):
+        lowered = argument.lower()
+        if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
+            return True
+        if lowered in ("no", "n", "false", "f", "0", "disable", "off"):
+            return False
+        if lowered in ("t", "thread", "threads"):
+            return None
+        raise BadArgument(f'{argument} is not a recognized boolean option or "threads"')
+
+
 class NoExitParser(argparse.ArgumentParser):
     """Handle default error as bad argument, not sys.exit."""
 

@@ -9,10 +9,12 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
 from redbot.core.utils.chat_formatting import pagify
 
-from inatcog.converters.base import InheritableBoolConverter
+from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
 from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
+
+LISTEN_VALUE = { True: "enabled in channels and threads", False: "disabled", None: "enabled in threads only" }
 
 
 class CommandsInat(INatEmbeds, MixinMeta):
@@ -318,7 +320,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_bot_prefixes(self, ctx, *prefixes):
-        """Set server ignored bot prefixes (mods).
+        """Set server ignored bot prefixes.
 
         All messages starting with one of these *prefixes* will be ignored by
         [botname].
@@ -339,6 +341,30 @@ class CommandsInat(INatEmbeds, MixinMeta):
             prefixes = await config.bot_prefixes()
 
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
+
+    @inat_set.command(name="listen")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_listen(self, ctx, scope: ServerScopeConverter):
+        """Set message listen server scope.
+
+        The `scope` parameter may be:
+        - `on` (listen enabled in channels and threads on this server)
+        - `off` (listen disabled)
+        - `threads` (listen enabled only in threads on this server)
+
+        When `listen` is `on` (default), the `autoobs` and `dot_taxon` message listeners operate both in a server's channels and in its threads when enabled. They can be disabled both at once with `[p]inat set listen off` or restricted to listen only in threads with `[p]inat set listen threads`.
+
+        Changing the `listen` server scope does not enable or manage server-wide or per-channel listener features on its own. It is more of a "kill switch" to turn off listening entirely, or selectively for main channel conversations, leaving them active only in threads.
+
+        See also: `[p]autoobs` and `[p]dot_taxon` to learn about these message listener features.
+        """  # noqa: E501
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        await config.listen.set(scope)
+        await ctx.send(f"Message listening is {LISTEN_VALUE[scope]}.")
 
     @inat_set.command(name="inactive_role")
     @checks.admin_or_permissions(manage_roles=True)
@@ -459,7 +485,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_clear.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def clear_bot_prefixes(self, ctx):
-        """Clear server ignored bot prefixes (mods)."""
+        """Clear server ignored bot prefixes."""
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -471,7 +497,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs(self, ctx, state: InheritableBoolConverter):
-        """Set channel auto-observation mode (mods).
+        """Set channel auto-observation mode.
 
         A separate subcommand sets this feature for the whole server. See `[p]help set autoobs server` for details.
 
@@ -500,7 +526,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @set_autoobs.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs_server(self, ctx, state: bool):
-        """Set server auto-observation mode (mods).
+        """Set server auto-observation mode.
 
         ```
         [p]inat set autoobs server on
@@ -522,7 +548,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.group(invoke_without_command=True, name="dot_taxon")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_dot_taxon(self, ctx, state: InheritableBoolConverter):
-        """Set channel .taxon. lookup (mods).
+        """Set channel .taxon. lookup.
 
         A separate subcommand sets this feature for the whole server. See `[p]help set dot_taxon server` for details.
 
@@ -553,7 +579,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @set_dot_taxon.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
     async def dot_taxon_server(self, ctx, state: bool):
-        """Set server .taxon. lookup (mods).
+        """Set server .taxon. lookup.
 
         ```
         [p]inat set dot_taxon server on
@@ -718,6 +744,16 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await ctx.send(f"Channel .taxon. lookup is {value}.")
         return
 
+    @inat_show.command(name="listen")
+    async def show_listen(self, ctx):
+        """Show message listen scope."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        guild_config = self.config.guild(ctx.guild)
+        listen_server_scope = await guild_config.listen()
+        await ctx.send(f"Message listening is {LISTEN_VALUE[listen_server_scope]}.")
+
     @inat_show.command(name="bot_prefixes")
     async def show_bot_prefixes(self, ctx):
         """Show server ignored bot prefixes."""
@@ -731,7 +767,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.command(name="home")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_home(self, ctx, home: str):
-        """Set server default home place (mods)."""
+        """Set server default home place."""
         config = self.config.guild(ctx.guild)
         try:
             place = await self.place_table.get_place(ctx.guild, home, ctx.author)
@@ -778,7 +814,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         role: Optional[discord.Role] = None,
         teams: Optional[str] = None,
     ):
-        """Add a server event project (mods).
+        """Add a server event project.
 
         - `project_abbrev` uniquely identifies this project.
         - `project_id` Use `[p]prj` or `[p]s prj` to look it up for the project.
@@ -827,7 +863,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_clear.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
     async def clear_event(self, ctx, project_abbrev: str):
-        """Clear a server event project (mods)."""
+        """Clear a server event project."""
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
 
