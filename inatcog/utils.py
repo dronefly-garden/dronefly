@@ -5,7 +5,6 @@ from urllib.parse import urlencode
 import discord
 
 from .base_classes import WWW_BASE_URL
-from .common import LOG
 
 
 async def get_valid_user_config(
@@ -18,7 +17,6 @@ async def get_valid_user_config(
     with `,user set known True`.
     """
     user_config = cog.config.user(user)
-    LOG.info(user.id)
     inat_user_id = await user_config.inat_user_id()
     if not inat_user_id:
         return False
