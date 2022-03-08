@@ -54,6 +54,7 @@ MACROS = {
 }
 VALID_OBS_OPTS = [
     "captive",
+    "csi",
     "day",
     "endemic",
     "hrank",
