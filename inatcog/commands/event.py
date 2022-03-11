@@ -15,9 +15,9 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     async def event(self, ctx):
         """Commands to manage server events."""
 
-    @event.command(name="add")
-    async def event_add(self, ctx, abbrev: str, place_number: int):
-        """Add member to server event."""
+    @event.command(name="join")
+    async def event_join(self, ctx, abbrev: str, user):
+        """Join member to server event."""
 
     @event.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
@@ -25,6 +25,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         """List members of server event."""
         await self.user_list(ctx, abbrev)
 
-    @event.command(name="remove")
-    async def event_remove(self, ctx, abbrev: str):
+    @event.command(name="leave")
+    async def event_leave(self, ctx, abbrev: str, user):
         """Remove member from server event."""
