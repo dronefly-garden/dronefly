@@ -366,11 +366,6 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await config.listen.set(scope)
         await ctx.send(f"Message listening is {LISTEN_VALUE[scope]}.")
 
-    @inat_set.command(name="inactive_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_inactive_role(self, ctx, inactive_role: Optional[discord.Role]):
-        """Set server Inactive role."""
     async def _set_role(self, ctx, config_item: str, role: Union[discord.Role, str]):
         if ctx.author.bot or ctx.guild is None:
             return
