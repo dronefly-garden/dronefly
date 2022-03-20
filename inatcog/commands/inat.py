@@ -340,60 +340,6 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
 
-    @inat_set.command(name="inactive_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_inactive_role(self, ctx, inactive_role: Optional[discord.Role]):
-        """Set server Inactive role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
-
-        config = self.config.guild(ctx.guild)
-
-        if inactive_role:
-            msg = inactive_role.mention
-            await config.inactive_role.set(inactive_role.id)
-        else:
-            find = await config.inactive_role()
-            if find:
-                inactive_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    inactive_role.mention
-                    if inactive_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Inactive role: {msg}"))
-
-    @inat_set.command(name="active_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_active_role(self, ctx, active_role: Optional[discord.Role]):
-        """Set server Active role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
-
-        config = self.config.guild(ctx.guild)
-
-        if active_role:
-            msg = active_role.mention
-            await config.active_role.set(active_role.id)
-        else:
-            find = await config.active_role()
-            if find:
-                active_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    active_role.mention if active_role else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
-
     async def _set_role(self, ctx, config_item: str, role: Union[discord.Role, str]):
         if ctx.author.bot or ctx.guild is None:
             return
@@ -422,14 +368,38 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 value = "not set"
         return value
 
+    @inat_set.command(name="inactive_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_inactive_role(self, ctx, inactive_role: Optional[Union[discord.Role, str]]):
+        """Set server inactive role.
+
+        To unset the inactive role: `[p]inat set inactive_role none`
+        """
+        value = await self._set_role(ctx, "inactive_role", inactive_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Inactive role: {value}"))
+
+    @inat_set.command(name="active_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_active_role(self, ctx, active_role: Optional[Union[discord.Role, str]]):
+        """Set server active role.
+
+        To unset the active role: `[p]inat set active_role none`
+        """
+        value = await self._set_role(ctx, "active_role", active_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Active role: {value}"))
+
     @inat_set.command(name="manage_places_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
     async def set_manage_places_role(
         self, ctx, manage_places_role: Optional[Union[discord.Role, str]]
     ):
-        """Set manage places role.
-        
+        """Set server manage places role.
+
         To unset the manage places role: `[p]inat set manage_places_role none`
         """
         value = await self._set_role(ctx, "manage_places_role", manage_places_role)
@@ -440,88 +410,43 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
     async def set_manage_projects_role(
-        self, ctx, manage_projects_role: Optional[discord.Role]
+        self, ctx, manage_projects_role: Optional[Union[discord.Role, str]]
     ):
-        """Set manage projects role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
+        """Set server manage projects role.
 
-        config = self.config.guild(ctx.guild)
-
-        if manage_projects_role:
-            msg = manage_projects_role.mention
-            await config.manage_projects_role.set(manage_projects_role.id)
-        else:
-            find = await config.manage_projects_role()
-            if find:
-                manage_projects_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    manage_projects_role.mention
-                    if manage_projects_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Manage projects role: {msg}"))
+        To unset the manage projects role: `[p]inat set manage_projects_role none`
+        """
+        value = await self._set_role(ctx, "manage_projects_role", manage_projects_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage projects role: {value}"))
 
     @inat_set.command(name="manage_users_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
     async def set_manage_users_role(
-        self, ctx, manage_users_role: Optional[discord.Role]
+        self, ctx, manage_users_role: Optional[Union[discord.Role, str]]
     ):
-        """Set manage users role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
+        """Set server manage users role.
 
-        config = self.config.guild(ctx.guild)
-
-        if manage_users_role:
-            msg = manage_users_role.mention
-            await config.manage_users_role.set(manage_users_role.id)
-        else:
-            find = await config.manage_users_role()
-            if find:
-                manage_users_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    manage_users_role.mention
-                    if manage_users_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Manage users role: {msg}"))
+        To unset the manage users role: `[p]inat set manage_users_role none`
+        """
+        value = await self._set_role(ctx, "manage_users_role", manage_users_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage users role: {value}"))
 
     @inat_set.command(name="beta_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def set_beta_role(self, ctx, beta_role: Optional[discord.Role]):
+    async def set_beta_role(self, ctx, beta_role: Optional[Union[discord.Role, str]]):
         """Set server beta role.
 
-        The beta role grants users with the role early access to `inatcog` features that are not yet released for all users.
-        """  # noqa: E501
-        if ctx.author.bot or ctx.guild is None:
-            return
+        Grant users with the role early access to unreleased features.
 
-        config = self.config.guild(ctx.guild)
-
-        if beta_role:
-            msg = beta_role.mention
-            await config.beta_role.set(beta_role.id)
-        else:
-            find = await config.beta_role()
-            if find:
-                beta_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = beta_role.mention if beta_role else f"missing role: <@&{find}>"
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Beta role: {msg}"))
+        To unset the manage users role: `[p]inat set manage_users_role none`
+        """
+        value = await self._set_role(ctx, "beta_role", beta_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Beta role: {value}"))
 
     @inat.group(name="clear")
     @checks.admin_or_permissions(manage_messages=True)
