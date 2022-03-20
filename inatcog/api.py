@@ -128,6 +128,12 @@ class INatAPI:
 
         return None
 
+    async def _pyinaturalist_endpoint(self, ctx, endpoint, **kwargs):
+        LOG.info('_pyinaturalist_endpoint(%s, %s)', endpoint.__name__, repr(kwargs))
+        return await ctx.bot.loop.run_in_executor(
+            None, partial(endpoint, **kwargs)
+        )
+
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
 
@@ -343,11 +349,10 @@ class INatAPI:
     async def get_taxa_autocomplete(self, ctx, **kwargs):
         """Get taxa using autocomplete endpoint.
         
-        Just a thin wrapper for pyinaturalist get_taxa_autocomplete for now.
+        Just a thin wrapper for pyinaturalist get_taxa_autocomplete for now
+        to demonstrate basic operation of pyinaturalist.
         """
-        return await ctx.bot.loop.run_in_executor(
-            None, partial(get_taxa_autocomplete, **kwargs)
-        )
+        return await self._pyinaturalist_endpoint(ctx, get_taxa_autocomplete, **kwargs)
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
