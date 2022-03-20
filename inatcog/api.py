@@ -1,4 +1,23 @@
-"""Module to access iNaturalist API."""
+"""Module to access iNaturalist API.
+
+- Note: Most methods use aiohttp directly, whereas some now use pyinaturalist. Please note
+  that for each of these we're working on moving from homegrown approaches to built-in
+  capabilities in pyinaturalist for:
+  - caching
+  - rate-limiting
+- Until migration to pyinaturalist is complete, mismatches between the two approaches might
+  lead to:
+  - any old code that depends on specific caching behaviours may not work correctly with
+    new pyinaturalist-based replacements
+  - there's an outside chance that rate limits may be exceeded, since neither rate-limiter
+    is aware of the rate buckets collected by the other.
+- Therefore, take care to add transitional code that mixes the two underlying libraries
+  sparingly, and in particular:
+  - prefer adding new methods over modifying existing ones to use pyinaturalist
+  - focus on methods for commands that are infrequently called to reduce the
+    probability of rate limits being exceeded
+"""
+from functools import partial
 from time import time
 from types import SimpleNamespace
 from typing import List, Optional, Union
@@ -15,6 +34,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
+from pyinaturalist import get_taxa_autocomplete
 
 from .common import LOG
 
@@ -319,6 +339,15 @@ class INatAPI:
         else:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
+
+    async def get_taxa_autocomplete(self, ctx, **kwargs):
+        """Get taxa using autocomplete endpoint.
+        
+        Just a thin wrapper for pyinaturalist get_taxa_autocomplete for now.
+        """
+        return await ctx.bot.loop.run_in_executor(
+            None, partial(get_taxa_autocomplete, **kwargs)
+        )
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
