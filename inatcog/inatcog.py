@@ -96,6 +96,7 @@ class INatCog(
             dot_taxon=False,
             active_role=None,
             bot_prefixes=[],
+            beta_role=None,
             inactive_role=None,
             manage_places_role=None,
             manage_projects_role=None,
