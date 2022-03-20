@@ -394,6 +394,34 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 msg = "not set"
         await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
 
+    async def _set_role(self, ctx, config_item: str, role: Union[discord.Role, str]):
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if role:
+            if isinstance(role, str):
+                if role.lower() == "none":
+                    await config.clear_raw(config_item)
+                    value = "not set"
+                else:
+                    await ctx.send_help()
+                    return None
+            else:
+                value = role.mention
+                await config.set_raw(config_item, value=role.id)
+        else:
+            find = await config.get_raw(config_item)
+            if find:
+                role = next(
+                    (_role for _role in ctx.guild.roles if _role.id == find), None
+                )
+                value = role.mention if role else f"missing role: <@&{find}>"
+            else:
+                value = "not set"
+        return value
+
     @inat_set.command(name="manage_places_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
@@ -404,36 +432,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         
         To unset the manage places role: `[p]inat set manage_places_role none`
         """
-        if ctx.author.bot or ctx.guild is None:
-            return
-
-        config = self.config.guild(ctx.guild)
-
-        if manage_places_role:
-            if isinstance(manage_places_role, str):
-                if manage_places_role.lower() == "none":
-                    await config.manage_places_role.clear()
-                    msg = "not set"
-                else:
-                    await ctx.send_help()
-                    return
-            else:
-                msg = manage_places_role.mention
-                await config.manage_places_role.set(manage_places_role.id)
-        else:
-            find = await config.manage_places_role()
-            if find:
-                manage_places_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    manage_places_role.mention
-                    if manage_places_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Manage places role: {msg}"))
+        value = await self._set_role(ctx, "manage_places_role", manage_places_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage places role: {value}"))
 
     @inat_set.command(name="manage_projects_role")
     @checks.admin_or_permissions(manage_roles=True)
