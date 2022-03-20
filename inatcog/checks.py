@@ -41,6 +41,73 @@ def known_inat_user_here():
     return commands.check(check)
 
 
+def can_manage_places():
+    """Check if guild member can manage places."""
+
+    async def check(ctx: commands.Context) -> bool:
+        """Author is bot owner, guild owner or admin, or has manage places role."""
+        bot = ctx.bot
+        cog = bot.get_cog("iNat")
+        if not cog:
+            return False
+        guild = ctx.guild
+        if not guild:
+            # Place abbrevs not supported in DMs
+            return False
+
+        member = ctx.author
+        if (
+            member == guild.owner
+            or await bot.is_owner(member)
+            or await bot.is_admin(member)
+        ):
+            return True
+
+        guild_config = cog.config.guild(guild)
+        role_id = await guild_config.manage_places_role()
+        if role_id:
+            manage_places_role = guild.get_role(role_id)
+            return manage_places_role and manage_places_role in member.roles
+
+        # Fallback: if there is no manage places role, members added in this
+        # server are implicitly granted permission to manage places.
+        return await _known_inat_user(ctx, anywhere=False)
+
+    return commands.check(check)
+
+def can_manage_projects():
+    """Check if guild member can manage projects."""
+
+    async def check(ctx: commands.Context) -> bool:
+        """Author is bot owner, guild owner or admin, or has manage projects role."""
+        bot = ctx.bot
+        cog = bot.get_cog("iNat")
+        if not cog:
+            return False
+        guild = ctx.guild
+        if not guild:
+            # Project abbrevs not supported in DMs
+            return False
+
+        member = ctx.author
+        if (
+            member == guild.owner
+            or await bot.is_owner(member)
+            or await bot.is_admin(member)
+        ):
+            return True
+
+        guild_config = cog.config.guild(guild)
+        role_id = await guild_config.manage_projects_role()
+        if role_id:
+            manage_projects_role = guild.get_role(role_id)
+            return manage_projects_role and manage_projects_role in member.roles
+
+        # Fallback: if there is no manage projects role, members added in this
+        # server are implicitly granted permission to manage projects.
+        return await _known_inat_user(ctx, anywhere=False)
+
+    return commands.check(check)
 def can_manage_users():
     """Check if guild member can manage users."""
 

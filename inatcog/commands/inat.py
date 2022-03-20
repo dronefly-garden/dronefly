@@ -394,6 +394,66 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 msg = "not set"
         await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
 
+    @inat_set.command(name="manage_places_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_places_role(
+        self, ctx, manage_places_role: Optional[discord.Role]
+    ):
+        """Set manage places role."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if manage_places_role:
+            msg = manage_places_role.mention
+            await config.manage_places_role.set(manage_places_role.id)
+        else:
+            find = await config.manage_places_role()
+            if find:
+                manage_places_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = (
+                    manage_places_role.mention
+                    if manage_places_role
+                    else f"missing role: <@&{find}>"
+                )
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Manage places role: {msg}"))
+
+    @inat_set.command(name="manage_projects_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_projects_role(
+        self, ctx, manage_projects_role: Optional[discord.Role]
+    ):
+        """Set manage projects role."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if manage_projects_role:
+            msg = manage_projects_role.mention
+            await config.manage_projects_role.set(manage_projects_role.id)
+        else:
+            find = await config.manage_projects_role()
+            if find:
+                manage_projects_role = next(
+                    (role for role in ctx.guild.roles if role.id == find), None
+                )
+                msg = (
+                    manage_projects_role.mention
+                    if manage_projects_role
+                    else f"missing role: <@&{find}>"
+                )
+            else:
+                msg = "not set"
+        await ctx.send(embed=make_embed(description=f"Manage projects role: {msg}"))
+
     @inat_set.command(name="manage_users_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
