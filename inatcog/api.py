@@ -128,7 +128,7 @@ class INatAPI:
 
         return None
 
-    async def _pyinaturalist_endpoint(self, ctx, endpoint, **kwargs):
+    async def _pyinaturalist_endpoint(self, endpoint, ctx, **kwargs):
         LOG.info('_pyinaturalist_endpoint(%s, %s)', endpoint.__name__, repr(kwargs))
         return await ctx.bot.loop.run_in_executor(
             None, partial(endpoint, **kwargs)
@@ -352,7 +352,7 @@ class INatAPI:
         Just a thin wrapper for pyinaturalist get_taxa_autocomplete for now
         to demonstrate basic operation of pyinaturalist.
         """
-        return await self._pyinaturalist_endpoint(ctx, get_taxa_autocomplete, **kwargs)
+        return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
