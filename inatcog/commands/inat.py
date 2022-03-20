@@ -398,17 +398,28 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
     async def set_manage_places_role(
-        self, ctx, manage_places_role: Optional[discord.Role]
+        self, ctx, manage_places_role: Optional[Union[discord.Role, str]]
     ):
-        """Set manage places role."""
+        """Set manage places role.
+        
+        To unset the manage places role: `[p]inat set manage_places_role none`
+        """
         if ctx.author.bot or ctx.guild is None:
             return
 
         config = self.config.guild(ctx.guild)
 
         if manage_places_role:
-            msg = manage_places_role.mention
-            await config.manage_places_role.set(manage_places_role.id)
+            if isinstance(manage_places_role, str):
+                if manage_places_role.lower() == "none":
+                    await config.manage_places_role.clear()
+                    msg = "not set"
+                else:
+                    await ctx.send_help()
+                    return
+            else:
+                msg = manage_places_role.mention
+                await config.manage_places_role.set(manage_places_role.id)
         else:
             find = await config.manage_places_role()
             if find:
@@ -660,7 +671,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
                         ref.message_id
                     )
                 else:
-                    ctx.send_help()
+                    await ctx.send_help()
+                    return
         except discord.errors.NotFound:
             await ctx.send(f"Message not found: {message_id}")
             return
