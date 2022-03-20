@@ -8,8 +8,16 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.10"
-# Does not work until https://github.com/python-poetry/poetry/issues/5002 is solved.
-Red-DiscordBot = { git = "https://github.com/Cog-Creators/Red-DiscordBot", branch = "V3/dpy2_unstable" }
+# Old version of Red; please read carefully:
+Red-DiscordBot = "^3.4.16"
+# 
+# This version is required, but doesn't work until https://github.com/python-poetry/poetry/issues/5002 is solved:
+#
+#   Red-DiscordBot = { git = "https://github.com/Cog-Creators/Red-DiscordBot", branch = "V3/dpy2_unstable" }
+# 
+# **IMPORTANT!** Red-DiscordBot 3.5.x must therefore be upgraded manually via pip after poetry install:
+#
+#   $ python -m pip install -U --force-reinstall git+https://github.com/Cog-Creators/Red-DiscordBot@V3/dpy2_unstable#egg=Red-DiscordBot
 dataclasses-json = "^0.5.5"
 ebird-api = "^3.0.6"
 html2markdown = "^0.1.7"
