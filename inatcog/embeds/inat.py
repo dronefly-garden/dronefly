@@ -666,6 +666,8 @@ class INatEmbeds(MixinMeta):
                 and obs.community_taxon
                 and obs.community_taxon.id != obs.taxon.id
             ):
+                means_link = ""
+                status_link = ""
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
                     status = taxon_summary.conservation_status
@@ -677,9 +679,6 @@ class INatEmbeds(MixinMeta):
                         status_link = f"\n{status.description()} ({status.link()})"
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
-                else:
-                    means_link = ""
-                    status_link = ""
                 summary = (
                     f"{obs.community_taxon.format_name()} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
