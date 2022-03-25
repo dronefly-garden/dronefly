@@ -54,4 +54,5 @@ TODO: migrate Guide for Participant material here.
 Server Owner Guide
 ------------------
 
-TODO: migrate GitHub wiki material here.
+TODO: migrate `Server owner guide
+<https://github.com/dronefly-garden/dronefly/wiki/Server-owner-guide>`__ here.
