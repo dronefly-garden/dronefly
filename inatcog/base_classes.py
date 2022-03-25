@@ -440,14 +440,14 @@ class QueryResponse:
                     research = True
                     needsid = True
             if verifiable == "false":
-                adjectives.append("not verifiable")
+                adjectives.append("*not Verifiable*")
             elif research and needsid:
-                adjectives.append("verifiable")
+                adjectives.append("*Verifiable*")
             else:
                 if research:
-                    adjectives.append("research grade")
+                    adjectives.append("*Research Grade*")
                 if needsid:
-                    adjectives.append("needs ID")
+                    adjectives.append("*Needs ID*")
         self.adjectives = adjectives
 
     def obs_args(self):
