@@ -21,7 +21,7 @@ Dronefly is a bot for naturalists that gives users access to `iNaturalist
 
 Dronefly was made by and for members of the iNaturalist Discord server. You
 are welcome to join our community using this invite link:
-https://discord.gg/uskv2yx
+https://discord.gg/eCD4WvT
 
 Join the Dronefly support Discord server with this invite
 https://discord.gg/pUbZFDbDdD if:
@@ -54,4 +54,5 @@ TODO: migrate Guide for Participant material here.
 Server Owner Guide
 ------------------
 
-TODO: migrate GitHub wiki material here.
+TODO: migrate `Server owner guide
+<https://github.com/dronefly-garden/dronefly/wiki/Server-owner-guide>`__ here.
