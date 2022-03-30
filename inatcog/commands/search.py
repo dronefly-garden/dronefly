@@ -459,7 +459,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         """
         await self._search(ctx, query, "places")
 
-    @search.command(name="projects", aliases=["project"])
+    @search.command(name="projects", aliases=["prj", "project"])
     async def search_projects(self, ctx, *, query):
         """Search iNat projects.
 

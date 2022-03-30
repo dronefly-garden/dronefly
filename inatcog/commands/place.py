@@ -38,7 +38,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     abbrev for abbrev in places if places[abbrev] == place.place_id
                 ]
                 if place_abbrevs:
-                    abbrevs = ",".join(place_abbrevs)
+                    abbrevs = ", ".join(place_abbrevs)
                 else:
                     abbrevs = "*none*"
                     try:
