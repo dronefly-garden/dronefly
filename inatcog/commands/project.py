@@ -53,7 +53,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
                     if projects[abbrev] == project.project_id
                 ]
                 if proj_abbrevs:
-                    abbrevs = ",".join(proj_abbrevs)
+                    abbrevs = ", ".join(proj_abbrevs)
                 else:
                     abbrevs = "*none*"
                     try:
