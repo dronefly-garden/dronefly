@@ -338,6 +338,9 @@ def format_taxon_title(rec):
     title = rec.format_name()
     matched = rec.matched_term
     if matched not in (rec.name, rec.preferred_common_name):
+        invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
+        if matched in invalid_names:
+            matched = f"~~{matched}~~"
         title += f" ({matched})"
     return title
 
