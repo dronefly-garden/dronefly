@@ -20,8 +20,14 @@ class TaxonReplyConverter:
         """Default to taxon from replied to bot message."""
         query_str = argument
         ref = ctx.message.reference
+        msg = None
         if ref:
-            msg = ref.cached_message or await ctx.channel.fetch_message(ref.message_id)
+            msg = ref.cached_message
+            if not msg:
+                # See comment below for why the user won't see this message with our current approach:
+                if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                    raise BadArgument("I need Read Message History permission to read that message.")
+                msg = await ctx.channel.fetch_message(ref.message_id)
             if msg and msg.embeds:
                 inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
                 if query_str:

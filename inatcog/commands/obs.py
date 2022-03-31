@@ -62,9 +62,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if ref:
                 # It's a reply. Try to get an observation from the message.
                 # TODO: Lifted from TaxonReplyConverter; don't know where this belongs yet.
-                msg = ref.cached_message or await ctx.channel.fetch_message(
-                    ref.message_id
-                )
+                msg = ref.cached_message
+                if not msg:
+                    if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                        raise LookupError("I need Read Message History permission to read that message.")
+                    msg = await ctx.channel.fetch_message(ref.message_id)
                 if msg and msg.embeds:
                     inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
                     # pylint: disable=no-member, assigning-non-slot

@@ -70,6 +70,9 @@ async def add_reactions_with_cancel(
     with_keep: bool = False,
 ):
     """Add reactions with, for a limited time, author-only cancel."""
+    if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+        # nothing to do, as we don't have permission to add reactions
+        return
     _emojis = [emojis] if isinstance(emojis, str) else list(emojis)
     extra_emojis = []
     cancel = "\N{CROSS MARK}"

@@ -102,7 +102,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         await ctx.send("Project abbreviation added.")
 
     @project.command(name="list")
-    @checks.bot_has_permissions(embed_links=True)
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def project_list(self, ctx, *, match=""):
         """List projects with abbreviations on this server."""
         if not ctx.guild:

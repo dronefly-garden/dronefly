@@ -88,7 +88,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         await ctx.send("Place abbreviation added.")
 
     @place.command(name="list")
-    @checks.bot_has_permissions(embed_links=True)
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def place_list(self, ctx, *, match=""):
         """List places with abbreviations on this server."""
         if not ctx.guild:

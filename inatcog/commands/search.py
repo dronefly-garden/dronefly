@@ -413,7 +413,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
-    @checks.bot_has_permissions(embed_links=True)
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def search(self, ctx, *, query):
         """Search iNat.
 

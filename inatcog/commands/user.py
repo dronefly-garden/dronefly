@@ -384,7 +384,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="list")
     @can_manage_users()
-    @commands.bot_has_guild_permissions(embed_links=True)
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def user_list(self, ctx, abbrev: str = None):
         """List members with known iNat ids on this server.
 
