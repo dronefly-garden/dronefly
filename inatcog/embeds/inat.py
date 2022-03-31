@@ -1590,12 +1590,13 @@ class INatEmbeds(MixinMeta):
         if msg.id not in self.reaction_locks:
             self.reaction_locks[msg.id] = asyncio.Lock()
         async with self.reaction_locks[msg.id]:
-            # Refetch the message because it may have changed prior to
+            # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            try:
-                msg = await msg.channel.fetch_message(msg.id)
-            except discord.errors.NotFound:
-                return  # message has been deleted, nothing left to do
+            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
             embeds = msg.embeds
             inat_embed = INatEmbed.from_discord_embed(embeds[0])
             description = inat_embed.description or ""
@@ -1682,12 +1683,13 @@ class INatEmbeds(MixinMeta):
         if msg.id not in self.reaction_locks:
             self.reaction_locks[msg.id] = asyncio.Lock()
         async with self.reaction_locks[msg.id]:
-            # Refetch the message because it may have changed prior to
+            # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            try:
-                msg = await msg.channel.fetch_message(msg.id)
-            except discord.errors.NotFound:
-                return  # message has been deleted, nothing left to do
+            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
             embeds = msg.embeds
             inat_embed = INatEmbed.from_discord_embed(embeds[0])
             description = inat_embed.description or ""

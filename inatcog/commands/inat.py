@@ -315,7 +315,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         msg = await ctx.send(
             embed=make_embed(title="Test", description="Reactions test.")
         )
-        start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
+        if not ctx.guild or ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+            start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
@@ -612,24 +613,30 @@ class CommandsInat(INatEmbeds, MixinMeta):
                     if ctx.guild:
                         channel = ctx.guild.get_channel(channel_id)
                         if not channel:
-                            raise LookupError
+                            raise LookupError(f"Channel not found: {channel_id}")
                 else:
                     channel = ctx.channel
+                if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                    raise LookupError(f"No permission to read: {message_id}")
                 message = await channel.fetch_message(message_id)
             else:
                 ref = ctx.message.reference
                 if ref:
-                    message = ref.cached_message or await ctx.channel.fetch_message(
-                        ref.message_id
-                    )
+                    message = ref.cached_message
+                    if not message:
+                        if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                            raise LookupError(f"No permission to read: {ref.message_id}")
+                        message = await ctx.channel.fetch_message(
+                            ref.message_id
+                        )
                 else:
                     await ctx.send_help()
                     return
         except discord.errors.NotFound:
             await ctx.send(f"Message not found: {message_id}")
             return
-        except LookupError:
-            await ctx.send(f"Channel not found: {channel_id}")
+        except LookupError as err:
+            await ctx.send(str(err))
             return
         except ValueError:
             await ctx.send("Invalid argument")
