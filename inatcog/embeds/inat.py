@@ -333,9 +333,9 @@ def format_taxon_names_for_embed(*args, **kwargs):
     return format_taxon_names(*args, **kwargs)
 
 
-def format_taxon_title(rec):
+def format_taxon_title(rec, lang=None):
     """Format taxon title."""
-    title = rec.format_name()
+    title = rec.format_name(lang=lang)
     matched = rec.matched_term
     if matched not in (rec.name, rec.preferred_common_name):
         invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
@@ -399,11 +399,24 @@ class INatEmbeds(MixinMeta):
                 home = await self.config.home()
         return home
 
-    async def make_last_obs_embed(self, last):
+    async def get_lang(self, ctx):
+        """Get configured preferred language."""
+        user_config = self.config.user(ctx.author)
+        lang = await user_config.lang()
+        # TODO: support guild and global preferred language
+        #if not lang:
+        #    if ctx.guild:
+        #        guild_config = self.config.guild(ctx.guild)
+        #        lang = await guild_config.lang()
+        #    else:
+        #        lang = await self.config.lang()
+        return lang
+
+    async def make_last_obs_embed(self, ctx, last):
         """Return embed for recent observation link."""
         if last.obs:
             obs = last.obs
-            embed = await self.make_obs_embed(obs, url=last.url, preview=False)
+            embed = await self.make_obs_embed(ctx, obs, url=last.url, preview=False)
         else:
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
@@ -419,10 +432,11 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def make_map_embed(self, taxa):
+    async def make_map_embed(self, ctx, taxa, lang=None):
         """Return embed for an observation link."""
+        lang = await self.get_lang(ctx)
         title = format_taxon_names_for_embed(
-            taxa, with_term=True, names_format="Range map for %s"
+            taxa, with_term=True, names_format="Range map for %s", lang=lang
         )
         inat_map_url = INatMapURL(self.api)
         url = await inat_map_url.get_map_url_for_taxa(taxa)
@@ -541,7 +555,7 @@ class INatEmbeds(MixinMeta):
         return embed
 
     async def format_obs(
-        self, obs, with_description=True, with_link=False, compact=False, with_user=True
+        self, obs, with_description=True, with_link=False, compact=False, with_user=True, lang=None
     ):
         """Format an observation title & description."""
 
@@ -649,7 +663,7 @@ class INatEmbeds(MixinMeta):
                 summary += description + "\n"
             return summary
 
-        def format_community_id(title, summary, obs, taxon_summary):
+        async def format_community_id(title, summary, obs, taxon_summary, lang=lang):
             idents_count = ""
             if obs.idents_count:
                 if obs.community_taxon:
@@ -679,8 +693,12 @@ class INatEmbeds(MixinMeta):
                         status_link = f"\n{status.description()} ({status.link()})"
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
+                if lang:
+                    community_taxon = await get_taxon(self, community_taxon.id, refresh_cache=False)
+                else:
+                    community_taxon = obs.community_taxon
                 summary = (
-                    f"{obs.community_taxon.format_name()} "
+                    f"{community_taxon.format_name(lang=lang)} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
@@ -715,7 +733,10 @@ class INatEmbeds(MixinMeta):
                 return taxon_summary
             return None
 
-        taxon = obs.taxon
+        if lang:
+            taxon = await get_taxon(self, obs.taxon.id, refresh_cache=False)
+        else:
+            taxon = obs.taxon
         user = obs.user
         title = format_title(taxon, obs)
         taxon_summary = None
@@ -726,8 +747,8 @@ class INatEmbeds(MixinMeta):
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
-        title, summary = format_community_id(
-            title, summary, obs, community_taxon_summary
+        title, summary = await format_community_id(
+            title, summary, obs, community_taxon_summary, lang=lang
         )
         if not compact:
             title += format_media_counts(obs)
@@ -736,7 +757,7 @@ class INatEmbeds(MixinMeta):
                 title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
-    async def make_obs_embed(self, obs, url, preview: Union[bool, int] = True):
+    async def make_obs_embed(self, ctx, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
 
@@ -785,7 +806,8 @@ class INatEmbeds(MixinMeta):
                 embed.title = title
                 embed.url = url
             else:
-                embed.title, summary = await self.format_obs(obs)
+                lang = await self.get_lang(ctx)
+                embed.title, summary = await self.format_obs(obs, lang=lang)
                 if error:
                     summary += "\n" + error
                 embed.description = summary
@@ -805,8 +827,9 @@ class INatEmbeds(MixinMeta):
 
     async def make_related_embed(self, ctx, taxa):
         """Return embed for related taxa."""
+        lang = await self.get_lang(ctx)
         names = format_taxon_names_for_embed(
-            taxa, with_term=True, names_format="**The taxa:** %s"
+            taxa, with_term=True, names_format="**The taxa:** %s", lang=lang
         )
         taxa_iter = iter(taxa)
         first_taxon = next(taxa_iter)
@@ -841,15 +864,16 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name()}"
+        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name(lang=lang)}"
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, rec, index=1):
+    async def make_image_embed(self, ctx, rec, index=1):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.id}")
 
-        title = format_taxon_title(rec)
+        lang = await self.get_lang(ctx)
+        title = format_taxon_title(rec, lang=lang)
         image = None
         attribution = None
 
@@ -980,7 +1004,8 @@ class INatEmbeds(MixinMeta):
                 description += "."
             return description
 
-        title = format_taxon_title(taxon)
+        lang = await self.get_lang(ctx)
+        title = format_taxon_title(taxon, lang=lang)
 
         preferred_place_id = await self.get_home(ctx)
         if place:
@@ -1247,7 +1272,7 @@ class INatEmbeds(MixinMeta):
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
     ):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(query_response, index))
+        msg = await ctx.send(embed=await self.make_image_embed(ctx, query_response, index))
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
         #   user will break the display; they can use `,last t` to get the taxon

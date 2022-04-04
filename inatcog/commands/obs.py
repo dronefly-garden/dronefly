@@ -109,7 +109,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(res.obs, res.url, preview=res.preview)
+                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=res.preview)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name="img", aliases=["image", "photo"])
@@ -123,7 +123,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(res.obs, res.url, preview=number or 1)
+                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=number or 1)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
@@ -322,7 +322,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
             )["results"]
             obs = get_obs_fields(results[0]) if results else None
-            embed = await self.make_obs_embed(obs, url)
+            embed = await self.make_obs_embed(ctx, obs, url)
             await self.send_obs_embed(ctx, embed, obs)
             return
 

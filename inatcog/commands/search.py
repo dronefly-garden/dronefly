@@ -66,7 +66,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             selected_index[0] = result_index
             return pages
 
-        async def _display_selected(result):
+        async def _display_selected(ctx, result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
                 home = await self.get_home(ctx)
@@ -78,7 +78,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 obs = get_obs_fields(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
-                        obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                        ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
                     if obs and obs.sounds:
                         await self.maybe_send_sound(ctx.channel, obs.sounds)
@@ -169,7 +169,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         ):  # pylint: disable=too-many-arguments
             result = get_result(page, results, selected_index[0])
             if result:
-                await _display_selected(result)
+                await _display_selected(ctx, result)
             if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)

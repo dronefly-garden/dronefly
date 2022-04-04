@@ -238,7 +238,7 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
     """Public class for taxon with cog-specific behaviours."""
 
     def format_name(
-        self, with_term=False, hierarchy=False, with_rank=True, with_common=True
+        self, with_term=False, hierarchy=False, with_rank=True, with_common=True, lang=None
     ):
         """Format taxon name.
 
@@ -254,6 +254,9 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
             If specified and hierarchy=False, includes the rank for ranks higher than species.
         with_common: bool, optional
             If specified, include common name in parentheses after scientific name.
+        lang: str, optional
+            If specified, prefer the first name with its locale == lang instead of
+            the preferred_common_name.
 
         Returns
         -------
@@ -270,17 +273,24 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
         """
 
         if with_common:
+            preferred_common_name = None
+            if lang and self.names:
+                name = next(iter([name for name in self.names if name.get("locale") == lang]))
+                if name:
+                    preferred_common_name = name.get("name")
+            if not preferred_common_name:
+                preferred_common_name = self.preferred_common_name
             if with_term:
                 common = (
                     self.matched_term
-                    if self.matched_term not in (self.name, self.preferred_common_name)
-                    else self.preferred_common_name
+                    if self.matched_term not in (self.name, preferred_common_name)
+                    else preferred_common_name
                 )
             else:
                 if hierarchy:
                     common = None
                 else:
-                    common = self.preferred_common_name
+                    common = preferred_common_name
         else:
             common = None
         name = self.name

@@ -37,7 +37,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
             await apologize(ctx, err.args[0])
             return
 
-        await ctx.send(embed=await self.make_map_embed(taxa))
+        await ctx.send(embed=await self.make_map_embed(ctx, taxa))
 
     @map.command(name="obs")
     async def map_obs(self, ctx, *, query: NaturalQueryConverter):

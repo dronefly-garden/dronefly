@@ -93,7 +93,7 @@ class Listeners(INatEmbeds, MixinMeta):
             obs, url = await maybe_match_obs(self, ctx, message.content)
             # Only output if an observation is found
             if obs:
-                embed = await self.make_obs_embed(obs, url, preview=False)
+                embed = await self.make_obs_embed(ctx, obs, url, preview=False)
                 await self.send_obs_embed(ctx, embed, obs)
                 self.bot.dispatch("commandstats_action", ctx)
 

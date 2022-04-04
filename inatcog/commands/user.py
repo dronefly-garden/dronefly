@@ -251,7 +251,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """iNat user settings."""
-        if setting not in ["all", "known", "home"]:
+        if setting not in ["all", "known", "home", "lang"]:
             await ctx.send(f"Unknown setting: {setting}")
             return
         if setting in ["all", "known"]:
@@ -267,6 +267,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     await ctx.send(f"Non-existent place ({home_id})")
             else:
                 await ctx.send("home: none")
+        if setting in ["all", "lang"]:
+            lang = await config.lang()
+            await ctx.send(f"lang: {str(lang).lower()}")
 
     @user.command(name="remove_all")
     @checks.is_owner()
@@ -326,6 +329,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home` show your home place
         `[p]user set home clear` clear your home place
         `[p]user set home [place]` set your home place
+
+        Set also: `[p]help user set lang`.
         """
         try:
             config = await get_valid_user_config(self, ctx.author, anywhere=True)
@@ -381,6 +386,49 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
 
         await self.user_show_settings(ctx, config, "known")
+
+    @user_set.command(name="lang")
+    @known_inat_user()
+    async def user_set_lang(self, ctx, *, lang: str = None):
+        """Show or set your preferred language for common names.
+
+        `[p]user set lang` show your preferred language for common names
+        `[p]user set lang clear` clear your preferred language for common names
+        `[p]user set lang [lang]` set your preferred language for common names
+
+        It is recommended to only use this setting if the language of your home place is not your preferred language for common names.
+
+        When set, the common name shown in bot displays will be the first name with a locale exactly equal to the `lang` value. If no matching name is found, then the preferred common name for your home place is used by default.
+
+        Due to limitations of the API, the `lang` argument must be one of the locale abbreviations supported by iNaturalist, e.g. `en` for English, `de` for German, etc. Unfortunately, this means quite a number of minor languages that iNaturalist has translations for, but are not associated with a locale are not represented.
+
+        See: `[p]help user set home`.
+        """  # noqa: E501
+        try:
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+
+        if lang is not None:
+            _lang = re.sub(DEQUOTE, r"\1", lang).lower()
+            bot = self.bot.user.name
+            if _lang in ["clear", "none", ""]:
+                await config.lang.clear()
+                await ctx.send(f"{bot} no longer has a preferred language set for you.")
+            else:
+                try:
+                    if not re.search(r"^[a-z-]+$", lang):
+                        raise LookupError("Language must contain only letters or a dash, e.g. `en`, `de`, `zh`, `zh-CN`.")
+                    await config.lang.set(_lang)
+                    await ctx.send(
+                        f"{bot} will use `{_lang}` as your preferred language."
+                    )
+                except LookupError as err:
+                    await ctx.send(err)
+                    return
+
+        await self.user_show_settings(ctx, config, "lang")
 
     @user.command(name="list")
     @can_manage_users()
