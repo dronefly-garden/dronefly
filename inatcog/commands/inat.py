@@ -200,23 +200,26 @@ class CommandsInat(INatEmbeds, MixinMeta):
         See also: `[p]taxon_query`, `[p]dates`, `[p]advanced`, `[p]macros`.
 
         Aside from *taxon*, other *query* terms may be:
-        - `by <name>` for named user's observations; also `by me` or just `my` (a *macro*) for yourself
-        - `from <place>` for named place; also `from home` or just `home` (a *macro*) for your *home place*
-        - `in prj <project>` for named *project*
-        - `with <term> <value>` for *controlled term* with the given *value*
-        - `not by <name>` for obs unobserved by the user
-        - `id by <name>` for obs ided by the user
+        - `by <name>` user's obs; also `by me` or just `my` (a *macro*) for yourself
+        - `from <place>` obs in that place; also `from home` or just `home` (a *macro*) for your *home place*
+        - `in prj <project>` obs in the *project*
+        - `with <term> <value>` has *controlled term* with *value*
+        - `not by <name>` obs of taxa unobserved by the user
+        - `id by <name>` obs ided by the user
+        - `except by <name>` excludes obs by the user
         - `[added] since <date>`, `[added] until <date>`, `[added] on <date>`; see `[p]dates` for details
         **Examples:**
         ```
-        [p]obs by benarmstrong
-        -> most recently added observation by benarmstrong
-        [p]obs insecta by benarmstrong
-        -> most recent insecta by benarmstrong
+        [p]obs by me
+        -> most recently added by me
+        [p]obs insecta by me
+        -> most recent insecta by me
         [p]s obs insecta from canada
-        -> search for any insecta from Canada
+        -> search insects from Canada
         [p]s obs insecta with life larva
-        -> search for insecta with life stage = larva
+        -> search insect larvae
+        [p]s obs bees id by me except by me
+        -> search bees ided for others
         ```
         """  # noqa: E501
         await ctx.send_help()
