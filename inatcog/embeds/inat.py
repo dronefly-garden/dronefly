@@ -195,6 +195,7 @@ class INatEmbed(discord.Embed):
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
         content["unobserved_by_user_id"] = self.unobserved_by_user_id()
+        content["not_user_id"] = self.not_user_id()
         content["ident_user_id"] = self.ident_user_id()
         content["project_id"] = self.project_id()
         content["taxon_url"] = self.taxon_url
@@ -215,6 +216,7 @@ class INatEmbed(discord.Embed):
         user = query.user or self.user_id()
         id_by = query.id_by or self.ident_user_id()
         unobserved_by = query.unobserved_by or self.unobserved_by_user_id()
+        except_by = query.except_by or self.not_user_id()
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
@@ -223,6 +225,7 @@ class INatEmbed(discord.Embed):
             user=user,
             id_by=id_by,
             unobserved_by=unobserved_by,
+            except_by=except_by,
             place=place,
             project=project,
             controlled_term=controlled_term,
@@ -321,6 +324,11 @@ class INatEmbed(discord.Embed):
         unobserved_by_user_id = self.params.get("unobserved_by_user_id")
         return int(unobserved_by_user_id) if unobserved_by_user_id else None
 
+    def not_user_id(self):
+        """Return not_user_id(s) from embed, if present."""
+        not_user_id = self.params.get("not_user_id")
+        return int(not_user_id) if not_user_id else None
+
     def ident_user_id(self):
         """Return ident_user_id(s) from embed, if present."""
         ident_user_id = self.params.get("ident_user_id")
@@ -345,6 +353,8 @@ def format_taxon_title(rec):
     return title
 
 
+# TODO: refactor these two helpers as a single context manager so we can
+# supply custom emoji sets in the context block.
 def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = False):
     if not query_response:
         return False
@@ -353,6 +363,10 @@ def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = Fals
     return query_response.place and not (
         query_response.user or query_response.id_by or query_response.unobserved_by
     )
+
+# Note: always call this after _add_place_emojis
+def _add_user_emojis(query_response: QueryResponse):
+    return not query_response.except_by
 
 
 EMOJI = {
@@ -1210,7 +1224,8 @@ class INatEmbeds(MixinMeta):
         reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS
+            else OBS_REACTION_EMOJIS if _add_user_emojis(query_response)
+            else []
         )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
@@ -1233,13 +1248,15 @@ class INatEmbeds(MixinMeta):
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else TAXON_REACTION_EMOJIS
+                else TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else []
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else NO_PARENT_TAXON_REACTION_EMOJIS
+                else NO_PARENT_TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else []
             )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
 

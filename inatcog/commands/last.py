@@ -84,6 +84,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             place=query.place,
             controlled_term="",
             unobserved_by=query.unobserved_by,
+            except_by=query.except_by,
             id_by=query.id_by,
             per=query.per,
             project=query.project,

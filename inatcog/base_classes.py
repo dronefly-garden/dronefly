@@ -418,6 +418,7 @@ class QueryResponse:
     user: Optional[User]
     place: Optional[Place]
     unobserved_by: Optional[User]
+    except_by: Optional[User]
     id_by: Optional[User]
     project: Optional[Project]
     options: Optional[dict]
@@ -460,6 +461,7 @@ class QueryResponse:
         kwargs.set_from(self.place, "place_id")
         kwargs.set_from(self.id_by, "user_id", "ident_user_id")
         kwargs.set_from(self.unobserved_by, "user_id", "unobserved_by_user_id")
+        kwargs.set_from(self.except_by, "user_id", "not_user_id")
         if self.unobserved_by:
             kwargs["lrank"] = "species"
         if self.controlled_term:
@@ -592,6 +594,8 @@ class QueryResponse:
             message += " unobserved by " + self.unobserved_by.display_name()
         if self.id_by:
             message += " identified by " + self.id_by.display_name()
+        if self.except_by:
+            message += " except by " + self.except_by.display_name()
         if self.observed and self.observed.on or self.observed.d1 or self.observed.d2:
             message += " observed "
             if self.observed.on:
