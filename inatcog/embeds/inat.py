@@ -366,6 +366,8 @@ def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = Fals
 
 # Note: always call this after _add_place_emojis
 def _add_user_emojis(query_response: QueryResponse):
+    if not query_response:
+        return True
     return not query_response.except_by
 
 
