@@ -154,6 +154,7 @@ class UnixlikeParser:
                 place=" ".join(vals.place),
                 controlled_term=controlled_term,
                 unobserved_by=" ".join(vals.unobserved_by),
+                except_by=" ".join(vals.except_by),
                 id_by=" ".join(vals.id_by),
                 per=" ".join(vals.per),
                 project=" ".join(vals.project),

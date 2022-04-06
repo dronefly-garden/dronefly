@@ -52,6 +52,10 @@ class TestQuery:
         query = Query(main=TaxonQuery(terms=["song", "sparrow"]), unobserved_by="me")
         assert str(query) == "song sparrow not by me"
 
+    def test_query_except_by(self):
+        query = Query(main=TaxonQuery(terms=["song", "sparrow"]), except_by="me")
+        assert str(query) == "song sparrow except by me"
+
     def test_query_id_by(self):
         query = Query(main=TaxonQuery(terms=["song", "sparrow"]), id_by="me")
         assert str(query) == "song sparrow id by me"

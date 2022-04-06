@@ -110,6 +110,7 @@ class Query:
     place: Optional[str] = None
     controlled_term: Optional[str] = None
     unobserved_by: Optional[str] = None
+    except_by: Optional[str] = None
     id_by: Optional[str] = None
     per: Optional[str] = None
     project: Optional[str] = None
@@ -141,6 +142,7 @@ class Query:
         self._add_clause("by {}", self.user)
         self._add_clause("id by {}", self.id_by)
         self._add_clause("not by {}", self.unobserved_by)
+        self._add_clause("except by {}", self.except_by)
         self._add_clause("with {}", self.controlled_term)
         self._add_clause("per {}", self.per)
         self._add_clause("opt {}", self.options)

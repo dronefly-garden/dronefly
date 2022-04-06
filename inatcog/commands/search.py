@@ -226,6 +226,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         async def get_obs_query_args(query):
             query_response = await self.query.get(ctx, query)
             kwargs = query_response.obs_args()
+            # TODO: determine why we don't just use QueryResponse.obs_query_description
+            # and either use it directly or otherwise share code instead of duplicating
+            # most of it here.
             if query_response.taxon:
                 query_title = query_response.taxon.format_name(with_term=True)
             else:
@@ -236,6 +239,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 query_title += f" unobserved by {query_response.unobserved_by.login}"
             if query_response.id_by:
                 query_title += f" identified by {query_response.id_by.login}"
+            if query_response.except_by:
+                query_title += f" except by {query_response.except_by.login}"
+            if query_response.project:
+                query_title += f" in {query_response.project.title}"
             if query_response.place:
                 query_title += f" from {query_response.place.display_name}"
             url = obs_url_from_v1(kwargs)

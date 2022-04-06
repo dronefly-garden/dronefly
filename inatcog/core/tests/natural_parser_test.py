@@ -47,6 +47,10 @@ class TestUnixlikeParser:
         parsed = parser.parse("not by me")
         assert str(parsed == "not by me")
 
+    def test_except_by(self, parser):
+        parsed = parser.parse("except by me")
+        assert str(parsed == "except by me")
+
     def test_id_by(self, parser):
         parsed = parser.parse("id by me")
         assert str(parsed == "id by me")
