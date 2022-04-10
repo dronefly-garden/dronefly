@@ -152,6 +152,10 @@ class INatAPI:
         )
         id_arg = f"/{args[0]}" if args else ""
         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
+        _kwargs = {
+            "all_names": "true",
+            **kwargs,
+        }
 
         # Cache lookup by id#, as those should be stable.
         # - note: we could support splitting a list of id#s and caching each
@@ -160,13 +164,13 @@ class INatAPI:
         if args and (isinstance(args[0], int) or args[0].isnumeric()):
             taxon_id = int(args[0])
             if refresh_cache or taxon_id not in self.taxa_cache:
-                taxon = await self._get_rate_limited(full_url, **kwargs)
+                taxon = await self._get_rate_limited(full_url, **_kwargs)
                 if taxon:
                     self.taxa_cache[taxon_id] = taxon
             return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
 
         # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **kwargs)
+        return await self._get_rate_limited(full_url, **_kwargs)
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
