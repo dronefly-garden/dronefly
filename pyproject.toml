@@ -17,7 +17,7 @@ Red-DiscordBot = "^3.4.16"
 # 
 # **IMPORTANT!** Red-DiscordBot 3.5.x must therefore be upgraded manually via pip after poetry install:
 #
-#   $ python -m pip install -U --force-reinstall git+https://github.com/Cog-Creators/Red-DiscordBot@V3/dpy2_unstable#egg=Red-DiscordBot
+#   $ python -m pip install -U --force-reinstall git+https://github.com/Cog-Creators/Red-DiscordBot@V3/develop#egg=Red-DiscordBot
 dataclasses-json = "^0.5.5"
 ebird-api = "^3.0.6"
 html2markdown = "^0.1.7"

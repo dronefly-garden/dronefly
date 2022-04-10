@@ -194,10 +194,10 @@ class INatCog(
                     )
             await self.config.schema_version.set(4)
 
-    def cog_unload(self):
+    async def cog_unload(self):
         """Cleanup when the cog unloads."""
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
-            self.bot.loop.create_task(self.api.session.close())
+            await self.api.session.close()
             self._cleaned_up = True
