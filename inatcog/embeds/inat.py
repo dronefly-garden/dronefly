@@ -345,7 +345,12 @@ def format_taxon_title(rec, lang=None):
     """Format taxon title."""
     title = rec.format_name(lang=lang)
     matched = rec.matched_term
-    if matched not in (rec.name, rec.preferred_common_name):
+    preferred_common_name = rec.preferred_common_name
+    if lang and rec.names:
+        name = next(iter([name for name in rec.names if name.get("locale") == lang]))
+        if name:
+            preferred_common_name = name.get("name")
+    if matched not in (rec.name, preferred_common_name):
         invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
         if matched in invalid_names:
             matched = f"~~{matched}~~"
