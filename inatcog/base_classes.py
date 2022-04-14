@@ -275,7 +275,7 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
         if with_common:
             preferred_common_name = None
             if lang and self.names:
-                name = next(iter([name for name in self.names if name.get("locale") == lang]))
+                name = next(iter([name for name in self.names if name.get("locale") == lang]), None)
                 if name:
                     preferred_common_name = name.get("name")
             if not preferred_common_name:

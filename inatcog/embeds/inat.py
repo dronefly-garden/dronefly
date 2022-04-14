@@ -347,7 +347,7 @@ def format_taxon_title(rec, lang=None):
     matched = rec.matched_term
     preferred_common_name = rec.preferred_common_name
     if lang and rec.names:
-        name = next(iter([name for name in rec.names if name.get("locale") == lang]))
+        name = next(iter([name for name in rec.names if name.get("locale") == lang]), None)
         if name:
             preferred_common_name = name.get("name")
     if matched not in (rec.name, preferred_common_name):
