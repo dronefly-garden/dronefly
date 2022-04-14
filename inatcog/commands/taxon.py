@@ -69,7 +69,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
         taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
-        full_name = taxon.format_name()
+        lang = await self.get_lang(ctx)
+        full_name = taxon.format_name(lang=lang)
         if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
             await ctx.send(f"{full_name} is not in Plantae")
             return
@@ -135,7 +136,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await apologize(ctx, str(err))
             return
         taxon = query_response.taxon
-        title = taxon.format_name(with_term=True)
+        lang = await self.get_lang(ctx)
+        title = taxon.format_name(with_term=True, lang=lang)
         url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
         full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"

@@ -30,7 +30,7 @@ TAXON_LIST_DELIMITER = [", ", " > "]
 
 
 def format_taxon_names(
-    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False
+    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False, lang=None
 ):
     """Format names of taxa from matched records.
 
@@ -59,7 +59,7 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        taxon.format_name(with_term=with_term, hierarchy=hierarchy) for taxon in taxa
+        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
     ]
 
     def fit_names(names):

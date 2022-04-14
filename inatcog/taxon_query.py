@@ -49,7 +49,6 @@ class INatTaxonQuery:
         records_read = 0
         total_records = 0
 
-        kwargs["all_names"] = "true"
         if locale:
             kwargs["locale"] = locale
         if preferred_place_id:

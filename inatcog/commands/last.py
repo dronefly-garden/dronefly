@@ -44,7 +44,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        embed = await self.make_last_obs_embed(last)
+        embed = await self.make_last_obs_embed(ctx, last)
         await self.send_obs_embed(ctx, embed, last.obs)
 
     @last_obs.command(name="img", aliases=["image", "photo"])
@@ -65,7 +65,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 num = 1 if number is None else int(number)
             except ValueError:
                 num = 0
-            embed = await self.make_obs_embed(last.obs, last.url, preview=num)
+            embed = await self.make_obs_embed(ctx, last.obs, last.url, preview=num)
             await self.send_obs_embed(ctx, embed, last.obs)
         else:
             await apologize(ctx, "Nothing found")
@@ -128,7 +128,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         """Taxon range map for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
+            await ctx.send(embed=await self.make_map_embed(ctx, [last.obs.taxon]))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -194,7 +194,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await ctx.send(embed=await self.make_map_embed([last.taxon]))
+        await ctx.send(embed=await self.make_map_embed(ctx, [last.taxon]))
 
     @last_taxon.command(name="image", aliases=["img"])
     async def last_taxon_image(self, ctx, number=1):

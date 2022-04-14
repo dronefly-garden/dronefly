@@ -115,6 +115,7 @@ class INatCog(
             inat_user_id=None,
             known_in=[],
             known_all=False,
+            lang=None,
         )
         self._cleaned_up = False
         self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())
