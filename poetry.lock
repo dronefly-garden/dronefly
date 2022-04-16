@@ -131,11 +131,11 @@ tzdata = ["tzdata"]
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.10.0"
+version = "4.11.1"
 description = "Screen-scraping library"
 category = "main"
 optional = false
-python-versions = ">3.0.0"
+python-versions = ">=3.6.0"
 
 [package.dependencies]
 soupsieve = ">1.2"
@@ -166,6 +166,17 @@ d = ["aiohttp (>=3.7.4)"]
 jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 python2 = ["typed-ast (>=1.4.3)"]
 uvloop = ["uvloop (>=0.15.2)"]
+
+[[package]]
+name = "cattrs"
+version = "1.10.0"
+description = "Composable complex class support for attrs and dataclasses."
+category = "main"
+optional = false
+python-versions = ">=3.7,<4.0"
+
+[package.dependencies]
+attrs = ">=20"
 
 [[package]]
 name = "certifi"
@@ -395,14 +406,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "itsdangerous"
-version = "2.1.2"
-description = "Safely pass data to untrusted environments and back."
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[[package]]
 name = "jeepney"
 version = "0.8.0"
 description = "Low-level, pure Python DBus protocol wrapper."
@@ -510,7 +513,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 name = "platformdirs"
 version = "2.5.1"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -567,25 +570,25 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyinaturalist"
-version = "0.15.0"
+version = "0.17.0.dev1"
 description = "iNaturalist API client for python"
 category = "main"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-appdirs = ">=1.4"
 attrs = ">=21.2"
 keyring = ">=22.3"
+platformdirs = ">=2.5"
 python-dateutil = ">=2.0"
 python-forge = ">=18.6"
-requests = ">=2.20"
-requests-cache = ">=0.7.4,<0.8.0"
+requests = ">=2.22"
+requests-cache = "0.10.0.dev0"
 requests-ratelimiter = ">=0.2.1"
-rich = ">=10.0"
+rich = ">=10.9"
 
 [package.extras]
-docs = ["furo (==2021.8.17b43)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.15.1,<0.16.0)", "nbsphinx (>=0.8.5,<0.9.0)", "sphinx (>=4.0.2,<5.0.0)", "sphinx-automodapi (>=0.13,<0.14)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-copybutton (>=0.3,<0.5)", "sphinx-inline-tabs (>=2021.4.11-beta.9,<2022.0.0)", "sphinx-panels (>=0.6.0,<0.7.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
+docs = ["furo (>=2022.2.14.1,<2023.0.0.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.17.0,<0.18.0)", "nbsphinx (>=0.8.5,<0.9.0)", "sphinx (>=4.2.0,<5.0.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-copybutton (>=0.5)", "sphinx-inline-tabs (>=2022.1.2b11,<2023.0.0)", "sphinx-panels (>=0.6.0,<0.7.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "pynacl"
@@ -605,22 +608,26 @@ tests = ["pytest (>=3.2.1,!=3.3.0)", "hypothesis (>=3.27.0)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.0.7"
-description = "Python parsing module"
+version = "3.0.8"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.6.8"
 
 [package.extras]
-diagrams = ["jinja2", "railroad-diagrams"]
+diagrams = ["railroad-diagrams", "jinja2"]
 
 [[package]]
 name = "pyrate-limiter"
-version = "2.6.3"
-description = "Python Rate-Limiter using Leaky-Bucket Algorimth Family"
+version = "2.8.1"
+description = "Python Rate-Limiter using Leaky-Bucket Algorithm"
 category = "main"
 optional = false
 python-versions = ">=3.6.2,<4.0.0"
+
+[package.extras]
+all = ["filelock (>=3.0)", "redis (>=3.3,<4.0)", "redis-py-cluster (>=2.1.3,<3.0.0)"]
+docs = ["furo (>=2022.3.4,<2023.0.0)", "myst-parser (>=0.17)", "sphinx (>=4.3.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-copybutton (>=0.5)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "pytest"
@@ -808,43 +815,45 @@ use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
 name = "requests-cache"
-version = "0.7.5"
-description = "A transparent, persistent cache for the requests library"
+version = "0.10.0.dev0"
+description = "A transparent persistent cache for the requests library"
 category = "main"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
+appdirs = ">=1.4.4,<2.0.0"
 attrs = ">=21.2,<22.0"
-itsdangerous = ">=2.0.1"
-pyyaml = ">=5.4"
-requests = ">=2.17,<3.0"
+cattrs = ">=1.8,<2.0"
+requests = ">=2.22,<3.0"
 url-normalize = ">=1.4,<2.0"
+urllib3 = ">=1.25.5,<2.0.0"
 
 [package.extras]
-bson = ["bson (>=0.5)", "cattrs (>=1.7,<2.0)"]
-all = ["cattrs (>=1.7,<2.0)", "ujson (>=4.0)", "boto3 (<1.16)", "pymongo (>=3.0,<4.0)", "redis (>=3.0,<4.0)"]
-json = ["cattrs (>=1.7,<2.0)", "ujson (>=4.0)"]
-yaml = ["cattrs (>=1.7,<2.0)"]
-mongodb = ["cattrs (>=1.7,<2.0)", "pymongo (>=3.0,<4.0)"]
-dynamodb = ["boto3 (<1.16)", "botocore (<1.19)"]
-redis = ["redis (>=3.0,<4.0)"]
-docs = ["furo (>=2021.6.24-beta.37)", "myst-parser (>=0.15.1,<0.16.0)", "Sphinx (==4.1.2)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-copybutton (>=0.3,<0.5)", "sphinx-inline-tabs (>=2021.4.11-beta.9,<2022.0.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)", "linkify-it-py (>=1.0.1,<2.0.0)"]
+dynamodb = ["boto3 (>=1.15,<2.0)", "botocore (>=1.18,<2.0)"]
+all = ["boto3 (>=1.15,<2.0)", "botocore (>=1.18,<2.0)", "pymongo (>=3,<5)", "redis (>=3,<5)", "itsdangerous (>=2.0,<3.0)", "pyyaml (>=5.4)", "ujson (>=4.0)"]
+mongodb = ["pymongo (>=3,<5)"]
+redis = ["redis (>=3,<5)"]
+bson = ["bson (>=0.5)"]
+security = ["itsdangerous (>=2.0,<3.0)"]
+yaml = ["pyyaml (>=5.4)"]
+json = ["ujson (>=4.0)"]
+docs = ["furo (>=2021.9.8)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.15.1,<0.16.0)", "sphinx (==4.3.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-automodapi (>=0.13,<0.15)", "sphinx-copybutton (>=0.3,<0.5)", "sphinx-inline-tabs (>=2022.1.2b11)", "sphinx-notfound-page", "sphinx-panels (>=0.6,<0.7)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "requests-ratelimiter"
-version = "0.2.1"
+version = "0.3.1"
 description = "Rate-limiting for the requests library"
 category = "main"
 optional = false
 python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
-pyrate-limiter = ">=2.3,<3.0"
+pyrate-limiter = ">=2.6.3"
 requests = ">=2.20,<3.0"
 
 [package.extras]
-docs = ["furo (==2021.8.17b43)", "myst-parser (>=0.15.1,<0.16.0)", "sphinx (>=4.0.2,<5.0.0)", "sphinx-autodoc-typehints (>=1.11,<2.0)", "sphinx-copybutton (>=0.3,<0.5)"]
+docs = ["furo (==2022.3.4)", "myst-parser (>=0.17)", "sphinx (>=4.3.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-copybutton (>=0.5)"]
 
 [[package]]
 name = "rich"
@@ -895,7 +904,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "soupsieve"
-version = "2.3.2"
+version = "2.3.2.post1"
 description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
@@ -1034,7 +1043,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "01b77390c1684e4e5680ba91977b7f20d2bc97e02a827d4e4446bc53b34ad8e6"
+content-hash = "d928a25656dbd70f972f534b179705a0962ffa3515c338ef6973b49d44982208"
 
 [metadata.files]
 aiohttp = [
@@ -1164,12 +1173,16 @@ babel = [
     {file = "backports.zoneinfo-0.2.1.tar.gz", hash = "sha256:fadbfe37f74051d024037f223b8e001611eac868b5c5b06144ef4d8b799862f2"},
 ]
 beautifulsoup4 = [
-    {file = "beautifulsoup4-4.10.0-py3-none-any.whl", hash = "sha256:9a315ce70049920ea4572a4055bc4bd700c940521d36fc858205ad4fcde149bf"},
-    {file = "beautifulsoup4-4.10.0.tar.gz", hash = "sha256:c23ad23c521d818955a4151a67d81580319d4bf548d3d49f4223ae041ff98891"},
+    {file = "beautifulsoup4-4.11.1-py3-none-any.whl", hash = "sha256:58d5c3d29f5a36ffeb94f02f0d786cd53014cf9b3b3951d42e0080d8a9498d30"},
+    {file = "beautifulsoup4-4.11.1.tar.gz", hash = "sha256:ad9aa55b65ef2808eb405f46cf74df7fcb7044d5cbc26487f96eb2ef2e436693"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},
     {file = "black-21.12b0.tar.gz", hash = "sha256:77b80f693a569e2e527958459634f18df9b0ba2625ba4e0c2d5da5be42e6f2b3"},
+]
+cattrs = [
+    {file = "cattrs-1.10.0-py3-none-any.whl", hash = "sha256:35dd9063244263e63bd0bd24ea61e3015b00272cead084b2c40d788b0f857c46"},
+    {file = "cattrs-1.10.0.tar.gz", hash = "sha256:211800f725cdecedcbcf4c753bbd22d248312b37d130f06045434acb7d9b34e1"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -1311,10 +1324,6 @@ iniconfig = [
     {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
     {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
-itsdangerous = [
-    {file = "itsdangerous-2.1.2-py3-none-any.whl", hash = "sha256:2c2349112351b88699d8d4b6b075022c0808887cb7ad10069318a8b0bc88db44"},
-    {file = "itsdangerous-2.1.2.tar.gz", hash = "sha256:5dbbc68b317e5e42f327f9021763545dc3fc3bfe22e6deb96aaf1fc38874156a"},
-]
 jeepney = [
     {file = "jeepney-0.8.0-py3-none-any.whl", hash = "sha256:c0a454ad016ca575060802ee4d590dd912e35c122fa04e70306de3d076cce755"},
     {file = "jeepney-0.8.0.tar.gz", hash = "sha256:5efe48d255973902f6badc3ce55e2aa6c5c3b3bc642059ef3a91247bcfcc5806"},
@@ -1437,8 +1446,8 @@ pygments = [
     {file = "Pygments-2.10.0.tar.gz", hash = "sha256:f398865f7eb6874156579fdf36bc840a03cab64d1cde9e93d68f46a425ec52c6"},
 ]
 pyinaturalist = [
-    {file = "pyinaturalist-0.15.0-py3-none-any.whl", hash = "sha256:d43fdd0dd32e5bba1656bba20ca5489a77bd32b5106be04aaacb265096b4fafc"},
-    {file = "pyinaturalist-0.15.0.tar.gz", hash = "sha256:a31f1280acead75a6d13823436ef4f56edeb5bc79cd8f79e9622b6fcc3045309"},
+    {file = "pyinaturalist-0.17.0dev1-py3-none-any.whl", hash = "sha256:f6e8666322784298aa1955d79bfb445dca5262a2de942da0419871c862358658"},
+    {file = "pyinaturalist-0.17.0dev1.tar.gz", hash = "sha256:03120b01b11771f818d76893e943d44291a2cdbc44819879e4b2bc4e67f55d53"},
 ]
 pynacl = [
     {file = "PyNaCl-1.4.0-cp27-cp27m-macosx_10_10_x86_64.whl", hash = "sha256:ea6841bc3a76fa4942ce00f3bda7d436fda21e2d91602b9e21b7ca9ecab8f3ff"},
@@ -1461,11 +1470,11 @@ pynacl = [
     {file = "PyNaCl-1.4.0.tar.gz", hash = "sha256:54e9a2c849c742006516ad56a88f5c74bf2ce92c9f67435187c3c5953b346505"},
 ]
 pyparsing = [
-    {file = "pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
-    {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
+    {file = "pyparsing-3.0.8-py3-none-any.whl", hash = "sha256:ef7b523f6356f763771559412c0d7134753f037822dad1b16945b7b846f7ad06"},
+    {file = "pyparsing-3.0.8.tar.gz", hash = "sha256:7bf433498c016c4314268d95df76c81b842a4cb2b276fa3312cfb1e1d85f6954"},
 ]
 pyrate-limiter = [
-    {file = "pyrate-limiter-2.6.3.tar.gz", hash = "sha256:c702bf93f810b233db167b8ee75ce96195055c349dee543c179e725da702a72c"},
+    {file = "pyrate-limiter-2.8.1.tar.gz", hash = "sha256:0741b7db4b3facdce60bd836e0fcc43911bc52c443f674f924afba7e02e79c18"},
 ]
 pytest = [
     {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},
@@ -1657,12 +1666,12 @@ requests = [
     {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
 ]
 requests-cache = [
-    {file = "requests-cache-0.7.5.tar.gz", hash = "sha256:08102daab3b06fb8c0de14a297e44ed5dfe44ccf0e2ba8c858a0f12aa32b109f"},
-    {file = "requests_cache-0.7.5-py3-none-any.whl", hash = "sha256:3189cad997359f6a57e3c305ca8ab313f359626cbd15426570dd48711d02930f"},
+    {file = "requests-cache-0.10.0dev0.tar.gz", hash = "sha256:fd179fe1a68c31abf933964a7051c9c3911ee73de20e7febbb3415f4ac737ae2"},
+    {file = "requests_cache-0.10.0dev0-py3-none-any.whl", hash = "sha256:7a577296110debe256c832f1884d7eba8917d00181f056504efaa6295090afd8"},
 ]
 requests-ratelimiter = [
-    {file = "requests-ratelimiter-0.2.1.tar.gz", hash = "sha256:9c9271c9435eea9e50b87837c32c23dd6f421c8303cbf615e0b52ee5e640015a"},
-    {file = "requests_ratelimiter-0.2.1-py3-none-any.whl", hash = "sha256:67ddb03c86c12fd41c3c8c204ccaf72553459ba37ab73a2b99312447fcd1e34a"},
+    {file = "requests-ratelimiter-0.3.1.tar.gz", hash = "sha256:242363e9a37fd26251bce43983554ed1b600f66b9a4eacd8819bbbe96e3bd338"},
+    {file = "requests_ratelimiter-0.3.1-py3-none-any.whl", hash = "sha256:a8fd1145bf89a1ab72aa568d7d324eeb76a0d9c2cca60a69edb7551be72ef048"},
 ]
 rich = [
     {file = "rich-10.9.0-py3-none-any.whl", hash = "sha256:2c84d9b3459c16bf413fe0f9644c7ae1791971e0bb944dfae56e7c7634b187ab"},
@@ -1681,8 +1690,8 @@ six = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 soupsieve = [
-    {file = "soupsieve-2.3.2-py3-none-any.whl", hash = "sha256:a714129d3021ec17ce5be346b1007300558b378332c289a1a20e7d4de6ff18a5"},
-    {file = "soupsieve-2.3.2.tar.gz", hash = "sha256:0bcc6d7432153063e3df09c3ac9442af3eba488715bfcad6a4c38ccb2a523124"},
+    {file = "soupsieve-2.3.2.post1-py3-none-any.whl", hash = "sha256:3b2503d3c7084a42b1ebd08116e5f81aadfaea95863628c80a3b774a11b7c759"},
+    {file = "soupsieve-2.3.2.post1.tar.gz", hash = "sha256:fc53893b3da2c33de295667a0e19f078c14bf86544af307354de5fcf12a3f30d"},
 ]
 timeago = [
     {file = "timeago-1.0.15.tar.gz", hash = "sha256:cfce420d82892af6b2439d0f69eeb3e876bbeddab6670c3c88ebf7676407bf4c"},
