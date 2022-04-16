@@ -34,7 +34,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-#from pyinaturalist import add_project_users, delete_project_users, get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import add_project_users, delete_project_users, get_taxa_autocomplete, get_projects_by_id
 from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 from .common import LOG
