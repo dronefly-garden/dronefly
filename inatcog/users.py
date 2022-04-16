@@ -14,12 +14,12 @@ class INatUserTable:
         self.cog = cog
 
     async def get_user(
-        self, member: Union[discord.Member, discord.User], refresh_cache=False
+        self, member: Union[discord.Member, discord.User], refresh_cache=False, anywhere=True
     ):
         """Get user for Discord member."""
         inat_user_id = None
         user = None
-        user_config = await get_valid_user_config(self.cog, member, anywhere=True)
+        user_config = await get_valid_user_config(self.cog, member, anywhere=anywhere)
         if user_config:
             inat_user_id = await user_config.inat_user_id()
 

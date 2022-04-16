@@ -34,7 +34,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from pyinaturalist import get_taxa_autocomplete
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 from .common import LOG
 
@@ -128,10 +128,10 @@ class INatAPI:
 
         return None
 
-    async def _pyinaturalist_endpoint(self, endpoint, ctx, **kwargs):
-        LOG.info('_pyinaturalist_endpoint(%s, %s)', endpoint.__name__, repr(kwargs))
+    async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
+        LOG.info('_pyinaturalist_endpoint(%s, %s, %s)', endpoint.__name__, repr(args), repr(kwargs))
         return await ctx.bot.loop.run_in_executor(
-            None, partial(endpoint, **kwargs)
+            None, partial(endpoint, *args, **kwargs)
         )
 
     async def get_controlled_terms(self, *args, **kwargs):
@@ -346,13 +346,16 @@ class INatAPI:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
 
+    # Some thin wrappers around pyinaturalist endpoints:
+    async def get_projects_by_id(self, ctx, project_id, **kwargs):
+        """Get projects by id."""
+        return await self._pyinaturalist_endpoint(get_projects_by_id, ctx, project_id, **kwargs)
+
     async def get_taxa_autocomplete(self, ctx, **kwargs):
-        """Get taxa using autocomplete endpoint.
-        
-        Just a thin wrapper for pyinaturalist get_taxa_autocomplete for now
-        to demonstrate basic operation of pyinaturalist.
-        """
+        """Get taxa using autocomplete."""
+        # - TODO: support user settings for home place, language
         return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
+    # end of pyinaturalist shims
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
