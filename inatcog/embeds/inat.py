@@ -718,7 +718,7 @@ class INatEmbeds(MixinMeta):
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
                 if lang:
-                    community_taxon = await get_taxon(self, community_taxon.id, refresh_cache=False)
+                    community_taxon = await get_taxon(self, obs.community_taxon.id, refresh_cache=False)
                 else:
                     community_taxon = obs.community_taxon
                 summary = (
