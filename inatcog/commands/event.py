@@ -75,7 +75,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             return
         async with ctx.typing():
             try:
-                method = self.api.add_project_users if action == "add" else self.api.delete_project_users
+                method = self.api.add_project_users if action == "join" else self.api.delete_project_users
                 response = await method(ctx, project.id, inat_user_id, access_token=token)
             except HTTPError as err:
                 await ctx.send(str(err))
