@@ -129,7 +129,13 @@ class INatAPI:
         return None
 
     async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
-        LOG.info('_pyinaturalist_endpoint(%s, %s, %s)', endpoint.__name__, repr(args), repr(kwargs))
+        if "access_token" in kwargs:
+            safe_kwargs = { **kwargs }
+            safe_kwargs["access_token"] = "***REDACTED***"
+        else:
+            safe_kwargs = kwargs
+        LOG.info('_pyinaturalist_endpoint(%s, %s, %s)', endpoint.__name__, repr(args), repr(safe_kwargs))
+
         return await ctx.bot.loop.run_in_executor(
             None, partial(endpoint, *args, **kwargs)
         )
