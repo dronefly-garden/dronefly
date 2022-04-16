@@ -10,7 +10,7 @@ import inflect
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
-from .commands.event import CommandsEvent
+#from .commands.event import CommandsEvent
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
 from .commands.map import CommandsMap
@@ -46,7 +46,7 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
 class INatCog(
     Listeners,
     commands.Cog,
-    CommandsEvent,
+#   CommandsEvent,
     CommandsInat,
     CommandsLast,
     CommandsMap,
