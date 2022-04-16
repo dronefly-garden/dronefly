@@ -3,12 +3,16 @@ from typing import Union
 
 import discord
 from redbot.core import checks, commands
+from pyinaturalist import get_access_token
 from pyinaturalist.models import Project
+from requests.exceptions import HTTPError
 
 from ..checks import can_manage_users
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 
+_ACTION = {"join": "added", "leave": "removed"}
+_ACTION_PREP = {"join": "to", "leave": "from"}
 _DRONEFLY_INAT_ID = 3969847
 
 
@@ -20,9 +24,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     async def event(self, ctx):
         """Commands to manage server events."""
 
-    @event.command(name="join")
-    async def event_join(self, ctx, abbrev: str, user: Union[discord.Member, discord.User]):
-        """Join member to server event."""
+    async def _event_action(self, ctx, action, abbrev, user):
         try:
             manager_inat_user = await self.user_table.get_user(ctx.author, anywhere=False)
             manager_inat_id = manager_inat_user.user_id
@@ -50,6 +52,16 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(str(err))
             return
+        inat_user_id = inat_user.user_id
+        user_rule_ids = [rule["operand_id"] for rule in project.project_observation_rules if rule["operand_type"] == "User" and rule["operator"] == "observed_by_user?"]
+        if action == "join":
+            if inat_user_id in user_rule_ids:
+                await ctx.send("User is already in this project's observer rules.")
+                return
+        else:
+            if inat_user_id not in user_rule_ids:
+                await ctx.send("User is not in this project's observer rules.")
+                return
         required_admins = [admin.id for admin in project.admins if admin.id in [manager_inat_id, _DRONEFLY_INAT_ID] and admin.role in ["admin", "manager"]]
         if (_DRONEFLY_INAT_ID not in required_admins):
             await ctx.send("I am not an admin or manager of this project.")
@@ -57,9 +69,29 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         if (manager_inat_id not in required_admins):
             await ctx.send("You are not an admin or manager of this project.")
             return
-        await ctx.send(repr(inat_user))
-        await ctx.send(project.title)
+        token = get_access_token()
+        if (not token):
+            await ctx.send("I am not authorized to login to iNaturalist.")
+            return
+        async with ctx.typing():
+            try:
+                method = self.api.add_project_users if action == "add" else self.api.delete_project_users
+                response = await method(ctx, project.id, inat_user_id, access_token=token)
+            except HTTPError as err:
+                await ctx.send(str(err))
+                return
+            if (response):
+                user_id = next(iter([rule["operand_id"] for rule in response["project_observation_rules"] if rule["operand_type"] == "User" and rule["operator"] == "observed_by_user?" if rule["operand_id"] == inat_user_id]), None)
+                if user_id if action == "join" else not user_id:
+                    await ctx.send(f"Succesfully {_ACTION[action]} {inat_user.login} {_ACTION_PREP[action]} {project.title}.")
+                    return
+            await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")
 
+    @event.command(name="join")
+    async def event_join(self, ctx, abbrev: str, user: Union[discord.Member, discord.User]):
+        """Join member to server event."""
+        await self._event_action(ctx, "join", abbrev, user)
+        
     @event.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
     async def event_list(self, ctx, abbrev: str):
@@ -67,5 +99,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         await self.user_list(ctx, abbrev)
 
     @event.command(name="leave")
-    async def event_leave(self, ctx, abbrev: str, user):
+    async def event_leave(self, ctx, abbrev: str, user: Union[discord.Member, discord.User]):
         """Remove member from server event."""
+        await self._event_action(ctx, "leave", abbrev, user)

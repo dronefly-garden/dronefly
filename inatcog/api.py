@@ -34,7 +34,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import add_project_users, delete_project_users, get_taxa_autocomplete, get_projects_by_id
 
 from .common import LOG
 
@@ -347,6 +347,14 @@ class INatAPI:
         return await self._get_rate_limited(full_url, **kwargs)
 
     # Some thin wrappers around pyinaturalist endpoints:
+    async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Add users to a project's rules."""
+        return await self._pyinaturalist_endpoint(add_project_users, ctx, project_id, user_ids, **kwargs)
+
+    async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Remove users from a project's rules."""
+        return await self._pyinaturalist_endpoint(delete_project_users, ctx, project_id, user_ids, **kwargs)
+
     async def get_projects_by_id(self, ctx, project_id, **kwargs):
         """Get projects by id."""
         return await self._pyinaturalist_endpoint(get_projects_by_id, ctx, project_id, **kwargs)
