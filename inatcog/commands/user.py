@@ -520,7 +520,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         event_projects,
         filter_role,
     ):
-        def abbrevs_for_user(user_id: int):
+        def abbrevs_for_user(user_id: int, event_project_ids, projects):
             return [
                 event_project_ids[int(project_id)]
                 for project_id in projects
@@ -548,7 +548,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
-            project_abbrevs = abbrevs_for_user(iuser.user_id)
+            project_abbrevs = abbrevs_for_user(iuser.user_id, event_project_ids, projects)
             line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
             if filter_role:
                 # Skip non-candidates: no role, and not in project.
@@ -571,6 +571,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     and not has_opposite_team_role
                 )
             else:
+                member_user_ids.append(iuser.user_id)
                 role_strictly_matches_project = True
             if role_strictly_matches_project:
                 matching_names.append(line)
