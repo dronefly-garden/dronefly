@@ -430,56 +430,38 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         await self.user_show_settings(ctx, config, "lang")
 
-    @user.command(name="list")
-    @can_manage_users()
-    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
-    async def user_list(self, ctx, abbrev: str = None):
-        """List members with known iNat ids on this server.
-
-        The `abbrev` can be `active`, `inactive`, or an *event* abbreviation. The user list will only show known users with the associated role and/or in the event project. Discrepancies will be listed first.
-
-        Note: If a user not known in the server holds an event role, or is added to an event project, those discrepancies won't be reported.
-
-        See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
-        """  # noqa: E501
-        if not ctx.guild:
-            return
-
-        # Avoid having to fully enumerate pages of discord/iNat user pairs
-        # which would otherwise do expensive API calls if not in the cache
-        # already just to get # of pages of member users:
-        all_users = await self.config.all_users()
-        config = self.config.guild(ctx.guild)
-        event_projects = await config.event_projects()
+    async def _user_list_filter_role(self, ctx, abbrev, config, event_projects):
         filter_role = None
         filter_role_id = None
-        team_roles = []
         if abbrev:
-            if abbrev == "active":
-                filter_role_id = await config.active_role()
-            elif abbrev == "inactive":
-                filter_role_id = await config.inactive_role()
+            if abbrev in ["active", "inactive"]:
+                filter_role_id = await (config.active_role() if abbrev == "active" else config.inactive_role())
+                if not filter_role_id:
+                    raise BadArgument(f"The {abbrev} role is undefined. To set it, use: `{ctx.clean_prefix}inat set {abbrev}`")
             elif abbrev in event_projects:
                 filter_role_id = event_projects[abbrev]["role"]
             else:
-                await ctx.send_help()
-                return
-        if abbrev and not filter_role_id:
-            await ctx.send(embed=make_embed(description=f"No {abbrev} role set."))
-            return
+                raise BadArgument(
+                    "That event doesn't exist."
+                    f" To create it, use: `{ctx.clean_prefix}inat set event`"
+                )
 
         if filter_role_id:
             filter_role = next(
                 (role for role in ctx.guild.roles if role.id == filter_role_id), None
             )
             if not filter_role:
-                await ctx.send(
-                    embed=make_embed(
-                        description=f"The {abbrev} role is not a guild role: "
-                        f"<@&{filter_role_id}>."
-                    )
+                raise BadArgument(
+                    f"The defined {abbrev} role doesn't exist: <@&{filter_role_id}>."
+                    f" To update it, use: `{ctx.clean_prefix}inat set event`"
                 )
-                return
+
+        return filter_role
+
+    async def _user_list_event_info(self, ctx, abbrev, event_projects):
+        team_roles = []
+        team_abbrevs = []
+        event_project_ids = {}
 
         main_event_project_ids = {
             int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
@@ -487,10 +469,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if event_projects[prj_abbrev]["main"]
             and int(event_projects[prj_abbrev]["project_id"])
         }
+
         if abbrev in event_projects:
             prj = event_projects[abbrev]
             prj_id = int(prj["project_id"])
-            event_project_ids = {}
             if prj_id:
                 event_project_ids[prj_id] = abbrev
                 teams = prj["teams"]
@@ -507,9 +489,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                     if team_role:
                         team_roles.append(team_role)
-
         else:
             event_project_ids = main_event_project_ids
+
+        return (team_roles, team_abbrevs, event_project_ids, main_event_project_ids)
+
+    async def _user_list_get_projects(self, ctx, event_project_ids, main_event_project_ids):
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
@@ -526,31 +511,52 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if main_event_project_ids and not self.user_cache_init.get(ctx.guild.id):
             await self.api.get_observers_from_projects(list(main_event_project_ids))
             self.user_cache_init[ctx.guild.id] = True
+        return projects
 
-        def abbrevs(user_id: int):
+    async def _user_list_match_members(
+        self,
+        ctx,
+        abbrev,
+        event_projects,
+        filter_role,
+    ):
+        def abbrevs_for_user(user_id: int):
             return [
                 event_project_ids[int(project_id)]
                 for project_id in projects
                 if user_id in projects[int(project_id)].observed_by_ids()
             ]
 
+        (team_roles, team_abbrevs, event_project_ids, main_event_project_ids) = await self._user_list_event_info(ctx, abbrev, event_projects)
+
         matching_names = []
         non_matching_names = []
         member_user_ids = []
-        if filter_role and abbrev in event_projects:
-            all_user_ids = projects[
-                int(event_projects[abbrev]["project_id"])
-            ].observed_by_ids()
-        else:
-            all_user_ids = []
+        all_user_ids = []
+        all_users = await self.config.all_users()
+        projects = await self._user_list_get_projects(ctx, event_project_ids, main_event_project_ids)
+
+        if abbrev in event_projects:
+            prj = event_projects[abbrev]
+            prj_id = int(prj["project_id"])
+            if prj_id:
+                all_user_ids = projects[prj_id].observed_by_ids()
+
+        # Main pass:
+        # - Candidate members are all users known to the bot.
+        # - This includes non-server members which are indicated as :ghost: in the listing.
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
-            project_abbrevs = abbrevs(iuser.user_id)
+            project_abbrevs = abbrevs_for_user(iuser.user_id)
             line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
             if filter_role:
+                # Skip non-candidates: no role, and not in project.
                 if abbrev not in project_abbrevs and filter_role not in dmember.roles:
                     continue
+                # Partition into those whose role matches the event they signed
+                # up for vs. those who don't match, and therefore need attention
+                # by a project admin.
                 member_user_ids.append(iuser.user_id)
                 has_opposite_team_role = False
                 for role in [filter_role, *team_roles]:
@@ -571,6 +577,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 non_matching_names.append(line)
 
+        # Second pass:
+        # - Project members who are not (or are no longer) Discord server members:
+        #   - i.e. user erroneously added when not a Discord server member, or
+        #     they were added when they were a server member, but later left
+        #   - discord user ID intentionally not shown
         for user_id in all_user_ids:
             if user_id not in member_user_ids:
                 line = (
@@ -578,29 +589,62 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     f"[`{user_id}`]({WWW_BASE_URL}/users/{user_id})\n{abbrev}"
                 )
                 non_matching_names.append(line)
+
+        return (matching_names, non_matching_names)
+
+    @user.command(name="list")
+    @can_manage_users()
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def user_list(self, ctx, abbrev: str = None):
+        """List members with known iNat ids on this server.
+
+        The `abbrev` can be `active`, `inactive`, or an *event* abbreviation. The user list will only show known users with the associated role and/or in the event project. Discrepancies will be listed first.
+
+        Note: If a user not known in the server holds an event role, or is added to an event project, those discrepancies won't be reported.
+
+        See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
+        """  # noqa: E501
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        event_projects = await config.event_projects()
+        try:
+            filter_role = await self._user_list_filter_role(ctx, abbrev, config, event_projects)
+        except BadArgument as err:
+            await ctx.send(embed=make_embed(title=f"Invalid abbreviation: {abbrev}", description=str(err)))
+            return
+
+        # If filter_role is given, resulting list of names will be partitioned
+        # into matching and non matching names, where "non-matching" is any
+        # discrepancy between the role(s) assigned and the project they're in,
+        # or when a non-server-member is in the specified event project.
+        (matching_names, non_matching_names) = await self._user_list_match_members(ctx, abbrev, event_projects, filter_role)
         # Placing non matching names first allows an event manager to easily
-        # spot and correct mismatches. See role_strictly_matches_project above
-        # for what constititutes a mismatch.
+        # spot and correct mismatches.
         pages = [
             "\n".join(filter(None, names))
             for names in grouper([*non_matching_names, *matching_names], 10)
         ]
 
         if pages:
-            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            pages_len = len(pages)
+            if abbrev in ["active", "inactive"]:
+                list_name = f"{abbrev.capitalize()} known server members"
+            elif abbrev:
+                list_name = f"Membership report for event: {abbrev}"
+            else:
+                list_name = f"Known server members"
             embeds = [
                 make_embed(
-                    title=f"Discord iNat user list (page {index} of {pages_len})",
+                    title=f"{list_name} (page {index} of {pages_len})",
                     description=page,
                 )
                 for index, page in enumerate(pages, start=1)
             ]
-            # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send(
-                f"No iNat login ids are known. Add them with `{ctx.clean_prefix}user add`."
-            )
+            await ctx.send(f"No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()
