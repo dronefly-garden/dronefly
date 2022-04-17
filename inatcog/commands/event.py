@@ -43,10 +43,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             await ctx.send("iNat project not found.")
             return
         project = Project.from_json(response["results"][0])
-        if project.prefers_user_trust:
-            await ctx.send("Users must login on the web to join this project:")
-            await (self.bot.get_command("project")(ctx, query=event_project_id))
-            return
         try:
             inat_user = await self.user_table.get_user(user, anywhere=False)
         except LookupError as err:
