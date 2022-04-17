@@ -80,7 +80,7 @@ class UserProject(DataClassJsonMixin):
             and rule.operand_id not in exclude_user_ids
         ]
 
-        if self.members_only:
+        if self.members_only():
             if include_user_rules:
                 # i.e. case 3, Closed (user joins & admin approves the join)
                 include_user_ids = [
