@@ -1,12 +1,10 @@
 """Module for taxon command group."""
 
-from functools import partial
 import re
 import textwrap
 from typing import Optional
 
 # TODO: Experimental & doesn't belong here. Migrate out to api.py later.
-from pyinaturalist import get_taxa_autocomplete
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
@@ -192,9 +190,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: str):
         """Taxon via pyinaturalist (test)."""
-        response = await ctx.bot.loop.run_in_executor(
-            None, partial(get_taxa_autocomplete, q=query)
-        )
+        response = await self.api.get_taxa_autocomplete(ctx, q=query)
         if response:
             results = response.get("results")
             if results:
