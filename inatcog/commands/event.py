@@ -49,15 +49,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             await ctx.send(str(err))
             return
         inat_user_id = inat_user.user_id
-        user_rule_ids = [rule["operand_id"] for rule in project.project_observation_rules if rule["operand_type"] == "User" and rule["operator"] == "observed_by_user?"]
-        if action == "join":
-            if inat_user_id in user_rule_ids:
-                await ctx.send("User is already in this project's observer rules.")
-                return
-        else:
-            if inat_user_id not in user_rule_ids:
-                await ctx.send("User is not in this project's observer rules.")
-                return
         required_admins = [admin.id for admin in project.admins if admin.id in [manager_inat_id, _DRONEFLY_INAT_ID] and admin.role in ["admin", "manager"]]
         if (_DRONEFLY_INAT_ID not in required_admins):
             await ctx.send("I am not an admin or manager of this project.")
