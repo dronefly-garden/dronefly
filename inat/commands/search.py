@@ -23,6 +23,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields
+from ..utils import obs_url_from_v1
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):
@@ -65,7 +66,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             selected_index[0] = result_index
             return pages
 
-        async def _display_selected(result):
+        async def _display_selected(ctx, result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
                 home = await self.get_home(ctx)
@@ -77,12 +78,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 obs = get_obs_fields(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
-                        obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                        ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
-                    if obs and obs.sounds:
-                        await self.maybe_send_sound(ctx.channel, obs.sounds)
-                    controls = {"❌": DEFAULT_CONTROLS["❌"], "✅": cancel_timeout}
-                    await menu(ctx, [embed], controls, timeout=10)
+                    await self.send_obs_embed(ctx, embed, obs, timeout=10, with_keep=True)
                     return
                 await apologize(ctx, "Not found")
                 return
@@ -135,7 +133,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 selected_index[0] = per_embed_page - 1
                 target_page = (page - 1) % len(pages)
                 pages = update_selected(pages, target_page, selected_index[0])
-                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                if (
+                    ctx.guild
+                    and ctx.channel.permissions_for(ctx.guild.me).manage_messages
+                ):
                     await message.remove_reaction(reaction, ctx.author)
                 prev_reaction = DEFAULT_CONTROLS["⬅️"]
             else:
@@ -165,8 +166,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         ):  # pylint: disable=too-many-arguments
             result = get_result(page, results, selected_index[0])
             if result:
-                await _display_selected(result)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                await _display_selected(ctx, result)
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -177,7 +178,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -196,7 +197,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             result = get_result(page, results, result_index)
             if result:
                 pages = update_selected(pages, page, result_index)
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
@@ -225,6 +226,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         async def get_obs_query_args(query):
             query_response = await self.query.get(ctx, query)
             kwargs = query_response.obs_args()
+            # TODO: determine why we don't just use QueryResponse.obs_query_description
+            # and either use it directly or otherwise share code instead of duplicating
+            # most of it here.
             if query_response.taxon:
                 query_title = query_response.taxon.format_name(with_term=True)
             else:
@@ -235,9 +239,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 query_title += f" unobserved by {query_response.unobserved_by.login}"
             if query_response.id_by:
                 query_title += f" identified by {query_response.id_by.login}"
+            if query_response.except_by:
+                query_title += f" except by {query_response.except_by.login}"
+            if query_response.project:
+                query_title += f" in {query_response.project.title}"
             if query_response.place:
                 query_title += f" from {query_response.place.display_name}"
-            url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(kwargs)}"
+            url = obs_url_from_v1(kwargs)
             kwargs["per_page"] = 200
             return (query_title, url, kwargs)
 
@@ -409,7 +417,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
-    @checks.bot_has_permissions(embed_links=True)
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def search(self, ctx, *, query):
         """Search iNat.
 
@@ -458,7 +466,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         """
         await self._search(ctx, query, "places")
 
-    @search.command(name="projects", aliases=["project"])
+    @search.command(name="projects", aliases=["prj", "project"])
     async def search_projects(self, ctx, *, query):
         """Search iNat projects.
 

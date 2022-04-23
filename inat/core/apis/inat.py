@@ -1,5 +1,23 @@
-"""Module to access iNaturalist API (deprecated)."""
-import logging
+"""Module to access iNaturalist API.
+
+- Note: Most methods use aiohttp directly, whereas some now use pyinaturalist. Please note
+  that for each of these we're working on moving from homegrown approaches to built-in
+  capabilities in pyinaturalist for:
+  - caching
+  - rate-limiting
+- Until migration to pyinaturalist is complete, mismatches between the two approaches might
+  lead to:
+  - any old code that depends on specific caching behaviours may not work correctly with
+    new pyinaturalist-based replacements
+  - there's an outside chance that rate limits may be exceeded, since neither rate-limiter
+    is aware of the rate buckets collected by the other.
+- Therefore, take care to add transitional code that mixes the two underlying libraries
+  sparingly, and in particular:
+  - prefer adding new methods over modifying existing ones to use pyinaturalist
+  - focus on methods for commands that are infrequently called to reduce the
+    probability of rate limits being exceeded
+"""
+from functools import partial
 from time import time
 from types import SimpleNamespace
 from typing import List, Optional, Union
@@ -16,6 +34,8 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
+from pyinaturalist import add_project_users, delete_project_users, get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 # FIXME: learn how Logging hierarchical loggers work and implement
 LOG = logging.getLogger("red.dronefly.inatcog")
@@ -110,6 +130,18 @@ class INatAPI:
 
         return None
 
+    async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
+        if "access_token" in kwargs:
+            safe_kwargs = { **kwargs }
+            safe_kwargs["access_token"] = "***REDACTED***"
+        else:
+            safe_kwargs = kwargs
+        LOG.info('_pyinaturalist_endpoint(%s, %s, %s)', endpoint.__name__, repr(args), repr(safe_kwargs))
+
+        return await ctx.bot.loop.run_in_executor(
+            None, partial(endpoint, *args, **kwargs)
+        )
+
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
 
@@ -154,6 +186,10 @@ class INatAPI:
         )
         id_arg = f"/{args[0]}" if args else ""
         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
+        _kwargs = {
+            "all_names": "true",
+            **kwargs,
+        }
 
         # Cache lookup by id#, as those should be stable.
         # - note: we could support splitting a list of id#s and caching each
@@ -162,13 +198,13 @@ class INatAPI:
         if args and (isinstance(args[0], int) or args[0].isnumeric()):
             taxon_id = int(args[0])
             if refresh_cache or taxon_id not in self.taxa_cache:
-                taxon = await self._get_rate_limited(full_url, **kwargs)
+                taxon = await self._get_rate_limited(full_url, **_kwargs)
                 if taxon:
                     self.taxa_cache[taxon_id] = taxon
             return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
 
         # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **kwargs)
+        return await self._get_rate_limited(full_url, **_kwargs)
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
@@ -317,6 +353,25 @@ class INatAPI:
         else:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
+
+    # Some thin wrappers around pyinaturalist endpoints:
+    async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Add users to a project's rules."""
+        return await self._pyinaturalist_endpoint(add_project_users, ctx, project_id, user_ids, **kwargs)
+
+    async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Remove users from a project's rules."""
+        return await self._pyinaturalist_endpoint(delete_project_users, ctx, project_id, user_ids, **kwargs)
+
+    async def get_projects_by_id(self, ctx, project_id, **kwargs):
+        """Get projects by id."""
+        return await self._pyinaturalist_endpoint(get_projects_by_id, ctx, project_id, **kwargs)
+
+    async def get_taxa_autocomplete(self, ctx, **kwargs):
+        """Get taxa using autocomplete."""
+        # - TODO: support user settings for home place, language
+        return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
+    # end of pyinaturalist shims
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs

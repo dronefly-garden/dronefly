@@ -20,6 +20,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
+from ..utils import obs_url_from_v1
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 
@@ -61,9 +62,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if ref:
                 # It's a reply. Try to get an observation from the message.
                 # TODO: Lifted from TaxonReplyConverter; don't know where this belongs yet.
-                msg = ref.cached_message or await ctx.channel.fetch_message(
-                    ref.message_id
-                )
+                msg = ref.cached_message
+                if not msg:
+                    if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                        raise LookupError("I need Read Message History permission to read that message.")
+                    msg = await ctx.channel.fetch_message(ref.message_id)
                 if msg and msg.embeds:
                     inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
                     # pylint: disable=no-member, assigning-non-slot
@@ -106,7 +109,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(res.obs, res.url, preview=res.preview)
+                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=res.preview)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name="img", aliases=["image", "photo"])
@@ -120,7 +123,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(res.obs, res.url, preview=number or 1)
+                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=number or 1)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
@@ -231,7 +234,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         obs_opt["view"] = obs_opt_view
-        url = f"{WWW_BASE_URL}/observations?{urllib.parse.urlencode(obs_opt)}"
+        url = obs_url_from_v1(obs_opt)
         taxon = query_response.taxon
         species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
         user_links = get_formatted_user_counts(users, url, species_only, view)
@@ -319,7 +322,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
             )["results"]
             obs = get_obs_fields(results[0]) if results else None
-            embed = await self.make_obs_embed(obs, url)
+            embed = await self.make_obs_embed(ctx, obs, url)
             await self.send_obs_embed(ctx, embed, obs)
             return
 

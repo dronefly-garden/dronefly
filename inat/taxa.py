@@ -2,7 +2,6 @@
 import copy
 import re
 from typing import NamedTuple, Optional, Union
-from urllib.parse import urlencode
 
 from .base_classes import (
     ConservationStatus,
@@ -11,12 +10,11 @@ from .base_classes import (
     Taxon,
     User,
     Place,
-    WWW_BASE_URL,
 )
-from .common import LOG
 from .core.models.taxon import RANK_LEVELS
 from .core.parsers.url import STATIC_URL_PAT
 from .core.query.query import TaxonQuery
+from .utils import obs_url_from_v1
 
 
 TAXON_ID_LIFE = 48460
@@ -32,7 +30,7 @@ TAXON_LIST_DELIMITER = [", ", " > "]
 
 
 def format_taxon_names(
-    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False
+    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False, lang=None
 ):
     """Format names of taxa from matched records.
 
@@ -61,7 +59,7 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        taxon.format_name(with_term=with_term, hierarchy=hierarchy) for taxon in taxa
+        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
     ]
 
     def fit_names(names):
@@ -187,7 +185,6 @@ def get_taxon_fields(record):
         establishment_means = None
     conservation_status_raw = record.get("conservation_status")
     if conservation_status_raw:
-        LOG.info(conservation_status_raw)
         conservation_status = ConservationStatus.from_dict(conservation_status_raw)
     else:
         conservation_status = None
@@ -267,7 +264,6 @@ def match_pat(record, pat, scientific_name=False, locale=None):
         for name in names:
             mat = re.search(pat, name)
             if mat:
-                LOG.info("match=%s", pat)
                 return NameMatch(
                     mat,
                     None,
@@ -455,7 +451,7 @@ async def format_place_taxon_counts(
         )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count:,}]({url}) {name}"
         else:
@@ -498,7 +494,7 @@ async def format_user_taxon_counts(
         )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_opt)
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
             link = f"[{observations_count:,}]({url}) {login}"
         else:

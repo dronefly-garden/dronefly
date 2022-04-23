@@ -237,7 +237,7 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
     """Public class for taxon with cog-specific behaviours."""
 
     def format_name(
-        self, with_term=False, hierarchy=False, with_rank=True, with_common=True
+        self, with_term=False, hierarchy=False, with_rank=True, with_common=True, lang=None
     ):
         """Format taxon name.
 
@@ -253,6 +253,9 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
             If specified and hierarchy=False, includes the rank for ranks higher than species.
         with_common: bool, optional
             If specified, include common name in parentheses after scientific name.
+        lang: str, optional
+            If specified, prefer the first name with its locale == lang instead of
+            the preferred_common_name.
 
         Returns
         -------
@@ -269,17 +272,24 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
         """
 
         if with_common:
+            preferred_common_name = None
+            if lang and self.names:
+                name = next(iter([name for name in self.names if name.get("locale") == lang]), None)
+                if name:
+                    preferred_common_name = name.get("name")
+            if not preferred_common_name:
+                preferred_common_name = self.preferred_common_name
             if with_term:
                 common = (
                     self.matched_term
-                    if self.matched_term not in (self.name, self.preferred_common_name)
-                    else self.preferred_common_name
+                    if self.matched_term not in (self.name, preferred_common_name)
+                    else preferred_common_name
                 )
             else:
                 if hierarchy:
                     common = None
                 else:
-                    common = self.preferred_common_name
+                    common = preferred_common_name
         else:
             common = None
         name = self.name
@@ -362,6 +372,9 @@ class Project(DataClassJsonMixin):
     project_id: int = field(metadata=config(field_name="id"))
     title: str
     url: str = field(init=False)
+    description: str
+    icon: str
+    banner_color: str
 
     def __post_init__(self):
         """URL for project."""
@@ -414,12 +427,38 @@ class QueryResponse:
     user: Optional[User]
     place: Optional[Place]
     unobserved_by: Optional[User]
+    except_by: Optional[User]
     id_by: Optional[User]
     project: Optional[Project]
     options: Optional[dict]
     controlled_term: Optional[ControlledTermSelector]
     observed: Optional[DateSelector]
     added: Optional[DateSelector]
+    adjectives: Optional[List[str]] = field(init=False)
+
+    def __post_init__(self):
+        adjectives = []
+        if self.options:
+            quality_grade = (self.options.get("quality_grade") or "").split(",")
+            verifiable = self.options.get("verifiable")
+            if "any" not in quality_grade:
+                research = "research" in quality_grade
+                needsid = "needs_id" in quality_grade
+            # If specified, will override any quality_grade set already:
+            if verifiable:
+                if verifiable in ["true", ""]:
+                    research = True
+                    needsid = True
+            if verifiable == "false":
+                adjectives.append("*not Verifiable*")
+            elif research and needsid:
+                adjectives.append("*Verifiable*")
+            else:
+                if research:
+                    adjectives.append("*Research Grade*")
+                if needsid:
+                    adjectives.append("*Needs ID*")
+        self.adjectives = adjectives
 
     def obs_args(self):
         """Arguments for an observations query."""
@@ -431,6 +470,7 @@ class QueryResponse:
         kwargs.set_from(self.place, "place_id")
         kwargs.set_from(self.id_by, "user_id", "ident_user_id")
         kwargs.set_from(self.unobserved_by, "user_id", "unobserved_by_user_id")
+        kwargs.set_from(self.except_by, "user_id", "not_user_id")
         if self.unobserved_by:
             kwargs["lrank"] = "species"
         if self.controlled_term:
@@ -477,7 +517,7 @@ class QueryResponse:
                     kwargs["created_d2"] = self.added.d2.isoformat()
         return kwargs
 
-    def obs_query_description(self):
+    def obs_query_description(self, with_adjectives: bool = True):
         """Description of an observations query."""
 
         def _format_date(date: str):
@@ -487,47 +527,72 @@ class QueryResponse:
             return time.strftime("%b %-d, %Y %h:%m %p")
 
         message = ""
+        of_taxa_description = ""
+        without_taxa_description = ""
         if self.taxon:
             taxon = self.taxon
-            message += " of " + taxon.format_name(with_term=True)
+            of_taxa_description = taxon.format_name(with_term=True)
         if self.options:
             without_taxon_id = self.options.get("without_taxon_id")
             iconic_taxa = self.options.get("iconic_taxa")
             if iconic_taxa == "unknown":
-                message += " of Unknown"
+                of_taxa_description = "Unknown"
             else:
                 taxon_ids = self.options.get("taxon_ids")
                 # Note: if taxon_ids is given with "of" clause (taxon_id), then
                 # taxon_ids is simply ignored, so we don't handle that case here.
                 if taxon_ids and not self.taxon:
-                    if taxon_ids == "20978,26036":
-                        message += " of Amphibia, Reptilia (Herps)"
-                    elif (
-                        taxon_ids
-                        == "152028,791197,54743,152030,175541,127378,117881,117869"
-                    ):
-                        message += (
-                            " of Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
+                    # TODO: support generally; hardwired cases here are for herps
+                    # and lichenish
+                    of_taxa_description = {
+                        "20978,26036": "Amphibia, Reptilia (Herps)",
+                        # Note: the list is getting a bit ridiculously long - maybe
+                        # just call this grouping "Probably lichens"?
+                        "152028,791197,54743,152030,175541,127378,117881,117869": (
+                            "Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
                             " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
                             "Verrucariales (Lichenized Fungi)"
-                        )
-                    else:
-                        message += " of taxon #" + taxon_ids.replace(",", ", ")
+                        ),
+                    }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
                 if without_taxon_id:
-                    message += " without "
-                    # TODO: support generally; hardwired cases are for waspsonly & mothsonly
-                    if without_taxon_id == "47336,630955":
-                        message += "Formicidae, Anthophila"
-                    elif without_taxon_id == "47224":
-                        message += "Papilionoidea"
-                    elif without_taxon_id == "352459":
-                        message += "Stictis radiata"
-                    elif without_taxon_id == "47125":
-                        message += "Angiospermae"
-                    elif without_taxon_id == "211194":
-                        message += "Tracheophyta"
-                    else:
-                        message += "taxon #" + without_taxon_id.replace(",", ", ")
+                    # TODO: support generally; hardwired cases here are for
+                    # waspsonly, mothsonly, lichenish, etc.
+                    without_taxa_description = {
+                        "47336,630955": "Formicidae, Anthophila",
+                        "47224": "Papilionoidea",
+                        "352459": "Stictis radiata",
+                        "47125": "Angiospermae",
+                        "211194": "Tracheophyta",
+                    }.get(without_taxon_id) or "taxon #" + without_taxon_id.replace(
+                        ",", ", "
+                    )
+
+        _taxa_description = []
+        if of_taxa_description:
+            _of = ["of"]
+            if with_adjectives and self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append(of_taxa_description)
+            _taxa_description.append(" ".join(_of))
+        if without_taxa_description:
+            _without = []
+            # If we only have "without" =>
+            #   "of [adjectives] taxa without [taxa]":
+            if not of_taxa_description and with_adjectives:
+                _without.append("of")
+                if with_adjectives and self.adjectives:
+                    _without.append(", ".join(self.adjectives))
+                _without.append("taxa")
+            _without.append("without")
+            _without.append(without_taxa_description)
+            _taxa_description.append(" ".join(_without))
+        if with_adjectives and not _taxa_description:
+            _of = ["of"]
+            if with_adjectives and self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append("taxa")
+            _taxa_description.append(" ".join(_of))
+        message += " ".join(_taxa_description)
         if self.project:
             message += " in " + self.project.title
         if self.place:
@@ -538,6 +603,8 @@ class QueryResponse:
             message += " unobserved by " + self.unobserved_by.display_name()
         if self.id_by:
             message += " identified by " + self.id_by.display_name()
+        if self.except_by:
+            message += " except by " + self.except_by.display_name()
         if self.observed and self.observed.on or self.observed.d1 or self.observed.d2:
             message += " observed "
             if self.observed.on:

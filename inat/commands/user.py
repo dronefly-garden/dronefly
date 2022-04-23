@@ -1,13 +1,18 @@
 """Module for user command group."""
+import asyncio
+import contextlib
 from datetime import datetime
 import re
 
 import discord
+from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
+
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.core.utils.predicates import MessagePredicate
 
-from ..base_classes import User
+from ..base_classes import User, WWW_BASE_URL
 from ..checks import can_manage_users, known_inat_user
 from ..common import DEQUOTE, grouper
 from ..converters.base import (
@@ -20,6 +25,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
+from ..utils import get_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -48,7 +54,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """  # noqa: E501
-        if not ctx.guild:
+        if not (ctx.guild or (ctx.author == who.member)):
             return
 
         member = who.member
@@ -64,11 +70,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     @user.command(name="add")
     @can_manage_users()
-    async def user_add(self, ctx, discord_user: discord.User, inat_user):
-        """Add user as an iNat user for this server.
+    async def user_add(self, ctx, discord_user: str, inat_user: str):
+        """Add user in this server, or `me` to add yourself.
 
         `discord_user`
-        - Discord user mention, ID, username, or nickname.
+        - `me`, Discord user mention, ID, username, or nickname.
+        - You can only add yourself in DM.
         - Username and nickname must be enclosed in double quotes if they contain blanks, so a mention or ID is easier.
         - Turn on `Developer Mode` in your Discord user settings to enable `Copy ID` when right-clicking/long-pressing a user's PFP.
           Depending on your platform, the setting is in `Behavior` or `Appearance > Advanced`.
@@ -76,13 +83,34 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `inat_user`
         - iNat login id or iNat user profile URL
         """  # noqa: E501
+        if discord_user == "me":
+            if ctx.guild:
+                await ctx.send(
+                    f"`{ctx.clean_prefix}user add me` is only supported in DM with the bot.\n"
+                    "To be added in this server, a mod must add you by your Discord username."
+                )
+                return
+            discord_user = ctx.author
+        else:
+            if not ctx.guild:
+                await ctx.send(
+                    f"Add yourself with `{ctx.clean_prefix}user add me`.\n"
+                    "Other users cannot be added in DM."
+                )
+                return
+            try:
+                ctx_member = await DiscordMemberConverter().convert(ctx, discord_user)
+                discord_user = ctx_member
+            except (BadArgument, CommandError):
+                await ctx.send("Invalid or unknown Discord member.")
+                return
         config = self.config.user(discord_user)
 
         inat_user_id = await config.inat_user_id()
-        known_all = await config.known_all()
         known_in = await config.known_in()
-        if inat_user_id and known_all or ctx.guild.id in known_in:
-            await ctx.send("iNat user already known.")
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if inat_user_id and guild_id in known_in:
+            await ctx.send("iNat user already added.")
             return
 
         mat_link = re.search(PAT_USER_LINK, inat_user)
@@ -121,60 +149,109 @@ class CommandsUser(INatEmbeds, MixinMeta):
         else:
             await config.inat_user_id.set(user.user_id)
 
-        known_in.append(ctx.guild.id)
+        known_in.append(guild_id)
         await config.known_in.set(known_in)
 
         await ctx.send(
             f"{discord_user.display_name} is added as {user.display_name()}."
         )
 
+    @staticmethod
+    async def _user_clear(ctx, config):
+        # Removal from last server removes all traces of the user:
+        await config.inat_user_id.clear()
+        await config.known_all.clear()
+        await config.known_in.clear()
+        await ctx.send("iNat user completely removed.")
+
     @user.command(name="remove")
     @can_manage_users()
-    async def user_remove(self, ctx, discord_user: discord.User):
-        """Remove user as an iNat user for this server.
+    async def user_remove(self, ctx, discord_user: str):
+        """Remove user in this server, or `me` to remove yourself.
 
         `discord_user`
-        - Discord username or nickname
+        - `me`, Discord user mention, ID, username, or nickname.
+        - You can only remove yourself in DM.
         - enclose in double-quotes if it contains blanks
         - for this reason, a mention is easier
         """
+
+        if discord_user == "me":
+            if ctx.guild:
+                await ctx.send(
+                    f"`{ctx.clean_prefix}user remove me` is only supported in DM with the bot.\n"
+                    "To be removed in this server, a mod must remove you by your Discord username."
+                )
+                return
+            discord_user = ctx.author
+        else:
+            if not ctx.guild:
+                await ctx.send(
+                    f"Remove yourself with `{ctx.clean_prefix}user remove me`.\n"
+                    "Other users cannot be added or removed in DM."
+                )
+                return
+            try:
+                ctx_member = await DiscordMemberConverter().convert(ctx, discord_user)
+                discord_user = ctx_member
+            except (BadArgument, CommandError):
+                await ctx.send("Invalid or unknown Discord member.")
+                return
         config = self.config.user(discord_user)
         inat_user_id = await config.inat_user_id()
         known_in = await config.known_in()
         known_all = await config.known_all()
-        if not inat_user_id or not (known_all or ctx.guild.id in known_in):
+        # User can only be removed from servers where they were added unless
+        # in a DM (special value 0).
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if not inat_user_id or not (known_all or guild_id in known_in):
             await ctx.send("iNat user not known.")
             return
-        # User can only be removed from servers where they were added:
-        if ctx.guild.id in known_in:
-            known_in.remove(ctx.guild.id)
-            await config.known_in.set(known_in)
-            if known_in:
-                await ctx.send("iNat user removed from this server.")
-            else:
-                # Removal from last server removes all traces of the user:
-                await config.inat_user_id.clear()
-                await config.known_all.clear()
-                await config.known_in.clear()
-                await ctx.send("iNat user removed.")
-        elif known_in and known_all:
-            await ctx.send(
-                "iNat user was added on another server and can only be removed there."
-            )
 
-    async def get_valid_user_config(self, ctx):
-        """iNat user config known in this guild."""
-        user_config = self.config.user(ctx.author)
-        inat_user_id = await user_config.inat_user_id()
-        known_in = await user_config.known_in()
-        known_all = await user_config.known_all()
-        if not (inat_user_id and known_all or ctx.guild.id in known_in):
-            raise LookupError("Ask a moderator to add your iNat profile link.")
-        return user_config
+        # DMs are a special case:
+        if not guild_id:
+            query = await ctx.send(
+                "This action is irrevocable and will remove all your settings"
+                " including on any servers where you may have been added.\n\n"
+                "If you really want to remove yourself completely, type:\n"
+                "  `I understand`"
+            )
+            try:
+                response = await self.bot.wait_for(
+                    "message_without_command",
+                    check=MessagePredicate.same_context(
+                        channel=ctx.channel, user=ctx.author
+                    ),
+                    timeout=30,
+                )
+            except asyncio.TimeoutError:
+                with contextlib.suppress(discord.HTTPException):
+                    await query.delete()
+                    return
+            if response.content.lower() == "i understand":
+                await self._user_clear(ctx, config)
+            return
+
+        if known_in:
+            if guild_id in known_in:
+                known_in.remove(guild_id)
+                await config.known_in.set(known_in)
+                if known_in:
+                    await ctx.send("iNat user removed from this server.")
+                else:
+                    # Removal from last server removes all traces of the user:
+                    # - note: if they added themself via DM, only they can
+                    #   completely remove themself because "server" 0 will
+                    #   be in their DM
+                    await self._user_clear(ctx, config)
+            elif known_all:
+                await ctx.send(
+                    "iNat user was added on another server or in DM and can only be removed there."
+                )
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """iNat user settings."""
-        if setting not in ["all", "known", "home"]:
+        if setting not in ["all", "known", "home", "lang"]:
             await ctx.send(f"Unknown setting: {setting}")
             return
         if setting in ["all", "known"]:
@@ -190,6 +267,39 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     await ctx.send(f"Non-existent place ({home_id})")
             else:
                 await ctx.send("home: none")
+        if setting in ["all", "lang"]:
+            lang = await config.lang()
+            await ctx.send(f"lang: {str(lang).lower()}")
+
+    @user.command(name="remove_all")
+    @checks.is_owner()
+    async def user_remove_all(self, ctx, discord_user: discord.User):
+        """Remove a user's settings for all servers."""
+        config = self.config.user(discord_user)
+        query = await ctx.send(
+            "This action is irrevocable and will remove all of this user's"
+            " settings on all servers. Only do this if the user requested it.\n"
+            "Settings removal does not prevent the user from later being re-added"
+            " or from accessing other bot functions. To do that, ban them with"
+            f" `{ctx.clean_prefix}userlocalblocklist add`.\n\n"
+            f"If you really want to remove {discord_user.mention} completely, type:\n"
+            "  `I understand`"
+        )
+        try:
+            response = await self.bot.wait_for(
+                "message_without_command",
+                check=MessagePredicate.same_context(
+                    channel=ctx.channel, user=ctx.author
+                ),
+                timeout=30,
+            )
+        except asyncio.TimeoutError:
+            with contextlib.suppress(discord.HTTPException):
+                await query.delete()
+                return
+        if response and response.content.lower() == "i understand":
+            await self._user_clear(ctx, config)
+        return
 
     @user.group(name="set", invoke_without_command=True)
     @known_inat_user()
@@ -204,7 +314,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(f"Unknown setting: {arg}")
             return
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -219,9 +329,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set home` show your home place
         `[p]user set home clear` clear your home place
         `[p]user set home [place]` set your home place
+
+        Set also: `[p]help user set lang`.
         """
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -254,7 +366,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         `[p]user set known true` set known on other servers
         """
         try:
-            config = await self.get_valid_user_config(ctx)
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
         except LookupError as err:
             await ctx.send(err)
             return
@@ -275,56 +387,81 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         await self.user_show_settings(ctx, config, "known")
 
-    @user.command(name="list")
-    @can_manage_users()
-    @checks.bot_has_permissions(embed_links=True)
-    async def user_list(self, ctx, abbrev: str = None):
-        """List members with known iNat ids on this server.
+    @user_set.command(name="lang")
+    @known_inat_user()
+    async def user_set_lang(self, ctx, *, lang: str = None):
+        """Show or set your preferred language for common names.
 
-        The `abbrev` can be `active`, `inactive`, or an *event* abbreviation. The user list will only show known users with the associated role and/or in the event project. Discrepancies will be listed first.
+        `[p]user set lang` show your preferred language for common names
+        `[p]user set lang clear` clear your preferred language for common names
+        `[p]user set lang [lang]` set your preferred language for common names
 
-        Note: If a user not known in the server holds an event role, or is added to an event project, those discrepancies won't be reported.
+        It is recommended to only use this setting if the language of your home place is not your preferred language for common names.
 
-        See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
+        When set, the common name shown in bot displays will be the first name with a locale exactly equal to the `lang` value. If no matching name is found, then the preferred common name for your home place is used by default.
+
+        Due to limitations of the API, the `lang` argument must be one of the locale abbreviations supported by iNaturalist, e.g. `en` for English, `de` for German, etc. Unfortunately, this means quite a number of minor languages that iNaturalist has translations for, but are not associated with a locale are not represented.
+
+        See: `[p]help user set home`.
         """  # noqa: E501
-        if not ctx.guild:
+        try:
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
+        except LookupError as err:
+            await ctx.send(err)
             return
 
-        # Avoid having to fully enumerate pages of discord/iNat user pairs
-        # which would otherwise do expensive API calls if not in the cache
-        # already just to get # of pages of member users:
-        all_users = await self.config.all_users()
-        config = self.config.guild(ctx.guild)
-        event_projects = await config.event_projects()
+        if lang is not None:
+            _lang = re.sub(DEQUOTE, r"\1", lang).lower()
+            bot = self.bot.user.name
+            if _lang in ["clear", "none", ""]:
+                await config.lang.clear()
+                await ctx.send(f"{bot} no longer has a preferred language set for you.")
+            else:
+                try:
+                    if not re.search(r"^[a-z-]+$", lang):
+                        raise LookupError("Language must contain only letters or a dash, e.g. `en`, `de`, `zh`, `zh-CN`.")
+                    await config.lang.set(_lang)
+                    await ctx.send(
+                        f"{bot} will use `{_lang}` as your preferred language."
+                    )
+                except LookupError as err:
+                    await ctx.send(err)
+                    return
+
+        await self.user_show_settings(ctx, config, "lang")
+
+    async def _user_list_filter_role(self, ctx, abbrev, config, event_projects):
         filter_role = None
         filter_role_id = None
-        team_roles = []
         if abbrev:
-            if abbrev == "active":
-                filter_role_id = await config.active_role()
-            elif abbrev == "inactive":
-                filter_role_id = await config.inactive_role()
+            if abbrev in ["active", "inactive"]:
+                filter_role_id = await (config.active_role() if abbrev == "active" else config.inactive_role())
+                if not filter_role_id:
+                    raise BadArgument(f"The {abbrev} role is undefined. To set it, use: `{ctx.clean_prefix}inat set {abbrev}`")
             elif abbrev in event_projects:
                 filter_role_id = event_projects[abbrev]["role"]
             else:
-                await ctx.send_help()
-                return
-        if abbrev and not filter_role_id:
-            await ctx.send(embed=make_embed(description=f"No {abbrev} role set."))
-            return
+                raise BadArgument(
+                    "That event doesn't exist."
+                    f" To create it, use: `{ctx.clean_prefix}inat set event`"
+                )
 
         if filter_role_id:
             filter_role = next(
                 (role for role in ctx.guild.roles if role.id == filter_role_id), None
             )
             if not filter_role:
-                await ctx.send(
-                    embed=make_embed(
-                        description=f"The {abbrev} role is not a guild role: "
-                        f"<@&{filter_role_id}>."
-                    )
+                raise BadArgument(
+                    f"The defined {abbrev} role doesn't exist: <@&{filter_role_id}>."
+                    f" To update it, use: `{ctx.clean_prefix}inat set event`"
                 )
-                return
+
+        return filter_role
+
+    async def _user_list_event_info(self, ctx, abbrev, event_projects):
+        team_roles = []
+        team_abbrevs = []
+        event_project_ids = {}
 
         main_event_project_ids = {
             int(event_projects[prj_abbrev]["project_id"]): prj_abbrev
@@ -332,10 +469,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if event_projects[prj_abbrev]["main"]
             and int(event_projects[prj_abbrev]["project_id"])
         }
+
         if abbrev in event_projects:
             prj = event_projects[abbrev]
             prj_id = int(prj["project_id"])
-            event_project_ids = {}
             if prj_id:
                 event_project_ids[prj_id] = abbrev
                 teams = prj["teams"]
@@ -352,18 +489,21 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                     if team_role:
                         team_roles.append(team_role)
-
         else:
             event_project_ids = main_event_project_ids
+
+        return (team_roles, team_abbrevs, event_project_ids, main_event_project_ids)
+
+    async def _user_list_get_projects(self, ctx, event_project_ids, main_event_project_ids):
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
         ]
-        projects = [
-            UserProject.from_dict(response["results"][0])
+        projects = {
+            response["results"][0]["id"]: UserProject.from_dict(response["results"][0])
             for response in responses
             if response
-        ]
+        }
 
         # Only do the extra work to initially cache all the observers when
         # listing all users.
@@ -371,24 +511,53 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if main_event_project_ids and not self.user_cache_init.get(ctx.guild.id):
             await self.api.get_observers_from_projects(list(main_event_project_ids))
             self.user_cache_init[ctx.guild.id] = True
+        return projects
 
-        def abbrevs(user_id: int):
+    async def _user_list_match_members(
+        self,
+        ctx,
+        abbrev,
+        event_projects,
+        filter_role,
+    ):
+        def abbrevs_for_user(user_id: int, event_project_ids, projects):
             return [
-                event_project_ids[int(project.project_id)]
-                for project in projects
-                if user_id in project.observed_by_ids()
+                event_project_ids[int(project_id)]
+                for project_id in projects
+                if user_id in projects[int(project_id)].observed_by_ids()
             ]
+
+        (team_roles, team_abbrevs, event_project_ids, main_event_project_ids) = await self._user_list_event_info(ctx, abbrev, event_projects)
 
         matching_names = []
         non_matching_names = []
+        member_user_ids = []
+        all_user_ids = []
+        all_users = await self.config.all_users()
+        projects = await self._user_list_get_projects(ctx, event_project_ids, main_event_project_ids)
+
+        if abbrev in event_projects:
+            prj = event_projects[abbrev]
+            prj_id = int(prj["project_id"])
+            if prj_id:
+                all_user_ids = projects[prj_id].observed_by_ids()
+
+        # Main pass:
+        # - Candidate members are all users known to the bot.
+        # - This includes non-server members which are indicated as :ghost: in the listing.
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
-            project_abbrevs = abbrevs(iuser.user_id)
+            project_abbrevs = abbrevs_for_user(iuser.user_id, event_project_ids, projects)
             line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
             if filter_role:
+                # Skip non-candidates: no role, and not in project.
                 if abbrev not in project_abbrevs and filter_role not in dmember.roles:
                     continue
+                # Partition into those whose role matches the event they signed
+                # up for vs. those who don't match, and therefore need attention
+                # by a project admin.
+                member_user_ids.append(iuser.user_id)
                 has_opposite_team_role = False
                 for role in [filter_role, *team_roles]:
                     if role in dmember.roles:
@@ -402,35 +571,81 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     and not has_opposite_team_role
                 )
             else:
+                member_user_ids.append(iuser.user_id)
                 role_strictly_matches_project = True
             if role_strictly_matches_project:
                 matching_names.append(line)
             else:
                 non_matching_names.append(line)
 
+        # Second pass:
+        # - Project members who are not (or are no longer) Discord server members:
+        #   - i.e. user erroneously added when not a Discord server member, or
+        #     they were added when they were a server member, but later left
+        #   - discord user ID intentionally not shown
+        for user_id in all_user_ids:
+            if user_id not in member_user_ids:
+                line = (
+                    ":ghost: *(unknown user)* is "
+                    f"[`{user_id}`]({WWW_BASE_URL}/users/{user_id})\n{abbrev}"
+                )
+                non_matching_names.append(line)
+
+        return (matching_names, non_matching_names)
+
+    @user.command(name="list")
+    @can_manage_users()
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def user_list(self, ctx, abbrev: str = None):
+        """List members with known iNat ids on this server.
+
+        The `abbrev` can be `active`, `inactive`, or an *event* abbreviation. The user list will only show known users with the associated role and/or in the event project. Discrepancies will be listed first.
+
+        Note: If a user not known in the server holds an event role, or is added to an event project, those discrepancies won't be reported.
+
+        See also: `[p]help inat set event`, `[p]help inat set active_role`, and `[p]help inat set inactive_role`.
+        """  # noqa: E501
+        if not ctx.guild:
+            return
+
+        config = self.config.guild(ctx.guild)
+        event_projects = await config.event_projects()
+        try:
+            filter_role = await self._user_list_filter_role(ctx, abbrev, config, event_projects)
+        except BadArgument as err:
+            await ctx.send(embed=make_embed(title=f"Invalid abbreviation: {abbrev}", description=str(err)))
+            return
+
+        # If filter_role is given, resulting list of names will be partitioned
+        # into matching and non matching names, where "non-matching" is any
+        # discrepancy between the role(s) assigned and the project they're in,
+        # or when a non-server-member is in the specified event project.
+        (matching_names, non_matching_names) = await self._user_list_match_members(ctx, abbrev, event_projects, filter_role)
         # Placing non matching names first allows an event manager to easily
-        # spot and correct mismatches. See role_strictly_matches_project above
-        # for what constititutes a mismatch.
+        # spot and correct mismatches.
         pages = [
             "\n".join(filter(None, names))
             for names in grouper([*non_matching_names, *matching_names], 10)
         ]
 
         if pages:
-            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            pages_len = len(pages)
+            if abbrev in ["active", "inactive"]:
+                list_name = f"{abbrev.capitalize()} known server members"
+            elif abbrev:
+                list_name = f"Membership report for event: {abbrev}"
+            else:
+                list_name = f"Known server members"
             embeds = [
                 make_embed(
-                    title=f"Discord iNat user list (page {index} of {pages_len})",
+                    title=f"{list_name} (page {index} of {pages_len})",
                     description=page,
                 )
                 for index, page in enumerate(pages, start=1)
             ]
-            # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send(
-                f"No iNat login ids are known. Add them with `{ctx.clean_prefix}user add`."
-            )
+            await ctx.send(f"No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()

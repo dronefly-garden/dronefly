@@ -24,12 +24,12 @@ class MemberConverter(NamedTuple):
     @classmethod
     async def convert(cls, ctx: Context, arg: str):
         """Find best match for member from recent messages."""
-        if not ctx.guild:
-            raise BadArgument("iNat member lookup is only supported in servers.")
-
         # Handle special 'me' user:
         if arg.lower() == "me":
             return cls(ctx.author)
+
+        if not ctx.guild:
+            raise BadArgument("iNat member lookup is only supported in servers.")
 
         # Prefer exact match:
         try:
@@ -88,6 +88,20 @@ class InheritableBoolConverter(Converter):
         if lowered in ("i", "inherit", "inherits", "inherited"):
             return None
         raise BadArgument(f'{argument} is not a recognized boolean option or "inherit"')
+
+
+class ServerScopeConverter(Converter):
+    """Convert server scope to True, False, or None (threads)."""
+
+    async def convert(self, ctx, argument):
+        lowered = argument.lower()
+        if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
+            return True
+        if lowered in ("no", "n", "false", "f", "0", "disable", "off"):
+            return False
+        if lowered in ("t", "thread", "threads"):
+            return None
+        raise BadArgument(f'{argument} is not a recognized boolean option or "threads"')
 
 
 class NoExitParser(argparse.ArgumentParser):

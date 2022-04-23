@@ -7,11 +7,14 @@ from typing import Optional, Union
 import discord
 from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
+from redbot.core.utils.chat_formatting import pagify
 
-from inatcog.converters.base import InheritableBoolConverter
+from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
 from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
+
+LISTEN_VALUE = { True: "enabled in channels and threads", False: "disabled", None: "enabled in threads only" }
 
 
 class CommandsInat(INatEmbeds, MixinMeta):
@@ -37,6 +40,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Server mods and owners can set this up. See:
         `[p]help inat set autoobs server` and
         `[p]help inat set autoobs` (channel).
+
+        In DM with the bot, `autoobs` is always on and cannot be changed.
         """  # noqa: E501
         await ctx.send_help()
 
@@ -131,6 +136,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Server mods and owners can set this up. See:
         `[p]help inat set dot_taxon server` and
         `[p]help inat set dot_taxon` (channel).
+
+        In DM with the bot, `dot_taxon` is always on and cannot be changed.
         """
         await ctx.send_help()
 
@@ -193,23 +200,26 @@ class CommandsInat(INatEmbeds, MixinMeta):
         See also: `[p]taxon_query`, `[p]dates`, `[p]advanced`, `[p]macros`.
 
         Aside from *taxon*, other *query* terms may be:
-        - `by <name>` for named user's observations; also `by me` or just `my` (a *macro*) for yourself
-        - `from <place>` for named place; also `from home` or just `home` (a *macro*) for your *home place*
-        - `in prj <project>` for named *project*
-        - `with <term> <value>` for *controlled term* with the given *value*
-        - `not by <name>` for obs unobserved by the user
-        - `id by <name>` for obs ided by the user
+        - `by <name>` user's obs; also `by me` or just `my` (a *macro*) for yourself
+        - `from <place>` obs in that place; also `from home` or just `home` (a *macro*) for your *home place*
+        - `in prj <project>` obs in the *project*
+        - `with <term> <value>` has *controlled term* with *value*
+        - `not by <name>` obs of taxa unobserved by the user
+        - `id by <name>` obs ided by the user
+        - `except by <name>` excludes obs by the user
         - `[added] since <date>`, `[added] until <date>`, `[added] on <date>`; see `[p]dates` for details
         **Examples:**
         ```
-        [p]obs by benarmstrong
-        -> most recently added observation by benarmstrong
-        [p]obs insecta by benarmstrong
-        -> most recent insecta by benarmstrong
+        [p]obs by me
+        -> most recently added by me
+        [p]obs insecta by me
+        -> most recent insecta by me
         [p]s obs insecta from canada
-        -> search for any insecta from Canada
+        -> search insects from Canada
         [p]s obs insecta with life larva
-        -> search for insecta with life stage = larva
+        -> search insect larvae
+        [p]s obs bees id by me except by me
+        -> search bees ided for others
         ```
         """  # noqa: E501
         await ctx.send_help()
@@ -230,7 +240,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         **Options that always require a parameter:**
 
-        `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id`
+        `csi` `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id` `geoprivacy` `taxon_geoprivacy`
 
         **Documentation & limitations:**
 
@@ -308,12 +318,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         msg = await ctx.send(
             embed=make_embed(title="Test", description="Reactions test.")
         )
-        start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
+        if not ctx.guild or ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+            start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_bot_prefixes(self, ctx, *prefixes):
-        """Set server ignored bot prefixes (mods).
+        """Set server ignored bot prefixes.
 
         All messages starting with one of these *prefixes* will be ignored by
         [botname].
@@ -335,116 +346,137 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
 
-    @inat_set.command(name="inactive_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_inactive_role(self, ctx, inactive_role: Optional[discord.Role]):
-        """Set server Inactive role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
+    @inat_set.command(name="listen")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_listen(self, ctx, scope: ServerScopeConverter):
+        """Set message listen server scope.
 
-        config = self.config.guild(ctx.guild)
+        The `scope` parameter may be:
+        - `on` (listen enabled in channels and threads on this server)
+        - `off` (listen disabled)
+        - `threads` (listen enabled only in threads on this server)
 
-        if inactive_role:
-            msg = inactive_role.mention
-            await config.inactive_role.set(inactive_role.id)
-        else:
-            find = await config.inactive_role()
-            if find:
-                inactive_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    inactive_role.mention
-                    if inactive_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Inactive role: {msg}"))
+        When `listen` is `on` (default), the `autoobs` and `dot_taxon` message listeners operate both in a server's channels and in its threads when enabled. They can be disabled both at once with `[p]inat set listen off` or restricted to listen only in threads with `[p]inat set listen threads`.
 
-    @inat_set.command(name="active_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_active_role(self, ctx, active_role: Optional[discord.Role]):
-        """Set server Active role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
+        Changing the `listen` server scope does not enable or manage server-wide or per-channel listener features on its own. It is more of a "kill switch" to turn off listening entirely, or selectively for main channel conversations, leaving them active only in threads.
 
-        config = self.config.guild(ctx.guild)
-
-        if active_role:
-            msg = active_role.mention
-            await config.active_role.set(active_role.id)
-        else:
-            find = await config.active_role()
-            if find:
-                active_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    active_role.mention if active_role else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Active role: {msg}"))
-
-    @inat_set.command(name="manage_users_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_manage_users_role(
-        self, ctx, manage_users_role: Optional[discord.Role]
-    ):
-        """Set manage users role."""
-        if ctx.author.bot or ctx.guild is None:
-            return
-
-        config = self.config.guild(ctx.guild)
-
-        if manage_users_role:
-            msg = manage_users_role.mention
-            await config.manage_users_role.set(manage_users_role.id)
-        else:
-            find = await config.manage_users_role()
-            if find:
-                manage_users_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = (
-                    manage_users_role.mention
-                    if manage_users_role
-                    else f"missing role: <@&{find}>"
-                )
-            else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Manage users role: {msg}"))
-
-    @inat_set.command(name="beta_role")
-    @checks.admin_or_permissions(manage_roles=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def set_beta_role(self, ctx, beta_role: Optional[discord.Role]):
-        """Set server beta role.
-
-        The beta role grants users with the role early access to `inatcog` features that are not yet released for all users.
+        See also: `[p]autoobs` and `[p]dot_taxon` to learn about these message listener features.
         """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
 
         config = self.config.guild(ctx.guild)
 
-        if beta_role:
-            msg = beta_role.mention
-            await config.beta_role.set(beta_role.id)
-        else:
-            find = await config.beta_role()
-            if find:
-                beta_role = next(
-                    (role for role in ctx.guild.roles if role.id == find), None
-                )
-                msg = beta_role.mention if beta_role else f"missing role: <@&{find}>"
+        await config.listen.set(scope)
+        await ctx.send(f"Message listening is {LISTEN_VALUE[scope]}.")
+
+    async def _set_role(self, ctx, config_item: str, role: Union[discord.Role, str]):
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+
+        if role:
+            if isinstance(role, str):
+                if role.lower() == "none":
+                    await config.clear_raw(config_item)
+                    value = "not set"
+                else:
+                    await ctx.send_help()
+                    return None
             else:
-                msg = "not set"
-        await ctx.send(embed=make_embed(description=f"Beta role: {msg}"))
+                value = role.mention
+                await config.set_raw(config_item, value=role.id)
+        else:
+            find = await config.get_raw(config_item)
+            if find:
+                role = next(
+                    (_role for _role in ctx.guild.roles if _role.id == find), None
+                )
+                value = role.mention if role else f"missing role: <@&{find}>"
+            else:
+                value = "not set"
+        return value
+
+    @inat_set.command(name="inactive_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_inactive_role(self, ctx, inactive_role: Optional[Union[discord.Role, str]]):
+        """Set server inactive role.
+
+        To unset the inactive role: `[p]inat set inactive_role none`
+        """
+        value = await self._set_role(ctx, "inactive_role", inactive_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Inactive role: {value}"))
+
+    @inat_set.command(name="active_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_active_role(self, ctx, active_role: Optional[Union[discord.Role, str]]):
+        """Set server active role.
+
+        To unset the active role: `[p]inat set active_role none`
+        """
+        value = await self._set_role(ctx, "active_role", active_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Active role: {value}"))
+
+    @inat_set.command(name="manage_places_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_places_role(
+        self, ctx, manage_places_role: Optional[Union[discord.Role, str]]
+    ):
+        """Set server manage places role.
+
+        To unset the manage places role: `[p]inat set manage_places_role none`
+        """
+        value = await self._set_role(ctx, "manage_places_role", manage_places_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage places role: {value}"))
+
+    @inat_set.command(name="manage_projects_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_projects_role(
+        self, ctx, manage_projects_role: Optional[Union[discord.Role, str]]
+    ):
+        """Set server manage projects role.
+
+        To unset the manage projects role: `[p]inat set manage_projects_role none`
+        """
+        value = await self._set_role(ctx, "manage_projects_role", manage_projects_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage projects role: {value}"))
+
+    @inat_set.command(name="manage_users_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_manage_users_role(
+        self, ctx, manage_users_role: Optional[Union[discord.Role, str]]
+    ):
+        """Set server manage users role.
+
+        To unset the manage users role: `[p]inat set manage_users_role none`
+        """
+        value = await self._set_role(ctx, "manage_users_role", manage_users_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Manage users role: {value}"))
+
+    @inat_set.command(name="beta_role")
+    @checks.admin_or_permissions(manage_roles=True)
+    @checks.bot_has_permissions(embed_links=True)
+    async def set_beta_role(self, ctx, beta_role: Optional[Union[discord.Role, str]]):
+        """Set server beta role.
+
+        Grant users with the role early access to unreleased features.
+
+        To unset the manage users role: `[p]inat set manage_users_role none`
+        """
+        value = await self._set_role(ctx, "beta_role", beta_role)
+        if value:
+            await ctx.send(embed=make_embed(description=f"Beta role: {value}"))
 
     @inat.group(name="clear")
     @checks.admin_or_permissions(manage_messages=True)
@@ -454,7 +486,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_clear.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
     async def clear_bot_prefixes(self, ctx):
-        """Clear server ignored bot prefixes (mods)."""
+        """Clear server ignored bot prefixes."""
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -466,7 +498,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs(self, ctx, state: InheritableBoolConverter):
-        """Set channel auto-observation mode (mods).
+        """Set channel auto-observation mode.
 
         A separate subcommand sets this feature for the whole server. See `[p]help set autoobs server` for details.
 
@@ -495,7 +527,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @set_autoobs.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs_server(self, ctx, state: bool):
-        """Set server auto-observation mode (mods).
+        """Set server auto-observation mode.
 
         ```
         [p]inat set autoobs server on
@@ -517,7 +549,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.group(invoke_without_command=True, name="dot_taxon")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_dot_taxon(self, ctx, state: InheritableBoolConverter):
-        """Set channel .taxon. lookup (mods).
+        """Set channel .taxon. lookup.
 
         A separate subcommand sets this feature for the whole server. See `[p]help set dot_taxon server` for details.
 
@@ -548,7 +580,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @set_dot_taxon.command(name="server")
     @checks.admin_or_permissions(manage_messages=True)
     async def dot_taxon_server(self, ctx, state: bool):
-        """Set server .taxon. lookup (mods).
+        """Set server .taxon. lookup.
 
         ```
         [p]inat set dot_taxon server on
@@ -566,10 +598,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         return
 
     @inat.group(name="show")
+    @commands.bot_has_guild_permissions(read_messages=True)
     async def inat_show(self, ctx):
         """Show iNat settings."""
 
+    # TODO: make this command work in DMs
     @inat.command(name="inspect")
+    @commands.bot_has_guild_permissions(read_messages=True)
     async def inat_inspect(self, ctx, message_id: Optional[Union[int, str]]):
         """Inspect a message and show any iNat embed contents."""
         try:
@@ -581,23 +616,30 @@ class CommandsInat(INatEmbeds, MixinMeta):
                     if ctx.guild:
                         channel = ctx.guild.get_channel(channel_id)
                         if not channel:
-                            raise LookupError
+                            raise LookupError(f"Channel not found: {channel_id}")
                 else:
                     channel = ctx.channel
+                if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                    raise LookupError(f"No permission to read: {message_id}")
                 message = await channel.fetch_message(message_id)
             else:
                 ref = ctx.message.reference
                 if ref:
-                    message = ref.cached_message or await ctx.channel.fetch_message(
-                        ref.message_id
-                    )
+                    message = ref.cached_message
+                    if not message:
+                        if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                            raise LookupError(f"No permission to read: {ref.message_id}")
+                        message = await ctx.channel.fetch_message(
+                            ref.message_id
+                        )
                 else:
-                    ctx.send_help()
+                    await ctx.send_help()
+                    return
         except discord.errors.NotFound:
             await ctx.send(f"Message not found: {message_id}")
             return
-        except LookupError:
-            await ctx.send(f"Channel not found: {channel_id}")
+        except LookupError as err:
+            await ctx.send(str(err))
             return
         except ValueError:
             await ctx.send("Invalid argument")
@@ -638,6 +680,33 @@ class CommandsInat(INatEmbeds, MixinMeta):
             title="Embed attributes", description=attributes_inspect
         )
         embeds.append(attributes_embed)
+        reactions = message.reactions
+        if reactions:
+            reactions_table = ""
+            all_users = await self.config.all_users()
+            for reaction in reactions:
+                reactions_table += f"{reaction.emoji}: {reaction.count}\n"
+                known_users = []
+                unknown_users = []
+                async for user in reaction.users():
+                    if not user.bot:
+                        if user.id in all_users:
+                            known_users.append(f"`{user.id}`")
+                        else:
+                            unknown_users.append(f"`{user.id}`")
+                if known_users:
+                    reactions_table += "\n".join(known_users) + "\n"
+                if unknown_users:
+                    reactions_table += "*unknown:*\n" + "\n".join(unknown_users) + "\n"
+            pages = [page for page in pagify(reactions_table, page_length=500)]
+            page_number = 0
+            for page in pages:
+                page_number += 1
+                reactions_embed = make_embed(
+                    title=f"Message reactions (page {page_number} of {len(pages)})",
+                    description=page,
+                )
+                embeds.append(reactions_embed)
 
         await menu(ctx, embeds, DEFAULT_CONTROLS)
 
@@ -683,6 +752,16 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await ctx.send(f"Channel .taxon. lookup is {value}.")
         return
 
+    @inat_show.command(name="listen")
+    async def show_listen(self, ctx):
+        """Show message listen scope."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        guild_config = self.config.guild(ctx.guild)
+        listen_server_scope = await guild_config.listen()
+        await ctx.send(f"Message listening is {LISTEN_VALUE[listen_server_scope]}.")
+
     @inat_show.command(name="bot_prefixes")
     async def show_bot_prefixes(self, ctx):
         """Show server ignored bot prefixes."""
@@ -696,7 +775,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.command(name="home")
     @checks.admin_or_permissions(manage_messages=True)
     async def set_home(self, ctx, home: str):
-        """Set server default home place (mods)."""
+        """Set server default home place."""
         config = self.config.guild(ctx.guild)
         try:
             place = await self.place_table.get_place(ctx.guild, home, ctx.author)
@@ -718,6 +797,20 @@ class CommandsInat(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
 
+    @staticmethod
+    def format_event(abbrev, event):
+        """Format an event description."""
+        main = {True: " (main)", False: ""}[event["main"]]
+        project_id = event["project_id"]
+        line = f"**Abbrev:** {abbrev}{main} **Project id:** {project_id}"
+        role = event["role"]
+        if role:
+            line += f" **Role:** <@&{role}>"
+        teams = event["teams"]
+        if teams:
+            line += f" **Teams:** {teams}"
+        return line
+
     @inat_set.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
     async def set_event(
@@ -729,7 +822,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         role: Optional[discord.Role] = None,
         teams: Optional[str] = None,
     ):
-        """Add a server event project (mods).
+        """Add a server event project.
 
         - `project_abbrev` uniquely identifies this project.
         - `project_id` Use `[p]prj` or `[p]s prj` to look it up for the project.
@@ -754,10 +847,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         _event_project = event_projects.get(project_abbrev)
         event_project = _event_project or {}
 
+        description = ""
         if _event_project:
-            await ctx.send(
-                f"event project {project_abbrev} was:\n```py\n{repr(event_project)}\n```"
-            )
+            line = self.format_event(project_abbrev, event_project)
+            description = f"was:\n{line}\n"
 
         event_project["project_id"] = project_id
         event_projects[project_abbrev] = event_project
@@ -767,14 +860,18 @@ class CommandsInat(INatEmbeds, MixinMeta):
         if teams or not _event_project:
             event_project["teams"] = teams
         await config.event_projects.set(event_projects)
-        await ctx.send(
-            f"event project {project_abbrev} is now:\n```py\n{repr(event_project)}\n```"
-        )
+        line = self.format_event(project_abbrev, event_project)
+        if _event_project:
+            description += f"now:\n{line}"
+        else:
+            description = line
+        embed = make_embed(title="Event project", description=description)
+        await ctx.send(embed=embed)
 
     @inat_clear.command(name="event")
     @checks.admin_or_permissions(manage_roles=True)
     async def clear_event(self, ctx, project_abbrev: str):
-        """Clear a server event project (mods)."""
+        """Clear a server event project."""
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
 
@@ -791,4 +888,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Show server event projects."""
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
-        await ctx.send(f"```py\n{repr(event_projects)}\n```")
+        embed = make_embed(title="Event projects")
+        description = ""
+        for abbrev in event_projects:
+            event = event_projects[abbrev]
+            line = self.format_event(abbrev, event)
+            description += line + "\n"
+        embed.description = description
+        await ctx.send(embed=embed)

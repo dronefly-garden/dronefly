@@ -6,6 +6,7 @@ ARGPARSE_ARGS = {
     "by": {"nargs": "+", "dest": "user", "default": []},
     "not-by": {"nargs": "+", "dest": "unobserved_by", "default": []},
     "id-by": {"nargs": "+", "dest": "id_by", "default": []},
+    "except-by": {"nargs": "+", "dest": "except_by", "default": []},
     "from": {"nargs": "+", "dest": "place", "default": []},
     "rank": {"nargs": "+", "dest": "ranks", "default": []},
     "with": {"nargs": "+", "dest": "controlled_term"},
@@ -54,8 +55,10 @@ MACROS = {
 }
 VALID_OBS_OPTS = [
     "captive",
+    "csi",
     "day",
     "endemic",
+    "geoprivacy",
     "hrank",
     "iconic_taxa",
     "id",
@@ -75,6 +78,7 @@ VALID_OBS_OPTS = [
     "quality_grade",
     "rank",
     "sounds",
+    "taxon_geoprivacy",
     "taxon_ids",
     "threatened",
     "verifiable",

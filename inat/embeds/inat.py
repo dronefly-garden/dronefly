@@ -7,7 +7,7 @@ from io import BytesIO
 import re
 import textwrap
 from typing import Optional, Union
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
@@ -64,6 +64,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..users import User
+from ..utils import obs_url_from_v1
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -196,6 +197,7 @@ class INatEmbed(discord.Embed):
         content["taxon_id"] = self.taxon_id()
         content["user_id"] = self.user_id()
         content["unobserved_by_user_id"] = self.unobserved_by_user_id()
+        content["not_user_id"] = self.not_user_id()
         content["ident_user_id"] = self.ident_user_id()
         content["project_id"] = self.project_id()
         content["taxon_url"] = self.taxon_url
@@ -216,6 +218,7 @@ class INatEmbed(discord.Embed):
         user = query.user or self.user_id()
         id_by = query.id_by or self.ident_user_id()
         unobserved_by = query.unobserved_by or self.unobserved_by_user_id()
+        except_by = query.except_by or self.not_user_id()
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
@@ -224,6 +227,7 @@ class INatEmbed(discord.Embed):
             user=user,
             id_by=id_by,
             unobserved_by=unobserved_by,
+            except_by=except_by,
             place=place,
             project=project,
             controlled_term=controlled_term,
@@ -323,6 +327,11 @@ class INatEmbed(discord.Embed):
         unobserved_by_user_id = self.params.get("unobserved_by_user_id")
         return int(unobserved_by_user_id) if unobserved_by_user_id else None
 
+    def not_user_id(self):
+        """Return not_user_id(s) from embed, if present."""
+        not_user_id = self.params.get("not_user_id")
+        return int(not_user_id) if not_user_id else None
+
     def ident_user_id(self):
         """Return ident_user_id(s) from embed, if present."""
         ident_user_id = self.params.get("ident_user_id")
@@ -335,15 +344,25 @@ def format_taxon_names_for_embed(*args, **kwargs):
     return format_taxon_names(*args, **kwargs)
 
 
-def format_taxon_title(rec):
+def format_taxon_title(rec, lang=None):
     """Format taxon title."""
-    title = rec.format_name()
+    title = rec.format_name(lang=lang)
     matched = rec.matched_term
-    if matched not in (rec.name, rec.preferred_common_name):
+    preferred_common_name = rec.preferred_common_name
+    if lang and rec.names:
+        name = next(iter([name for name in rec.names if name.get("locale") == lang]), None)
+        if name:
+            preferred_common_name = name.get("name")
+    if matched not in (rec.name, preferred_common_name):
+        invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
+        if matched in invalid_names:
+            matched = f"~~{matched}~~"
         title += f" ({matched})"
     return title
 
 
+# TODO: refactor these two helpers as a single context manager so we can
+# supply custom emoji sets in the context block.
 def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = False):
     if not query_response:
         return False
@@ -352,6 +371,12 @@ def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = Fals
     return query_response.place and not (
         query_response.user or query_response.id_by or query_response.unobserved_by
     )
+
+# Note: always call this after _add_place_emojis
+def _add_user_emojis(query_response: QueryResponse):
+    if not query_response:
+        return True
+    return not query_response.except_by
 
 
 EMOJI = {
@@ -399,11 +424,24 @@ class INatEmbeds(MixinMeta):
                 home = await self.config.home()
         return home
 
-    async def make_last_obs_embed(self, last):
+    async def get_lang(self, ctx):
+        """Get configured preferred language."""
+        user_config = self.config.user(ctx.author)
+        lang = await user_config.lang()
+        # TODO: support guild and global preferred language
+        #if not lang:
+        #    if ctx.guild:
+        #        guild_config = self.config.guild(ctx.guild)
+        #        lang = await guild_config.lang()
+        #    else:
+        #        lang = await self.config.lang()
+        return lang
+
+    async def make_last_obs_embed(self, ctx, last):
         """Return embed for recent observation link."""
         if last.obs:
             obs = last.obs
-            embed = await self.make_obs_embed(obs, url=last.url, preview=False)
+            embed = await self.make_obs_embed(ctx, obs, url=last.url, preview=False)
         else:
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
@@ -419,18 +457,21 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def make_map_embed(self, taxa):
+    async def make_map_embed(self, ctx, taxa, lang=None):
         """Return embed for an observation link."""
+        lang = await self.get_lang(ctx)
         title = format_taxon_names_for_embed(
-            taxa, with_term=True, names_format="Range map for %s"
+            taxa, with_term=True, names_format="Range map for %s", lang=lang
         )
         inat_map_url = INatMapURL(self.api)
         url = await inat_map_url.get_map_url_for_taxa(taxa)
         return make_embed(title=title, url=url)
 
-    async def maybe_send_sound(self, channel, sounds: list, index=0):
-        """Given a URL to a sound file, send the file if possible, or else just the url."""
+    @contextlib.asynccontextmanager
+    async def sound_message_params(self, channel, sounds: list, embed: discord.Embed, index=0):
+        """Given a sound URL, yield params to send embed with file (if possible) or just URL."""
         if not sounds:
+            yield None
             return
         sound = sounds[index]
         if isinstance(channel, DMChannel):
@@ -450,28 +491,29 @@ class INatEmbeds(MixinMeta):
                 filename = None
                 sound_bytes = None
 
-        embed = make_embed()
+        _embed = make_embed()
         title = "Sound recording"
         if len(sounds) > 1:
             title += f" ({index + 1} of {len(sounds)})"
         if filename:
             title += f": {filename}"
-        embed.title = title
-        embed.url = sound.url
-        embed.set_footer(text=sound.attribution)
+        _embed.title = title
+        _embed.url = sound.url
+        _embed.set_footer(text=sound.attribution)
+        embeds = [embed, _embed]
+        _params = { "embeds": embeds }
 
         if not url_only:
             if len(sound_bytes) <= max_embed_file_size:
                 sound_io = BytesIO(sound_bytes)
 
             if sound_io:
-                msg = await channel.send(
-                    embed=embed, file=File(sound_io, filename=filename)
-                )
+                _params["file"] = File(sound_io, filename=filename)
+                yield _params
                 sound_io.close()
-                return msg
+                return
 
-        return await channel.send(embed=embed)
+        yield _params
 
     async def summarize_obs_spp_counts(self, taxon, obs_args):
         observations = await self.api.get_observations(per_page=0, **obs_args)
@@ -481,8 +523,8 @@ class INatEmbeds(MixinMeta):
             )
             observations_count = observations["total_results"]
             species_count = species["total_results"]
-            url = f"{WWW_BASE_URL}/observations?" + urlencode(obs_args)
-            species_url = url + "&view=species"
+            url = obs_url_from_v1(obs_args)
+            species_url = obs_url_from_v1({**obs_args, "view": "species"})
             if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
                 summary_counts = f"Total: [{observations_count:,}]({url})"
             else:
@@ -534,16 +576,14 @@ class INatEmbeds(MixinMeta):
         else:
             description = summary_counts
 
-        url = f"{WWW_BASE_URL}/observations"
         title_args = title_query_response.obs_args()
-        if title_args:
-            url += "?" + urlencode(title_args)
+        url = obs_url_from_v1(title_args)
         full_title = f"Observations {title_query_response.obs_query_description()}"
         embed = make_embed(url=url, title=full_title, description=description)
         return embed
 
     async def format_obs(
-        self, obs, with_description=True, with_link=False, compact=False, with_user=True
+        self, obs, with_description=True, with_link=False, compact=False, with_user=True, lang=None
     ):
         """Format an observation title & description."""
 
@@ -651,7 +691,7 @@ class INatEmbeds(MixinMeta):
                 summary += description + "\n"
             return summary
 
-        def format_community_id(title, summary, obs, taxon_summary):
+        async def format_community_id(title, summary, obs, taxon_summary, lang=lang):
             idents_count = ""
             if obs.idents_count:
                 if obs.community_taxon:
@@ -668,6 +708,8 @@ class INatEmbeds(MixinMeta):
                 and obs.community_taxon
                 and obs.community_taxon.id != obs.taxon.id
             ):
+                means_link = ""
+                status_link = ""
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
                     status = taxon_summary.conservation_status
@@ -679,11 +721,12 @@ class INatEmbeds(MixinMeta):
                         status_link = f"\n{status.description()} ({status.link()})"
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
+                if lang:
+                    community_taxon = await get_taxon(self, obs.community_taxon.id, refresh_cache=False)
                 else:
-                    means_link = ""
-                    status_link = ""
+                    community_taxon = obs.community_taxon
                 summary = (
-                    f"{obs.community_taxon.format_name()} "
+                    f"{community_taxon.format_name(lang=lang)} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
@@ -718,7 +761,10 @@ class INatEmbeds(MixinMeta):
                 return taxon_summary
             return None
 
-        taxon = obs.taxon
+        if lang:
+            taxon = await get_taxon(self, obs.taxon.id, refresh_cache=False)
+        else:
+            taxon = obs.taxon
         user = obs.user
         title = format_title(taxon, obs)
         taxon_summary = None
@@ -729,8 +775,8 @@ class INatEmbeds(MixinMeta):
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
-        title, summary = format_community_id(
-            title, summary, obs, community_taxon_summary
+        title, summary = await format_community_id(
+            title, summary, obs, community_taxon_summary, lang=lang
         )
         if not compact:
             title += format_media_counts(obs)
@@ -739,7 +785,7 @@ class INatEmbeds(MixinMeta):
                 title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
-    async def make_obs_embed(self, obs, url, preview: Union[bool, int] = True):
+    async def make_obs_embed(self, ctx, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
         # pylint: disable=too-many-locals
 
@@ -788,7 +834,8 @@ class INatEmbeds(MixinMeta):
                 embed.title = title
                 embed.url = url
             else:
-                embed.title, summary = await self.format_obs(obs)
+                lang = await self.get_lang(ctx)
+                embed.title, summary = await self.format_obs(obs, lang=lang)
                 if error:
                     summary += "\n" + error
                 embed.description = summary
@@ -808,8 +855,9 @@ class INatEmbeds(MixinMeta):
 
     async def make_related_embed(self, ctx, taxa):
         """Return embed for related taxa."""
+        lang = await self.get_lang(ctx)
         names = format_taxon_names_for_embed(
-            taxa, with_term=True, names_format="**The taxa:** %s"
+            taxa, with_term=True, names_format="**The taxa:** %s", lang=lang
         )
         taxa_iter = iter(taxa)
         first_taxon = next(taxa_iter)
@@ -844,15 +892,16 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name()}"
+        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name(lang=lang)}"
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, rec, index=1):
+    async def make_image_embed(self, ctx, rec, index=1):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.id}")
 
-        title = format_taxon_title(rec)
+        lang = await self.get_lang(ctx)
+        title = format_taxon_title(rec, lang=lang)
         image = None
         attribution = None
 
@@ -904,6 +953,7 @@ class INatEmbeds(MixinMeta):
     ):
         """Make embed describing taxa record."""
         obs_cnt_filtered = False
+        adjectives = []
         if isinstance(arg, QueryResponse):
             taxon = arg.taxon
             user = arg.user
@@ -917,20 +967,21 @@ class INatEmbeds(MixinMeta):
             filter_args = copy.copy(obs_args)
             del filter_args["taxon_id"]
             obs_cnt = taxon.observations_count
-            obs_url = "?".join((f"{WWW_BASE_URL}/observations", urlencode(obs_args)))
+            obs_url = obs_url_from_v1(obs_args)
             # i.e. any args other than the ones accounted for in rec.observations_count
             if filter_args:
                 response = await self.api.get_observations(per_page=0, **obs_args)
                 if response:
                     obs_cnt_filtered = True
                     obs_cnt = response.get("total_results")
+            adjectives = arg.adjectives
         elif isinstance(arg, Taxon):
             taxon = arg
             user = None
             place = None
             obs_args = {"taxon_id": taxon.id}
             obs_cnt = taxon.observations_count
-            obs_url = f"{WWW_BASE_URL}/observations?taxon_id={taxon.id}"
+            obs_url = obs_url_from_v1(obs_args)
         else:
             LOG.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
@@ -958,13 +1009,17 @@ class INatEmbeds(MixinMeta):
                 descriptor = " ".join([article, status, rec.rank])
             else:
                 descriptor = p.a(rec.rank)
-            description = (
-                f"is {descriptor} with {obs_fmt} {p.plural('observation', obs_cnt)}"
-            )
+            _observations = []
+            if adjectives:
+                _observations.append(", ".join(adjectives))
+            _observations.append(p.plural("observation", obs_cnt))
+            description = f"is {descriptor} with {obs_fmt} {' '.join(_observations)}"
             if obs_cnt_filtered:
                 obs_without_taxon = copy.copy(title_query_response)
                 obs_without_taxon.taxon = None
-                description += f" {obs_without_taxon.obs_query_description()}"
+                description += (
+                    f" {obs_without_taxon.obs_query_description(with_adjectives=False)}"
+                )
             if means_fmtd:
                 description += f" {means_fmtd}"
             return description
@@ -977,7 +1032,8 @@ class INatEmbeds(MixinMeta):
                 description += "."
             return description
 
-        title = format_taxon_title(taxon)
+        lang = await self.get_lang(ctx)
+        title = format_taxon_title(taxon, lang=lang)
 
         preferred_place_id = await self.get_home(ctx)
         if place:
@@ -1097,7 +1153,12 @@ class INatEmbeds(MixinMeta):
 
     async def get_user_server_projects_stats(self, ctx, user):
         """Get a user's stats for the server's main event projects."""
-        event_projects = await self.config.guild(ctx.guild).event_projects() or {}
+        event_projects = None
+        if ctx.guild:
+            event_projects = await self.config.guild(ctx.guild).event_projects()
+        if not event_projects:
+            # No projects defined; implicit `ever` project for all-time stats
+            event_projects = {"ever": {"project_id": 0, "main": True}}
         projects_by_id = {
             int(event_projects[prj]["project_id"]): prj
             for prj in event_projects
@@ -1142,12 +1203,18 @@ class INatEmbeds(MixinMeta):
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
             taxa_count, _taxa_rank = taxa_stats
-            url = f"{WWW_BASE_URL}/observations?user_id={user.user_id}"
+            obs_args = {"user_id": user.user_id}
             if int(project_id):
-                url += f"&project_id={project_id}"
-            obs_url = f"{url}&view=observations&verifiable=any"
-            spp_url = f"{url}&view=species&verifiable=any&hrank=species"
-            taxa_url = f"{url}&view=species&verifiable=any"
+                obs_args["project_id"] = project_id
+            obs_url = obs_url_from_v1(
+                {**obs_args, "view": "observations", "verifiable": "any"}
+            )
+            spp_url = obs_url_from_v1(
+                {**obs_args, "view": "species", "verifiable": "any", "hrank": "species"}
+            )
+            taxa_url = obs_url_from_v1(
+                {**obs_args, "view": "species", "verifiable": "any"}
+            )
             fmt = (
                 f"[{obs_count:,}]({obs_url}) / [{spp_count:,}]({spp_url}) / "
                 f"[{taxa_count:,}]({taxa_url})"
@@ -1173,13 +1240,14 @@ class INatEmbeds(MixinMeta):
         taxa_count, _taxa_rank = await self.get_user_project_stats(
             project_id, user, category="taxa"
         )
-        url = (
-            f"{WWW_BASE_URL}/observations?project_id={project.project_id}"
-            f"&user_id={user.user_id}"
+        obs_args = {"project_id": project.project_id, "user_id": user.user_id}
+        obs_url = obs_url_from_v1(
+            {**obs_args, "view": "observations", "verifiable": "any"}
         )
-        obs_url = f"{url}&view=observations&verifiable=any"
-        spp_url = f"{url}&view=species&verifiable=any&hrank=species"
-        taxa_url = f"{url}&view=species&verifiable=any"
+        spp_url = obs_url_from_v1(
+            {**obs_args, "view": "species", "verifiable": "any", "hrank": "species"}
+        )
+        taxa_url = obs_url_from_v1({**obs_args, "view": "species", "verifiable": "any"})
         fmt = (
             f"[{obs_count:,}]({obs_url}) (#{obs_rank}) / "
             f"[{spp_count:,}]({spp_url}) (#{spp_rank}) / "
@@ -1195,7 +1263,8 @@ class INatEmbeds(MixinMeta):
         reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS
+            else OBS_REACTION_EMOJIS if _add_user_emojis(query_response)
+            else []
         )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
@@ -1218,13 +1287,15 @@ class INatEmbeds(MixinMeta):
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else TAXON_REACTION_EMOJIS
+                else TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else []
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else NO_PARENT_TAXON_REACTION_EMOJIS
+                else NO_PARENT_TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else []
             )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
 
@@ -1232,7 +1303,7 @@ class INatEmbeds(MixinMeta):
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
     ):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(query_response, index))
+        msg = await ctx.send(embed=await self.make_image_embed(ctx, query_response, index))
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
         #   user will break the display; they can use `,last t` to get the taxon
@@ -1256,17 +1327,17 @@ class INatEmbeds(MixinMeta):
             ctx, msg, query_response, with_keep=with_keep
         )
 
-    async def send_obs_embed(self, ctx, embed, obs):
+    async def send_obs_embed(self, ctx, embed, obs, **reaction_params):
         """Send observation embed and sound."""
-        msg = await ctx.channel.send(embed=embed)
+        msg = None
         if obs and obs.sounds:
-            sound_msg = await self.maybe_send_sound(ctx.channel, obs.sounds)
-        else:
-            sound_msg = None
-        cancelled = await add_reactions_with_cancel(ctx, msg, [])
-        if cancelled and sound_msg:
-            with contextlib.suppress(discord.HTTPException):
-                await sound_msg.delete()
+            async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
+                if params:
+                    msg = await ctx.channel.send(**params)
+        if not msg:
+            msg = await ctx.channel.send(embed=embed)
+
+        await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
@@ -1326,13 +1397,8 @@ class INatEmbeds(MixinMeta):
 
         update_place = None
         if place is None:
-            config = self.config.user(user)
-            home = await config.home()
-            if not home:
-                return
-
             try:
-                update_place = await self.place_table.get_place(msg.guild, home, user)
+                update_place = await self.place_table.get_place(msg.guild, "home", user)
             except LookupError:
                 return
         else:
@@ -1577,12 +1643,13 @@ class INatEmbeds(MixinMeta):
         if msg.id not in self.reaction_locks:
             self.reaction_locks[msg.id] = asyncio.Lock()
         async with self.reaction_locks[msg.id]:
-            # Refetch the message because it may have changed prior to
+            # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            try:
-                msg = await msg.channel.fetch_message(msg.id)
-            except discord.errors.NotFound:
-                return  # message has been deleted, nothing left to do
+            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
             embeds = msg.embeds
             inat_embed = INatEmbed.from_discord_embed(embeds[0])
             description = inat_embed.description or ""
@@ -1669,12 +1736,13 @@ class INatEmbeds(MixinMeta):
         if msg.id not in self.reaction_locks:
             self.reaction_locks[msg.id] = asyncio.Lock()
         async with self.reaction_locks[msg.id]:
-            # Refetch the message because it may have changed prior to
+            # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            try:
-                msg = await msg.channel.fetch_message(msg.id)
-            except discord.errors.NotFound:
-                return  # message has been deleted, nothing left to do
+            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+                try:
+                    msg = await msg.channel.fetch_message(msg.id)
+                except discord.errors.NotFound:
+                    return  # message has been deleted, nothing left to do
             embeds = msg.embeds
             inat_embed = INatEmbed.from_discord_embed(embeds[0])
             description = inat_embed.description or ""

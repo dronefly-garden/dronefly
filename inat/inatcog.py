@@ -10,6 +10,7 @@ import inflect
 from pyinaturalist import iNatClient
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
+from .commands.event import CommandsEvent
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
 from .commands.map import CommandsMap
@@ -46,6 +47,7 @@ class CompositeMetaClass(type(commands.Cog), type(ABC)):
 class INatCog(
     Listeners,
     commands.Cog,
+    CommandsEvent,
     CommandsInat,
     CommandsLast,
     CommandsMap,
@@ -100,7 +102,11 @@ class INatCog(
             dot_taxon=False,
             active_role=None,
             bot_prefixes=[],
+            beta_role=None,
             inactive_role=None,
+            listen=True,
+            manage_places_role=None,
+            manage_projects_role=None,
             manage_users_role=None,
             user_projects={},  # deprecated (schema <=2); superseded by event_projects
             event_projects={},
@@ -111,7 +117,11 @@ class INatCog(
         )
         self.config.register_channel(autoobs=None, dot_taxon=None)
         self.config.register_user(
-            home=None, inat_user_id=None, known_in=[], known_all=False
+            home=None,
+            inat_user_id=None,
+            known_in=[],
+            known_all=False,
+            lang=None,
         )
         self._cleaned_up = False
         self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())
@@ -191,10 +201,10 @@ class INatCog(
                     )
             await self.config.schema_version.set(4)
 
-    def cog_unload(self):
+    async def cog_unload(self):
         """Cleanup when the cog unloads."""
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
-            self.bot.loop.create_task(self.api.session.close())
+            await self.api.session.close()
             self._cleaned_up = True

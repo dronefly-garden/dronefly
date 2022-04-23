@@ -7,7 +7,7 @@ from .inat import INat
 __red_end_user_data_statement__ = get_end_user_data_statement(__file__)
 
 
-def setup(bot):
+async def setup(bot):
     """Setup bot with our custom formatter, then add our cog.
 
     Note: incompatible with cogs providing their own help formatter, but inatcog
@@ -15,7 +15,8 @@ def setup(bot):
     general-purpose bot, so this is OK(-ish).
     """
     bot.set_help_formatter(INatHelp())
-    bot.add_cog(INat(bot))
+    cog = INat(bot)
+    await bot.add_cog(cog)
 
 
 def teardown(bot):

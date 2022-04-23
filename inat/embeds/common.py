@@ -17,7 +17,7 @@ class NoRoomInDisplay(Exception):
 
 async def apologize(ctx, apology="I don't understand"):
     """Send an apology and remove the message after a while."""
-    if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).embed_links:
+    if not ctx.guild or ctx.channel.permissions_for(ctx.guild.me).embed_links:
         msg = await ctx.send(embed=sorry(apology=apology, title="Sorry"))
     else:
         msg = await ctx.send(f"Sorry: {apology}")
@@ -44,6 +44,9 @@ async def add_reactions_with_cancel(
     with_keep: bool = False,
 ):
     """Add reactions with, for a limited time, author-only cancel."""
+    if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+        # nothing to do, as we don't have permission to add reactions
+        return
     _emojis = [emojis] if isinstance(emojis, str) else list(emojis)
     extra_emojis = []
     cancel = "\N{CROSS MARK}"

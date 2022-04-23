@@ -132,6 +132,11 @@ class INatQuery:
             if has_value(query.unobserved_by)
             else None
         )
+        args["except_by"] = (
+            await self.get_inat_user(ctx, query.except_by)
+            if has_value(query.except_by)
+            else None
+        )
         args["id_by"] = (
             await self.get_inat_user(ctx, query.id_by)
             if has_value(query.id_by)
