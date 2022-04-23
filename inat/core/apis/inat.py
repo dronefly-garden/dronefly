@@ -18,6 +18,7 @@
     probability of rate limits being exceeded
 """
 from functools import partial
+import logging
 from time import time
 from types import SimpleNamespace
 from typing import List, Optional, Union
