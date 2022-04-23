@@ -844,7 +844,7 @@ dev = ["black (==22.1.0)", "flake8 (==4.0.1)", "isort (==5.10.1)"]
 
 [[package]]
 name = "Red-DiscordBot"
-version = "3.5.0.dev185+g96e8d8cdf"
+version = "3.5.0.dev190+g23023da09"
 description = "A highly customisable Discord bot"
 category = "main"
 optional = false
