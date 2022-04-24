@@ -526,14 +526,32 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 for project_id in projects
                 if user_id in projects[int(project_id)].observed_by_ids()
             ]
+        
+        def formatted_user(dmember, iuser, project_abbrevs):
+            if dmember:
+                user_is = f"{dmember.mention} is "
+            else:
+                user_is = ":ghost: *(unknown user)* is "
+            if isinstance(iuser, User):
+                profile_link = iuser.profile_link()
+            else:
+                profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
+            return f"{user_is}{profile_link}\n{' '.join(project_abbrevs)}"
 
         (team_roles, team_abbrevs, event_project_ids, main_event_project_ids) = await self._user_list_event_info(ctx, abbrev, event_projects)
 
         matching_names = []
         non_matching_names = []
-        member_user_ids = []
+        known_inat_user_ids_in_event = []
         all_user_ids = []
         all_users = await self.config.all_users()
+        guild_id = ctx.guild.id
+        known_user_ids_by_inat_id = {}
+        for (discord_user_id, user_config) in all_users.items():
+            inat_user_id = user_config.get("inat_user_id")
+            if inat_user_id:
+                if guild_id in user_config.get("known_in"):
+                    known_user_ids_by_inat_id[inat_user_id] = discord_user_id
         projects = await self._user_list_get_projects(ctx, event_project_ids, main_event_project_ids)
 
         if abbrev in event_projects:
@@ -544,7 +562,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         # Main pass:
         # - Candidate members are all users known to the bot.
-        # - This includes non-server members which are indicated as :ghost: in the listing.
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
@@ -554,12 +571,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 candidate = filter_role in dmember.roles
             if not candidate: 
                 continue
-            line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
+            line = formatted_user(dmember, iuser, project_abbrevs)
             if filter_role:
                 # Partition into those whose role matches the event they signed
                 # up for vs. those who don't match, and therefore need attention
                 # by a project admin.
-                member_user_ids.append(iuser.user_id)
+                known_inat_user_ids_in_event.append(iuser.user_id)
                 has_opposite_team_role = False
                 for role in [filter_role, *team_roles]:
                     if role in dmember.roles:
@@ -573,7 +590,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     and not has_opposite_team_role
                 )
             else:
-                member_user_ids.append(iuser.user_id)
+                known_inat_user_ids_in_event.append(iuser.user_id)
                 role_strictly_matches_project = True
             if role_strictly_matches_project:
                 matching_names.append(line)
@@ -584,14 +601,34 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # - Project members who are not (or are no longer) Discord server members:
         #   - i.e. user erroneously added when not a Discord server member, or
         #     they were added when they were a server member, but later left
-        #   - discord user ID intentionally not shown
-        for user_id in all_user_ids:
-            if user_id not in member_user_ids:
-                line = (
-                    ":ghost: *(unknown user)* is "
-                    f"[`{user_id}`]({WWW_BASE_URL}/users/{user_id})\n{abbrev}"
-                )
-                non_matching_names.append(line)
+        #   - Note: Discord user ID intentionally not shown even if known to the
+        #     bot for a different server but not in this one
+        for inat_user_id in all_user_ids:
+            if inat_user_id not in known_inat_user_ids_in_event:
+                known_discord_user_id = known_user_ids_by_inat_id.get(inat_user_id)
+                inat_user = None
+                if inat_user_id in self.api.users_cache:
+                    try:
+                        user_json = await self.api.get_users(inat_user_id)
+                        results = user_json.get("results")
+                        if results:
+                            inat_user = User.from_dict(results[0])
+                    except LookupError:
+                        pass
+                if known_discord_user_id:
+                    discord_member = ctx.guild.get_member(known_discord_user_id)
+                    # i.e. added in this server, but not a Discord server member anymore
+                    if not discord_member:
+                        discord_user = self.bot.get_user(known_discord_user_id)
+                        if inat_user:
+                            line = ":ghost: " + formatted_user(discord_user, inat_user or inat_user_id, project_abbrevs)
+                            non_matching_names.append(line)
+                else:
+                    # User is in the event project observer rules and may or may
+                    # not be known to the bot, but is not known in this server.
+                    # In either case, we only list them as "unknown user".
+                    line = formatted_user(None, inat_user or inat_user_id, project_abbrevs)
+                    non_matching_names.append(line)
 
         return (matching_names, non_matching_names)
 
