@@ -621,7 +621,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     if not discord_member:
                         discord_user = self.bot.get_user(known_discord_user_id)
                         if inat_user:
-                            line = ":ghost: " + formatted_user(discord_user, inat_user or inat_user_id, project_abbrevs)
+                            line = ":ghost: " if discord_user else ""
+                            line += formatted_user(discord_user, inat_user or inat_user_id, project_abbrevs)
                             non_matching_names.append(line)
                 else:
                     # User is in the event project observer rules and may or may
