@@ -4,6 +4,7 @@ from typing import Union
 import discord
 from redbot.core import checks, commands
 from pyinaturalist import get_access_token
+from pyinaturalist.exceptions import AuthenticationError
 from pyinaturalist.models import Project
 from requests.exceptions import HTTPError
 
@@ -56,8 +57,9 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         if (manager_inat_id not in required_admins):
             await ctx.send("You are not an admin or manager of this project.")
             return
-        token = get_access_token()
-        if (not token):
+        try:
+            token = get_access_token()
+        except AuthenticationError:
             await ctx.send("I am not authorized to login to iNaturalist.")
             return
         async with ctx.typing():
