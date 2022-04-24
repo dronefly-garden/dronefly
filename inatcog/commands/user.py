@@ -549,11 +549,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
             ctx.guild, all_users
         ):
             project_abbrevs = abbrevs_for_user(iuser.user_id, event_project_ids, projects)
+            candidate = not abbrev or abbrev in project_abbrevs
+            if filter_role and not candidate:
+                candidate = filter_role in dmember.roles
+            if not candidate: 
+                continue
             line = f"{dmember.mention} is {iuser.profile_link()}\n{' '.join(project_abbrevs)}"
             if filter_role:
-                # Skip non-candidates: no role, and not in project.
-                if abbrev not in project_abbrevs and filter_role not in dmember.roles:
-                    continue
                 # Partition into those whose role matches the event they signed
                 # up for vs. those who don't match, and therefore need attention
                 # by a project admin.
