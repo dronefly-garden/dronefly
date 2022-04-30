@@ -2,9 +2,9 @@ name: Dronefly
 
 on: 
   push:
-    branches: [main]
+    branches: [dev]
   pull_request:
-    branches: [main]
+    branches: [dev]
 env:
   LATEST_PY_VERSION: '3.9'
 
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: [3.9]
       fail-fast: false
 
     steps:

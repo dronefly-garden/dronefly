@@ -1,23 +1,12 @@
 """INatCog init."""
 from redbot.core.utils import get_end_user_data_statement
 
-from .help import INatHelp
 from .inat import INat
 
 __red_end_user_data_statement__ = get_end_user_data_statement(__file__)
 
 
 async def setup(bot):
-    """Setup bot with our custom formatter, then add our cog.
-
-    Note: incompatible with cogs providing their own help formatter, but inatcog
-    is such a special-purpose cog, it's not really intended to use it on a
-    general-purpose bot, so this is OK(-ish).
-    """
-    bot.set_help_formatter(INatHelp())
+    """Setup bot."""
     cog = INat(bot)
     await bot.add_cog(cog)
-
-
-def teardown(bot):
-    bot.reset_help_formatter()
