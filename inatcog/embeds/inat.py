@@ -5,7 +5,6 @@ import copy
 import datetime as dt
 from io import BytesIO
 import re
-import textwrap
 from typing import Optional, Union
 from urllib.parse import parse_qs, urlsplit
 
@@ -597,8 +596,6 @@ class INatEmbeds(MixinMeta):
             if with_link:
                 link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                 taxon_str = f"[{taxon_str}]({link_url})"
-            if compact:
-                title += f"{EMOJI[obs.quality_grade]} "
             title += taxon_str
             if not compact:
                 title += f" by {user.login} " + EMOJI[obs.quality_grade]
@@ -628,10 +625,15 @@ class INatEmbeds(MixinMeta):
                     summary += f"Conservation Status: {status.description()} ({status.link()})\n"
                 if means:
                     summary += f"{means.emoji()}{means.link()}\n"
+            login = ""
             if compact:
-                summary += f": {user.login if with_user else ''}"
+                if with_user:
+                    login = user.login
+                summary += "\n"
             else:
                 summary += "Observed by " + user.profile_link()
+            obs_on = ""
+            obs_at = ""
             if obs.obs_on:
                 if compact:
                     if obs.obs_on.date() == dt.datetime.now().date():
@@ -643,7 +645,6 @@ class INatEmbeds(MixinMeta):
                         obs_on = obs.obs_on.strftime("%d-%b")
                     else:
                         obs_on = obs.obs_on.strftime("%b-%Y")
-                    summary += f" {obs_on}"
                 else:
                     if obs.time_obs:
                         obs_on = obs.time_obs.strftime("%c")
@@ -652,16 +653,15 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs_on
             if obs.obs_at:
                 if compact:
-                    name_width = len(taxon.name) if taxon else 7
-                    place_width = 20 if with_user else 30
-                    place_width += 18 - name_width
-                    place_width = max(place_width, 20)
-                    summary += " " + textwrap.shorten(
-                        obs.obs_at, width=place_width, placeholder="…"
-                    )
+                    obs_at =  obs.obs_at
                 else:
                     summary += " at " + obs.obs_at
             if compact:
+                line = " ".join((item for item in (login, obs_on, obs_at) if item))
+                if len(line) > 32:
+                    line = line[0:31] + "…"
+                summary += "`{0: <32}`".format(line)
+                summary += EMOJI[obs.quality_grade]
                 if obs.faves_count:
                     summary += format_count("fave", obs.faves_count)
                 if obs.comments_count:
