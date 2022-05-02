@@ -67,7 +67,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         self._query_title = query_title
         self._pages_len = ceil(self._total_results / 4)
         self._single_entry = False
-        self._multi_images = False
+        self._multi_images = True
         self._current_entry = 0
         super().__init__(self.generate_obs(observations), per_page=4)
 
