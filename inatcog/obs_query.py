@@ -25,12 +25,13 @@ class INatObsQuery:
 
         return get_obs_fields(response["results"][0])
 
-    async def query_observations(self, ctx, query: Query):
+    async def query_observations(self, ctx, query: Query, page=1):
         """Query observations and return iterator for any found."""
 
         query_response = await self.cog.query.get(ctx, query)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 200
+        kwargs["page"] = page
         home = await self.cog.get_home(ctx)
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
