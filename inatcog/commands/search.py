@@ -1,11 +1,14 @@
 """Module for search command group."""
+import contextlib
 from math import ceil
 import re
 from typing import Optional, Union
 import urllib.parse
 
+import discord
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
+from redbot.vendored.discord.ext import menus
 
 from ..base_classes import WWW_BASE_URL
 from ..common import grouper
@@ -25,6 +28,173 @@ from ..interfaces import MixinMeta
 from ..obs import get_obs_fields
 from ..utils import obs_url_from_v1
 
+INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
+ENTRY_EMOJIS = [
+    "\N{REGIONAL INDICATOR SYMBOL LETTER A}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
+]
+
+async def show_entry(menu, payload):
+    index = ENTRY_EMOJIS.index(str(payload.emoji))
+    if menu.current_page * menu._source.per_page + index < menu._source._total_results:
+        menu._source._current_entry = index
+        menu._source._single_entry = False
+        await menu.show_page(menu.current_page)
+
+class SearchObsSource(menus.AsyncIteratorPageSource):
+    """Paged (both UI & API) observation search results source."""
+    async def generate_obs(self, observations):
+        _observations = observations
+        api_page = 1
+        while _observations:
+            for obs in _observations:
+                yield obs
+            if (api_page - 1) * self._per_api_page + len(_observations) < self._total_results:
+                api_page += 1
+                (_observations, *_ignore) = await self._cog.obs_query.query_observations(self._ctx, self._query, page=api_page)
+            else:
+                _observations = None
+
+    def __init__(self, cog, ctx, query, observations, total_results, per_api_page, url, query_title):
+        self._cog = cog
+        self._ctx = ctx
+        self._query = query
+        self._total_results = total_results
+        self._per_api_page = per_api_page
+        self._url = url
+        self._query_title = query_title
+        self._pages_len = ceil(self._total_results / 4)
+        self._single_entry = False
+        self._multi_images = False
+        self._current_entry = 0
+        super().__init__(self.generate_obs(observations), per_page=4)
+
+    async def _format_obs(self, obs):
+        formatted_obs = await self._cog.format_obs(
+            obs,
+            with_description=False,
+            with_link=True,
+            compact=True,
+            with_user=not self._query.user,
+        )
+        return ''.join(formatted_obs)
+
+    async def format_page(self, menu, entries):
+        def get_image_url(obs):
+            return next(iter([image.url for image in obs.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
+
+        start = menu.current_page * self.per_page
+        embeds = []
+        if self._single_entry:
+            obs = next(obs for i, obs in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            embed = await self._cog.make_obs_embed(
+                menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+            )
+            embeds = [embed]
+        else:
+            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {self._pages_len})"
+            fmt_entries = []
+            for i, obs in enumerate(entries, start=start):
+                fmt_entry = await self._format_obs(obs)
+                index = i
+                if i + 1 > self._total_results:
+                    index = self._total_results - 1
+                if index % self.per_page == self._current_entry:
+                    fmt_entry = f"**{fmt_entry}**"
+                fmt_entries.append(f"{ENTRY_EMOJIS[i % self.per_page]} {fmt_entry}")
+                embed = discord.Embed(url=self._url)
+                # add embeds for all images when cursor is on 1st image, otherwise just
+                # set the image of the 1st embed to be for the corresponding entry.
+                if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                    embed.set_image(url=get_image_url(obs))
+                    embeds.append(embed)
+            if embeds:
+                embeds[0].description = f'\n'.join(fmt_entries)
+                embeds[0].title = title
+        if self._multi_images:
+            message = { "embeds": embeds }
+        else:
+            message = { "embed": embeds[0] }
+        return message
+
+class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
+    """Navigate observation search results."""
+    def __init__(self, source, **kwargs):
+        super().__init__(source, **kwargs)
+        for i, emoji in enumerate(ENTRY_EMOJIS):
+            self.add_button(menus.Button(emoji, show_entry))
+
+    @menus.button("\N{UP-POINTING SMALL RED TRIANGLE}")
+    async def on_prev_result(self, payload):
+        # don't run off the start
+        if self._source._current_entry == 0 and self.current_page == 0:
+            return
+        self._source._current_entry -= 1
+        page_offset = 0
+        # back up to the last entry on the previous page
+        if self._source._current_entry < 0:
+            self._source._current_entry = self._source.per_page - 1
+            page_offset = 1
+        await self.show_page(self.current_page - page_offset)
+
+    @menus.button("\N{DOWN-POINTING SMALL RED TRIANGLE}")
+    async def on_next_result(self, payload):
+        # don't run off the end
+        if self._source._current_entry + 2 + self.current_page * self._source.per_page > self._source._total_results:
+            return
+        self._source._current_entry += 1
+        page_offset = 0
+        # advance to the first entry on the next page
+        if self._source._current_entry > self._source.per_page - 1:
+            self._source._current_entry = 0
+            page_offset = 1
+        await self.show_page(self.current_page + page_offset)
+
+    @menus.button("\N{BLACK LEFT-POINTING TRIANGLE}")
+    async def go_to_previous_page(self, payload):
+        """Go to the top of the previous page."""
+        self._source._current_entry = 0
+        self._source._single_entry = False
+        await self.show_checked_page(self.current_page - 1)
+
+    @menus.button("\N{BLACK RIGHT-POINTING TRIANGLE}")
+    async def go_to_next_page(self, payload):
+        """Go to the top of the next page."""
+        self._source._current_entry = 0
+        self._source._single_entry = False
+        await self.show_checked_page(self.current_page + 1)
+
+    @menus.button("\N{WHITE HEAVY CHECK MARK}")
+    async def on_select(self, payload):
+        """Select this entry to view the full observation."""
+        if self._source._single_entry:
+            ctx = self.ctx
+            current_page = self.current_page
+            pages = SearchMenuPages(
+                source=self._source,
+                clear_reactions_after=True,
+            )
+            self.stop()
+            self._source._single_entry = False
+            pages.current_page = current_page
+            await pages.start(ctx)
+            await pages.show_checked_page(current_page)
+        else:
+            self._source._single_entry = True
+            await self.show_checked_page(self.current_page)
+
+    @menus.button("\N{CROSS MARK}")
+    async def on_cancel(self, payload):
+        """Cancel viewing full observation or stop menu and delete."""
+        if self._source._single_entry:
+            self._source._single_entry = False
+            await self.show_checked_page(self.current_page)
+        else:
+            self.stop()
+            with contextlib.suppress(discord.HTTPException):
+                await self.message.delete()
 
 class CommandsSearch(INatEmbeds, MixinMeta):
     """Mixin providing search command group."""
@@ -204,7 +374,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
 
-        def make_search_embed(
+        def make_search_embeds(
             query_title, page, thumbnails, index, per_embed_page, pages_len
         ):  # pylint: disable=too-many-arguments
             embed = make_embed(
@@ -271,34 +441,12 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return (kw_lowered, query_title, url, kwargs)
 
         async def query_formatted_results(query, query_type, kwargs):
-            results = []
             thumbnails = []
-            if query_type == "obs":
-                (
-                    observations,
-                    total_results,
-                    per_page,
-                ) = await self.obs_query.query_observations(ctx, query)
-                for obs in observations:
-                    results.append(
-                        "".join(
-                            await self.format_obs(
-                                obs,
-                                with_description=False,
-                                with_link=True,
-                                compact=True,
-                                with_user=not query.user,
-                            )
-                        )
-                    )
-                    thumbnails.append(obs.thumbnail)
-                per_embed_page = 5
-            else:
-                (results, total_results, per_page) = await self.site_search.search(
-                    ctx, query, **kwargs
-                )
-                per_embed_page = 10
-            return (total_results, results, thumbnails, per_page, per_embed_page)
+            (results, total_results, per_api_page) = await self.site_search.search(
+                ctx, query, **kwargs
+            )
+            per_embed_page = 10
+            return (total_results, results, thumbnails, per_api_page, per_embed_page)
 
         def get_button_controls(results, query_type):
             all_buttons = [
@@ -352,7 +500,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             page = "\n".join(lines)
             return page
 
-        def format_embeds(results, total_results, per_page, per_embed_page, buttons):
+        def format_embeds(results, total_results, per_api_page, per_embed_page, buttons):
             pages = []
             for group in grouper(results, per_embed_page):
                 page = format_page(buttons, group)
@@ -362,10 +510,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             if len(results) < total_results:
                 pages_len = (
                     f"{pages_len}; "
-                    f"{ceil((total_results - per_page)/per_embed_page)} more not shown"
+                    f"{ceil((total_results - per_api_page)/per_embed_page)} more not shown"
                 )
             embeds = [
-                make_search_embed(
+                make_search_embeds(
                     query_title, page, thumbnails, index, per_embed_page, pages_len
                 )
                 for index, page in enumerate(pages, start=0)
@@ -382,13 +530,20 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             else:
                 _query = query
             query_type, query_title, url, kwargs = await get_query_args(_query)
-            (
-                total_results,
-                results,
-                thumbnails,
-                per_page,
-                per_embed_page,
-            ) = await query_formatted_results(_query, query_type, kwargs)
+            if query_type == "obs":
+                (
+                    results,
+                    total_results,
+                    per_api_page,
+                ) = await self.obs_query.query_observations(ctx, _query)
+            else:
+                (
+                    total_results,
+                    results,
+                    thumbnails,
+                    per_api_page,
+                    per_embed_page,
+                ) = await query_formatted_results(_query, query_type, kwargs)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
@@ -409,15 +564,31 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 )
             return
 
-        (buttons, controls) = get_button_controls(results, query_type)
-        embeds = format_embeds(
-            results, total_results, per_page, per_embed_page, buttons
-        )
-        # Track index in outer scope
-        # - TODO: use a menu class (from vendored menu) and make this an attribute.
-        selected_index = [0]
+        if query_type == "obs":
+            pages = SearchMenuPages(
+                source=SearchObsSource(
+                    self,
+                    ctx,
+                    _query,
+                    results,
+                    total_results,
+                    per_api_page,
+                    url,
+                    query_title,
+                ),
+                clear_reactions_after=True,
+            )
+            await pages.start(ctx)
+        else:
+            (buttons, controls) = get_button_controls(results, query_type)
+            embeds = format_embeds(
+                results, total_results, per_api_page, per_embed_page, buttons
+            )
+            # Track index in outer scope
+            # - TODO: use a menu class (from vendored menu) and make this an attribute.
+            selected_index = [0]
 
-        await menu(ctx, embeds, controls, timeout=60)
+            await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
