@@ -1,6 +1,6 @@
 """Module for search command group."""
 import contextlib
-from math import ceil
+from math import ceil, floor
 import re
 from typing import Optional, Union
 import urllib.parse
@@ -34,6 +34,10 @@ ENTRY_EMOJIS = [
     "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
     "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
     "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER E}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER G}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER H}",
 ]
 
 async def show_entry(menu, payload):
@@ -57,7 +61,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             else:
                 _observations = None
 
-    def __init__(self, cog, ctx, query, observations, total_results, per_api_page, url, query_title):
+    def __init__(self, cog, ctx, query, observations, total_results, per_page, per_api_page, url, query_title):
         self._cog = cog
         self._ctx = ctx
         self._query = query
@@ -65,11 +69,11 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         self._per_api_page = per_api_page
         self._url = url
         self._query_title = query_title
-        self._pages_len = ceil(self._total_results / 4)
         self._single_entry = False
         self._multi_images = False
+        self._show_images = True
         self._current_entry = 0
-        super().__init__(self.generate_obs(observations), per_page=4)
+        super().__init__(self.generate_obs(observations), per_page=per_page)
 
     async def _format_obs(self, obs):
         formatted_obs = await self._cog.format_obs(
@@ -98,7 +102,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             )
             embeds = [embed]
         else:
-            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {self._pages_len})"
+            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {ceil(self._total_results / self.per_page)})"
             fmt_entries = []
             for i, obs in enumerate(entries, start=start):
                 fmt_entry = await self._format_obs(obs)
@@ -111,9 +115,13 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 embed = discord.Embed(url=self._url)
                 # add embeds for all images when cursor is on 1st image, otherwise just
                 # set the image of the 1st embed to be for the corresponding entry.
-                if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
-                    embed.set_image(url=get_image_url(obs))
-                    embeds.append(embed)
+                if self._show_images:
+                    if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                        embed.set_image(url=get_image_url(obs))
+                        embeds.append(embed)
+                else:
+                    if not embeds:
+                        embeds.append(embed)
             if embeds:
                 embeds[0].description = f'\n'.join(fmt_entries)
                 embeds[0].title = title
@@ -127,7 +135,13 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
     """Navigate observation search results."""
     def __init__(self, source, **kwargs):
         super().__init__(source, **kwargs)
+        self._max_per_page = len(ENTRY_EMOJIS)
+        if self._source.per_page > self._max_per_page:
+            self._source.per_page = self._max_per_page
+        self._original_per_page = self._source.per_page
+        self._max_buttons_added = self._source.per_page == self._max_per_page
         for i, emoji in enumerate(ENTRY_EMOJIS):
+            if i >= self._source.per_page: break
             self.add_button(menus.Button(emoji, show_entry))
 
     @menus.button("\N{UP-POINTING SMALL RED TRIANGLE}")
@@ -199,6 +213,28 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
             self.stop()
             with contextlib.suppress(discord.HTTPException):
                 await self.message.delete()
+
+    @menus.button("\N{CAMERA}")
+    async def on_show_image(self, payload):
+        """Toggle images / more entries per page.."""
+        per_page = self._source.per_page
+        current_page = self.current_page
+        current_entry = current_page * per_page + self._source._current_entry
+        if self._source._show_images:
+            if not self._max_buttons_added:
+                for i, emoji in enumerate(ENTRY_EMOJIS, start=self._source.per_page):
+                    await self.add_button(menus.Button(emoji, show_entry), react=True)
+                self._max_buttons_added = True
+            self._source._show_images = False
+            self._original_per_page = self._source.per_page
+            per_page = self._max_per_page
+        else:
+            self._source._show_images = True
+            per_page = self._original_per_page
+        self._source.per_page = per_page
+        current_page = floor(current_entry / per_page)
+        self._source._current_entry = current_entry - (current_page * per_page)
+        await self.show_checked_page(current_page)
 
 class CommandsSearch(INatEmbeds, MixinMeta):
     """Mixin providing search command group."""
@@ -569,6 +605,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             return
 
         if query_type == "obs":
+            per_page = 4
             pages = SearchMenuPages(
                 source=SearchObsSource(
                     self,
@@ -576,6 +613,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     _query,
                     results,
                     total_results,
+                    per_page,
                     per_api_page,
                     url,
                     query_title,
