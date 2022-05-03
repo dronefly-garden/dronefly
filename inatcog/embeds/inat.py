@@ -757,7 +757,7 @@ class INatEmbeds(MixinMeta):
                 return taxon_summary
             return None
 
-        if lang:
+        if lang and obs.taxon:
             taxon = await get_taxon(self, obs.taxon.id, refresh_cache=False)
         else:
             taxon = obs.taxon
