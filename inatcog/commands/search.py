@@ -81,6 +81,10 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         )
         return ''.join(formatted_obs)
 
+    def is_paginating(self):
+        """Always paginate so non-paging buttons work."""
+        return True
+
     async def format_page(self, menu, entries):
         def get_image_url(obs):
             return next(iter([image.url for image in obs.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
