@@ -50,6 +50,7 @@ MACROS = {
         "of": "plantae",
         "opt": ["without_taxon_id=211194"],
     },
+    "inverts": {"of": "animalia", "opt": ["without_taxon_id=355675"]},
     "spp": {"opt": ["hrank=species"]},
     "species": {"opt": ["hrank=species"]},
 }
