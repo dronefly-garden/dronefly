@@ -188,6 +188,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`       `**`       without_taxon_id=47125`
         **`nonvascular`**` plantae opt`
         **`       `**`       without_taxon_id=211194`
+        **`inverts`**`     animalia opt`
+        **`       `**`       without_taxon_id=355675`
         """  # noqa: E501
         await ctx.send_help()
 

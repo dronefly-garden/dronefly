@@ -564,6 +564,7 @@ class QueryResponse:
                         "352459": "Stictis radiata",
                         "47125": "Angiospermae",
                         "211194": "Tracheophyta",
+                        "355675": "Vertebrata",
                     }.get(without_taxon_id) or "taxon #" + without_taxon_id.replace(
                         ",", ", "
                     )
