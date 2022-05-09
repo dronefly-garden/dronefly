@@ -17,8 +17,10 @@ def format_taxon_names(
 
     Parameters
     ----------
-    rec: Taxon
-        A matched taxon record.
+    taxa: List[Taxon]
+        A list of Taxon records to format, either as a comma-delimited list or
+        in a hierarchy.
+        - If hierarchy=True, these must be in highest to lowest rank order.
     with_term: bool, optional
         With non-common / non-name matching term in parentheses in place of common name.
     names_format: str, optional
