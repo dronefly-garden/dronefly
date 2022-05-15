@@ -230,21 +230,17 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def topic_advanced(self, ctx):
         """\u200b*Advanced* query options via `opt`.
 
-        Shortcuts for the most commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
+        Shortcuts for commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
 
         See also: `[p]macros`, and `[p]query`.
 
         **Boolean options:**
-
         `captive` `endemic` `identified` `introduced` `native` `out_of_range` `pcid` `photos` `popular` `sounds` `threatened` `verifiable`
 
         Boolean options without a parameter default to `=true`, e.g. `,tab my opt verifiable` means `,tab my opt verifiable=true`. Other values can be `=false` or `=any`.
 
-        **Options that always require a parameter:**
-
-        `csi` `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id` `geoprivacy` `taxon_geoprivacy`
-
-        **Documentation & limitations:**
+        **Other options:**
+        `csi` `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id` `geoprivacy` `taxon_geoprivacy` `q` `search_on`
 
         See the [get observations API documentation](https://api.inaturalist.org/v1/docs/#!/Observations/get_observations) for detailed descriptions of these options and what parameter values are allowed. Not all options make sense for all queries/commands.
         """  # noqa: E501
