@@ -144,6 +144,17 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
             if i >= self._source.per_page: break
             self.add_button(menus.Button(emoji, show_entry))
 
+    async def send_initial_message(self, ctx, channel):
+        """Send first page of menu
+        
+        - use ctx.send to be comaptible with hybrid commands
+        - channel is ignored
+        - a temporary measure until we convert to views
+        """
+        page = await self._source.get_page(0)
+        kwargs = await self._get_kwargs_from_page(page)
+        return await ctx.send(**kwargs)
+
     @menus.button("\N{UP-POINTING SMALL RED TRIANGLE}")
     async def on_prev_result(self, payload):
         # don't run off the start
@@ -559,7 +570,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         try:
             if keyword and keyword.lower() == "obs":
-                await ctx.trigger_typing()
+                if not ctx.interaction:
+                    await ctx.typing()
                 try:
                     _query = query or (await TaxonReplyConverter.convert(ctx, ""))
                 except commands.BadArgument:

@@ -1325,13 +1325,25 @@ class INatEmbeds(MixinMeta):
 
     async def send_obs_embed(self, ctx, embed, obs, **reaction_params):
         """Send observation embed and sound."""
+        async def hybrid_send(ctx, **kwargs):
+            """See d.py /discord/ext/commands/context.py send()"""
+            if ctx.interaction is None:
+                msg = await ctx.channel.send(**kwargs)
+            else:
+                if ctx.interaction.response.is_done():
+                    msg = await ctx.interaction.followup.send(**kwargs, wait=True)
+                else:
+                    await ctx.interaction.response.send_message(**kwargs)
+                    msg = await ctx.interaction.original_message()
+            return msg
+
         msg = None
         if obs and obs.sounds:
             async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
                 if params:
-                    msg = await ctx.channel.send(**params)
+                    msg = await hybrid_send(ctx, **params)
         if not msg:
-            msg = await ctx.channel.send(embed=embed)
+            msg = await hybrid_send(ctx, embed=embed)
 
         await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
 

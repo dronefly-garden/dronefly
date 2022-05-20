@@ -1,5 +1,5 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple, Tuple, Union
+from typing import NamedTuple, Optional, Tuple, Union
 import asyncio
 import contextlib
 from copy import copy
@@ -43,9 +43,10 @@ class PartialContext(NamedTuple):
     guild: discord.Guild
     channel: discord.ChannelType
     author: discord.User
-    message: Union[discord.Message, PartialMessage] = None
-    command: str = ""
+    message: Optional[Union[discord.Message, PartialMessage]]
+    command: Optional[str] = ""
     assume_yes: bool = True
+    interaction: Optional[discord.Interaction] = None
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -91,7 +92,7 @@ class Listeners(INatEmbeds, MixinMeta):
 
         if autoobs:
             ctx = PartialContext(
-                self.bot, guild, channel, message.author, message, "msg autoobs"
+                self.bot, guild, channel, message.author, message, "msg autoobs", None
             )
             obs, url = await maybe_match_obs(self, ctx, message.content)
             # Only output if an observation is found
@@ -111,7 +112,7 @@ class Listeners(INatEmbeds, MixinMeta):
             if mat:
                 msg = None
                 ctx = PartialContext(
-                    self.bot, guild, channel, message.author, message, "msg dot_taxon"
+                    self.bot, guild, channel, message.author, message, "msg dot_taxon", None
                 )
                 try:
                     query = await NaturalQueryConverter.convert(ctx, mat["query"])
@@ -151,6 +152,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 message.author,
                 fake_command_message,
                 command,
+                None
             )
             self.bot.dispatch("commandstats_action", ctx)
 
@@ -181,7 +183,7 @@ class Listeners(INatEmbeds, MixinMeta):
                     dispatch_commandstats(message, "react self")
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
-                        self.bot, message.guild, message.channel, member
+                        self.bot, message.guild, message.channel, member, None
                     )
                     await self.maybe_update_user_by_name(ctx, msg=msg, member=member)
                     dispatch_commandstats(message, "react user")

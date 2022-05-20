@@ -20,15 +20,12 @@ LISTEN_VALUE = { True: "enabled in channels and threads", False: "disabled", Non
 class CommandsInat(INatEmbeds, MixinMeta):
     """Mixin providing inat command group."""
 
-    @commands.group()
-    async def inat(self, ctx):
-        """Show/change iNat settings.
+    @commands.hybrid_group()
+    async def describe(self, ctx):
+        """Describe iNat features, terms, and syntax."""
 
-        See also `[p]help iNat` to list available `iNat` *commands* and other *Help* topics.
-        """
-
-    @commands.command(name="autoobs")
-    async def topic_autoobs(self, ctx):
+    @describe.command(name="autoobs")
+    async def describe_autoobs(self, ctx):
         """\u200b*Automatic observation* link preview feature.
 
         When `autoobs` is on for the channel/server:
@@ -45,8 +42,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="cheatsheet", aliases=["commands"])
-    async def topic_cheatsheet(self, ctx):
+    @describe.command(name="cheatsheet", aliases=["commands"])
+    async def describe_cheatsheet(self, ctx):
         """\u200b*Common commands.*
 
         **Taxon:**
@@ -72,8 +69,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="dates", aliases=["date"])
-    async def topic_dates(self, ctx):
+    @describe.command(name="dates", aliases=["date"])
+    async def describe_dates(self, ctx):
         """\u200b*Date filters* and *sort order*.
 
         See also: `[p]query`, `[p]macros`, `[p]advanced`.
@@ -111,8 +108,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="dot_taxon")
-    async def topic_dot_taxon(self, ctx):
+    @describe.command(name="dot_taxon")
+    async def describe_dot_taxon(self, ctx):
         """\u200b*Automatic `.taxon.` lookup* feature.
 
         When `dot_taxon` is on for the channel/server:
@@ -141,8 +138,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """
         await ctx.send_help()
 
-    @commands.command(name="macros", aliases=["macro"])
-    async def topic_macros(self, ctx):
+    @describe.command(name="macros", aliases=["macro"])
+    async def describe_macros(self, ctx):
         """\u200b*Macro* query terms.
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
@@ -164,8 +161,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="groups", aliases=["group"])
-    async def topic_groups(self, ctx):
+    @describe.command(name="groups", aliases=["group"])
+    async def describe_groups(self, ctx):
         """\u200b*Query* macros that are *taxonomic groups*.
 
         See also: `[p]macros`, and `[p]query`.
@@ -193,8 +190,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="query", aliases=["queries"])
-    async def topic_query(self, ctx):
+    @describe.command(name="query", aliases=["queries"])
+    async def describe_query(self, ctx):
         """\u200b*Observation query* terms.
 
         A *query* may contain *taxon query* terms, *macros*, and other *query* terms described below.
@@ -226,8 +223,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="advanced")
-    async def topic_advanced(self, ctx):
+    @describe.command(name="advanced")
+    async def describe_advanced(self, ctx):
         """\u200b*Advanced* query options via `opt`.
 
         Shortcuts for commonly used `opt` options are provided as *macros*, e.g. use `rg` instead of `opt quality_grade=research`.
@@ -246,8 +243,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="taxon_query", aliases=["taxon_queries", "query_taxon"])
-    async def topic_taxon_query(self, ctx):
+    @describe.command(name="taxon_query", aliases=["taxon_queries", "query_taxon"])
+    async def describe_taxon_query(self, ctx):
         """\u200b*Taxon query* terms.
 
         See also: `[p]query` and `[p]macros` to specify what is also shown about a taxon.
@@ -273,10 +270,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(
+    @describe.command(
         name="glossary", aliases=["term", "terms", "abbrevation", "abbreviations"]
     )
-    async def topic_counts(self, ctx):
+    async def describe_glossary(self, ctx):
         """\u200b*Glossary* of terms and abbreviations.
 
         __**Obs.** = observations__
@@ -289,8 +286,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="reactions", aliases=["reaction"])
-    async def topic_reactions(self, ctx):
+    @describe.command(name="reactions", aliases=["reaction"])
+    async def describe_reactions(self, ctx):
         """\u200bTaxon *reaction* buttons.
 
         Taxon reaction buttons appear on many different displays.  You may use them only if your iNat account is known in the server.
@@ -304,6 +301,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See `[p]help user add` if you're a server owner or mod.
         """  # noqa: E501
+
+    @commands.group()
+    async def inat(self, ctx):
+        """Show/change iNat settings.
+
+        See also `[p]help iNat` to list available `iNat` *commands* and other *Help* topics.
+        """
 
     @inat.group(name="set")
     @checks.admin_or_permissions(manage_messages=True)
@@ -321,7 +325,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_set.command(name="bot_prefixes")
     @checks.admin_or_permissions(manage_messages=True)
-    async def set_bot_prefixes(self, ctx, *prefixes):
+    async def set_bot_prefixes(self, ctx, *, prefixes: str):
         """Set server ignored bot prefixes.
 
         All messages starting with one of these *prefixes* will be ignored by

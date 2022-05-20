@@ -23,7 +23,7 @@ BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
 class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
-    @commands.group(aliases=["t"], invoke_without_command=True)
+    @commands.hybrid_group(aliases=["t"], fallback="find")
     @checks.bot_has_permissions(embed_links=True)
     async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Taxon information.
@@ -52,6 +52,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         await self.send_embed_for_taxon(ctx, query_response)
+
+    @taxon.command(name='search')
+    async def taxon_search(self, ctx, *, query):
+        """Search for matching taxa."""
+        await (self.bot.get_command("search taxa")(ctx, query=query))
 
     @taxon.command()
     async def bonap(self, ctx, *, query: NaturalQueryConverter):
@@ -217,7 +222,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 )
                 await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def tname(self, ctx, *, query: NaturalQueryConverter):
         """Taxon name only.
 

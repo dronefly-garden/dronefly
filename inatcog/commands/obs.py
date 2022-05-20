@@ -98,7 +98,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
         yield ObsResult(obs, url, True)
 
-    @commands.group(invoke_without_command=True, aliases=["observation"])
+    @commands.hybrid_group(aliases=["observation"], fallback="find")
     @checks.bot_has_permissions(embed_links=True)
     async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
@@ -111,6 +111,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if res:
                 embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=res.preview)
                 await self.send_obs_embed(ctx, embed, res.obs)
+
+    @obs.command(name='search')
+    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Search for matching taxa."""
+        if ctx.interaction:
+            await ctx.interaction.response.defer(thinking=True)
+        else:
+            await ctx.typing()
+        await (self.bot.get_command("search obs")(ctx, query=query))
 
     @obs.command(name="img", aliases=["image", "photo"])
     @checks.bot_has_permissions(embed_links=True)
@@ -126,7 +135,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=number or 1)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
-    @commands.group(invoke_without_command=True, aliases=["tab"])
+    @commands.hybrid_group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Tabulate iNaturalist data.
