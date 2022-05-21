@@ -245,7 +245,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await ctx.send(query_response.taxon.name)
 
-    @commands.command(aliases=["sp"])
+    @commands.command(aliases=["sp"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
     async def species(self, ctx, *, query: NaturalQueryConverter):
         """Species information. (alias `[p]t` *query* `rank sp`)
