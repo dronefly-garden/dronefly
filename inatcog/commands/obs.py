@@ -113,9 +113,27 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=res.preview)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
+    @obs.command(name='count')
+    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Count matching observations."""
+        if ctx.interaction:
+            await ctx.interaction.response.defer(thinking=True)
+        else:
+            await ctx.typing()
+        await (self.bot.get_command("tabulate")(ctx, query=query))
+
+    @obs.command(name='maverick')
+    async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Count maverick observations."""
+        if ctx.interaction:
+            await ctx.interaction.response.defer(thinking=True)
+        else:
+            await ctx.typing()
+        await (self.bot.get_command("tabulate maverick")(ctx, query=query))
+
     @obs.command(name='search')
     async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
-        """Search for matching taxa."""
+        """Search for matching observations."""
         if ctx.interaction:
             await ctx.interaction.response.defer(thinking=True)
         else:
@@ -136,7 +154,32 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=number or 1)
                 await self.send_obs_embed(ctx, embed, res.obs)
 
-    @commands.hybrid_group(invoke_without_command=True, aliases=["tab"])
+    @commands.hybrid_group(fallback="help")
+    @checks.bot_has_permissions(embed_links=True)
+    async def top(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Leaderboards for observations, species, identifications, etc."""
+        await ctx.send_help()
+
+    @top.command(name="identifiers")
+    async def top_identifiers(
+        self, ctx, *, query: Optional[TaxonReplyConverter]
+    ):
+        """Top observations IDed per IDer (alias `[p]topids`)."""
+        await self._tabulate_query(ctx, query, view="ids")
+
+    @top.command(name="observers")
+    async def top_observers(
+        self, ctx, *, query: Optional[TaxonReplyConverter]
+    ):
+        """Top observations per observer (alias `[p]topobs`)."""
+        await self._tabulate_query(ctx, query)
+
+    @top.command(name="species")
+    async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Top species per observer (alias `[p]topspp`)."""
+        await self._tabulate_query(ctx, query, view="spp")
+
+    @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Tabulate iNaturalist data.

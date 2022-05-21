@@ -222,7 +222,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 )
                 await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command(hidden=True)
     async def tname(self, ctx, *, query: NaturalQueryConverter):
         """Taxon name only.
 
