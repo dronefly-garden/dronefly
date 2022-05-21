@@ -160,21 +160,21 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Leaderboards for observations, species, identifications, etc."""
         await ctx.send_help()
 
-    @top.command(name="identifiers")
+    @top.command(name="identifiers", aliases=["id", "ids"])
     async def top_identifiers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
-    @top.command(name="observers")
+    @top.command(name="observers", aliases=["obs"])
     async def top_observers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
 
-    @top.command(name="species")
+    @top.command(name="species", aliases=["spp", "sp"])
     async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
@@ -318,8 +318,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
-    @commands.command(name="topids")
-    async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @commands.command(name="topids", hidden=True)
+    async def top_identifiers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations IDed per IDer (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
@@ -330,8 +330,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
 
-    @commands.command(name="topobs")
-    async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @commands.command(name="topobs", hidden=True)
+    async def top_observers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
 
@@ -340,8 +340,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
-    @commands.command(name="topspp", alias=["topsp"])
-    async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @commands.command(name="topspp", alias=["topsp"], hidden=True)
+    async def top_species_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
