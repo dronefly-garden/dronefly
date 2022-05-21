@@ -33,7 +33,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Return a single observation, its URL, and whether to preview it.
 
         Image preview is only desired if it wasn't already auto-previewed
-        by Discord itself (i.e. the user pasted a URL).
+        by Discord itself (i.e. the user pasted a URL, and did not use a
+        slash-command).
         """
         if query:
             id_or_link = None
@@ -50,7 +51,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 # Note: if the user specified an invalid or deleted id, a url is still
                 # produced (i.e. should 404).
                 if url:
-                    yield ObsResult(obs, url, False)
+                    yield ObsResult(obs, url, ctx.interaction is not None)
                     return
                 else:
                     await apologize(ctx, "I don't understand")
