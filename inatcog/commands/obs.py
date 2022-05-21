@@ -99,7 +99,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
         yield ObsResult(obs, url, True)
 
-    @commands.hybrid_group(aliases=["observation"], fallback="find")
+    @commands.hybrid_group(aliases=["observation"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
     async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.

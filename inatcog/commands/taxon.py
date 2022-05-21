@@ -23,7 +23,7 @@ BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
 class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
-    @commands.hybrid_group(aliases=["t"], fallback="find")
+    @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
     async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Taxon information.
