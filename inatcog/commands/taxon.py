@@ -255,9 +255,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         query_species.main.ranks.append("species")
         await self.taxon(ctx, query=query_species)
 
-    @commands.command()
+    @taxon.command(name="related")
     @checks.bot_has_permissions(embed_links=True)
-    async def related(self, ctx, *, taxa_list):
+    async def taxon_related(self, ctx, *, taxa_list: str):
         """Relatedness of a list of taxa.
 
         **Examples:**
@@ -280,9 +280,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
 
-    @commands.command(aliases=["img", "photo"])
+    @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, *, query: NaturalQueryConverter):
+    async def related(self, ctx, *, taxa_list: str):
+        await (self.bot.get_command('taxon related')(ctx, taxa_list=taxa_list))
+
+    @taxon.command(name="image", aliases=["img", "photo"])
+    @checks.bot_has_permissions(embed_links=True)
+    async def taxon_image(self, ctx, *, query: NaturalQueryConverter):
         """Default image for a taxon.
 
         See `[p]help taxon_query` for *query* help."""
@@ -299,3 +304,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
 
         await self.send_embed_for_taxon_image(ctx, query_response.taxon)
+
+    @commands.command(aliases=["img", "photo"])
+    @checks.bot_has_permissions(embed_links=True)
+    async def image_alias(self, ctx, *, query: NaturalQueryConverter):
+        await (self.bot.get_command("taxon image")(ctx, query=query))
