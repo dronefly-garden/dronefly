@@ -53,6 +53,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon(ctx, query_response)
 
+    @taxon.command(name='map')
+    async def taxon_map(self, ctx, *, taxa_list):
+        """Show range map for one or more taxa."""
+        await (self.bot.get_command("map")(ctx, taxa_list=taxa_list))
+
     @taxon.command(name='search')
     async def taxon_search(self, ctx, *, query):
         """Search for matching taxa."""
@@ -305,7 +310,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon_image(ctx, query_response.taxon)
 
-    @commands.command(aliases=["img", "photo"])
+    @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
     async def image_alias(self, ctx, *, query: NaturalQueryConverter):
         await (self.bot.get_command("taxon image")(ctx, query=query))

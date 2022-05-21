@@ -122,6 +122,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await ctx.typing()
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
+    @obs.command(name='map')
+    async def obs_map(self, ctx, *, query: NaturalQueryConverter):
+        """Show map of observations."""
+        await (self.bot.get_command("map obs")(ctx, query=query))
+
     @obs.command(name='maverick')
     async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Count maverick observations."""
