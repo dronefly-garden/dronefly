@@ -117,7 +117,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Barcode records from BOLD v4 (alias `[p]bold4`)."""
         await self._bold4(ctx, query)
 
-    @commands.command()
+    @commands.command(hidden="true")
     async def bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Barcode records from BOLD v4 (alias `[p]t bold4`)."""
         await self._bold4(ctx, query)
