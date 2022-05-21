@@ -301,14 +301,16 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
-    @commands.command()
+    @commands.hybrid_command()
     @checks.bot_has_permissions(embed_links=True)
     async def link(self, ctx, *, query):
         """Information and image from iNaturalist link.
 
         For observation displays, the default observation image is shown, if it has one.
 
-        Enclose the link in angle brackets to suppress the automatic Discord preview of the image to avoid the image being shown twice.
+        It is recommended when sending a URL to use the slash-command to avoid the message being previewed twice.
+
+        If you're not sending as a slash-command, enclose the link in angle brackets to suppress the automatic Discord preview of the image to avoid the image being shown twice.
 
         e.g.
         ```
