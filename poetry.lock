@@ -291,7 +291,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "discord.py"
-version = "2.0.0a4293+g3dddddc8"
+version = "2.0.0a4294+g77baa06a"
 description = "A Python wrapper for the Discord API"
 category = "main"
 optional = false
@@ -310,8 +310,8 @@ voice = ["PyNaCl (>=1.3.0,<1.6)"]
 [package.source]
 type = "git"
 url = "https://github.com/Rapptz/discord.py"
-reference = "HEAD"
-resolved_reference = "77baa06a99b00b50d24398714bce40fcda1fa0c2"
+reference = "3d914e08e0c7df370987592affb3655d2a12f7d1"
+resolved_reference = "3d914e08e0c7df370987592affb3655d2a12f7d1"
 
 [[package]]
 name = "distlib"
@@ -336,7 +336,7 @@ description = "Core dronefly components"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.10"
-develop = true
+develop = false
 
 [package.dependencies]
 dateparser = "^1.1.1"
@@ -344,8 +344,10 @@ pyinaturalist = "^0.17.0"
 pytest-mock = "^3.6.1"
 
 [package.source]
-type = "directory"
-url = "../dronefly-core"
+type = "git"
+url = "https://github.com/dronefly-garden/dronefly-core.git"
+reference = "main"
+resolved_reference = "d8f604b70c0334d3c77f4ae2eb3710240f70f7ee"
 
 [[package]]
 name = "exceptiongroup"
@@ -825,12 +827,12 @@ dev = ["black (==22.1.0)", "flake8 (==4.0.1)", "isort (==5.10.1)"]
 
 [[package]]
 name = "Red-DiscordBot"
-version = "3.5.0"
+version = "3.5.0.dev191+gec5562241"
 description = "A highly customisable Discord bot"
 category = "main"
 optional = false
 python-versions = "<3.10,>=3.8.1"
-develop = true
+develop = false
 
 [package.dependencies]
 aiohttp = "3.7.4.post0"
@@ -847,7 +849,7 @@ click = "8.0.1"
 colorama = "0.4.4"
 commonmark = "0.9.1"
 contextlib2 = "21.6.0"
-"discord.py" = {git = "https://github.com/Rapptz/discord.py"}
+"discord.py" = {git = "https://github.com/Rapptz/discord.py", rev = "3d914e08e0c7df370987592affb3655d2a12f7d1"}
 distro = {version = "1.6.0", markers = "sys_platform == \"linux\""}
 fuzzywuzzy = "0.18.0"
 idna = "3.2"
@@ -879,8 +881,10 @@ style = ["black (==22.1.0)", "mypy-extensions (==0.4.3)", "pathspec (==0.9.0)", 
 test = ["astroid (==2.7.3)", "iniconfig (==1.1.1)", "isort (==5.9.3)", "lazy-object-proxy (==1.6.0)", "mccabe (==0.6.1)", "packaging (==21.0)", "platformdirs (==2.3.0)", "pluggy (==1.0.0)", "py (==1.10.0)", "pylint (==2.10.2)", "pyparsing (==2.4.7)", "pytest (==6.2.5)", "pytest-asyncio (==0.15.1)", "pytest-mock (==3.6.1)", "toml (==0.10.2)", "wrapt (==1.12.1)"]
 
 [package.source]
-type = "directory"
-url = "../Red-DiscordBot"
+type = "git"
+url = "https://github.com/Cog-Creators/Red-DiscordBot.git"
+reference = "V3/develop"
+resolved_reference = "acdc1df084a83abedf55cf1558c739e686902741"
 
 [[package]]
 name = "red-lavalink"
@@ -1166,7 +1170,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "0e81b8a5a54cb6559fbe0212ae2c003ff4024e6af817efda4b80befa4a128482"
+content-hash = "dd450fc599af24a9dedc85504e57c4d72cbd791181559a8dbc8459e15af9d214"
 
 [metadata.files]
 aiohttp = [
