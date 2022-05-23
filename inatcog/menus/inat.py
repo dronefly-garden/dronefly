@@ -1,1 +1,251 @@
 """iNat menus."""
+import contextlib
+from math import ceil, floor
+import re
+
+import discord
+from redbot.vendored.discord.ext import menus
+
+from ..base_classes import WWW_BASE_URL
+
+ENTRY_EMOJIS = [
+    "\N{REGIONAL INDICATOR SYMBOL LETTER A}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER E}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER G}",
+    "\N{REGIONAL INDICATOR SYMBOL LETTER H}",
+]
+INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
+
+
+async def show_entry(menu, payload):
+    index = ENTRY_EMOJIS.index(str(payload.emoji))
+    if menu.current_page * menu._source.per_page + index < menu._source._total_results:
+        menu._source._current_entry = index
+        menu._source._single_entry = False
+        await menu.show_page(menu.current_page)
+
+# TODO: derive a base class from this that:
+# - wraps a dronefly-core (pyinat-based) get method for the entity being paged
+#   (obs, taxa, users, etc.)
+# - featuring:
+#   - page formatting w. current entry cursor highlighting
+#   - single/default/max #entries modes
+#   - preview image show/hide and single/multi modes
+class SearchObsSource(menus.AsyncIteratorPageSource):
+    """Paged (both UI & API) observation search results source."""
+    async def generate_obs(self, observations):
+        _observations = observations
+        api_page = 1
+        while _observations:
+            for obs in _observations:
+                yield obs
+            if (api_page - 1) * self._per_api_page + len(_observations) < self._total_results:
+                api_page += 1
+                # TODO: use dronefly-core (pyinat-based) get_observations
+                # - top level should handle mapping dronefly query parts
+                #   to iNat id#s to send to pyinat (`me`, Discord user mapping,
+                #   place abbrevs, `home` place, user's `lang` setting, etc.)
+                # - do pyinat at the lowest level to take advantage of
+                #   caching, paginator, etc.
+                # - eliminates reliance on computing our own API page
+                (_observations, *_ignore) = await self._cog.obs_query.query_observations(self._ctx, self._query, page=api_page)
+            else:
+                _observations = None
+
+    def __init__(self, cog, ctx, query, observations, total_results, per_page, per_api_page, url, query_title):
+        self._cog = cog
+        self._ctx = ctx
+        self._query = query
+        self._total_results = total_results
+        self._per_api_page = per_api_page
+        self._url = url
+        self._query_title = query_title
+        self._single_entry = False
+        self._multi_images = True
+        self._show_images = True
+        self._current_entry = 0
+        super().__init__(self.generate_obs(observations), per_page=per_page)
+
+    async def _format_obs(self, obs):
+        # TODO: use core formatter for markdown-formatted individual observation
+        formatted_obs = await self._cog.format_obs(
+            obs,
+            with_description=False,
+            with_link=True,
+            compact=True,
+            with_user=not self._query.user,
+        )
+        return ''.join(formatted_obs)
+
+    def is_paginating(self):
+        """Always paginate so non-paging buttons work."""
+        return True
+
+    async def format_page(self, menu, entries):
+        # TODO: move out to core classes
+        def get_image_url(obs):
+            return next(iter([image.url for image in obs.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
+
+        start = menu.current_page * self.per_page
+        embeds = []
+        if self._single_entry:
+            obs = next(obs for i, obs in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            # TODO: use core formatter for embed-format page of observations
+            embed = await self._cog.make_obs_embed(
+                menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+            )
+            embeds = [embed]
+        else:
+            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {ceil(self._total_results / self.per_page)})"
+            fmt_entries = []
+            for i, obs in enumerate(entries, start=start):
+                fmt_entry = await self._format_obs(obs)
+                index = i
+                if i + 1 > self._total_results:
+                    index = self._total_results - 1
+                # cursor highlighting for currently selected entry:
+                # - markdown **bold** style
+                if index % self.per_page == self._current_entry:
+                    fmt_entry = f"**{fmt_entry}**"
+                fmt_entries.append(f"{ENTRY_EMOJIS[i % self.per_page]} {fmt_entry}")
+                embed = discord.Embed(url=self._url)
+                # add embeds for all images when cursor is on 1st image, otherwise just
+                # set the image of the 1st embed to be for the corresponding entry.
+                if self._show_images:
+                    if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                        embed.set_image(url=get_image_url(obs))
+                        embeds.append(embed)
+                else:
+                    if not embeds:
+                        embeds.append(embed)
+            if embeds:
+                embeds[0].description = f'\n'.join(fmt_entries)
+                embeds[0].title = title
+        # Only dpy2 and higher supports multi images via multiple embeds with
+        # matching url per embed.
+        if self._multi_images:
+            message = { "embeds": embeds }
+        else:
+            # Fallback single image provided for legacy 1.7 dpy
+            message = { "embed": embeds[0] }
+        return message
+
+class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
+    """Navigate observation search results."""
+    def __init__(self, source, **kwargs):
+        super().__init__(source, **kwargs)
+        self._max_per_page = len(ENTRY_EMOJIS)
+        if self._source.per_page > self._max_per_page:
+            self._source.per_page = self._max_per_page
+        self._original_per_page = self._source.per_page
+        self._max_buttons_added = self._source.per_page == self._max_per_page
+        for i, emoji in enumerate(ENTRY_EMOJIS):
+            if i >= self._source.per_page: break
+            self.add_button(menus.Button(emoji, show_entry))
+
+    async def send_initial_message(self, ctx, channel):
+        """Send first page of menu
+
+        - use ctx.send to be comaptible with hybrid commands
+        - channel is ignored
+        - a temporary measure until we convert to views
+        """
+        page = await self._source.get_page(0)
+        kwargs = await self._get_kwargs_from_page(page)
+        return await ctx.send(**kwargs)
+
+    @menus.button("\N{UP-POINTING SMALL RED TRIANGLE}")
+    async def on_prev_result(self, payload):
+        # don't run off the start
+        if self._source._current_entry == 0 and self.current_page == 0:
+            return
+        self._source._current_entry -= 1
+        page_offset = 0
+        # back up to the last entry on the previous page
+        if self._source._current_entry < 0:
+            self._source._current_entry = self._source.per_page - 1
+            page_offset = 1
+        await self.show_page(self.current_page - page_offset)
+
+    @menus.button("\N{DOWN-POINTING SMALL RED TRIANGLE}")
+    async def on_next_result(self, payload):
+        # don't run off the end
+        if self._source._current_entry + 2 + self.current_page * self._source.per_page > self._source._total_results:
+            return
+        self._source._current_entry += 1
+        page_offset = 0
+        # advance to the first entry on the next page
+        if self._source._current_entry > self._source.per_page - 1:
+            self._source._current_entry = 0
+            page_offset = 1
+        await self.show_page(self.current_page + page_offset)
+
+    @menus.button("\N{BLACK LEFT-POINTING TRIANGLE}")
+    async def go_to_previous_page(self, payload):
+        """Go to the top of the previous page."""
+        self._source._current_entry = 0
+        self._source._single_entry = False
+        await self.show_checked_page(self.current_page - 1)
+
+    @menus.button("\N{BLACK RIGHT-POINTING TRIANGLE}")
+    async def go_to_next_page(self, payload):
+        """Go to the top of the next page."""
+        self._source._current_entry = 0
+        self._source._single_entry = False
+        await self.show_checked_page(self.current_page + 1)
+
+    @menus.button("\N{WHITE HEAVY CHECK MARK}")
+    async def on_select(self, payload):
+        """Select this entry to view the full observation."""
+        if self._source._single_entry:
+            ctx = self.ctx
+            current_page = self.current_page
+            pages = SearchMenuPages(
+                source=self._source,
+                clear_reactions_after=True,
+            )
+            self.stop()
+            self._source._single_entry = False
+            pages.current_page = current_page
+            await pages.start(ctx)
+            await pages.show_checked_page(current_page)
+        else:
+            self._source._single_entry = True
+            await self.show_checked_page(self.current_page)
+
+    @menus.button("\N{CROSS MARK}")
+    async def on_cancel(self, payload):
+        """Cancel viewing full observation or stop menu and delete."""
+        if self._source._single_entry:
+            self._source._single_entry = False
+            await self.show_checked_page(self.current_page)
+        else:
+            self.stop()
+            with contextlib.suppress(discord.HTTPException):
+                await self.message.delete()
+
+    @menus.button("\N{CAMERA}")
+    async def on_show_image(self, payload):
+        """Toggle images / more entries per page.."""
+        per_page = self._source.per_page
+        current_page = self.current_page
+        current_entry = current_page * per_page + self._source._current_entry
+        if self._source._show_images:
+            if not self._max_buttons_added:
+                for i, emoji in enumerate(ENTRY_EMOJIS, start=self._source.per_page):
+                    await self.add_button(menus.Button(emoji, show_entry), react=True)
+                self._max_buttons_added = True
+            self._source._show_images = False
+            self._original_per_page = self._source.per_page
+            per_page = self._max_per_page
+        else:
+            self._source._show_images = True
+            per_page = self._original_per_page
+        self._source.per_page = per_page
+        current_page = floor(current_entry / per_page)
+        self._source._current_entry = current_entry - (current_page * per_page)
+        await self.show_checked_page(current_page)
