@@ -28,6 +28,13 @@ async def show_entry(menu, payload):
         menu._source._single_entry = False
         await menu.show_page(menu.current_page)
 
+# TODO: derive a base class from this that:
+# - wraps a dronefly-core (pyinat-based) get method for the entity being paged
+#   (obs, taxa, users, etc.)
+# - featuring:
+#   - page formatting w. current entry cursor highlighting
+#   - single/default/max #entries modes
+#   - preview image show/hide and single/multi modes
 class SearchObsSource(menus.AsyncIteratorPageSource):
     """Paged (both UI & API) observation search results source."""
     async def generate_obs(self, observations):
@@ -38,6 +45,13 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 yield obs
             if (api_page - 1) * self._per_api_page + len(_observations) < self._total_results:
                 api_page += 1
+                # TODO: use dronefly-core (pyinat-based) get_observations
+                # - top level should handle mapping dronefly query parts
+                #   to iNat id#s to send to pyinat (`me`, Discord user mapping,
+                #   place abbrevs, `home` place, user's `lang` setting, etc.)
+                # - do pyinat at the lowest level to take advantage of
+                #   caching, paginator, etc.
+                # - eliminates reliance on computing our own API page
                 (_observations, *_ignore) = await self._cog.obs_query.query_observations(self._ctx, self._query, page=api_page)
             else:
                 _observations = None
@@ -57,6 +71,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         super().__init__(self.generate_obs(observations), per_page=per_page)
 
     async def _format_obs(self, obs):
+        # TODO: use core formatter for markdown-formatted individual observation
         formatted_obs = await self._cog.format_obs(
             obs,
             with_description=False,
@@ -71,6 +86,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         return True
 
     async def format_page(self, menu, entries):
+        # TODO: move out to core classes
         def get_image_url(obs):
             return next(iter([image.url for image in obs.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
 
@@ -78,6 +94,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
         embeds = []
         if self._single_entry:
             obs = next(obs for i, obs in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            # TODO: use core formatter for embed-format page of observations
             embed = await self._cog.make_obs_embed(
                 menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
             )
@@ -90,6 +107,8 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 index = i
                 if i + 1 > self._total_results:
                     index = self._total_results - 1
+                # cursor highlighting for currently selected entry:
+                # - markdown **bold** style
                 if index % self.per_page == self._current_entry:
                     fmt_entry = f"**{fmt_entry}**"
                 fmt_entries.append(f"{ENTRY_EMOJIS[i % self.per_page]} {fmt_entry}")
@@ -106,9 +125,12 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             if embeds:
                 embeds[0].description = f'\n'.join(fmt_entries)
                 embeds[0].title = title
+        # Only dpy2 and higher supports multi images via multiple embeds with
+        # matching url per embed.
         if self._multi_images:
             message = { "embeds": embeds }
         else:
+            # Fallback single image provided for legacy 1.7 dpy
             message = { "embed": embeds[0] }
         return message
 
