@@ -13,7 +13,6 @@ python = ">=3.8.1,<3.10"
 dronefly-core = { git = "https://github.com/dronefly-garden/dronefly-core.git", branch = "main" }
 Red-DiscordBot = { git = "https://github.com/Cog-Creators/Red-DiscordBot.git", branch = "V3/develop" }
 pyinaturalist = "^0.17.0"
-pytest-mock = "^3.6.1"
 dateparser = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
@@ -21,6 +20,7 @@ black = "^22.1.0"
 pytest = "^6.2.5"
 pylint = "^2.10.2"
 pytest-asyncio = "^0.15.1"
+pytest-mock = "^3.6.1"
 pre-commit = "^2.18.1"
 
 [build-system]
