@@ -5,7 +5,7 @@ import discord
 from pyinaturalist import iNatClient
 from redbot.core import commands, Config
 
-from dronefly-core.formatters.discord import format_taxon_image_embed
+from dronefly.core.formatters.discord import format_taxon_image_embed
 
 
 class INat(commands.Cog, name="iNat"):
