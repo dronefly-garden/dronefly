@@ -291,7 +291,7 @@ graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
 name = "discord.py"
-version = "2.0.0a4294+g77baa06a"
+version = "2.0.0a4020+g3d914e08"
 description = "A Python wrapper for the Discord API"
 category = "main"
 optional = false
@@ -299,11 +299,11 @@ python-versions = ">=3.8.0"
 develop = false
 
 [package.dependencies]
-aiohttp = ">=3.7.4,<4"
+aiohttp = ">=3.6.0,<4"
 
 [package.extras]
 docs = ["sphinx (==4.4.0)", "sphinxcontrib_trio (==1.1.2)", "sphinxcontrib-websupport", "typing-extensions"]
-speed = ["orjson (>=3.5.4)", "aiodns (>=1.1)", "brotli", "cchardet"]
+speed = ["orjson (>=3.5.4)"]
 test = ["coverage", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock"]
 voice = ["PyNaCl (>=1.3.0,<1.6)"]
 
@@ -347,7 +347,7 @@ pytest-mock = "^3.6.1"
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core.git"
 reference = "main"
-resolved_reference = "d8f604b70c0334d3c77f4ae2eb3710240f70f7ee"
+resolved_reference = "09eafc81c08fdefe547b2fa1ed25696379bdb42e"
 
 [[package]]
 name = "exceptiongroup"
@@ -827,7 +827,7 @@ dev = ["black (==22.1.0)", "flake8 (==4.0.1)", "isort (==5.10.1)"]
 
 [[package]]
 name = "Red-DiscordBot"
-version = "3.5.0.dev191+gec5562241"
+version = "3.5.0.dev192+gacdc1df08"
 description = "A highly customisable Discord bot"
 category = "main"
 optional = false
