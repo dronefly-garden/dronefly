@@ -349,7 +349,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         try:
             if keyword and keyword.lower() == "obs":
-                await ctx.trigger_typing()
+                await ctx.typing()
                 try:
                     _query = query or (await TaxonReplyConverter.convert(ctx, ""))
                 except commands.BadArgument:
