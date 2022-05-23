@@ -5,7 +5,7 @@
   "short" : "Commands using the iNat API v1.",
   "description" : "Commands using the iNat API v1 (https://api.inaturalist.org/v1).",
   "end_user_data_statement": "This cog stores no end-user data.",
-  "requirements" : ["dateparser", "pyinaturalist"],
+  "requirements" : ["dateparser", "dronefly-core", "pyinaturalist"],
   "tags": ["inaturalist", "naturalist", "nature"],
   "hidden": false,
   "min_bot_version": "3.4.16"

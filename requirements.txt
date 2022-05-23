@@ -1,3 +1,4 @@
-git+https://github.com/Cog-Creators/Red-DiscordBot@V3/dpy2_unstable#egg=Red-DiscordBot
+git+https://github.com/Cog-Creators/Red-DiscordBot@V3/develop#egg=Red-DiscordBot
 dateparser
+dronefly-core
 pyinaturalist
