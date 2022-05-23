@@ -16,7 +16,7 @@ pyinaturalist = "^0.17.0"
 pytest-mock = "^3.6.1"
 dateparser = "^1.1.1"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 black = "^22.1.0"
 pytest = "^6.2.5"
 pylint = "^2.10.2"
