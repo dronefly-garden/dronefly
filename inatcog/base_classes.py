@@ -6,10 +6,10 @@ from typing import List, NamedTuple, Optional, Union
 
 from dataclasses_json import config, DataClassJsonMixin
 from discord.utils import escape_markdown
+from dronefly.core import models
+from dronefly.core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
 
 from .controlled_terms import ControlledTermSelector
-from .core import models
-from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
 from .photos import Photo
 from .sounds import Sound
 

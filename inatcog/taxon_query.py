@@ -1,10 +1,10 @@
 """Module to query iNat taxa."""
 from redbot.core.commands import BadArgument
+from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS
+from dronefly.core.query.query import Query, TaxonQuery
 
 from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS
-from .core.query.query import Query, TaxonQuery
 
 
 class INatTaxonQuery:

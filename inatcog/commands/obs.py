@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from typing import Optional
 import urllib.parse
 
+from dronefly.core.models.taxon import RANK_LEVELS
+from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -13,8 +15,6 @@ from ..base_classes import WWW_BASE_URL
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
-from ..core.models.taxon import RANK_LEVELS
-from ..core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta

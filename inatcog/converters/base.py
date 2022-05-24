@@ -5,6 +5,8 @@ from typing import NamedTuple
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter
+from dronefly.core.parsers.natural import NaturalParser
+from dronefly.core.query.query import Query
 from redbot.core.commands import (
     BadArgument,
     Context,
@@ -12,8 +14,6 @@ from redbot.core.commands import (
 )
 
 from ..common import DEQUOTE
-from ..core.parsers.natural import NaturalParser
-from ..core.query.query import Query
 
 
 class MemberConverter(NamedTuple):

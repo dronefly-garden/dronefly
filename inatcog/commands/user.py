@@ -6,7 +6,7 @@ import re
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
-
+from dronefly.core.parsers.url import PAT_USER_LINK
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -20,7 +20,6 @@ from ..converters.base import (
     QuotedContextMemberConverter,
     NaturalQueryConverter,
 )
-from ..core.parsers.url import PAT_USER_LINK
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
