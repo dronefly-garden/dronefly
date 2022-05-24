@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
     - uses: snok/install-poetry@v1.3.1
       with:
-        installation-arguments: --git https://github.com/python-poetry/poetry.git@ad1b093850948511503d98611814ec9da045aa07
+        installation-arguments: --git https://github.com/python-poetry/poetry.git@34c6da4c2cbdfd5572fc4711d3ee628bf80eba72
         virtualenvs-in-project: true
 
     # Cache packages per python version, and reuse until lockfile changes
