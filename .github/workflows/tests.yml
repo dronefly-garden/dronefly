@@ -1,4 +1,4 @@
-name: Dronefly
+name: Dronefly-dev
 
 on: 
   push:
