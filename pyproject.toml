@@ -8,6 +8,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.10"
+dronefly-core = { path = "../dronefly-core", develop = true }
 Red-DiscordBot = { path = "../Red-DiscordBot", develop = true }
 dataclasses-json = "^0.5.5"
 ebird-api = "^3.0.6"

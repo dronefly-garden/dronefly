@@ -1,5 +1,6 @@
 """Module to query iNat observations."""
-from .core.query.query import Query
+from dronefly.core.query.query import Query
+
 from .obs import get_obs_fields
 
 

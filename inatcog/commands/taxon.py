@@ -4,14 +4,13 @@ import re
 import textwrap
 from typing import Optional
 
-# TODO: Experimental & doesn't belong here. Migrate out to api.py later.
+from dronefly.core.models.taxon import PLANTAE_ID
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
-from ..core.models.taxon import PLANTAE_ID
 from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
