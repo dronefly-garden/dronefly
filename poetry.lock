@@ -3,7 +3,7 @@ name = "aiohttp"
 version = "3.7.4.post0"
 description = "Async http client/server framework (asyncio)"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -22,7 +22,7 @@ name = "aiohttp-json-rpc"
 version = "0.13.3"
 description = "Implementation JSON-RPC 2.0 server and client using aiohttp on top of websockets transport"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.5"
 
 [package.dependencies]
@@ -33,7 +33,7 @@ name = "aiosqlite"
 version = "0.17.0"
 description = "asyncio bridge to the standard sqlite3 module"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -44,7 +44,7 @@ name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -52,7 +52,7 @@ name = "apsw-wheels"
 version = "3.36.0.post1"
 description = "Another Python SQLite Wrapper"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -74,7 +74,7 @@ name = "async-timeout"
 version = "3.0.1"
 description = "Timeout context manager for asyncio programs"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.5.3"
 
 [[package]]
@@ -104,7 +104,7 @@ name = "babel"
 version = "2.9.1"
 description = "Internationalization utilities"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.dependencies]
@@ -187,7 +187,7 @@ name = "chardet"
 version = "4.0.0"
 description = "Universal encoding detector for Python 2 and 3"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
@@ -236,7 +236,7 @@ name = "contextlib2"
 version = "21.6.0"
 description = "Backports and enhancements for the contextlib module"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -293,7 +293,7 @@ name = "discord.py"
 version = "2.0.0a4020+g3d914e08"
 description = "A Python wrapper for the Discord API"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.8.0"
 develop = false
 
@@ -325,7 +325,7 @@ name = "distro"
 version = "1.6.0"
 description = "Distro - an OS platform information API"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -333,7 +333,7 @@ name = "dronefly-core"
 version = "0.2.0"
 description = "Core dronefly components"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.8.1,<3.10"
 develop = false
 
@@ -376,7 +376,7 @@ name = "fuzzywuzzy"
 version = "0.18.0"
 description = "Fuzzy string matching in python"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [package.extras]
@@ -482,7 +482,7 @@ name = "markdown"
 version = "3.3.4"
 description = "Python implementation of Markdown."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.extras]
@@ -501,7 +501,7 @@ name = "multidict"
 version = "5.1.0"
 description = "multidict implementation"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -584,7 +584,7 @@ name = "psutil"
 version = "5.8.0"
 description = "Cross-platform lib for process and system monitoring in Python."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.extras]
@@ -662,7 +662,7 @@ name = "pynacl"
 version = "1.4.0"
 description = "Python binding to the Networking and Cryptography (NaCl) library"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [package.dependencies]
@@ -774,7 +774,7 @@ name = "python-levenshtein-wheels"
 version = "0.13.2"
 description = "Python extension for computing string edit distances and similarities."
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [[package]]
@@ -818,7 +818,7 @@ name = "red-commons"
 version = "1.0.0"
 description = "Common utilities used by multiple projects maintained by Cog Creators."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.8"
 
 [package.extras]
@@ -829,7 +829,7 @@ name = "Red-DiscordBot"
 version = "3.5.0.dev192+gacdc1df08"
 description = "A highly customisable Discord bot"
 category = "main"
-optional = false
+optional = true
 python-versions = "<3.10,>=3.8.1"
 develop = false
 
@@ -890,7 +890,7 @@ name = "red-lavalink"
 version = "0.11.0rc0"
 description = "Lavalink client library for Red-DiscordBot"
 category = "main"
-optional = false
+optional = true
 python-versions = ">3.8.0"
 
 [package.dependencies]
@@ -991,7 +991,7 @@ name = "schema"
 version = "0.7.4"
 description = "Simple data validation library"
 category = "main"
-optional = false
+optional = true
 python-versions = "*"
 
 [package.dependencies]
@@ -1108,7 +1108,7 @@ name = "uvloop"
 version = "0.16.0"
 description = "Fast implementation of asyncio event loop on top of libuv"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [package.extras]
@@ -1147,7 +1147,7 @@ name = "yarl"
 version = "1.6.3"
 description = "Yet another URL library"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [package.dependencies]
@@ -1166,10 +1166,13 @@ python-versions = ">=3.7"
 docs = ["sphinx", "jaraco.packaging (>=9)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy (>=0.9.1)"]
 
+[extras]
+dronefly = ["dronefly-core", "Red-DiscordBot"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "dea6e23c884efdd05c7446c1a1f1b314b1cd0a084babc248f500dd9615639bf5"
+content-hash = "2e849bcf127f71cbfaf29057ebc121878f30342a5731ee29f7c89e0bcf365d4a"
 
 [metadata.files]
 aiohttp = [
