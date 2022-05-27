@@ -14,13 +14,6 @@ ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 
 
-async def show_entry(menu, payload):
-    index = ENTRY_EMOJIS.index(str(payload.emoji))
-    if menu.current_page * menu._source.per_page + index < menu._source._total_results:
-        menu._source._current_entry = index
-        menu._source._single_entry = False
-        await menu.show_page(menu.current_page)
-
 # TODO: derive a base class from this that:
 # - wraps a dronefly-core (pyinat-based) get method for the entity being paged
 #   (obs, taxa, users, etc.)
@@ -138,7 +131,7 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
         self._max_buttons_added = self._source.per_page == self._max_per_page
         for i, emoji in enumerate(ENTRY_EMOJIS[:self._max_per_page]):
             if i >= self._source.per_page: break
-            self.add_button(menus.Button(emoji, show_entry))
+            self.add_button(menus.Button(emoji, self.show_entry))
 
     async def send_initial_message(self, ctx, channel):
         """Send first page of menu
@@ -150,6 +143,14 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
         page = await self._source.get_page(0)
         kwargs = await self._get_kwargs_from_page(page)
         return await ctx.send(**kwargs)
+
+    @staticmethod
+    async def show_entry(menu, payload):
+        index = ENTRY_EMOJIS.index(str(payload.emoji))
+        if menu.current_page * menu._source.per_page + index < menu._source._total_results:
+            menu._source._current_entry = index
+            menu._source._single_entry = False
+            await menu.show_page(menu.current_page)
 
     @menus.button("\N{UP-POINTING SMALL RED TRIANGLE}")
     async def on_prev_result(self, payload):
@@ -230,7 +231,7 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
         if self._source._show_images:
             if not self._max_buttons_added:
                 for i, emoji in enumerate(ENTRY_EMOJIS[:8], start=self._source.per_page):
-                    await self.add_button(menus.Button(emoji, show_entry), react=True)
+                    await self.add_button(menus.Button(emoji, self.show_entry), react=True)
                 self._max_buttons_added = True
             self._source._show_images = False
             self._original_per_page = self._source.per_page
