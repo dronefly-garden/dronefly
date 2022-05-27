@@ -8,16 +8,9 @@ from redbot.vendored.discord.ext import menus
 
 from ..base_classes import WWW_BASE_URL
 
-ENTRY_EMOJIS = [
-    "\N{REGIONAL INDICATOR SYMBOL LETTER A}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER B}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER C}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER D}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER E}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER F}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER G}",
-    "\N{REGIONAL INDICATOR SYMBOL LETTER H}",
-]
+LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
+MAX_LETTER_EMOJIS = 10
+ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 
 
@@ -138,12 +131,12 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
     """Navigate observation search results."""
     def __init__(self, source, **kwargs):
         super().__init__(source, **kwargs)
-        self._max_per_page = len(ENTRY_EMOJIS)
+        self._max_per_page = 8
         if self._source.per_page > self._max_per_page:
             self._source.per_page = self._max_per_page
         self._original_per_page = self._source.per_page
         self._max_buttons_added = self._source.per_page == self._max_per_page
-        for i, emoji in enumerate(ENTRY_EMOJIS):
+        for i, emoji in enumerate(ENTRY_EMOJIS[:self._max_per_page]):
             if i >= self._source.per_page: break
             self.add_button(menus.Button(emoji, show_entry))
 
@@ -236,7 +229,7 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
         current_entry = current_page * per_page + self._source._current_entry
         if self._source._show_images:
             if not self._max_buttons_added:
-                for i, emoji in enumerate(ENTRY_EMOJIS, start=self._source.per_page):
+                for i, emoji in enumerate(ENTRY_EMOJIS[:8], start=self._source.per_page):
                     await self.add_button(menus.Button(emoji, show_entry), react=True)
                 self._max_buttons_added = True
             self._source._show_images = False
