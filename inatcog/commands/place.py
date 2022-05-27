@@ -12,7 +12,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
-from ..utils import get_valid_user_config
+from ..utils import has_valid_user_config
 
 
 class CommandsPlace(INatEmbeds, MixinMeta):
@@ -41,14 +41,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     abbrevs = ", ".join(place_abbrevs)
                 else:
                     abbrevs = "*none*"
-                    try:
-                        can_add_places = bool(
-                            await get_valid_user_config(
-                                self, ctx.author, anywhere=False
-                            )
-                        )
-                    except LookupError:
-                        can_add_places = False
+                    can_add_places = await has_valid_user_config(self, ctx.author, anywhere=False)
                     if can_add_places:
                         embed.set_footer(
                             text=f"Add an abbreviation with {ctx.clean_prefix}place add"

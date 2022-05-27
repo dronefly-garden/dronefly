@@ -1,6 +1,6 @@
 """Checks for iNatcog."""
 from redbot.core import commands
-from .utils import get_valid_user_config
+from .utils import has_valid_user_config
 
 
 async def _known_inat_user(ctx, anywhere):
@@ -8,12 +8,7 @@ async def _known_inat_user(ctx, anywhere):
     if not cog:
         return False
 
-    user_config = None
-    try:
-        user_config = await get_valid_user_config(cog, ctx.author, anywhere=anywhere)
-    except LookupError:
-        pass
-    return bool(user_config)
+    return await has_valid_user_config(cog, ctx.author, anywhere=anywhere)
 
 
 def known_inat_user():

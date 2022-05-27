@@ -19,17 +19,16 @@ class INatUserTable:
         """Get user for Discord member."""
         inat_user_id = None
         user = None
+        # Note: may raise LookupError if user is not known in the specified scope:
         user_config = await get_valid_user_config(self.cog, member, anywhere=anywhere)
-        if user_config:
-            inat_user_id = await user_config.inat_user_id()
-
-        if not inat_user_id:
-            raise LookupError("iNat user not known.")
+        inat_user_id = await user_config.inat_user_id()
 
         response = await self.cog.api.get_users(inat_user_id, refresh_cache)
         if response and response["results"] and len(response["results"]) == 1:
             user = User.from_dict(response["results"][0])
         if not user:
+            # The account is (probably) deleted, as I know of no temporary
+            # failure of the API that wouldn't raise a different error.
             raise LookupError("iNat user id lookup failed.")
 
         return user
