@@ -6,7 +6,7 @@ class TestEmbeds(unittest.TestCase):
     def test_make_embed(self):
         """Test make_embed."""
         test_embed = embeds.make_embed(
-            title="a", url="b", description="c", other="blank"
+            title="a", url="b", description="c"
         )
         self.assertEqual("a", test_embed.title)
         self.assertEqual("b", test_embed.url)

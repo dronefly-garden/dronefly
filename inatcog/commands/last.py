@@ -1,10 +1,9 @@
 """Module for last command group."""
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
-from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
+from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS, Taxon
 from dronefly.core.query.query import Query, TaxonQuery
 
-from ..base_classes import Taxon
 from ..converters.base import NaturalQueryConverter
 from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds

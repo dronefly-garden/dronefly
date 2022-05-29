@@ -1,6 +1,8 @@
 """Module for map command group."""
 
 import urllib.parse
+
+from dronefly.core.formatters.generic import format_taxon_name
 from redbot.core import checks, commands
 
 from inatcog.base_classes import WWW_BASE_URL
@@ -50,9 +52,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
             # and either use it directly or otherwise share code instead of duplicating
             # most of it here.
             if query_response.taxon:
-                query_title = "Map of " + query_response.taxon.format_name(
-                    with_term=True
-                )
+                query_title = "Map of " + format_taxon_name(query_response.taxon, with_term=True)
             else:
                 query_title = "Map of observations"
             if query_response.user:

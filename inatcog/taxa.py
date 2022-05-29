@@ -7,11 +7,11 @@ from .base_classes import (
     ConservationStatus,
     EstablishmentMeans,
     EstablishmentMeansPartial,
-    Taxon,
     User,
     Place,
 )
-from dronefly.core.models.taxon import RANK_LEVELS
+from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.models.taxon import RANK_LEVELS, Taxon
 from dronefly.core.parsers.url import STATIC_URL_PAT
 from dronefly.core.query.query import TaxonQuery
 from .utils import obs_url_from_v1
@@ -59,7 +59,7 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
+        format_taxon_name(taxon, with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
     ]
 
     def fit_names(names):
@@ -507,4 +507,4 @@ async def format_user_taxon_counts(
 async def get_taxon(cog, taxon_id, **kwargs):
     """Get taxon by id."""
     results = (await cog.api.get_taxa(taxon_id, **kwargs))["results"]
-    return get_taxon_fields(results[0]) if results else None
+    return Taxon.from_json(results[0]) if results else None

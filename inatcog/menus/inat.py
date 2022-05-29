@@ -120,8 +120,107 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             message = { "embed": embeds[0] }
         return message
 
+class SearchTaxonSource(menus.AsyncIteratorPageSource):
+    """Paged (both UI & API) taxon search results source."""
+    async def generate_taxa(self, taxa):
+        _taxa = taxa
+        api_page = 1
+        while _taxa:
+            for taxon in _taxa:
+                yield taxon
+            if (api_page - 1) * self._per_api_page + len(_taxa) < self._total_results:
+                api_page += 1
+                # TODO: use dronefly-core (pyinat-based) get_observations
+                # - top level should handle mapping dronefly query parts
+                #   to iNat id#s to send to pyinat (`me`, Discord user mapping,
+                #   place abbrevs, `home` place, user's `lang` setting, etc.)
+                # - do pyinat at the lowest level to take advantage of
+                #   caching, paginator, etc.
+                # - eliminates reliance on computing our own API page
+                (_taxa, *_ignore) = await self._cog.taxon_query.query_taxa(self._ctx, self._query, page=api_page)
+            else:
+                _taxa = None
+
+    def __init__(self, cog, ctx, query, taxa, total_results, per_page, per_api_page, url, query_title):
+        self._cog = cog
+        self._ctx = ctx
+        self._query = query
+        self._total_results = total_results
+        self._per_api_page = per_api_page
+        self._url = url
+        self._query_title = query_title
+        self._single_entry = False
+        self._multi_images = True
+        self._show_images = True
+        self._current_entry = 0
+        super().__init__(self.generate_taxa(taxa), per_page=per_page)
+
+    async def _format_taxon(self, taxon):
+        # TODO: use core formatter for markdown-formatted individual observation
+        formatted_taxon = await self._cog.format_taxon(
+            taxon,
+            with_description=False,
+            with_link=True,
+            compact=True,
+            with_user=not self._query.user,
+        )
+        return ''.join(formatted_taxon)
+
+    def is_paginating(self):
+        """Always paginate so non-paging buttons work."""
+        return True
+
+    async def format_page(self, menu, entries):
+        # TODO: move out to core classes
+        def get_image_url(taxon):
+            return next(iter([image.url for image in taxon.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
+
+        start = menu.current_page * self.per_page
+        embeds = []
+        if self._single_entry:
+            taxon = next(taxon for i, taxon in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            # TODO: use core formatter for embed-format page of observations
+            embed = await self._cog.make_taxon_embed(
+                menu.ctx, taxon, f"{WWW_BASE_URL}/taxon/{taxon.taxon_id}"
+            )
+            embeds = [embed]
+        else:
+            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {ceil(self._total_results / self.per_page)})"
+            fmt_entries = []
+            for i, obs in enumerate(entries, start=start):
+                fmt_entry = await self._format_taxon(obs)
+                index = i
+                if i + 1 > self._total_results:
+                    index = self._total_results - 1
+                # cursor highlighting for currently selected entry:
+                # - markdown **bold** style
+                if index % self.per_page == self._current_entry:
+                    fmt_entry = f"**{fmt_entry}**"
+                fmt_entries.append(f"{ENTRY_EMOJIS[i % self.per_page]} {fmt_entry}")
+                embed = discord.Embed(url=self._url)
+                # add embeds for all images when cursor is on 1st image, otherwise just
+                # set the image of the 1st embed to be for the corresponding entry.
+                if self._show_images:
+                    if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                        embed.set_image(url=get_image_url(obs))
+                        embeds.append(embed)
+                else:
+                    if not embeds:
+                        embeds.append(embed)
+            if embeds:
+                embeds[0].description = f'\n'.join(fmt_entries)
+                embeds[0].title = title
+        # Only dpy2 and higher supports multi images via multiple embeds with
+        # matching url per embed.
+        if self._multi_images:
+            message = { "embeds": embeds }
+        else:
+            # Fallback single image provided for legacy 1.7 dpy
+            message = { "embed": embeds[0] }
+        return message
+
 class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
-    """Navigate observation search results."""
+    """Navigate search results."""
     def __init__(self, source, **kwargs):
         super().__init__(source, **kwargs)
         self._max_per_page = 8
@@ -194,7 +293,7 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
 
     @menus.button("\N{WHITE HEAVY CHECK MARK}")
     async def on_select(self, payload):
-        """Select this entry to view the full observation."""
+        """Select this entry to view the full entry."""
         if self._source._single_entry:
             ctx = self.ctx
             current_page = self.current_page
@@ -213,7 +312,7 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
 
     @menus.button("\N{CROSS MARK}")
     async def on_cancel(self, payload):
-        """Cancel viewing full observation or stop menu and delete."""
+        """Cancel viewing full entry or stop menu and delete."""
         if self._source._single_entry:
             self._source._single_entry = False
             await self.show_checked_page(self.current_page)

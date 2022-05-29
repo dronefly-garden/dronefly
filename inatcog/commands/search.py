@@ -4,6 +4,7 @@ import re
 from typing import Optional, Union
 import urllib.parse
 
+from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
     PAT_PLACE_LINK,
@@ -230,7 +231,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             # and either use it directly or otherwise share code instead of duplicating
             # most of it here.
             if query_response.taxon:
-                query_title = query_response.taxon.format_name(with_term=True)
+                query_title = format_taxon_name(query_response.taxon, with_term=True)
             else:
                 query_title = "Observations"
             if query_response.user:

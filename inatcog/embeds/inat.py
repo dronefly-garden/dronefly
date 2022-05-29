@@ -10,7 +10,9 @@ from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
-from dronefly.core.models.taxon import RANK_LEVELS
+from dronefly.core.formatters.generic import RANK_LEVELS, format_taxon_name
+from dronefly.core.formatters.discord import format_taxon_names
+from dronefly.core.models.taxon import RANK_LEVELS, Taxon
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -20,6 +22,7 @@ from dronefly.core.parsers.url import (
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
+from pyinaturalist.models import IconPhoto
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -27,7 +30,6 @@ from ..base_classes import (
     MEANS_LABEL_DESC,
     Place,
     QueryResponse,
-    Taxon,
     TaxonSummary,
     WWW_BASE_URL,
 )
@@ -45,10 +47,8 @@ from ..maps import INatMapURL
 from ..projects import UserProject, ObserverStats
 from ..taxa import (
     format_place_taxon_counts,
-    format_taxon_names,
     format_user_taxon_counts,
     get_taxon,
-    get_taxon_fields,
     get_taxon_preferred_establishment_means,
     TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
@@ -340,17 +340,17 @@ def format_taxon_names_for_embed(*args, **kwargs):
     return format_taxon_names(*args, **kwargs)
 
 
-def format_taxon_title(rec, lang=None):
+def format_taxon_title(taxon, lang=None):
     """Format taxon title."""
-    title = rec.format_name(lang=lang)
-    matched = rec.matched_term
-    preferred_common_name = rec.preferred_common_name
-    if lang and rec.names:
-        name = next(iter([name for name in rec.names if name.get("locale") == lang]), None)
+    title = format_taxon_name(taxon, lang=lang)
+    matched = taxon.matched_term
+    preferred_common_name = taxon.preferred_common_name
+    if lang and taxon.names:
+        name = next(iter([name for name in taxon.names if name.get("locale") == lang]), None)
         if name:
             preferred_common_name = name.get("name")
-    if matched not in (rec.name, preferred_common_name):
-        invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
+    if matched not in (None, taxon.name, preferred_common_name):
+        invalid_names = [name["name"] for name in taxon.names if not name["is_valid"]] if taxon.names else []
         if matched in invalid_names:
             matched = f"~~{matched}~~"
         title += f" ({matched})"
@@ -588,7 +588,7 @@ class INatEmbeds(MixinMeta):
 
         def get_taxon_name(taxon):
             if taxon:
-                taxon_str = taxon.format_name(with_rank=not compact, with_common=False)
+                taxon_str = format_taxon_name(taxon, with_rank=not compact, with_common=False)
             else:
                 taxon_str = "Unknown"
             return taxon_str
@@ -722,7 +722,7 @@ class INatEmbeds(MixinMeta):
                 else:
                     community_taxon = obs.community_taxon
                 summary = (
-                    f"{community_taxon.format_name(lang=lang)} "
+                    f"{format_taxon_name(community_taxon, lang=lang)} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
                 )
             else:
@@ -787,7 +787,7 @@ class INatEmbeds(MixinMeta):
 
         def format_image_title_url(taxon, obs, num):
             if taxon:
-                title = taxon.format_name()
+                title = format_taxon_name(taxon)
             else:
                 title = "Unknown"
             title += f" (Image {num} of {len(obs.images)})"
@@ -888,54 +888,44 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name(lang=lang)}"
+        description = f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon, lang=lang)}"
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, ctx, rec, index=1):
+    async def make_image_embed(self, ctx, taxon, index=1):
         """Make embed showing default image for taxon."""
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{rec.id}")
+        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
 
         lang = await self.get_lang(ctx)
-        title = format_taxon_title(rec, lang=lang)
-        image = None
-        attribution = None
+        title = format_taxon_title(taxon, lang=lang)
+        taxon_photo = None
 
         embed.title = title
-        if rec.thumbnail:
-            if rec.image and index == 1:
-                image = rec.image
-                attribution = rec.image_attribution
+        if taxon.default_photo and not isinstance(taxon.default_photo, IconPhoto):
+            if index == 1:
+                taxon_photo = taxon.default_photo
             else:
-                # - A taxon record may have a thumbnail but no image if the image
-                #   is externally hosted (e.g. Flickr) and the record was created
-                #   from /v1/taxa/autocomplete (i.e. only has a subset of the
-                #   fields that /v1/taxa/# returns).
-                # - Or the user may have requested other than the default image.
+                # - A taxon record may have a default_photo but no photos if the
+                #   photo is externally hosted (e.g. Flickr) and the record
+                #   was created from /v1/taxa/autocomplete (i.e. only has a
+                #   subset of the fields that /v1/taxa/# returns).
+                # - Or the user may have requested other than the default photo.
                 # - In either case, we retrieve the full record via taxon_id so
-                #   the image will be set from the full-quality original in
+                #   the photo will be set from the full-quality original in
                 #   taxon_photos.
-                response = await self.api.get_taxa(rec.id)
-                try:
-                    taxon_photos_raw = response["results"][0]["taxon_photos"]
-                except (TypeError, KeyError, IndexError):
-                    taxon_photos_raw = None
-                if taxon_photos_raw:
-                    photos = (entry.get("photo") for entry in taxon_photos_raw)
-                    (image, attribution) = next(
-                        (
-                            (
-                                photo.get("original_url"),
-                                photo.get("attribution", ""),
-                            )
-                            for i, photo in enumerate(photos, 1)
-                            if i == index
-                        ),
-                        (None, None),
-                    )
-        if image:
-            embed.set_image(url=image)
-            embed.set_footer(text=attribution)
+                if not taxon.taxon_photos or len(taxon.taxon_photos) == 0:
+                    response = await self.api.get_taxa(taxon.id)
+                    try:
+                        _taxon = Taxon.from_json(response["results"][0])
+                    except (TypeError, KeyError, IndexError):
+                        _taxon = None
+                else:
+                    _taxon = taxon
+                if _taxon and index <= len(_taxon.taxon_photos):
+                    taxon_photo = _taxon.taxon_photos[index - 1]
+        if taxon_photo:
+            embed.set_image(url=taxon_photo.original_url)
+            embed.set_footer(text=taxon_photo.attribution)
         else:
             if index == 1:
                 embed.description = "This taxon has no default photo."
@@ -1022,7 +1012,6 @@ class INatEmbeds(MixinMeta):
 
         async def format_ancestors(description, ancestors):
             if ancestors:
-                ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors]
                 description += " in: " + format_taxon_names(ancestors, hierarchy=True)
             else:
                 description += "."
@@ -1037,7 +1026,7 @@ class INatEmbeds(MixinMeta):
         full_record = (
             await self.api.get_taxa(taxon.id, preferred_place_id=preferred_place_id)
         )["results"][0]
-        full_taxon = get_taxon_fields(full_record)
+        full_taxon = Taxon.from_json(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         means_fmtd = ""
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
@@ -1059,8 +1048,7 @@ class INatEmbeds(MixinMeta):
         )
 
         if include_ancestors:
-            ancestors = full_record.get("ancestors")
-            description = await format_ancestors(description, ancestors)
+            description = await format_ancestors(description, full_taxon.ancestors)
 
         if user:
             formatted_counts = await format_user_taxon_counts(
@@ -1077,8 +1065,7 @@ class INatEmbeds(MixinMeta):
 
         embed.title = title
         embed.description = description
-        if taxon.thumbnail:
-            embed.set_thumbnail(url=taxon.thumbnail)
+        embed.set_thumbnail(url=taxon.default_photo.square_url if taxon.default_photo else taxon.icon.url)
 
         return embed
 
@@ -1531,13 +1518,9 @@ class INatEmbeds(MixinMeta):
             response = await self.api.get_taxa(
                 inat_embed.taxon_id(), refresh_cache=False
             )
-            full_taxon_raw = response["results"][0]
-            if full_taxon_raw:
-                ancestors_raw = full_taxon_raw.get("ancestors")
-                if not ancestors_raw:
-                    return
-                ancestors = [get_taxon_fields(ancestor) for ancestor in ancestors_raw]
-                formatted_names = format_taxon_names(ancestors, hierarchy=True)
+            full_taxon = Taxon.from_json(response["results"][0])
+            if full_taxon:
+                formatted_names = format_taxon_names(full_taxon.ancestors, hierarchy=True)
                 hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
                 new_description = re.sub(
                     NO_TAXONOMY_PAT,

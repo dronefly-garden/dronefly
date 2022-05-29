@@ -6,8 +6,8 @@ from typing import List, NamedTuple, Optional, Union
 
 from dataclasses_json import config, DataClassJsonMixin
 from discord.utils import escape_markdown
-from dronefly.core import models
-from dronefly.core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
+from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.models.taxon import Taxon
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo
@@ -218,104 +218,6 @@ class ConservationStatus(DataClassJsonMixin):
         if self.url:
             return f"[{self.authority}]({self.url})"
         return self.authority
-
-
-@dataclass
-class _TaxonBase(models.taxon.TaxonBase):
-    """Base class for standard fields of cog Taxon."""
-
-
-@dataclass
-class _TaxonDefaultsBase(models.taxon.TaxonDefaultsBase):
-    """Base class for optional fields of cog Taxon."""
-
-    establishment_means: Optional[EstablishmentMeansPartial] = None
-    conservation_status: Optional[ConservationStatus] = None
-
-
-@dataclass
-class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
-    """Public class for taxon with cog-specific behaviours."""
-
-    def format_name(
-        self, with_term=False, hierarchy=False, with_rank=True, with_common=True, lang=None
-    ):
-        """Format taxon name.
-
-        Parameters
-        ----------
-        with_term: bool, optional
-            When with_common=True, non-common / non-name matching term is put in
-            parentheses in place of common name.
-        hierarchy: bool, optional
-            If specified, produces a list item suitable for inclusion in the hierarchy section
-            of a taxon embed. See format_taxon_names() for details.
-        with_rank: bool, optional
-            If specified and hierarchy=False, includes the rank for ranks higher than species.
-        with_common: bool, optional
-            If specified, include common name in parentheses after scientific name.
-        lang: str, optional
-            If specified, prefer the first name with its locale == lang instead of
-            the preferred_common_name.
-
-        Returns
-        -------
-        str
-            A name of the form "Rank Scientific name (Common name)" following the
-            same basic format as iNaturalist taxon pages on the web, i.e.
-
-            - drop the "Rank" keyword for species level and lower
-            - italicize the name (minus any rank abbreviations; see next point) for genus
-            level and lower
-            - for trinomials (must be subspecies level & have exactly 3 names to qualify),
-            insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
-            name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
-        """
-
-        if with_common:
-            preferred_common_name = None
-            if lang and self.names:
-                name = next(iter([name for name in self.names if name.get("locale") == lang]), None)
-                if name:
-                    preferred_common_name = name.get("name")
-            if not preferred_common_name:
-                preferred_common_name = self.preferred_common_name
-            if with_term:
-                common = (
-                    self.matched_term
-                    if self.matched_term not in (self.name, preferred_common_name)
-                    else preferred_common_name
-                )
-            else:
-                if hierarchy:
-                    common = None
-                else:
-                    common = preferred_common_name
-        else:
-            common = None
-        name = self.name
-
-        rank = self.rank
-        rank_level = RANK_LEVELS[rank]
-
-        if rank_level <= RANK_LEVELS["genus"]:
-            name = f"*{name}*"
-        if rank_level > RANK_LEVELS["species"]:
-            if hierarchy:
-                bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
-                name = f"{bold[0]}{name}{bold[1]}"
-            elif with_rank:
-                name = f"{rank.capitalize()} {name}"
-        else:
-            if rank in TRINOMIAL_ABBR.keys():
-                tri = name.split(" ")
-                if len(tri) == 3:
-                    # Note: name already italicized, so close/reopen italics around insertion.
-                    name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
-        full_name = f"{name} ({common})" if common else name
-        if not self.is_active:
-            full_name += " :exclamation: Inactive Taxon"
-        return full_name
 
 
 @dataclass
@@ -532,7 +434,7 @@ class QueryResponse:
         without_taxa_description = ""
         if self.taxon:
             taxon = self.taxon
-            of_taxa_description = taxon.format_name(with_term=True)
+            of_taxa_description = format_taxon_name(taxon, with_term=True)
         if self.options:
             without_taxon_id = self.options.get("without_taxon_id")
             iconic_taxa = self.options.get("iconic_taxa")

@@ -1,10 +1,11 @@
 """Module to query iNat taxa."""
 from redbot.core.commands import BadArgument
-from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS
+from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS, Taxon
 from dronefly.core.query.query import Query, TaxonQuery
 
 from .converters.base import NaturalQueryConverter
-from .taxa import get_taxon, get_taxon_fields, match_taxon
+from .taxa import get_taxon, match_taxon
 
 
 class INatTaxonQuery:
@@ -58,7 +59,7 @@ class INatTaxonQuery:
             if response:
                 records = response.get("results")
             if records:
-                taxon = match_taxon(taxon_query, list(map(get_taxon_fields, records)))
+                taxon = match_taxon(taxon_query, list(map(Taxon.from_json, records)))
         else:
             kwargs["q"] = " ".join(taxon_query.terms)
             if taxon_query.ranks:
@@ -84,7 +85,7 @@ class INatTaxonQuery:
                 records_read += len(records)
                 taxon = match_taxon(
                     taxon_query,
-                    list(map(get_taxon_fields, records)),
+                    list(map(Taxon.from_json, records)),
                     scientific_name=scientific_name,
                     locale=locale,
                 )
@@ -154,7 +155,7 @@ class INatTaxonQuery:
                     "`from` (place) or `in prj` (project)?"
                 )
                 if ancestor:
-                    reason = f"{reason}\n\nAncestor taxon: {ancestor.format_name(with_term=True)}"
+                    reason = f"{reason}\n\nAncestor taxon: {format_taxon_name(taxon, with_term=True)}"
                 else:
                     reason = f"{reason}\n\nAncestor taxon not found."
                 raise LookupError(reason) from err
