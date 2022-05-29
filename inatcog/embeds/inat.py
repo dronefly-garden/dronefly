@@ -768,9 +768,9 @@ class INatEmbeds(MixinMeta):
         taxon_summary = None
         community_taxon_summary = None
         if not compact:
-           taxon_summary = await get_taxon_summary(obs)
-           if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
-               community_taxon_summary = await get_taxon_summary(obs, community=1)
+            taxon_summary = await get_taxon_summary(obs)
+            if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
+                community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
         title, summary = await format_community_id(
