@@ -742,6 +742,8 @@ class INatEmbeds(MixinMeta):
             return media_counts
 
         async def get_taxon_summary(obs, **kwargs):
+            # FIXME: provide & use formatters for means & status in core, then re-enable this
+            return None
             taxon_summary_raw = await self.api.get_obs_taxon_summary(
                 obs.obs_id, **kwargs
             )
@@ -766,9 +768,9 @@ class INatEmbeds(MixinMeta):
         taxon_summary = None
         community_taxon_summary = None
         if not compact:
-            taxon_summary = await get_taxon_summary(obs)
-            if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
-                community_taxon_summary = await get_taxon_summary(obs, community=1)
+           taxon_summary = await get_taxon_summary(obs)
+           if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
+               community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
         title, summary = await format_community_id(
@@ -1027,11 +1029,13 @@ class INatEmbeds(MixinMeta):
             await self.api.get_taxa(taxon.id, preferred_place_id=preferred_place_id)
         )["results"][0]
         full_taxon = Taxon.from_json(full_record)
-        means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
+        # FIXME: switch to core formatter & re-enable
+        means = None # await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         means_fmtd = ""
         if means and MEANS_LABEL_DESC.get(means.establishment_means):
             means_fmtd = f"{means.emoji()}{means.link()}"
-        status = full_taxon.conservation_status
+        # FIXME: switch to core formatter & re-enable
+        status = None # full_taxon.conservation_status
         # Workaround for neither conservation_status record has both status_name and url:
         # - /v1/taxa/autocomplete result has 'threatened' as status_name for
         #   status 't' polar bear, but no URL
