@@ -26,15 +26,13 @@ from dronefly.core.parsers.url import (
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
-from pyinaturalist.models import IconPhoto
+from pyinaturalist.models import IconPhoto, TaxonSummary
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
-    MEANS_LABEL_DESC,
     Place,
     QueryResponse,
-    TaxonSummary,
     WWW_BASE_URL,
 )
 from ..common import LOG
@@ -627,11 +625,12 @@ class INatEmbeds(MixinMeta):
                 summary += f"Taxon: {taxon_str}\n"
             if taxon_summary:
                 means = taxon_summary.listed_taxon
-                status = taxon_summary.conservation_status
+                # FIXME: make & use core formatter for conservation status
+                status = None # taxon_summary.conservation_status
                 if status:
                     summary += f"Conservation Status: {status.description()} ({status.link()})\n"
                 if means:
-                    summary += f"{means.emoji()}{means.link()}\n"
+                    summary += f"{format_taxon_establishment_means(means)}\n"
             login = ""
             if compact:
                 if with_user:
@@ -712,7 +711,8 @@ class INatEmbeds(MixinMeta):
                 status_link = ""
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
-                    status = taxon_summary.conservation_status
+                    # FIXME: make & use core formatter for conservation status
+                    status = None # taxon_summary.conservation_status
                     if status:
                         status_link = (
                             f"\nConservation Status: {status.description()} "
@@ -720,7 +720,7 @@ class INatEmbeds(MixinMeta):
                         )
                         status_link = f"\n{status.description()} ({status.link()})"
                     if means:
-                        means_link = f"\n{means.emoji()}{means.link()}"
+                        means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
                     community_taxon = await get_taxon(self, obs.community_taxon.id, refresh_cache=False)
                 else:
@@ -746,19 +746,18 @@ class INatEmbeds(MixinMeta):
             return media_counts
 
         async def get_taxon_summary(obs, **kwargs):
-            # FIXME: provide & use formatters for means & status in core, then re-enable this
-            return None
             taxon_summary_raw = await self.api.get_obs_taxon_summary(
                 obs.obs_id, **kwargs
             )
-            taxon_summary = TaxonSummary.from_dict(taxon_summary_raw)
+            taxon_summary = TaxonSummary.from_json(taxon_summary_raw)
             means = None
             status = None
             if taxon_summary:
                 listed = taxon_summary.listed_taxon
                 if listed:
                     means = listed.establishment_means
-                status = taxon_summary.conservation_status
+                # FIXME: make & use core formatter for conservation status
+                # status = taxon_summary.conservation_status
             if means or status:
                 return taxon_summary
             return None
@@ -1036,7 +1035,7 @@ class INatEmbeds(MixinMeta):
         # FIXME: switch to core formatter & re-enable
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         if means:
-            means_fmtd = format_taxon_establishment_means(means, all_means=False)
+            means_fmtd = format_taxon_establishment_means(means)
         # FIXME: switch to core formatter & re-enable
         status = None # full_taxon.conservation_status
         # Workaround for neither conservation_status record has both status_name and url:
