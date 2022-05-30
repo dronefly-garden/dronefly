@@ -10,7 +10,11 @@ from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
-from dronefly.core.formatters.generic import RANK_LEVELS, format_taxon_name
+from dronefly.core.formatters.generic import (
+    RANK_LEVELS,
+    format_taxon_establishment_means,
+    format_taxon_name,
+)
 from dronefly.core.formatters.discord import format_taxon_names
 from dronefly.core.models.taxon import RANK_LEVELS, Taxon
 from dronefly.core.parsers.url import (
@@ -1030,10 +1034,9 @@ class INatEmbeds(MixinMeta):
         )["results"][0]
         full_taxon = Taxon.from_json(full_record)
         # FIXME: switch to core formatter & re-enable
-        means = None # await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
-        means_fmtd = ""
-        if means and MEANS_LABEL_DESC.get(means.establishment_means):
-            means_fmtd = f"{means.emoji()}{means.link()}"
+        means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
+        if means:
+            means_fmtd = format_taxon_establishment_means(means, all_means=False)
         # FIXME: switch to core formatter & re-enable
         status = None # full_taxon.conservation_status
         # Workaround for neither conservation_status record has both status_name and url:

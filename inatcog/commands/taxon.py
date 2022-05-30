@@ -4,7 +4,7 @@ import re
 import textwrap
 from typing import Optional
 
-from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.formatters.generic import format_taxon_name, format_taxon_establishment_means
 from dronefly.core.models.taxon import PLANTAE_ID
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -146,9 +146,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             )
             means = next(find_means, full_taxon.establishment_means)
             if means:
-                description = (
-                    f"{means.emoji()}{means.description()} ({means.list_link()})"
-                )
+                if means:
+                    description = format_taxon_establishment_means(means, all_means=True, list_title=True)
         except AttributeError:
             pass
         await ctx.send(embed=make_embed(title=title, url=url, description=description))
