@@ -14,7 +14,10 @@ class INatUserTable:
         self.cog = cog
 
     async def get_user(
-        self, member: Union[discord.Member, discord.User], refresh_cache=False, anywhere=True
+        self,
+        member: Union[discord.Member, discord.User],
+        refresh_cache=False,
+        anywhere=True,
     ):
         """Get user for Discord member."""
         inat_user_id = None

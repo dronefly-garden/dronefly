@@ -349,11 +349,17 @@ def format_taxon_title(taxon, lang=None):
     matched = taxon.matched_term
     preferred_common_name = taxon.preferred_common_name
     if lang and taxon.names:
-        name = next(iter([name for name in taxon.names if name.get("locale") == lang]), None)
+        name = next(
+            iter([name for name in taxon.names if name.get("locale") == lang]), None
+        )
         if name:
             preferred_common_name = name.get("name")
     if matched not in (None, taxon.name, preferred_common_name):
-        invalid_names = [name["name"] for name in taxon.names if not name["is_valid"]] if taxon.names else []
+        invalid_names = (
+            [name["name"] for name in taxon.names if not name["is_valid"]]
+            if taxon.names
+            else []
+        )
         if matched in invalid_names:
             matched = f"~~{matched}~~"
         title += f" ({matched})"
@@ -370,6 +376,7 @@ def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = Fals
     return query_response.place and not (
         query_response.user or query_response.id_by or query_response.unobserved_by
     )
+
 
 # Note: always call this after _add_place_emojis
 def _add_user_emojis(query_response: QueryResponse):
@@ -427,7 +434,7 @@ class INatEmbeds(MixinMeta):
         user_config = self.config.user(ctx.author)
         lang = await user_config.lang()
         # TODO: support guild and global preferred language
-        #if not lang:
+        # if not lang:
         #    if ctx.guild:
         #        guild_config = self.config.guild(ctx.guild)
         #        lang = await guild_config.lang()
@@ -466,7 +473,9 @@ class INatEmbeds(MixinMeta):
         return make_embed(title=title, url=url)
 
     @contextlib.asynccontextmanager
-    async def sound_message_params(self, channel, sounds: list, embed: discord.Embed, index=0):
+    async def sound_message_params(
+        self, channel, sounds: list, embed: discord.Embed, index=0
+    ):
         """Given a sound URL, yield params to send embed with file (if possible) or just URL."""
         if not sounds:
             yield None
@@ -499,7 +508,7 @@ class INatEmbeds(MixinMeta):
         _embed.url = sound.url
         _embed.set_footer(text=sound.attribution)
         embeds = [embed, _embed]
-        _params = { "embeds": embeds }
+        _params = {"embeds": embeds}
 
         if not url_only:
             if len(sound_bytes) <= max_embed_file_size:
@@ -581,7 +590,13 @@ class INatEmbeds(MixinMeta):
         return embed
 
     async def format_obs(
-        self, obs, with_description=True, with_link=False, compact=False, with_user=True, lang=None
+        self,
+        obs,
+        with_description=True,
+        with_link=False,
+        compact=False,
+        with_user=True,
+        lang=None,
     ):
         """Format an observation title & description."""
 
@@ -591,7 +606,9 @@ class INatEmbeds(MixinMeta):
 
         def get_taxon_name(taxon):
             if taxon:
-                taxon_str = format_taxon_name(taxon, with_rank=not compact, with_common=False)
+                taxon_str = format_taxon_name(
+                    taxon, with_rank=not compact, with_common=False
+                )
             else:
                 taxon_str = "Unknown"
             return taxon_str
@@ -660,7 +677,7 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs_on
             if obs.obs_at:
                 if compact:
-                    obs_at =  obs.obs_at
+                    obs_at = obs.obs_at
                 else:
                     summary += " at " + obs.obs_at
             if compact:
@@ -718,7 +735,9 @@ class INatEmbeds(MixinMeta):
                     if means:
                         means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
-                    community_taxon = await get_taxon(self, obs.community_taxon.id, refresh_cache=False)
+                    community_taxon = await get_taxon(
+                        self, obs.community_taxon.id, refresh_cache=False
+                    )
                 else:
                     community_taxon = obs.community_taxon
                 summary = (
@@ -980,7 +999,9 @@ class INatEmbeds(MixinMeta):
         ):
             obs_fmt = f"[{obs_cnt:,}]({obs_url})"
             if status:
-                status_link = format_taxon_conservation_status(status, brief=True, inflect=True)
+                status_link = format_taxon_conservation_status(
+                    status, brief=True, inflect=True
+                )
                 descriptor = " ".join([status_link, rec.rank])
             else:
                 descriptor = p.a(rec.rank)
@@ -1055,7 +1076,11 @@ class INatEmbeds(MixinMeta):
 
         embed.title = title
         embed.description = description
-        embed.set_thumbnail(url=taxon.default_photo.square_url if taxon.default_photo else taxon.icon.url)
+        embed.set_thumbnail(
+            url=taxon.default_photo.square_url
+            if taxon.default_photo
+            else taxon.icon.url
+        )
 
         return embed
 
@@ -1236,7 +1261,8 @@ class INatEmbeds(MixinMeta):
         reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS if _add_user_emojis(query_response)
+            else OBS_REACTION_EMOJIS
+            if _add_user_emojis(query_response)
             else []
         )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis)
@@ -1260,14 +1286,16 @@ class INatEmbeds(MixinMeta):
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else TAXON_REACTION_EMOJIS
+                if _add_user_emojis(query_response)
                 else []
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else NO_PARENT_TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else NO_PARENT_TAXON_REACTION_EMOJIS
+                if _add_user_emojis(query_response)
                 else []
             )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
@@ -1276,7 +1304,9 @@ class INatEmbeds(MixinMeta):
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
     ):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(ctx, query_response, index))
+        msg = await ctx.send(
+            embed=await self.make_image_embed(ctx, query_response, index)
+        )
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
         #   user will break the display; they can use `,last t` to get the taxon
@@ -1304,7 +1334,9 @@ class INatEmbeds(MixinMeta):
         """Send observation embed and sound."""
         msg = None
         if obs and obs.sounds:
-            async with self.sound_message_params(ctx.channel, obs.sounds, embed=embed) as params:
+            async with self.sound_message_params(
+                ctx.channel, obs.sounds, embed=embed
+            ) as params:
                 if params:
                     msg = await ctx.channel.send(**params)
         if not msg:
@@ -1510,7 +1542,9 @@ class INatEmbeds(MixinMeta):
             )
             full_taxon = Taxon.from_json(response["results"][0])
             if full_taxon:
-                formatted_names = format_taxon_names(full_taxon.ancestors, hierarchy=True)
+                formatted_names = format_taxon_names(
+                    full_taxon.ancestors, hierarchy=True
+                )
                 hierarchy = re.sub(HIERARCHY_PAT, "", formatted_names, 1)
                 new_description = re.sub(
                     NO_TAXONOMY_PAT,
@@ -1614,7 +1648,10 @@ class INatEmbeds(MixinMeta):
         async with self.reaction_locks[msg.id]:
             # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+            if (
+                msg.guild
+                and not msg.channel.permissions_for(msg.guild.me).read_message_history
+            ):
                 try:
                     msg = await msg.channel.fetch_message(msg.id)
                 except discord.errors.NotFound:
@@ -1707,7 +1744,10 @@ class INatEmbeds(MixinMeta):
         async with self.reaction_locks[msg.id]:
             # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+            if (
+                msg.guild
+                and not msg.channel.permissions_for(msg.guild.me).read_message_history
+            ):
                 try:
                     msg = await msg.channel.fetch_message(msg.id)
                 except discord.errors.NotFound:

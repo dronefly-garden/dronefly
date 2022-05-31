@@ -23,13 +23,16 @@ INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 #   - preview image show/hide and single/multi modes
 class SearchObsSource(menus.AsyncIteratorPageSource):
     """Paged (both UI & API) observation search results source."""
+
     async def generate_obs(self, observations):
         _observations = observations
         api_page = 1
         while _observations:
             for obs in _observations:
                 yield obs
-            if (api_page - 1) * self._per_api_page + len(_observations) < self._total_results:
+            if (api_page - 1) * self._per_api_page + len(
+                _observations
+            ) < self._total_results:
                 api_page += 1
                 # TODO: use dronefly-core (pyinat-based) get_observations
                 # - top level should handle mapping dronefly query parts
@@ -38,11 +41,27 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 # - do pyinat at the lowest level to take advantage of
                 #   caching, paginator, etc.
                 # - eliminates reliance on computing our own API page
-                (_observations, *_ignore) = await self._cog.obs_query.query_observations(self._ctx, self._query, page=api_page)
+                (
+                    _observations,
+                    *_ignore,
+                ) = await self._cog.obs_query.query_observations(
+                    self._ctx, self._query, page=api_page
+                )
             else:
                 _observations = None
 
-    def __init__(self, cog, ctx, query, observations, total_results, per_page, per_api_page, url, query_title):
+    def __init__(
+        self,
+        cog,
+        ctx,
+        query,
+        observations,
+        total_results,
+        per_page,
+        per_api_page,
+        url,
+        query_title,
+    ):
         self._cog = cog
         self._ctx = ctx
         self._query = query
@@ -65,7 +84,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             compact=True,
             with_user=not self._query.user,
         )
-        return ''.join(formatted_obs)
+        return "".join(formatted_obs)
 
     def is_paginating(self):
         """Always paginate so non-paging buttons work."""
@@ -74,12 +93,28 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
     async def format_page(self, menu, entries):
         # TODO: move out to core classes
         def get_image_url(obs):
-            return next(iter([image.url for image in obs.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
+            return (
+                next(
+                    iter(
+                        [
+                            image.url
+                            for image in obs.images
+                            if not re.search(r"\.gif$", image.url, re.I)
+                        ]
+                    ),
+                    None,
+                )
+                or INAT_LOGO
+            )
 
         start = menu.current_page * self.per_page
         embeds = []
         if self._single_entry:
-            obs = next(obs for i, obs in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            obs = next(
+                obs
+                for i, obs in enumerate(entries, start=start)
+                if i % self.per_page == self._current_entry
+            )
             # TODO: use core formatter for embed-format page of observations
             embed = await self._cog.make_obs_embed(
                 menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
@@ -102,26 +137,30 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 # add embeds for all images when cursor is on 1st image, otherwise just
                 # set the image of the 1st embed to be for the corresponding entry.
                 if self._show_images:
-                    if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                    if self._current_entry == index % self.per_page or (
+                        self._multi_images and self._current_entry == 0
+                    ):
                         embed.set_image(url=get_image_url(obs))
                         embeds.append(embed)
                 else:
                     if not embeds:
                         embeds.append(embed)
             if embeds:
-                embeds[0].description = f'\n'.join(fmt_entries)
+                embeds[0].description = f"\n".join(fmt_entries)
                 embeds[0].title = title
         # Only dpy2 and higher supports multi images via multiple embeds with
         # matching url per embed.
         if self._multi_images:
-            message = { "embeds": embeds }
+            message = {"embeds": embeds}
         else:
             # Fallback single image provided for legacy 1.7 dpy
-            message = { "embed": embeds[0] }
+            message = {"embed": embeds[0]}
         return message
+
 
 class SearchTaxonSource(menus.AsyncIteratorPageSource):
     """Paged (both UI & API) taxon search results source."""
+
     async def generate_taxa(self, taxa):
         _taxa = taxa
         api_page = 1
@@ -137,11 +176,24 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                 # - do pyinat at the lowest level to take advantage of
                 #   caching, paginator, etc.
                 # - eliminates reliance on computing our own API page
-                (_taxa, *_ignore) = await self._cog.taxon_query.query_taxa(self._ctx, self._query, page=api_page)
+                (_taxa, *_ignore) = await self._cog.taxon_query.query_taxa(
+                    self._ctx, self._query, page=api_page
+                )
             else:
                 _taxa = None
 
-    def __init__(self, cog, ctx, query, taxa, total_results, per_page, per_api_page, url, query_title):
+    def __init__(
+        self,
+        cog,
+        ctx,
+        query,
+        taxa,
+        total_results,
+        per_page,
+        per_api_page,
+        url,
+        query_title,
+    ):
         self._cog = cog
         self._ctx = ctx
         self._query = query
@@ -164,7 +216,7 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
             compact=True,
             with_user=not self._query.user,
         )
-        return ''.join(formatted_taxon)
+        return "".join(formatted_taxon)
 
     def is_paginating(self):
         """Always paginate so non-paging buttons work."""
@@ -173,12 +225,28 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
     async def format_page(self, menu, entries):
         # TODO: move out to core classes
         def get_image_url(taxon):
-            return next(iter([image.url for image in taxon.images if not re.search(r"\.gif$", image.url, re.I)]), None) or INAT_LOGO
+            return (
+                next(
+                    iter(
+                        [
+                            image.url
+                            for image in taxon.images
+                            if not re.search(r"\.gif$", image.url, re.I)
+                        ]
+                    ),
+                    None,
+                )
+                or INAT_LOGO
+            )
 
         start = menu.current_page * self.per_page
         embeds = []
         if self._single_entry:
-            taxon = next(taxon for i, taxon in enumerate(entries, start=start) if i % self.per_page == self._current_entry)
+            taxon = next(
+                taxon
+                for i, taxon in enumerate(entries, start=start)
+                if i % self.per_page == self._current_entry
+            )
             # TODO: use core formatter for embed-format page of observations
             embed = await self._cog.make_taxon_embed(
                 menu.ctx, taxon, f"{WWW_BASE_URL}/taxon/{taxon.taxon_id}"
@@ -201,26 +269,30 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                 # add embeds for all images when cursor is on 1st image, otherwise just
                 # set the image of the 1st embed to be for the corresponding entry.
                 if self._show_images:
-                    if self._current_entry == index % self.per_page or (self._multi_images and self._current_entry == 0):
+                    if self._current_entry == index % self.per_page or (
+                        self._multi_images and self._current_entry == 0
+                    ):
                         embed.set_image(url=get_image_url(obs))
                         embeds.append(embed)
                 else:
                     if not embeds:
                         embeds.append(embed)
             if embeds:
-                embeds[0].description = f'\n'.join(fmt_entries)
+                embeds[0].description = f"\n".join(fmt_entries)
                 embeds[0].title = title
         # Only dpy2 and higher supports multi images via multiple embeds with
         # matching url per embed.
         if self._multi_images:
-            message = { "embeds": embeds }
+            message = {"embeds": embeds}
         else:
             # Fallback single image provided for legacy 1.7 dpy
-            message = { "embed": embeds[0] }
+            message = {"embed": embeds[0]}
         return message
+
 
 class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
     """Navigate search results."""
+
     def __init__(self, source, **kwargs):
         super().__init__(source, **kwargs)
         self._max_per_page = 8
@@ -228,8 +300,9 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
             self._source.per_page = self._max_per_page
         self._original_per_page = self._source.per_page
         self._max_buttons_added = self._source.per_page == self._max_per_page
-        for i, emoji in enumerate(ENTRY_EMOJIS[:self._max_per_page]):
-            if i >= self._source.per_page: break
+        for i, emoji in enumerate(ENTRY_EMOJIS[: self._max_per_page]):
+            if i >= self._source.per_page:
+                break
             self.add_button(menus.Button(emoji, self.show_entry))
 
     async def send_initial_message(self, ctx, channel):
@@ -246,7 +319,10 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
     @staticmethod
     async def show_entry(menu, payload):
         index = ENTRY_EMOJIS.index(str(payload.emoji))
-        if menu.current_page * menu._source.per_page + index < menu._source._total_results:
+        if (
+            menu.current_page * menu._source.per_page + index
+            < menu._source._total_results
+        ):
             menu._source._current_entry = index
             menu._source._single_entry = False
             await menu.show_page(menu.current_page)
@@ -267,7 +343,10 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
     @menus.button("\N{DOWN-POINTING SMALL RED TRIANGLE}")
     async def on_next_result(self, payload):
         # don't run off the end
-        if self._source._current_entry + 2 + self.current_page * self._source.per_page > self._source._total_results:
+        if (
+            self._source._current_entry + 2 + self.current_page * self._source.per_page
+            > self._source._total_results
+        ):
             return
         self._source._current_entry += 1
         page_offset = 0
@@ -329,8 +408,12 @@ class SearchMenuPages(menus.MenuPages, inherit_buttons=False):
         current_entry = current_page * per_page + self._source._current_entry
         if self._source._show_images:
             if not self._max_buttons_added:
-                for i, emoji in enumerate(ENTRY_EMOJIS[:8], start=self._source.per_page):
-                    await self.add_button(menus.Button(emoji, self.show_entry), react=True)
+                for i, emoji in enumerate(
+                    ENTRY_EMOJIS[:8], start=self._source.per_page
+                ):
+                    await self.add_button(
+                        menus.Button(emoji, self.show_entry), react=True
+                    )
                 self._max_buttons_added = True
             self._source._show_images = False
             self._original_per_page = self._source.per_page

@@ -14,7 +14,11 @@ from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
 
-LISTEN_VALUE = { True: "enabled in channels and threads", False: "disabled", None: "enabled in threads only" }
+LISTEN_VALUE = {
+    True: "enabled in channels and threads",
+    False: "disabled",
+    None: "enabled in threads only",
+}
 
 
 class CommandsInat(INatEmbeds, MixinMeta):
@@ -316,7 +320,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         msg = await ctx.send(
             embed=make_embed(title="Test", description="Reactions test.")
         )
-        if not ctx.guild or ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+        if (
+            not ctx.guild
+            or ctx.channel.permissions_for(ctx.guild.me).read_message_history
+        ):
             start_adding_reactions(msg, ["\N{THREE BUTTON MOUSE}"])
 
     @inat_set.command(name="bot_prefixes")
@@ -399,7 +406,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.command(name="inactive_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def set_inactive_role(self, ctx, inactive_role: Optional[Union[discord.Role, str]]):
+    async def set_inactive_role(
+        self, ctx, inactive_role: Optional[Union[discord.Role, str]]
+    ):
         """Set server inactive role.
 
         To unset the inactive role: `[p]inat set inactive_role none`
@@ -411,7 +420,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.command(name="active_role")
     @checks.admin_or_permissions(manage_roles=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def set_active_role(self, ctx, active_role: Optional[Union[discord.Role, str]]):
+    async def set_active_role(
+        self, ctx, active_role: Optional[Union[discord.Role, str]]
+    ):
         """Set server active role.
 
         To unset the active role: `[p]inat set active_role none`
@@ -446,7 +457,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """
         value = await self._set_role(ctx, "manage_projects_role", manage_projects_role)
         if value:
-            await ctx.send(embed=make_embed(description=f"Manage projects role: {value}"))
+            await ctx.send(
+                embed=make_embed(description=f"Manage projects role: {value}")
+            )
 
     @inat_set.command(name="manage_users_role")
     @checks.admin_or_permissions(manage_roles=True)
@@ -617,7 +630,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
                             raise LookupError(f"Channel not found: {channel_id}")
                 else:
                     channel = ctx.channel
-                if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
+                if (
+                    ctx.guild
+                    and not ctx.channel.permissions_for(
+                        ctx.guild.me
+                    ).read_message_history
+                ):
                     raise LookupError(f"No permission to read: {message_id}")
                 message = await channel.fetch_message(message_id)
             else:
@@ -625,11 +643,16 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 if ref:
                     message = ref.cached_message
                     if not message:
-                        if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
-                            raise LookupError(f"No permission to read: {ref.message_id}")
-                        message = await ctx.channel.fetch_message(
-                            ref.message_id
-                        )
+                        if (
+                            ctx.guild
+                            and not ctx.channel.permissions_for(
+                                ctx.guild.me
+                            ).read_message_history
+                        ):
+                            raise LookupError(
+                                f"No permission to read: {ref.message_id}"
+                            )
+                        message = await ctx.channel.fetch_message(ref.message_id)
                 else:
                     await ctx.send_help()
                     return

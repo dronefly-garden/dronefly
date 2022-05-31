@@ -52,7 +52,9 @@ class CommandsMap(INatEmbeds, MixinMeta):
             # and either use it directly or otherwise share code instead of duplicating
             # most of it here.
             if query_response.taxon:
-                query_title = "Map of " + format_taxon_name(query_response.taxon, with_term=True)
+                query_title = "Map of " + format_taxon_name(
+                    query_response.taxon, with_term=True
+                )
             else:
                 query_title = "Map of observations"
             if query_response.user:

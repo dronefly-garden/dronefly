@@ -25,8 +25,15 @@ class TaxonReplyConverter:
             msg = ref.cached_message
             if not msg:
                 # See comment below for why the user won't see this message with our current approach:
-                if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
-                    raise BadArgument("I need Read Message History permission to read that message.")
+                if (
+                    ctx.guild
+                    and not ctx.channel.permissions_for(
+                        ctx.guild.me
+                    ).read_message_history
+                ):
+                    raise BadArgument(
+                        "I need Read Message History permission to read that message."
+                    )
                 msg = await ctx.channel.fetch_message(ref.message_id)
             if msg and msg.embeds:
                 inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
