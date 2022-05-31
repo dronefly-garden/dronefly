@@ -1332,6 +1332,7 @@ class INatEmbeds(MixinMeta):
 
     async def send_obs_embed(self, ctx, embed, obs, **reaction_params):
         """Send observation embed and sound."""
+
         async def hybrid_send(ctx, **kwargs):
             """See d.py /discord/ext/commands/context.py send()"""
             if ctx.interaction is None:

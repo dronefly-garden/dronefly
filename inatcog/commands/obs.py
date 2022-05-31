@@ -122,7 +122,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
-    @obs.command(name='count')
+    @obs.command(name="count")
     async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Count matching observations."""
         if ctx.interaction:
@@ -131,12 +131,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await ctx.typing()
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
-    @obs.command(name='map')
+    @obs.command(name="map")
     async def obs_map(self, ctx, *, query: NaturalQueryConverter):
         """Show map of observations."""
         await (self.bot.get_command("map obs")(ctx, query=query))
 
-    @obs.command(name='maverick')
+    @obs.command(name="maverick")
     async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Count maverick observations."""
         if ctx.interaction:
@@ -145,7 +145,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await ctx.typing()
         await (self.bot.get_command("tabulate maverick")(ctx, query=query))
 
-    @obs.command(name='search')
+    @obs.command(name="search")
     async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Search for matching observations."""
         if ctx.interaction:
@@ -177,16 +177,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await ctx.send_help()
 
     @top.command(name="identifiers", aliases=["id", "ids"])
-    async def top_identifiers(
-        self, ctx, *, query: Optional[TaxonReplyConverter]
-    ):
+    async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @top.command(name="observers", aliases=["obs"])
-    async def top_observers(
-        self, ctx, *, query: Optional[TaxonReplyConverter]
-    ):
+    async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
 

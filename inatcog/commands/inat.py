@@ -27,7 +27,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.hybrid_group()
     async def describe(self, ctx):
         """Describe iNat features, terms, and syntax.
-        
+
         Note: Each subcommand provides a help page. All of the `[p]describe` subcommands are also aliased as hidden commands, e.g. `[p]cheatsheet` is a shorter way to type `[p]describe cheatsheet`, etc."""
 
     @describe.command(name="autoobs")
@@ -51,7 +51,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="autoobs", hidden=True)
     async def topic_autoobs(self, ctx):
         """Convenient alias for 'describe autoobs' message command."""
-        await ctx.send_help(self.bot.get_command('describe autoobs'))
+        await ctx.send_help(self.bot.get_command("describe autoobs"))
 
     @describe.command(name="cheatsheet", aliases=["commands"])
     async def describe_cheatsheet(self, ctx):
@@ -83,7 +83,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="cheatsheet", aliases=["commands"], hidden=True)
     async def topic_cheatsheet(self, ctx):
         """Convenient alias for 'describe cheatsheet' message command."""
-        await ctx.send_help(self.bot.get_command('describe cheatsheet'))
+        await ctx.send_help(self.bot.get_command("describe cheatsheet"))
 
     @describe.command(name="dates", aliases=["date"])
     async def describe_dates(self, ctx):
@@ -127,7 +127,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="dates", aliases=["date"], hidden=True)
     async def topic_dates(self, ctx):
         """Convenient alias for 'describe dates' message command."""
-        await ctx.send_help(self.bot.get_command('describe dates'))
+        await ctx.send_help(self.bot.get_command("describe dates"))
 
     @describe.command(name="dot_taxon")
     async def describe_dot_taxon(self, ctx):
@@ -162,7 +162,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="dot_taxon", hidden=True)
     async def topic_dot_taxon(self, ctx):
         """Convenient alias for 'describe dot_taxon' message command."""
-        await ctx.send_help(self.bot.get_command('describe dot_taxon'))
+        await ctx.send_help(self.bot.get_command("describe dot_taxon"))
 
     @describe.command(name="macros", aliases=["macro"])
     async def describe_macros(self, ctx):
@@ -190,7 +190,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="macros", aliases=["macro"], hidden=True)
     async def topic_macros(self, ctx):
         """Convenient alias for 'describe macros' message command."""
-        await ctx.send_help(self.bot.get_command('describe macros'))
+        await ctx.send_help(self.bot.get_command("describe macros"))
 
     @describe.command(name="groups", aliases=["group"])
     async def describe_groups(self, ctx):
@@ -224,7 +224,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="groups", aliases=["group"], hidden=True)
     async def topic_groups(self, ctx):
         """Convenient alias for 'describe groups' message command."""
-        await ctx.send_help(self.bot.get_command('describe groups'))
+        await ctx.send_help(self.bot.get_command("describe groups"))
 
     @describe.command(name="query", aliases=["queries"])
     async def describe_query(self, ctx):
@@ -262,7 +262,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="query", aliases=["queries"], hidden=True)
     async def topic_query(self, ctx):
         """Convenient alias for 'describe query' message command."""
-        await ctx.send_help(self.bot.get_command('describe query'))
+        await ctx.send_help(self.bot.get_command("describe query"))
 
     @describe.command(name="advanced")
     async def describe_advanced(self, ctx):
@@ -287,7 +287,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="advanced", hidden=True)
     async def topic_advanced(self, ctx):
         """Convenient alias for 'describe advanced' message command."""
-        await ctx.send_help(self.bot.get_command('describe advanced'))
+        await ctx.send_help(self.bot.get_command("describe advanced"))
 
     @describe.command(name="taxon_query", aliases=["taxon_queries", "query_taxon"])
     async def describe_taxon_query(self, ctx):
@@ -316,10 +316,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="taxon_query", aliases=["taxon_queries", "query_taxon"], hidden=True)
+    @commands.command(
+        name="taxon_query", aliases=["taxon_queries", "query_taxon"], hidden=True
+    )
     async def topic_taxon_query(self, ctx):
         """Convenient alias for 'describe taxon_query' message command."""
-        await ctx.send_help(self.bot.get_command('describe taxon_query'))
+        await ctx.send_help(self.bot.get_command("describe taxon_query"))
 
     @describe.command(
         name="glossary", aliases=["term", "terms", "abbreviation", "abbreviations"]
@@ -337,10 +339,14 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="glossary", aliases=["term", "terms", "abbreviation", "abbreviations"], hidden=True)
+    @commands.command(
+        name="glossary",
+        aliases=["term", "terms", "abbreviation", "abbreviations"],
+        hidden=True,
+    )
     async def topic_glossary(self, ctx):
         """Convenient alias for 'describe glossary' message command."""
-        await ctx.send_help(self.bot.get_command('describe glossary'))
+        await ctx.send_help(self.bot.get_command("describe glossary"))
 
     @describe.command(name="reactions", aliases=["reaction"])
     async def describe_reactions(self, ctx):
@@ -361,7 +367,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @commands.command(name="reactions", aliases=["reaction"], hidden=True)
     async def topic_reaction(self, ctx):
         """Convenient alias for 'describe reactions' message command."""
-        await ctx.send_help(self.bot.get_command('describe reactions'))
+        await ctx.send_help(self.bot.get_command("describe reactions"))
 
     @commands.group()
     async def inat(self, ctx):

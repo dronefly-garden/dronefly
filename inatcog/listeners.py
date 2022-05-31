@@ -115,7 +115,13 @@ class Listeners(INatEmbeds, MixinMeta):
             if mat:
                 msg = None
                 ctx = PartialContext(
-                    self.bot, guild, channel, message.author, message, "msg dot_taxon", None
+                    self.bot,
+                    guild,
+                    channel,
+                    message.author,
+                    message,
+                    "msg dot_taxon",
+                    None,
                 )
                 try:
                     query = await NaturalQueryConverter.convert(ctx, mat["query"])
@@ -155,7 +161,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 message.author,
                 fake_command_message,
                 command,
-                None
+                None,
             )
             self.bot.dispatch("commandstats_action", ctx)
 
