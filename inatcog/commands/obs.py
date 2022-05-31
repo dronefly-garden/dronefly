@@ -65,8 +65,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 # TODO: Lifted from TaxonReplyConverter; don't know where this belongs yet.
                 msg = ref.cached_message
                 if not msg:
-                    if ctx.guild and not ctx.channel.permissions_for(ctx.guild.me).read_message_history:
-                        raise LookupError("I need Read Message History permission to read that message.")
+                    if (
+                        ctx.guild
+                        and not ctx.channel.permissions_for(
+                            ctx.guild.me
+                        ).read_message_history
+                    ):
+                        raise LookupError(
+                            "I need Read Message History permission to read that message."
+                        )
                     msg = await ctx.channel.fetch_message(ref.message_id)
                 if msg and msg.embeds:
                     inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
@@ -110,7 +117,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=res.preview)
+                embed = await self.make_obs_embed(
+                    ctx, res.obs, res.url, preview=res.preview
+                )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name='count')
@@ -156,7 +165,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(ctx, res.obs, res.url, preview=number or 1)
+                embed = await self.make_obs_embed(
+                    ctx, res.obs, res.url, preview=number or 1
+                )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.hybrid_group(fallback="help")

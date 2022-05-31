@@ -3,16 +3,8 @@ import copy
 import re
 from typing import NamedTuple, Optional, Union
 
-from .base_classes import (
-    ConservationStatus,
-    EstablishmentMeans,
-    EstablishmentMeansPartial,
-    Taxon,
-    User,
-    Place,
-)
-from dronefly.core.models.taxon import RANK_LEVELS
-from dronefly.core.parsers.url import STATIC_URL_PAT
+from .base_classes import User, Place
+from dronefly.core.models.taxon import RANK_LEVELS, Taxon
 from dronefly.core.query.query import TaxonQuery
 from .utils import obs_url_from_v1
 
@@ -27,71 +19,6 @@ TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
-
-
-def format_taxon_names(
-    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False, lang=None
-):
-    """Format names of taxa from matched records.
-
-    Parameters
-    ----------
-    rec: Taxon
-        A matched taxon record.
-    with_term: bool, optional
-        With non-common / non-name matching term in parentheses in place of common name.
-    names_format: str, optional
-        Format string for the name. Must contain exactly one %s.
-    max_len: int, optional
-        The maximum length of the return str, with ', and # more' appended if they
-        don't all fit within this length.
-    hierarchy: bool, optional
-        If specified, formats a hierarchy list of scientific names with
-        primary ranks bolded & starting on a new line, and delimited with
-        angle-brackets instead of commas.
-
-    Returns
-    -------
-    str
-        A delimited list of formatted taxon names.
-    """
-
-    delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
-
-    names = [
-        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
-    ]
-
-    def fit_names(names):
-        names_fit = []
-        # Account for space already used by format string (minus 2 for %s)
-        available_len = max_len - (len(names_format) - 2)
-
-        def more(count):
-            return "and %d more" % count
-
-        def formatted_len(name):
-            return sum(len(item) + len(delimiter) for item in names_fit) + len(name)
-
-        def overflow(name):
-            return formatted_len(name) > available_len
-
-        for name in names:
-            if overflow(name):
-                unprocessed = len(names) - len(names_fit)
-                while overflow(more(unprocessed)):
-                    unprocessed += 1
-                    del names_fit[-1]
-                names_fit.append(more(unprocessed))
-                break
-            else:
-                names_fit.append(name)
-        return names_fit
-
-    if max_len:
-        names = fit_names(names)
-
-    return names_format % delimiter.join(names)
 
 
 async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
@@ -112,102 +39,6 @@ async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
         means for means in full_taxon.listed_taxa if means.place.id == place_id
     )
     return next(find_means, establishment_means)
-
-
-def get_taxon_fields(record):
-    """Get Taxon from a JSON record.
-
-    Parameters
-    ----------
-    record: dict
-        The JSON record from /v1/taxa or /v1/taxa/autocomplete.
-
-    Returns
-    -------
-    Taxon
-        A Taxon object from the JSON record.
-    """
-
-    def make_means(means):
-        try:
-            return EstablishmentMeans.from_dict(means)
-        except KeyError:
-            pass
-
-    def make_means_partial(means):
-        try:
-            return EstablishmentMeansPartial.from_dict(means)
-        except KeyError:
-            pass
-
-    thumbnail = None
-    photo = record.get("default_photo")
-    if photo:
-        thumbnail = photo.get("square_url")
-        # Though default_photo only contains small versions of the image,
-        # the original can be obtained for self-hosted images via this
-        # transform on the thumbnail image:
-        if re.search(STATIC_URL_PAT, thumbnail):
-            image = re.sub("/square", "/original", thumbnail)
-            attribution = photo.get("attribution")
-        else:
-            # For externally hosted default images (e.g. Flickr), only full records
-            # retrieved via id# contain taxon_photos.
-            # - See make_image_embed (inat_embeds.py) which does the extra API call
-            #   to fetch the full-quality photo.
-            taxon_photos = record.get("taxon_photos")
-            if taxon_photos:
-                image = taxon_photos[0]["photo"]["original_url"]
-                attribution = taxon_photos[0]["photo"]["attribution"]
-            else:
-                image = None
-                attribution = None
-    else:
-        thumbnail = None
-        image = None
-        attribution = None
-    taxon_id = record["id"] if "id" in record else record["taxon_id"]
-    ancestors = record.get("ancestors") or []
-    ancestor_ranks = (
-        ["stateofmatter"] + [ancestor["rank"] for ancestor in ancestors]
-        if ancestors
-        else []
-    )
-    listed_taxa_raw = record.get("listed_taxa")
-    if listed_taxa_raw:
-        listed_taxa = [make_means(means) for means in listed_taxa_raw]
-    else:
-        listed_taxa = []
-    establishment_means_raw = record.get("establishment_means")
-    if establishment_means_raw:
-        establishment_means = make_means_partial(establishment_means_raw)
-    else:
-        establishment_means = None
-    conservation_status_raw = record.get("conservation_status")
-    if conservation_status_raw:
-        conservation_status = ConservationStatus.from_dict(conservation_status_raw)
-    else:
-        conservation_status = None
-    preferred_common_name = record.get("preferred_common_name")
-    taxon = Taxon(
-        name=record["name"],
-        id=taxon_id,
-        matched_term=record.get("matched_term") or preferred_common_name,
-        rank=record["rank"],
-        ancestor_ids=record["ancestor_ids"],
-        observations_count=record["observations_count"],
-        ancestor_ranks=ancestor_ranks,
-        is_active=record["is_active"],
-        listed_taxa=listed_taxa,
-        names=record.get("names"),
-        preferred_common_name=preferred_common_name,
-        thumbnail=thumbnail,
-        image=image,
-        image_attribution=attribution,
-        establishment_means=establishment_means,
-        conservation_status=conservation_status,
-    )
-    return taxon
 
 
 class NameMatch(NamedTuple):
@@ -507,4 +338,4 @@ async def format_user_taxon_counts(
 async def get_taxon(cog, taxon_id, **kwargs):
     """Get taxon by id."""
     results = (await cog.api.get_taxa(taxon_id, **kwargs))["results"]
-    return get_taxon_fields(results[0]) if results else None
+    return Taxon.from_json(results[0]) if results else None

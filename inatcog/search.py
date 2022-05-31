@@ -1,8 +1,10 @@
 """Module to search iNat site."""
 
+from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.models.taxon import Taxon
+
 from .base_classes import Place, WWW_BASE_URL, User
 from .projects import Project
-from .taxa import get_taxon_fields
 
 
 def get_place(result):
@@ -27,18 +29,18 @@ def get_user(result):
 
 def get_taxon(result):
     """Get taxon result (v1/search)."""
-    taxon = get_taxon_fields(result.get("record"))
+    taxon = Taxon.from_json(result.get("record"))
     return (
-        f":green_circle: [{taxon.format_name(with_term=True)}]"
+        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.id})"
     )
 
 
 def get_taxon2(result):
     """Get taxon result (/v1/taxa)."""
-    taxon = get_taxon_fields(result)
+    taxon = Taxon.from_json(result.get("record"))
     return (
-        f":green_circle: [{taxon.format_name(with_term=True)}]"
+        f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.id})"
     )
 

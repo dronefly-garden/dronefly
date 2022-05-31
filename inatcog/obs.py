@@ -3,12 +3,12 @@ import datetime as dt
 from operator import itemgetter
 import re
 
+from dronefly.core.models.taxon import Taxon
 from dronefly.core.parsers.url import PAT_OBS_LINK
 
 from .base_classes import WWW_BASE_URL, Obs, User
 from .photos import Photo
 from .sounds import Sound
-from .taxa import get_taxon_fields
 
 
 def get_obs_fields(obs):
@@ -53,14 +53,14 @@ def get_obs_fields(obs):
 
     obs_taxon = obs.get("taxon")
     if obs_taxon:
-        taxon = get_taxon_fields(obs_taxon)
+        taxon = Taxon.from_json(obs_taxon)
     else:
         taxon = None
     obs_community_taxon = obs.get("community_taxon")
     idents_count = idents_agree = 0
     if obs_community_taxon:
         (idents_count, idents_agree) = count_community_id(obs, obs_community_taxon)
-        community_taxon = get_taxon_fields(obs_community_taxon)
+        community_taxon = Taxon.from_json(obs_community_taxon)
     else:
         idents_count = obs.get("identifications_count")
         community_taxon = None

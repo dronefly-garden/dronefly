@@ -4,6 +4,10 @@ import re
 import textwrap
 from typing import Optional
 
+from dronefly.core.formatters.generic import (
+    format_taxon_name,
+    format_taxon_establishment_means,
+)
 from dronefly.core.models.taxon import PLANTAE_ID
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -77,7 +81,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
         lang = await self.get_lang(ctx)
-        full_name = taxon.format_name(lang=lang)
+        full_name = format_taxon_name(taxon, lang=lang)
         if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
             await ctx.send(f"{full_name} is not in Plantae")
             return
@@ -103,7 +107,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         taxon = query_response.taxon
         taxon_name = taxon.name.replace(" ", "+")
-        name = taxon.format_name(with_common=False)
+        name = format_taxon_name(taxon, with_common=False)
         common = (
             f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
         )
@@ -144,7 +148,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
         taxon = query_response.taxon
         lang = await self.get_lang(ctx)
-        title = taxon.format_name(with_term=True, lang=lang)
+        title = format_taxon_name(taxon, with_term=True, lang=lang)
         url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
         full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"
@@ -155,9 +159,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             )
             means = next(find_means, full_taxon.establishment_means)
             if means:
-                description = (
-                    f"{means.emoji()}{means.description()} ({means.list_link()})"
-                )
+                if means:
+                    description = format_taxon_establishment_means(
+                        means, all_means=True, list_title=True
+                    )
         except AttributeError:
             pass
         await ctx.send(embed=make_embed(title=title, url=url, description=description))

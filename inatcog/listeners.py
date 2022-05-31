@@ -68,7 +68,10 @@ class Listeners(INatEmbeds, MixinMeta):
                 return
             guild_config = self.config.guild(guild)
             server_listen_scope = await guild_config.listen()
-            if server_listen_scope is False or (server_listen_scope is None and not isinstance(message.channel, discord.Thread)):
+            if server_listen_scope is False or (
+                server_listen_scope is None
+                and not isinstance(message.channel, discord.Thread)
+            ):
                 return
 
             # - on_message_without_command only ignores bot prefixes for this instance
@@ -245,7 +248,9 @@ class Listeners(INatEmbeds, MixinMeta):
             )
         except StopIteration as err:  # too old; have to fetch it
             if guild_id and not channel.permissions_for(guild.me).read_message_history:
-                raise ValueError("Message can't be read without read_message_history permission.") from err
+                raise ValueError(
+                    "Message can't be read without read_message_history permission."
+                ) from err
             try:
                 message = await channel.fetch_message(payload.message_id)
             except discord.errors.NotFound:

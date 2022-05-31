@@ -4,6 +4,7 @@ import re
 from typing import Optional, Union
 import urllib.parse
 
+from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
     PAT_PLACE_LINK,
@@ -25,6 +26,7 @@ from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource
 from ..obs import get_obs_fields
 from ..utils import obs_url_from_v1
+
 
 class CommandsSearch(INatEmbeds, MixinMeta):
     """Mixin providing search command group."""
@@ -80,7 +82,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     embed = await self.make_obs_embed(
                         ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
                     )
-                    await self.send_obs_embed(ctx, embed, obs, timeout=10, with_keep=True)
+                    await self.send_obs_embed(
+                        ctx, embed, obs, timeout=10, with_keep=True
+                    )
                     return
                 await apologize(ctx, "Not found")
                 return
@@ -230,7 +234,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             # and either use it directly or otherwise share code instead of duplicating
             # most of it here.
             if query_response.taxon:
-                query_title = query_response.taxon.format_name(with_term=True)
+                query_title = format_taxon_name(query_response.taxon, with_term=True)
             else:
                 query_title = "Observations"
             if query_response.user:
@@ -327,7 +331,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             page = "\n".join(lines)
             return page
 
-        def format_embeds(results, total_results, per_api_page, per_embed_page, buttons):
+        def format_embeds(
+            results, total_results, per_api_page, per_embed_page, buttons
+        ):
             pages = []
             for group in grouper(results, per_embed_page):
                 page = format_page(buttons, group)
