@@ -12,6 +12,7 @@ import discord
 from discord import DMChannel, File
 from dronefly.core.formatters.generic import (
     RANK_LEVELS,
+    format_taxon_conservation_status,
     format_taxon_establishment_means,
     format_taxon_name,
 )
@@ -625,10 +626,10 @@ class INatEmbeds(MixinMeta):
                 summary += f"Taxon: {taxon_str}\n"
             if taxon_summary:
                 means = taxon_summary.listed_taxon
-                # FIXME: make & use core formatter for conservation status
-                status = None # taxon_summary.conservation_status
+                status = taxon_summary.conservation_status
                 if status:
-                    summary += f"Conservation Status: {status.description()} ({status.link()})\n"
+                    formatted_status = format_taxon_conservation_status(status)
+                    summary += f"Conservation Status: {formatted_status}\n"
                 if means:
                     summary += f"{format_taxon_establishment_means(means)}\n"
             login = ""
@@ -711,14 +712,9 @@ class INatEmbeds(MixinMeta):
                 status_link = ""
                 if taxon_summary:
                     means = taxon_summary.listed_taxon
-                    # FIXME: make & use core formatter for conservation status
-                    status = None # taxon_summary.conservation_status
+                    status = taxon_summary.conservation_status
                     if status:
-                        status_link = (
-                            f"\nConservation Status: {status.description()} "
-                            f"({status.link()})"
-                        )
-                        status_link = f"\n{status.description()} ({status.link()})"
+                        status_link = f"\nConservation Status: {format_taxon_conservation_status(status)}"
                     if means:
                         means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
@@ -756,8 +752,7 @@ class INatEmbeds(MixinMeta):
                 listed = taxon_summary.listed_taxon
                 if listed:
                     means = listed.establishment_means
-                # FIXME: make & use core formatter for conservation status
-                # status = taxon_summary.conservation_status
+                status = taxon_summary.conservation_status
             if means or status:
                 return taxon_summary
             return None
@@ -985,19 +980,8 @@ class INatEmbeds(MixinMeta):
         ):
             obs_fmt = f"[{obs_cnt:,}]({obs_url})"
             if status:
-                # inflect statuses with single digits in them correctly
-                first_word = re.sub(
-                    r"[0-9]",
-                    " {0} ".format(p.number_to_words(r"\1")),
-                    status.description(),
-                ).split()[0]
-                article = p.a(first_word).split()[0]
-                status = (
-                    "[{}]({})".format(status.description(), status.url)
-                    if status.url
-                    else status.description()
-                )
-                descriptor = " ".join([article, status, rec.rank])
+                status_link = format_taxon_conservation_status(status, brief=True, inflect=True)
+                descriptor = " ".join([status_link, rec.rank])
             else:
                 descriptor = p.a(rec.rank)
             _observations = []
@@ -1032,12 +1016,12 @@ class INatEmbeds(MixinMeta):
             await self.api.get_taxa(taxon.id, preferred_place_id=preferred_place_id)
         )["results"][0]
         full_taxon = Taxon.from_json(full_record)
-        # FIXME: switch to core formatter & re-enable
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
         if means:
             means_fmtd = format_taxon_establishment_means(means)
-        # FIXME: switch to core formatter & re-enable
-        status = None # full_taxon.conservation_status
+        else:
+            means_fmtd = None
+        status = full_taxon.conservation_status
         # Workaround for neither conservation_status record has both status_name and url:
         # - /v1/taxa/autocomplete result has 'threatened' as status_name for
         #   status 't' polar bear, but no URL
