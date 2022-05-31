@@ -37,10 +37,11 @@ import html2markdown
 from pyinaturalist import (
     add_project_users,
     delete_project_users,
+    get_taxa,
     get_taxa_autocomplete,
+    get_taxa_by_id,
     get_projects_by_id,
 )
-from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 from .common import LOG
 
@@ -161,7 +162,7 @@ class INatAPI:
     # refresh_cache: Boolean
     # - Unlike places and projects which change infrequently, we usually want the
     #   latest, uncached taxon record.
-    async def get_taxa(self, *args, refresh_cache=True, **kwargs):
+    async def get_taxa(self, ctx, *args, refresh_cache=True, **kwargs):
         """Query API for taxa matching parameters.
 
         Parameters
@@ -186,34 +187,32 @@ class INatAPI:
               matching the iNat web taxon lookup experience.
         """
 
-        # Select endpoint based on call signature:
-        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-        endpoint = (
-            "/v1/taxa/autocomplete"
-            if "q" in kwargs and "page" not in kwargs
-            else "/v1/taxa"
-        )
-        id_arg = f"/{args[0]}" if args else ""
-        full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
+        # Add default kwargs:
         _kwargs = {
             "all_names": "true",
             **kwargs,
         }
-
-        # Cache lookup by id#, as those should be stable.
-        # - note: we could support splitting a list of id#s and caching each
-        #   one, but currently we don't make use of that call, so only cache
-        #   when a single ID is specified
-        if args and (isinstance(args[0], int) or args[0].isnumeric()):
-            taxon_id = int(args[0])
-            if refresh_cache or taxon_id not in self.taxa_cache:
-                taxon = await self._get_rate_limited(full_url, **_kwargs)
-                if taxon:
-                    self.taxa_cache[taxon_id] = taxon
-            return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
-
-        # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **_kwargs)
+        # Select endpoint based on call signature:
+        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
+        if "q" in kwargs and "page" not in kwargs:
+            return await self.get_taxa_autocomplete(ctx, **_kwargs)
+        else:
+            # Cache lookup by id#, as those should be stable.
+            # - note: we could support splitting a list of id#s and caching each
+            #   one, but currently we don't make use of that call, so only cache
+            #   when a single ID is specified
+            if args:
+                if isinstance(args[0], int) or args[0].isnumeric():
+                    taxon_id = int(args[0])
+                    if refresh_cache or taxon_id not in self.taxa_cache:
+                        taxon = await self.get_taxa_by_id(ctx, *args, **_kwargs)
+                        if taxon:
+                            self.taxa_cache[taxon_id] = taxon
+                    return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
+                else:
+                    return await self.get_taxa_by_id(ctx, args[0], **_kwargs)
+            else:
+                return await self.get_taxa_pyinat(ctx, **_kwargs)
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
@@ -386,6 +385,16 @@ class INatAPI:
         """Get taxa using autocomplete."""
         # - TODO: support user settings for home place, language
         return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
+
+    async def get_taxa_by_id(self, ctx, taxon_id, **kwargs):
+        """Get taxa by id."""
+        # - TODO: support user settings for home place, language
+        return await self._pyinaturalist_endpoint(get_taxa_by_id, ctx, taxon_id, **kwargs)
+
+    async def get_taxa_pyinat(self, ctx, **kwargs):
+        """Get taxa."""
+        # - TODO: support user settings for home place, language
+        return await self._pyinaturalist_endpoint(get_taxa, ctx, **kwargs)
 
     # end of pyinaturalist shims
 

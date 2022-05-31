@@ -1,5 +1,5 @@
 """Module to query iNat taxa."""
-from redbot.core.commands import BadArgument
+from redbot.core.commands import BadArgument, Context
 from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS, Taxon
 from dronefly.core.query.query import Query, TaxonQuery
@@ -14,7 +14,7 @@ class INatTaxonQuery:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_taxon_ancestor(self, taxon, rank):
+    async def get_taxon_ancestor(self, ctx: Context, taxon, rank):
         """Get Taxon ancestor for specified rank from a Taxon object.
 
         Parameters
@@ -32,12 +32,13 @@ class INatTaxonQuery:
         rank = RANK_EQUIVALENTS.get(rank) or rank
         if rank in taxon.ancestor_ranks:
             rank_index = taxon.ancestor_ranks.index(rank)
-            ancestor = await get_taxon(self.cog, taxon.ancestor_ids[rank_index])
+            ancestor = await get_taxon(self.cog, ctx, taxon.ancestor_ids[rank_index])
             return ancestor
         return None
 
     async def maybe_match_taxon(
         self,
+        ctx: Context,
         taxon_query: TaxonQuery,
         ancestor_id: int = None,
         preferred_place_id: int = None,
@@ -55,7 +56,7 @@ class INatTaxonQuery:
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if taxon_query.taxon_id:
-            response = await self.cog.api.get_taxa(taxon_query.taxon_id, **kwargs)
+            response = await self.cog.api.get_taxa(ctx, taxon_query.taxon_id, **kwargs)
             if response:
                 records = response.get("results")
             if records:
@@ -76,7 +77,7 @@ class INatTaxonQuery:
                         records_read = 0
                     kwargs["page"] = page
                     kwargs["per_page"] = 200
-                response = await self.cog.api.get_taxa(**kwargs)
+                response = await self.cog.api.get_taxa(ctx, **kwargs)
                 if response:
                     total_records = response.get("total_results") or 0
                     records = response.get("results")
@@ -108,6 +109,7 @@ class INatTaxonQuery:
 
     async def maybe_match_taxon_compound(
         self,
+        ctx: Context,
         query: Query,
         preferred_place_id=None,
         scientific_name=False,
@@ -122,6 +124,7 @@ class INatTaxonQuery:
             ancestor = None
             try:
                 ancestor = await self.maybe_match_taxon(
+                    ctx,
                     query.ancestor,
                     preferred_place_id=preferred_place_id,
                     scientific_name=scientific_name,
@@ -143,6 +146,7 @@ class INatTaxonQuery:
                                 )
                             )
                     taxon = await self.maybe_match_taxon(
+                        ctx,
                         query.main,
                         ancestor_id=ancestor.id,
                         preferred_place_id=preferred_place_id,
@@ -161,6 +165,7 @@ class INatTaxonQuery:
                 raise LookupError(reason) from err
         else:
             taxon = await self.maybe_match_taxon(
+                ctx,
                 query.main,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,

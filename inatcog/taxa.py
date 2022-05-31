@@ -3,9 +3,11 @@ import copy
 import re
 from typing import NamedTuple, Optional, Union
 
-from .base_classes import User, Place
 from dronefly.core.models.taxon import RANK_LEVELS, Taxon
 from dronefly.core.query.query import TaxonQuery
+from redbot.core.commands import Cog, Context
+
+from .base_classes import User, Place
 from .utils import obs_url_from_v1
 
 
@@ -21,16 +23,16 @@ TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
 
 
-async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
+async def get_taxon_preferred_establishment_means(cog: Cog, ctx, taxon):
     """Get the preferred establishment means for the taxon."""
     try:
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
-        home = await bot.get_home(ctx)
+        home = await cog.get_home(ctx)
         full_taxon = (
             taxon
             if taxon.listed_taxa
-            else await get_taxon(bot, taxon.id, preferred_place_id=int(home))
+            else await get_taxon(cog, ctx, taxon.id, preferred_place_id=int(home))
         )
     except (AttributeError, LookupError):
         return None
@@ -335,7 +337,7 @@ async def format_user_taxon_counts(
     return ""
 
 
-async def get_taxon(cog, taxon_id, **kwargs):
+async def get_taxon(cog: Cog, ctx: Context, taxon_id, **kwargs):
     """Get taxon by id."""
-    results = (await cog.api.get_taxa(taxon_id, **kwargs))["results"]
+    results = (await cog.api.get_taxa(ctx, taxon_id, **kwargs))["results"]
     return Taxon.from_json(results[0]) if results else None
