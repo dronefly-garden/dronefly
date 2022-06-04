@@ -151,7 +151,7 @@ class Listeners(INatEmbeds, MixinMeta):
     ):
         """Central handler for member reactions."""
 
-        def dispatch_commandstats(message, command):
+        def fake_command_context(message, command):
             partial_author = PartialAuthor(bot=False)
             fake_command_message = PartialMessage(partial_author, message.guild)
             ctx = PartialContext(
@@ -163,6 +163,9 @@ class Listeners(INatEmbeds, MixinMeta):
                 command,
                 None,
             )
+            return ctx
+
+        def dispatch_commandstats(ctx):
             self.bot.dispatch("commandstats_action", ctx)
 
         if not message.embeds or not message.reactions:
@@ -184,25 +187,34 @@ class Listeners(INatEmbeds, MixinMeta):
 
         try:
             if str(emoji) == REACTION_EMOJI["taxonomy"]:
-                await self.maybe_update_taxonomy(msg)
-                dispatch_commandstats(message, "react taxonomy")
+                command = "react taxonomy"
+                # TODO: DRY up with a context manager:
+                ctx = fake_command_context(message, command)
+                await self.maybe_update_taxonomy(ctx, msg)
+                dispatch_commandstats(ctx)
             elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
-                    await self.maybe_update_user(msg, member=member, action=action)
-                    dispatch_commandstats(message, "react self")
+                    command = "react self"
+                    ctx = fake_command_context(message, command)
+                    await self.maybe_update_user(ctx, msg, member=member, action=action)
+                    dispatch_commandstats(ctx)
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member, None
                     )
                     await self.maybe_update_user_by_name(ctx, msg=msg, member=member)
-                    dispatch_commandstats(message, "react user")
+                    dispatch_commandstats(ctx)
             if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:
-                    await self.maybe_update_place(msg, member, action)
-                    dispatch_commandstats(message, "react home")
+                    command = "react home"
+                    ctx = fake_command_context(message, command)
+                    await self.maybe_update_place(ctx, msg, member, action)
+                    dispatch_commandstats(ctx)
                 elif str(emoji) == REACTION_EMOJI["place"]:
-                    await self.maybe_update_place_by_name(msg, member)
-                    dispatch_commandstats(message, "react place")
+                    command = "react place"
+                    ctx = fake_command_context(message, command)
+                    await self.maybe_update_place_by_name(ctx, msg, member)
+                    dispatch_commandstats(ctx)
         except NoRoomInDisplay as err:
             if message.id not in self.predicate_locks:
                 self.predicate_locks[message.id] = asyncio.Lock()

@@ -150,7 +150,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         lang = await self.get_lang(ctx)
         title = format_taxon_name(taxon, with_term=True, lang=lang)
         url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
-        full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)
+        full_taxon = await get_taxon(self, ctx, taxon.id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"
         try:
             place_id = full_taxon.establishment_means.place.id

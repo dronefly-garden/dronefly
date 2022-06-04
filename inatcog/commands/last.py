@@ -154,7 +154,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if last.obs.taxon.rank == rank_keyword:
                 await self.send_embed_for_taxon(ctx, last.obs.taxon)
             else:
-                full_record = await get_taxon(self, last.obs.taxon.id)
+                full_record = await get_taxon(self, ctx, last.obs.taxon.id)
                 ancestor = await self.taxon_query.get_taxon_ancestor(
                     full_record, rank_keyword
                 )
@@ -234,9 +234,9 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last.taxon.rank == rank_keyword:
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
-            full_record = await get_taxon(self, last.taxon.id)
+            full_record = await get_taxon(self, ctx, last.taxon.id)
             ancestor = await self.taxon_query.get_taxon_ancestor(
-                full_record, rank_keyword
+                ctx, full_record, rank_keyword
             )
             if ancestor:
                 await self.send_embed_for_taxon(ctx, ancestor)

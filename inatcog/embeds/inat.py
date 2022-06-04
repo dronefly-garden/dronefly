@@ -28,7 +28,7 @@ from dronefly.core.parsers.url import (
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 from pyinaturalist.models import IconPhoto, TaxonSummary
-from redbot.core.commands import BadArgument
+from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
@@ -591,6 +591,7 @@ class INatEmbeds(MixinMeta):
 
     async def format_obs(
         self,
+        ctx,
         obs,
         with_description=True,
         with_link=False,
@@ -736,7 +737,7 @@ class INatEmbeds(MixinMeta):
                         means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
                     community_taxon = await get_taxon(
-                        self, obs.community_taxon.id, refresh_cache=False
+                        self, ctx, obs.community_taxon.id, refresh_cache=False
                     )
                 else:
                     community_taxon = obs.community_taxon
@@ -777,7 +778,7 @@ class INatEmbeds(MixinMeta):
             return None
 
         if lang and obs.taxon:
-            taxon = await get_taxon(self, obs.taxon.id, refresh_cache=False)
+            taxon = await get_taxon(self, ctx, obs.taxon.id, refresh_cache=False)
         else:
             taxon = obs.taxon
         user = obs.user
@@ -850,7 +851,7 @@ class INatEmbeds(MixinMeta):
                 embed.url = url
             else:
                 lang = await self.get_lang(ctx)
-                embed.title, summary = await self.format_obs(obs, lang=lang)
+                embed.title, summary = await self.format_obs(ctx, obs, lang=lang)
                 if error:
                     summary += "\n" + error
                 embed.description = summary
@@ -892,6 +893,7 @@ class INatEmbeds(MixinMeta):
             if not common_ancestor_indices:
                 taxon = await get_taxon(
                     self,
+                    ctx,
                     TAXON_ID_LIFE,
                     preferred_place_id=preferred_place_id,
                     refresh_cache=False,
@@ -902,6 +904,7 @@ class INatEmbeds(MixinMeta):
                 ]
                 taxon = await get_taxon(
                     self,
+                    ctx,
                     common_ancestor_id,
                     preferred_place_id=preferred_place_id,
                     refresh_cache=False,
@@ -933,7 +936,7 @@ class INatEmbeds(MixinMeta):
                 #   the photo will be set from the full-quality original in
                 #   taxon_photos.
                 if not taxon.taxon_photos or len(taxon.taxon_photos) == 0:
-                    response = await self.api.get_taxa(taxon.id)
+                    response = await self.api.get_taxa(ctx, taxon.id)
                     try:
                         _taxon = Taxon.from_json(response["results"][0])
                     except (TypeError, KeyError, IndexError):
@@ -1034,7 +1037,7 @@ class INatEmbeds(MixinMeta):
         if place:
             preferred_place_id = place.place_id
         full_record = (
-            await self.api.get_taxa(taxon.id, preferred_place_id=preferred_place_id)
+            await self.api.get_taxa(ctx, taxon.id, preferred_place_id=preferred_place_id)
         )["results"][0]
         full_taxon = Taxon.from_json(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
@@ -1374,6 +1377,7 @@ class INatEmbeds(MixinMeta):
 
     async def maybe_update_user(
         self,
+        ctx,
         msg: discord.Message,
         action: str,
         member: Optional[discord.Member] = None,
@@ -1394,7 +1398,7 @@ class INatEmbeds(MixinMeta):
         counts_pat = r"(\n|^)\[[0-9, \(\)]+\]\(.*?\) " + inat_user.login
         inat_embed = msg.embeds[0]
         if inat_embed.taxon_id():
-            taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+            taxon = await get_taxon(self, ctx, inat_embed.taxon_id(), refresh_cache=False)
         else:
             taxon = None
         # Observed by count add/remove for taxon:
@@ -1402,6 +1406,7 @@ class INatEmbeds(MixinMeta):
 
     async def maybe_update_place(
         self,
+        ctx,
         msg: discord.Message,
         user: discord.Member,
         action: str,
@@ -1427,7 +1432,7 @@ class INatEmbeds(MixinMeta):
             update_place.display_name
         )
         if inat_embed.taxon_id():
-            taxon = await get_taxon(self, inat_embed.taxon_id(), refresh_cache=False)
+            taxon = await get_taxon(self, ctx, inat_embed.taxon_id(), refresh_cache=False)
         else:
             taxon = None
         await self.edit_place_totals_locked(
@@ -1513,10 +1518,10 @@ class INatEmbeds(MixinMeta):
                     await error_msg.delete()
                 return
 
-            await self.maybe_update_user(msg, user=_user, action="toggle")
+            await self.maybe_update_user(ctx, msg, user=_user, action="toggle")
 
     async def maybe_update_place_by_name(
-        self, msg: discord.Message, user: discord.Member
+        self, ctx, msg: discord.Message, user: discord.Member
     ):
         """Prompt user for place by name and update the embed if provided & valid."""
         try:
@@ -1541,9 +1546,9 @@ class INatEmbeds(MixinMeta):
                     await error_msg.delete()
                 return
 
-            await self.maybe_update_place(msg, user, "toggle", place)
+            await self.maybe_update_place(ctx, msg, user, "toggle", place)
 
-    async def maybe_update_taxonomy(self, message):
+    async def maybe_update_taxonomy(self, ctx, message):
         """Update taxonomy in taxon embed, if applicable."""
         embeds = message.embeds
         inat_embed = embeds[0]
@@ -1551,7 +1556,7 @@ class INatEmbeds(MixinMeta):
         new_description = re.sub(TAXONOMY_PAT, "", description)
         if new_description == description:
             response = await self.api.get_taxa(
-                inat_embed.taxon_id(), refresh_cache=False
+                ctx, inat_embed.taxon_id(), refresh_cache=False
             )
             full_taxon = Taxon.from_json(response["results"][0])
             if full_taxon:

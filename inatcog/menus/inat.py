@@ -78,6 +78,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
     async def _format_obs(self, obs):
         # TODO: use core formatter for markdown-formatted individual observation
         formatted_obs = await self._cog.format_obs(
+            self._ctx,
             obs,
             with_description=False,
             with_link=True,

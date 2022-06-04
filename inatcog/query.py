@@ -117,6 +117,7 @@ class INatQuery:
             preferred_place_id = args["place"].place_id
         args["taxon"] = (
             await self.cog.taxon_query.maybe_match_taxon_compound(
+                ctx,
                 query,
                 preferred_place_id=preferred_place_id,
                 scientific_name=scientific_name,
