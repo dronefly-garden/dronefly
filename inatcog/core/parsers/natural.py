@@ -5,7 +5,6 @@ import shlex
 from redbot.core.commands import BadArgument
 
 from ...core.parsers.constants import ARGPARSE_ARGS, MACROS, REMAINING_ARGS
-from ...core.parsers.url import PAT_OBS_LINK
 from .unixlike import UnixlikeParser
 
 
@@ -14,9 +13,6 @@ class NaturalParser(UnixlikeParser):
 
     def parse(self, argument: str):
         """Parse natural language argument list."""
-        mat = re.search(PAT_OBS_LINK, argument)
-        if mat and mat["url"]:
-            return argument
         try:
             arg_normalized = re.sub(
                 r"((^| )(id|not|except)) ?by ", r"\2\3-by ", argument, re.I
