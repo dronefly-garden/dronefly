@@ -30,6 +30,8 @@ class NoExitParser(argparse.ArgumentParser):
 
 
 def _detect_terms_phrases_code_id(terms_and_phrases: list):
+    if not terms_and_phrases:
+        return None, None, None, None
     ungroup_phrases = re.sub("'", "\\'", " ".join(list(terms_and_phrases)))
     terms = list(re.sub("\\\\'", "'", term) for term in shlex.split(ungroup_phrases))
     phrases = [
@@ -90,7 +92,7 @@ class UnixlikeParser:
         if any(vars(vals).values()):
             main = None
             ancestor = None
-            if vals.main:
+            if vals.main or ranks:
                 terms, phrases, code, taxon_id = _detect_terms_phrases_code_id(
                     vals.main
                 )
@@ -103,18 +105,17 @@ class UnixlikeParser:
                         raise ValueError(
                             "Taxon IDs are unique. Retry without `in <taxon2>`."
                         )
-                if terms:
-                    main = TaxonQuery(
-                        taxon_id=taxon_id,
-                        terms=terms,
-                        phrases=phrases,
-                        ranks=ranks,
-                        code=code,
-                    )
+                main = TaxonQuery(
+                    taxon_id=taxon_id,
+                    terms=terms,
+                    phrases=phrases,
+                    ranks=ranks,
+                    code=code,
+                )
             if vals.ancestor:
-                if not vals.main:
+                if not main:
                     raise ValueError(
-                        "Missing `<taxon1>` for `<taxon1> in <taxon2>` search."
+                        "Missing `<ranks>` or `<taxon1>` for `in <taxon2>` search."
                     )
                 terms, phrases, code, taxon_id = _detect_terms_phrases_code_id(
                     vals.ancestor

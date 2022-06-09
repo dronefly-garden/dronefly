@@ -27,6 +27,10 @@ class TestUnixlikeParser:
             parser.parse("--in animals")
             assert re.match(r"Missing.*taxon", str(err), re.I)
 
+    def test_ancestor_with_ranks(self, parser):
+        parsed = parser.parse("--rank sp --in animals")
+        assert str(parsed) == "species in animals"
+
     def test_ancestor_with_main(self, parser):
         parsed = parser.parse("--of prunella --in animals")
         assert str(parsed) == "prunella in animals"
