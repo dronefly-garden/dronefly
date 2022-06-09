@@ -60,7 +60,8 @@ class INatTaxonQuery:
             if records:
                 taxon = match_taxon(taxon_query, list(map(get_taxon_fields, records)))
         else:
-            kwargs["q"] = " ".join(taxon_query.terms)
+            if taxon_query.terms:
+                kwargs["q"] = " ".join(taxon_query.terms)
             if taxon_query.ranks:
                 kwargs["rank"] = ",".join(taxon_query.ranks)
             if ancestor_id:

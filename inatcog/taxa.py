@@ -390,6 +390,8 @@ def score_match(
 
 def match_taxon(taxon_query: TaxonQuery, records, scientific_name=False, locale=None):
     """Match a single taxon for the given query among records returned by API."""
+    if taxon_query.ranks and not taxon_query.terms:
+        return records.get(0)
     pat_list = []
     all_terms = re.compile(r"^%s$" % re.escape(" ".join(taxon_query.terms)), re.I)
     if taxon_query.phrases:
