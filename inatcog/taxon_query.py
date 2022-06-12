@@ -62,7 +62,8 @@ class INatTaxonQuery:
             if records:
                 taxon = match_taxon(taxon_query, list(map(Taxon.from_json, records)))
         else:
-            kwargs["q"] = " ".join(taxon_query.terms)
+            if taxon_query.terms:
+                kwargs["q"] = " ".join(taxon_query.terms)
             if taxon_query.ranks:
                 kwargs["rank"] = ",".join(taxon_query.ranks)
             if ancestor_id:
@@ -159,7 +160,7 @@ class INatTaxonQuery:
                     "`from` (place) or `in prj` (project)?"
                 )
                 if ancestor:
-                    reason = f"{reason}\n\nAncestor taxon: {format_taxon_name(taxon, with_term=True)}"
+                    reason = f"{reason}\n\nAncestor taxon: {format_taxon_name(ancestor, with_term=True)}"
                 else:
                     reason = f"{reason}\n\nAncestor taxon not found."
                 raise LookupError(reason) from err
