@@ -196,3 +196,64 @@ class INatTaxonQuery:
             raise LookupError("No taxon found")
 
         return result
+
+    async def query_paginated_taxa(self, ctx, query):
+        """Query for one or more taxa and return paginator for matching taxa, if any.
+
+        Notes:
+        - In its original conception, this was used only for comma-delimited
+          lists of taxon queries for map & related, or a list of taxon ancestor
+          IDs. These had a small, definite number of elements (whatever the user
+          typed, or all the ancestors of a taxon), were de-duplicated, and
+          didn't need to be paginated.
+        - We want to go one step further here and return multiple taxa, whether or
+          not multiple were given as input:
+            - The return is then a paginator for all matching taxa.
+            - Which may be filtered in some fashion, e.g.
+                - All taxa matching the supplied name(s).
+                - For a given rank keyword.
+            - And if there are no filters, then just all results matching the
+              query.
+        - The "rank" filter is baked into maybe_match_taxon_compound (I think)
+          and needs to be pulled out of that.
+            - In fact, most of that relates to selecting "one best" match,
+              so really isn't needed here.
+        """
+        queries = query.split(",")
+
+        preferred_place_id = await self.cog.get_home(ctx)
+
+        async def get_taxon(query):
+            # TODO: extract from the following whatever logic applies
+            # to our taxon search and redo in a more modular way:
+            # - components:
+            #   - matchers (phrases, AOU codes, etc.)
+            #   - scorers (point values for exact / inexact, etc.)
+            #   - a filter (the `in` clause for parent taxon)
+            # - reassemble those components to implement the logic described
+            #   above, and especially the scorer has to be abandoned unless
+            #   the whole result set is fully enumerated (can't be done
+            #   efficiently with an arbitrary result set! might work for
+            #   single "root" taxon for `in` though)
+            return await self.cog.taxon_query.maybe_match_taxon_compound(
+                ctx,
+                query,
+                preferred_place_id=preferred_place_id,
+            )
+
+        # De-duplicate the query via dict:
+        taxa = {}
+        for query_str in queries:
+            try:
+                _query = await NaturalQueryConverter.convert(ctx, query_str)
+                taxon = await get_taxon(_query)
+                if taxon:
+                    taxa[str(taxon.id)] = taxon
+            except (BadArgument, LookupError):
+                pass
+
+        result = taxa.values()
+        if not result:
+            raise LookupError("No taxon found")
+
+        return result
