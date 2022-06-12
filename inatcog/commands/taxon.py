@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 import re
 import textwrap
-from typing import Optional
+from typing import List, Optional
 
 from dronefly.core.formatters.generic import (
     format_taxon_name,
@@ -29,13 +29,17 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
     @asynccontextmanager
-    async def _get_taxon_response(self, ctx, query: Optional[str]):
+    async def _get_taxon_response(self, ctx, query: Optional[str], ranks: Optional[List[str]] = None, **kwargs):
         """Yield a query_response for one or more taxa and related info."""
         query_response = None
         try:
             _query = await TaxonReplyConverter.convert(ctx, query)
+            if ranks:
+                _ranks = _query.main.ranks or []
+                _ranks.extend(ranks)
+                _query.main.ranks = _ranks
             self.check_taxon_query(ctx, _query)
-            query_response = await self.query.get(ctx, _query)
+            query_response = await self.query.get(ctx, _query, **kwargs)
         except EmptyArgument:
             await ctx.send_help()
         except (BadArgument, LookupError) as err:
@@ -63,71 +67,60 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command()
-    async def bonap(self, ctx, *, query: NaturalQueryConverter):
+    async def bonap(self, ctx, *, query: Optional[str]):
         """North American flora info from bonap.net."""
-        try:
-            self.check_taxon_query(ctx, query)
-            query_response = await self.query.get(ctx, query)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-
-        base_url = "http://bonap.net/MapGallery/County/"
-        maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
-        taxon = query_response.taxon
-        name = re.sub(r" ", "%20", taxon.name)
-        lang = await self.get_lang(ctx)
-        full_name = format_taxon_name(taxon, lang=lang)
-        if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
-            await ctx.send(f"{full_name} is not in Plantae")
-            return
-        if taxon.rank == "genus":
-            await ctx.send(
-                f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
-            )
-        elif taxon.rank == "species":
-            await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
-        else:
-            await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
-            return
-        await (self.bot.get_command("tabulate")(ctx, query=query))
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                base_url = "http://bonap.net/MapGallery/County/"
+                maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
+                taxon = query_response.taxon
+                name = re.sub(r" ", "%20", taxon.name)
+                lang = await self.get_lang(ctx)
+                full_name = format_taxon_name(taxon, lang=lang)
+                if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
+                    await ctx.send(f"{full_name} is not in Plantae")
+                    return
+                if taxon.rank == "genus":
+                    await ctx.send(
+                        f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
+                    )
+                elif taxon.rank == "species":
+                    await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
+                else:
+                    await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+                    return
+                await (self.bot.get_command("tabulate")(ctx, query=query))
 
     async def _bold4(self, ctx, query):
-        try:
-            _query = query or await TaxonReplyConverter.convert(ctx, "")
-            self.check_taxon_query(ctx, _query)
-            query_response = await self.query.get(ctx, _query)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-
-        taxon = query_response.taxon
-        taxon_name = taxon.name.replace(" ", "+")
-        name = format_taxon_name(taxon, with_common=False)
-        common = (
-            f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
-        )
-        taxon_id = taxon.id
-        taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
-        embed = make_embed(
-            title=f"BOLD v4: {name}",
-            url=f"{BOLD_BASE_URL}?searchtype=records&query={taxon_name}",
-            description=(f"iNat Taxon: [{name}]({taxon_url}){common}\n"),
-        )
-        await ctx.send(embed=embed)
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                taxon = query_response.taxon
+                taxon_name = taxon.name.replace(" ", "+")
+                name = format_taxon_name(taxon, with_common=False)
+                common = (
+                    f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
+                )
+                taxon_id = taxon.id
+                taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
+                embed = make_embed(
+                    title=f"BOLD v4: {name}",
+                    url=f"{BOLD_BASE_URL}?searchtype=records&query={taxon_name}",
+                    description=(f"iNat Taxon: [{name}]({taxon_url}){common}\n"),
+                )
+                await ctx.send(embed=embed)
 
     @taxon.command(name="bold4")
-    async def taxon_bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def taxon_bold4(self, ctx, *, query: Optional[str]):
         """Barcode records from BOLD v4 (alias `[p]bold4`)."""
         await self._bold4(ctx, query)
 
     @commands.command()
-    async def bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def bold4(self, ctx, *, query: Optional[str]):
         """Barcode records from BOLD v4 (alias `[p]t bold4`)."""
         await self._bold4(ctx, query)
 
     @taxon.command(name="means")
-    async def taxon_means(self, ctx, place_query: str, *, query: NaturalQueryConverter):
+    async def taxon_means(self, ctx, place_query: str, *, query: Optional[str]):
         """Show establishment means for taxon from the specified place."""
         try:
             place = await self.place_table.get_place(ctx.guild, place_query, ctx.author)
@@ -136,66 +129,42 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
         place_id = place.place_id
 
-        try:
-            self.check_taxon_query(ctx, query)
-            query_response = await self.query.get(ctx, query)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-        taxon = query_response.taxon
-        lang = await self.get_lang(ctx)
-        title = format_taxon_name(taxon, with_term=True, lang=lang)
-        url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
-        full_taxon = await get_taxon(self, ctx, taxon.id, preferred_place_id=place_id)
-        description = f"Establishment means unknown in: {place.display_name}"
-        try:
-            place_id = full_taxon.establishment_means.place.id
-            find_means = (
-                means for means in full_taxon.listed_taxa if means.place.id == place_id
-            )
-            means = next(find_means, full_taxon.establishment_means)
-            if means:
-                if means:
-                    description = format_taxon_establishment_means(
-                        means, all_means=True, list_title=True
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                taxon = query_response.taxon
+                lang = await self.get_lang(ctx)
+                title = format_taxon_name(taxon, with_term=True, lang=lang)
+                url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
+                full_taxon = await get_taxon(self, ctx, taxon.id, preferred_place_id=place_id)
+                description = f"Establishment means unknown in: {place.display_name}"
+                try:
+                    place_id = full_taxon.establishment_means.place.id
+                    find_means = (
+                        means for means in full_taxon.listed_taxa if means.place.id == place_id
                     )
-        except AttributeError:
-            pass
-        await ctx.send(embed=make_embed(title=title, url=url, description=description))
+                    means = next(find_means, full_taxon.establishment_means)
+                    if means:
+                        if means:
+                            description = format_taxon_establishment_means(
+                                means, all_means=True, list_title=True
+                            )
+                except AttributeError:
+                    pass
+                await ctx.send(embed=make_embed(title=title, url=url, description=description))
 
     @taxon.command(name="sci")
-    async def taxon_sci(self, ctx, *, query: NaturalQueryConverter):
+    async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
-        try:
-            self.check_taxon_query(ctx, query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
-
-        try:
-            query_response = await self.query.get(ctx, query, scientific_name=True)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
-
-        await self.send_embed_for_taxon(ctx, query_response)
+        async with self._get_taxon_response(ctx, query, scientific_name=True) as query_response:
+            if query_response:
+                await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
-    async def taxon_loc(self, ctx, locale: str, *, query: NaturalQueryConverter):
+    async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
-        try:
-            self.check_taxon_query(ctx, query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
-
-        try:
-            query_response = await self.query.get(ctx, query, locale=locale)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
-
-        await self.send_embed_for_taxon(ctx, query_response)
+        async with self._get_taxon_response(ctx, query, locale=locale) as query_response:
+            if query_response:
+                await self.send_embed_for_taxon(ctx, query_response)
 
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: str):
@@ -228,37 +197,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await ctx.send(embed=embed)
 
     @commands.command()
-    async def tname(self, ctx, *, query: NaturalQueryConverter):
+    async def tname(self, ctx, *, query: Optional[str]):
         """Taxon name only.
 
         See `[p]help taxon_query` for help with the query.
         ```
         """
-
-        try:
-            self.check_taxon_query(ctx, query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
-
-        try:
-            query_response = await self.query.get(ctx, query)
-        except LookupError as err:
-            reason = str(err)
-            await ctx.send(reason)
-            return
-
-        await ctx.send(query_response.taxon.name)
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                await ctx.send(query_response.taxon.name)
 
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
-    async def species(self, ctx, *, query: NaturalQueryConverter):
+    async def species(self, ctx, *, query: Optional[str]):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]help taxon_query` for query help."""
-        query_species = query
-        query_species.main.ranks.append("species")
-        await self.taxon(ctx, query=query_species)
+        async with self._get_taxon_response(ctx, query, ranks=["species"]) as query_response:
+            if query_response:
+                await self.send_embed_for_taxon(ctx, query_response)
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
@@ -287,20 +244,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, *, query: NaturalQueryConverter):
+    async def image(self, ctx, number: Optional[int]=1, *, query: Optional[str]):
         """Default image for a taxon.
 
         See `[p]help taxon_query` for *query* help."""
-        try:
-            self.check_taxon_query(ctx, query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
-
-        try:
-            query_response = await self.query.get(ctx, query)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
-
-        await self.send_embed_for_taxon_image(ctx, query_response.taxon)
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                await self.send_embed_for_taxon_image(ctx, query_response.taxon, number)
