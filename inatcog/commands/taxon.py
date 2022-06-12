@@ -1,5 +1,6 @@
 """Module for taxon command group."""
 
+from contextlib import asynccontextmanager
 import re
 import textwrap
 from typing import Optional
@@ -9,12 +10,13 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.models.taxon import PLANTAE_ID
+from dronefly.core.query.query import Query
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
-from ..converters.reply import TaxonReplyConverter
+from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
@@ -26,9 +28,24 @@ BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
 class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
-    @commands.group(aliases=["t"], invoke_without_command=True)
+    @asynccontextmanager
+    async def _get_taxon_response(self, ctx, query: Optional[str]):
+        """Yield a query_response for one or more taxa and related info."""
+        query_response = None
+        try:
+            _query = await TaxonReplyConverter.convert(ctx, query)
+            self.check_taxon_query(ctx, _query)
+            query_response = await self.query.get(ctx, _query)
+        except EmptyArgument:
+            await ctx.send_help()
+        except (BadArgument, LookupError) as err:
+            await apologize(ctx, str(err))
+
+        yield query_response
+
+    @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
-    async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def taxon(self, ctx, *, query: Optional[str]):
         """Taxon information.
 
         - *Taxon query terms* match a single taxon to display.
@@ -41,20 +58,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]help reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
-        _query = query or await TaxonReplyConverter.convert(ctx, "")
-        try:
-            self.check_taxon_query(ctx, _query)
-        except BadArgument as err:
-            await apologize(ctx, str(err))
-            return
-
-        try:
-            query_response = await self.query.get(ctx, _query)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
-
-        await self.send_embed_for_taxon(ctx, query_response)
+        async with self._get_taxon_response(ctx, query) as query_response:
+            if query_response:
+                await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command()
     async def bonap(self, ctx, *, query: NaturalQueryConverter):
