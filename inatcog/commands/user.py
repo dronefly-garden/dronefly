@@ -624,6 +624,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     if not discord_member:
                         discord_user = self.bot.get_user(known_discord_user_id)
                         if inat_user:
+                            project_abbrevs = abbrevs_for_user(inat_user_id, event_project_ids, projects)
                             line = ":ghost: " + formatted_user(discord_user or known_discord_user_id, inat_user or inat_user_id, project_abbrevs)
                             non_matching_names.append(line)
                 else:
