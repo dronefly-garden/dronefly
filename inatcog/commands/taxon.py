@@ -29,7 +29,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
     @asynccontextmanager
-    async def _get_taxon_response(self, ctx, query: Optional[str], ranks: Optional[List[str]] = None, **kwargs):
+    async def _get_taxon_response(
+        self, ctx, query: Optional[str], ranks: Optional[List[str]] = None, **kwargs
+    ):
         """Yield a query_response for one or more taxa and related info."""
         query_response = None
         try:
@@ -87,7 +89,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 elif taxon.rank == "species":
                     await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
                 else:
-                    await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+                    await ctx.send(
+                        f"{full_name} must be a genus or species, not: {taxon.rank}"
+                    )
                     return
                 await (self.bot.get_command("tabulate")(ctx, query=query))
 
@@ -98,7 +102,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 taxon_name = taxon.name.replace(" ", "+")
                 name = format_taxon_name(taxon, with_common=False)
                 common = (
-                    f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
+                    f" ({taxon.preferred_common_name})"
+                    if taxon.preferred_common_name
+                    else ""
                 )
                 taxon_id = taxon.id
                 taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
@@ -135,12 +141,16 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 lang = await self.get_lang(ctx)
                 title = format_taxon_name(taxon, with_term=True, lang=lang)
                 url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
-                full_taxon = await get_taxon(self, ctx, taxon.id, preferred_place_id=place_id)
+                full_taxon = await get_taxon(
+                    self, ctx, taxon.id, preferred_place_id=place_id
+                )
                 description = f"Establishment means unknown in: {place.display_name}"
                 try:
                     place_id = full_taxon.establishment_means.place.id
                     find_means = (
-                        means for means in full_taxon.listed_taxa if means.place.id == place_id
+                        means
+                        for means in full_taxon.listed_taxa
+                        if means.place.id == place_id
                     )
                     means = next(find_means, full_taxon.establishment_means)
                     if means:
@@ -150,19 +160,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                             )
                 except AttributeError:
                     pass
-                await ctx.send(embed=make_embed(title=title, url=url, description=description))
+                await ctx.send(
+                    embed=make_embed(title=title, url=url, description=description)
+                )
 
     @taxon.command(name="sci")
     async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
-        async with self._get_taxon_response(ctx, query, scientific_name=True) as query_response:
+        async with self._get_taxon_response(
+            ctx, query, scientific_name=True
+        ) as query_response:
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
     async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
-        async with self._get_taxon_response(ctx, query, locale=locale) as query_response:
+        async with self._get_taxon_response(
+            ctx, query, locale=locale
+        ) as query_response:
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -213,7 +229,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]help taxon_query` for query help."""
-        async with self._get_taxon_response(ctx, query, ranks=["species"]) as query_response:
+        async with self._get_taxon_response(
+            ctx, query, ranks=["species"]
+        ) as query_response:
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -244,7 +262,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, number: Optional[int]=1, *, query: Optional[str]):
+    async def image(self, ctx, number: Optional[int] = 1, *, query: Optional[str]):
         """Default image for a taxon.
 
         See `[p]help taxon_query` for *query* help."""

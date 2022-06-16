@@ -18,6 +18,7 @@ class TaxonReplyConverter:
     @classmethod
     async def convert(cls, ctx: Context, argument: str = ""):
         """Default to taxon from replied to bot message."""
+
         async def get_query_from_ref_msg(ref, query_str: str):
             """Return a query string from the referenced embed."""
             msg = ref.cached_message

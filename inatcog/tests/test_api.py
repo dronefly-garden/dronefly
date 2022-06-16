@@ -40,24 +40,24 @@ class TestAPI(IsolatedAsyncioTestCase):
         with SESSION_PATCH:
             self.api = INatAPI()
 
-# TODO: mock ctx
-#    async def test_get_taxa_by_id(self):
-#        """Test get_taxa by id."""
-#        expected_result = {"results": [{"name": "Animalia"}]}
-#
-#        with API_REQUESTS_PATCH as mock_get:
-#            mock_get.return_value = ResponseMock(expected_result)
-#            taxon = await self.api.get_taxa(ctx, 1)
-#            self.assertEqual(taxon["results"][0]["name"], "Animalia")
+    # TODO: mock ctx
+    #    async def test_get_taxa_by_id(self):
+    #        """Test get_taxa by id."""
+    #        expected_result = {"results": [{"name": "Animalia"}]}
+    #
+    #        with API_REQUESTS_PATCH as mock_get:
+    #            mock_get.return_value = ResponseMock(expected_result)
+    #            taxon = await self.api.get_taxa(ctx, 1)
+    #            self.assertEqual(taxon["results"][0]["name"], "Animalia")
 
-#    async def test_get_taxa_by_query(self):
-#        """Test get_taxa with query terms."""
-#        expected_result = {"results": [{"name": "Animalia"}]}
-#
-#        with API_REQUESTS_PATCH as mock_get:
-#            mock_get.return_value = ResponseMock(expected_result)
-#            taxon = await self.api.get_taxa(ctx, q="animals")
-#            self.assertEqual(taxon["results"][0]["name"], "Animalia")
+    #    async def test_get_taxa_by_query(self):
+    #        """Test get_taxa with query terms."""
+    #        expected_result = {"results": [{"name": "Animalia"}]}
+    #
+    #        with API_REQUESTS_PATCH as mock_get:
+    #            mock_get.return_value = ResponseMock(expected_result)
+    #            taxon = await self.api.get_taxa(ctx, q="animals")
+    #            self.assertEqual(taxon["results"][0]["name"], "Animalia")
 
     async def test_get_observation_bounds(self):
         """Test get_observation_bounds."""
