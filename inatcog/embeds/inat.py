@@ -1037,7 +1037,9 @@ class INatEmbeds(MixinMeta):
         if place:
             preferred_place_id = place.place_id
         full_record = (
-            await self.api.get_taxa(ctx, taxon.id, preferred_place_id=preferred_place_id)
+            await self.api.get_taxa(
+                ctx, taxon.id, preferred_place_id=preferred_place_id
+            )
         )["results"][0]
         full_taxon = Taxon.from_json(full_record)
         means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
@@ -1398,7 +1400,9 @@ class INatEmbeds(MixinMeta):
         counts_pat = r"(\n|^)\[[0-9, \(\)]+\]\(.*?\) " + inat_user.login
         inat_embed = msg.embeds[0]
         if inat_embed.taxon_id():
-            taxon = await get_taxon(self, ctx, inat_embed.taxon_id(), refresh_cache=False)
+            taxon = await get_taxon(
+                self, ctx, inat_embed.taxon_id(), refresh_cache=False
+            )
         else:
             taxon = None
         # Observed by count add/remove for taxon:
@@ -1432,7 +1436,9 @@ class INatEmbeds(MixinMeta):
             update_place.display_name
         )
         if inat_embed.taxon_id():
-            taxon = await get_taxon(self, ctx, inat_embed.taxon_id(), refresh_cache=False)
+            taxon = await get_taxon(
+                self, ctx, inat_embed.taxon_id(), refresh_cache=False
+            )
         else:
             taxon = None
         await self.edit_place_totals_locked(

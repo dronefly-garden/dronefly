@@ -208,7 +208,11 @@ class INatAPI:
                         taxon = await self.get_taxa_by_id(ctx, *args, **_kwargs)
                         if taxon:
                             self.taxa_cache[taxon_id] = taxon
-                    return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
+                    return (
+                        self.taxa_cache[taxon_id]
+                        if taxon_id in self.taxa_cache
+                        else None
+                    )
                 else:
                     return await self.get_taxa_by_id(ctx, args[0], **_kwargs)
             else:
@@ -389,7 +393,9 @@ class INatAPI:
     async def get_taxa_by_id(self, ctx, taxon_id, **kwargs):
         """Get taxa by id."""
         # - TODO: support user settings for home place, language
-        return await self._pyinaturalist_endpoint(get_taxa_by_id, ctx, taxon_id, **kwargs)
+        return await self._pyinaturalist_endpoint(
+            get_taxa_by_id, ctx, taxon_id, **kwargs
+        )
 
     async def get_taxa_pyinat(self, ctx, **kwargs):
         """Get taxa."""
