@@ -56,7 +56,16 @@ class UserProject(DataClassJsonMixin):
             raise TypeError
 
     def members_only(self):
-        return next(iter([param.value for param in self.search_parameters if param.field == "members_only"]), False)
+        return next(
+            iter(
+                [
+                    param.value
+                    for param in self.search_parameters
+                    if param.field == "members_only"
+                ]
+            ),
+            False,
+        )
 
     def observed_by_ids(self):
         """Valid observer user ids for the project.
@@ -84,19 +93,21 @@ class UserProject(DataClassJsonMixin):
             if include_user_rules:
                 # i.e. case 3, Closed (user joins & admin approves the join)
                 include_user_ids = [
-                    rule.operand_id for rule in include_user_rules if rule.operand_id in self.user_ids
+                    rule.operand_id
+                    for rule in include_user_rules
+                    if rule.operand_id in self.user_ids
                 ]
             else:
                 # i.e. case 1, Open (user joins)
                 include_user_ids = [
-                    user_id for user_id in self.user_ids if user_id not in exclude_user_ids
+                    user_id
+                    for user_id in self.user_ids
+                    if user_id not in exclude_user_ids
                 ]
         else:
             if include_user_rules:
                 # i.e. case 2, Closed (admin joins the user)
-                include_user_ids = [
-                    rule.operand_id for rule in include_user_rules
-                ]
+                include_user_ids = [rule.operand_id for rule in include_user_rules]
             else:
                 # i.e. fallback - project membership is undefined, so is empty
                 # - as in case 2 but admins haven't joined anyone yet

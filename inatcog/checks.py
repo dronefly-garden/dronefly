@@ -67,7 +67,7 @@ def can_manage_places():
 
     async def check(ctx: commands.Context) -> bool:
         """Author is bot owner, guild owner or admin, or has manage places role.
-            
+
         If no can_manage_places role is set, users that were added by a user
         manager in the current server are implicitly trusted to manage places.
         """
@@ -84,7 +84,7 @@ def can_manage_projects():
 
     async def check(ctx: commands.Context) -> bool:
         """Author is bot owner, guild owner or admin, or has manage places role.
-            
+
         If no can_manage_projects role is set, users that were added by a user
         manager in the current server are implicitly trusted to manage projects.
         """

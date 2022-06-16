@@ -238,7 +238,12 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
     """Public class for taxon with cog-specific behaviours."""
 
     def format_name(
-        self, with_term=False, hierarchy=False, with_rank=True, with_common=True, lang=None
+        self,
+        with_term=False,
+        hierarchy=False,
+        with_rank=True,
+        with_common=True,
+        lang=None,
     ):
         """Format taxon name.
 
@@ -275,7 +280,10 @@ class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
         if with_common:
             preferred_common_name = None
             if lang and self.names:
-                name = next(iter([name for name in self.names if name.get("locale") == lang]), None)
+                name = next(
+                    iter([name for name in self.names if name.get("locale") == lang]),
+                    None,
+                )
                 if name:
                     preferred_common_name = name.get("name")
             if not preferred_common_name:

@@ -59,7 +59,8 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang) for taxon in taxa
+        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang)
+        for taxon in taxa
     ]
 
     def fit_names(names):

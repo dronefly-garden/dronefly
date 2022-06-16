@@ -34,7 +34,12 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from pyinaturalist import add_project_users, delete_project_users, get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import (
+    add_project_users,
+    delete_project_users,
+    get_taxa_autocomplete,
+    get_projects_by_id,
+)
 from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 from .common import LOG
@@ -131,11 +136,16 @@ class INatAPI:
 
     async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
         if "access_token" in kwargs:
-            safe_kwargs = { **kwargs }
+            safe_kwargs = {**kwargs}
             safe_kwargs["access_token"] = "***REDACTED***"
         else:
             safe_kwargs = kwargs
-        LOG.info('_pyinaturalist_endpoint(%s, %s, %s)', endpoint.__name__, repr(args), repr(safe_kwargs))
+        LOG.info(
+            "_pyinaturalist_endpoint(%s, %s, %s)",
+            endpoint.__name__,
+            repr(args),
+            repr(safe_kwargs),
+        )
 
         return await ctx.bot.loop.run_in_executor(
             None, partial(endpoint, *args, **kwargs)
@@ -356,20 +366,27 @@ class INatAPI:
     # Some thin wrappers around pyinaturalist endpoints:
     async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
         """Add users to a project's rules."""
-        return await self._pyinaturalist_endpoint(add_project_users, ctx, project_id, user_ids, **kwargs)
+        return await self._pyinaturalist_endpoint(
+            add_project_users, ctx, project_id, user_ids, **kwargs
+        )
 
     async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
         """Remove users from a project's rules."""
-        return await self._pyinaturalist_endpoint(delete_project_users, ctx, project_id, user_ids, **kwargs)
+        return await self._pyinaturalist_endpoint(
+            delete_project_users, ctx, project_id, user_ids, **kwargs
+        )
 
     async def get_projects_by_id(self, ctx, project_id, **kwargs):
         """Get projects by id."""
-        return await self._pyinaturalist_endpoint(get_projects_by_id, ctx, project_id, **kwargs)
+        return await self._pyinaturalist_endpoint(
+            get_projects_by_id, ctx, project_id, **kwargs
+        )
 
     async def get_taxa_autocomplete(self, ctx, **kwargs):
         """Get taxa using autocomplete."""
         # - TODO: support user settings for home place, language
         return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
+
     # end of pyinaturalist shims
 
     async def get_users(

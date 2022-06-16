@@ -346,11 +346,17 @@ def format_taxon_title(rec, lang=None):
     matched = rec.matched_term
     preferred_common_name = rec.preferred_common_name
     if lang and rec.names:
-        name = next(iter([name for name in rec.names if name.get("locale") == lang]), None)
+        name = next(
+            iter([name for name in rec.names if name.get("locale") == lang]), None
+        )
         if name:
             preferred_common_name = name.get("name")
     if matched not in (rec.name, preferred_common_name):
-        invalid_names = [name["name"] for name in rec.names if not name["is_valid"]] if rec.names else []
+        invalid_names = (
+            [name["name"] for name in rec.names if not name["is_valid"]]
+            if rec.names
+            else []
+        )
         if matched in invalid_names:
             matched = f"~~{matched}~~"
         title += f" ({matched})"
@@ -367,6 +373,7 @@ def _add_place_emojis(query_response: QueryResponse, is_taxon_embed: bool = Fals
     return query_response.place and not (
         query_response.user or query_response.id_by or query_response.unobserved_by
     )
+
 
 # Note: always call this after _add_place_emojis
 def _add_user_emojis(query_response: QueryResponse):
@@ -424,7 +431,7 @@ class INatEmbeds(MixinMeta):
         user_config = self.config.user(ctx.author)
         lang = await user_config.lang()
         # TODO: support guild and global preferred language
-        #if not lang:
+        # if not lang:
         #    if ctx.guild:
         #        guild_config = self.config.guild(ctx.guild)
         #        lang = await guild_config.lang()
@@ -575,7 +582,13 @@ class INatEmbeds(MixinMeta):
         return embed
 
     async def format_obs(
-        self, obs, with_description=True, with_link=False, compact=False, with_user=True, lang=None
+        self,
+        obs,
+        with_description=True,
+        with_link=False,
+        compact=False,
+        with_user=True,
+        lang=None,
     ):
         """Format an observation title & description."""
 
@@ -653,7 +666,7 @@ class INatEmbeds(MixinMeta):
                     summary += " on " + obs_on
             if obs.obs_at:
                 if compact:
-                    obs_at =  obs.obs_at
+                    obs_at = obs.obs_at
                 else:
                     summary += " at " + obs.obs_at
             if compact:
@@ -715,7 +728,9 @@ class INatEmbeds(MixinMeta):
                     if means:
                         means_link = f"\n{means.emoji()}{means.link()}"
                 if lang:
-                    community_taxon = await get_taxon(self, obs.community_taxon.id, refresh_cache=False)
+                    community_taxon = await get_taxon(
+                        self, obs.community_taxon.id, refresh_cache=False
+                    )
                 else:
                     community_taxon = obs.community_taxon
                 summary = (
@@ -885,7 +900,9 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = f"{names}\n**are related by {taxon.rank}**: {taxon.format_name(lang=lang)}"
+        description = (
+            f"{names}\n**are related by {taxon.rank}**: {taxon.format_name(lang=lang)}"
+        )
 
         return make_embed(title="Closest related taxon", description=description)
 
@@ -1256,7 +1273,8 @@ class INatEmbeds(MixinMeta):
         reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS if _add_user_emojis(query_response)
+            else OBS_REACTION_EMOJIS
+            if _add_user_emojis(query_response)
             else []
         )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis)
@@ -1280,14 +1298,16 @@ class INatEmbeds(MixinMeta):
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else TAXON_REACTION_EMOJIS
+                if _add_user_emojis(query_response)
                 else []
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else NO_PARENT_TAXON_REACTION_EMOJIS if _add_user_emojis(query_response)
+                else NO_PARENT_TAXON_REACTION_EMOJIS
+                if _add_user_emojis(query_response)
                 else []
             )
         await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
@@ -1296,7 +1316,9 @@ class INatEmbeds(MixinMeta):
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
     ):
         """Make embed for taxon image & send."""
-        msg = await ctx.send(embed=await self.make_image_embed(ctx, query_response, index))
+        msg = await ctx.send(
+            embed=await self.make_image_embed(ctx, query_response, index)
+        )
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
         #   user will break the display; they can use `,last t` to get the taxon
@@ -1638,7 +1660,10 @@ class INatEmbeds(MixinMeta):
         async with self.reaction_locks[msg.id]:
             # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+            if (
+                msg.guild
+                and not msg.channel.permissions_for(msg.guild.me).read_message_history
+            ):
                 try:
                     msg = await msg.channel.fetch_message(msg.id)
                 except discord.errors.NotFound:
@@ -1731,7 +1756,10 @@ class INatEmbeds(MixinMeta):
         async with self.reaction_locks[msg.id]:
             # If permitted, refetch the message because it may have changed prior to
             # acquiring lock
-            if msg.guild and not msg.channel.permissions_for(msg.guild.me).read_message_history:
+            if (
+                msg.guild
+                and not msg.channel.permissions_for(msg.guild.me).read_message_history
+            ):
                 try:
                     msg = await msg.channel.fetch_message(msg.id)
                 except discord.errors.NotFound:

@@ -56,7 +56,9 @@ class CommandsProject(INatEmbeds, MixinMeta):
                     abbrevs = ", ".join(proj_abbrevs)
                 else:
                     abbrevs = "*none*"
-                    can_add_projects = await has_valid_user_config(self, ctx.author, anywhere=False)
+                    can_add_projects = await has_valid_user_config(
+                        self, ctx.author, anywhere=False
+                    )
                     if can_add_projects:
                         embed.set_footer(
                             text=f"Add an abbreviation with {ctx.clean_prefix}project add"

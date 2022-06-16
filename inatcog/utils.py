@@ -38,6 +38,7 @@ async def get_valid_user_config(
         raise LookupError(f"iNat user not known{where}.")
     return user_config
 
+
 async def has_valid_user_config(
     cog, user=Union[discord.Member, discord.User], anywhere=True
 ):
@@ -50,6 +51,7 @@ async def has_valid_user_config(
     except LookupError:
         return False
     return True
+
 
 def obs_url_from_v1(params: dict):
     """Observations query URL corresponding to /v1/observations API params."""

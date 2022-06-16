@@ -419,7 +419,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 try:
                     if not re.search(r"^[a-z-]+$", lang):
-                        raise LookupError("Language must contain only letters or a dash, e.g. `en`, `de`, `zh`, `zh-CN`.")
+                        raise LookupError(
+                            "Language must contain only letters or a dash, e.g. `en`, `de`, `zh`, `zh-CN`."
+                        )
                     await config.lang.set(_lang)
                     await ctx.send(
                         f"{bot} will use `{_lang}` as your preferred language."
@@ -435,9 +437,15 @@ class CommandsUser(INatEmbeds, MixinMeta):
         filter_role_id = None
         if abbrev:
             if abbrev in ["active", "inactive"]:
-                filter_role_id = await (config.active_role() if abbrev == "active" else config.inactive_role())
+                filter_role_id = await (
+                    config.active_role()
+                    if abbrev == "active"
+                    else config.inactive_role()
+                )
                 if not filter_role_id:
-                    raise BadArgument(f"The {abbrev} role is undefined. To set it, use: `{ctx.clean_prefix}inat set {abbrev}`")
+                    raise BadArgument(
+                        f"The {abbrev} role is undefined. To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
+                    )
             elif abbrev in event_projects:
                 filter_role_id = event_projects[abbrev]["role"]
             else:
@@ -494,7 +502,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         return (team_roles, team_abbrevs, event_project_ids, main_event_project_ids)
 
-    async def _user_list_get_projects(self, ctx, event_project_ids, main_event_project_ids):
+    async def _user_list_get_projects(
+        self, ctx, event_project_ids, main_event_project_ids
+    ):
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
@@ -526,10 +536,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 for project_id in projects
                 if user_id in projects[int(project_id)].observed_by_ids()
             ]
-        
+
         def formatted_user(dmember, iuser, project_abbrevs):
             if dmember:
-                if isinstance(dmember, discord.User) or isinstance(dmember, discord.Member):
+                if isinstance(dmember, discord.User) or isinstance(
+                    dmember, discord.Member
+                ):
                     user_is = f"{dmember.mention} is "
                 else:
                     user_is = f"<@{dmember}> is "
@@ -541,7 +553,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             return f"{user_is}{profile_link}\n{' '.join(project_abbrevs)}"
 
-        (team_roles, team_abbrevs, event_project_ids, main_event_project_ids) = await self._user_list_event_info(ctx, abbrev, event_projects)
+        (
+            team_roles,
+            team_abbrevs,
+            event_project_ids,
+            main_event_project_ids,
+        ) = await self._user_list_event_info(ctx, abbrev, event_projects)
 
         matching_names = []
         non_matching_names = []
@@ -555,7 +572,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if inat_user_id:
                 if guild_id in user_config.get("known_in"):
                     known_user_ids_by_inat_id[inat_user_id] = discord_user_id
-        projects = await self._user_list_get_projects(ctx, event_project_ids, main_event_project_ids)
+        projects = await self._user_list_get_projects(
+            ctx, event_project_ids, main_event_project_ids
+        )
 
         if abbrev in event_projects:
             prj = event_projects[abbrev]
@@ -568,11 +587,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users
         ):
-            project_abbrevs = abbrevs_for_user(iuser.user_id, event_project_ids, projects)
+            project_abbrevs = abbrevs_for_user(
+                iuser.user_id, event_project_ids, projects
+            )
             candidate = not abbrev or abbrev in project_abbrevs
             if filter_role and not candidate:
                 candidate = filter_role in dmember.roles
-            if not candidate: 
+            if not candidate:
                 continue
             line = formatted_user(dmember, iuser, project_abbrevs)
             if filter_role:
@@ -624,14 +645,22 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     if not discord_member:
                         discord_user = self.bot.get_user(known_discord_user_id)
                         if inat_user:
-                            project_abbrevs = abbrevs_for_user(inat_user_id, event_project_ids, projects)
-                            line = ":ghost: " + formatted_user(discord_user or known_discord_user_id, inat_user or inat_user_id, project_abbrevs)
+                            project_abbrevs = abbrevs_for_user(
+                                inat_user_id, event_project_ids, projects
+                            )
+                            line = ":ghost: " + formatted_user(
+                                discord_user or known_discord_user_id,
+                                inat_user or inat_user_id,
+                                project_abbrevs,
+                            )
                             non_matching_names.append(line)
                 else:
                     # User is in the event project observer rules and may or may
                     # not be known to the bot, but is not known in this server.
                     # In either case, we only list them as "unknown user".
-                    line = formatted_user(None, inat_user or inat_user_id, project_abbrevs)
+                    line = formatted_user(
+                        None, inat_user or inat_user_id, project_abbrevs
+                    )
                     non_matching_names.append(line)
 
         return (matching_names, non_matching_names)
@@ -654,16 +683,24 @@ class CommandsUser(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
         try:
-            filter_role = await self._user_list_filter_role(ctx, abbrev, config, event_projects)
+            filter_role = await self._user_list_filter_role(
+                ctx, abbrev, config, event_projects
+            )
         except BadArgument as err:
-            await ctx.send(embed=make_embed(title=f"Invalid abbreviation: {abbrev}", description=str(err)))
+            await ctx.send(
+                embed=make_embed(
+                    title=f"Invalid abbreviation: {abbrev}", description=str(err)
+                )
+            )
             return
 
         # If filter_role is given, resulting list of names will be partitioned
         # into matching and non matching names, where "non-matching" is any
         # discrepancy between the role(s) assigned and the project they're in,
         # or when a non-server-member is in the specified event project.
-        (matching_names, non_matching_names) = await self._user_list_match_members(ctx, abbrev, event_projects, filter_role)
+        (matching_names, non_matching_names) = await self._user_list_match_members(
+            ctx, abbrev, event_projects, filter_role
+        )
         # Placing non matching names first allows an event manager to easily
         # spot and correct mismatches.
         pages = [

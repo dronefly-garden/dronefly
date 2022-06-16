@@ -41,7 +41,9 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     abbrevs = ", ".join(place_abbrevs)
                 else:
                     abbrevs = "*none*"
-                    can_add_places = await has_valid_user_config(self, ctx.author, anywhere=False)
+                    can_add_places = await has_valid_user_config(
+                        self, ctx.author, anywhere=False
+                    )
                     if can_add_places:
                         embed.set_footer(
                             text=f"Add an abbreviation with {ctx.clean_prefix}place add"
