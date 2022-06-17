@@ -37,7 +37,7 @@ class INatUserTable:
         return user
 
     async def get_member_pairs(
-        self, guild: discord.Guild, users
+        self, guild: discord.Guild, users, anywhere: True
     ) -> AsyncIterator[Tuple[discord.Member, User]]:
         """
         yields:
@@ -58,7 +58,7 @@ class INatUserTable:
             discord_member = guild.get_member(discord_id)
             if discord_member and (
                 guild.id in users[discord_id].get("known_in")
-                or users[discord_id].get("known_all")
+                or (anywhere and users[discord_id].get("known_all"))
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:
