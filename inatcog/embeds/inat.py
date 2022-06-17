@@ -1211,21 +1211,22 @@ class INatEmbeds(MixinMeta):
     async def make_user_embed(self, ctx, member, user):
         """Make an embed for user including user stats."""
         description = f"{member.mention} is {user.profile_link()}"
-        event_projects = await self.config.guild(ctx.guild).event_projects()
-        main_projects = {
-            event_project: event_projects[event_project]
-            for event_project in event_projects
-            if event_projects[event_project].get("main")
-        }
-        # The "master project" for the server is hardcoded to be the event project with the abbrev "ever"
-        # - if it is defined and has a custom emoji set, use that
-        # - otherwise, fall back to :white_check_mark: to indicate a mod-added member in this server
-        master_project = main_projects.get("ever")
-        master_project_emoji = (
-            master_project and master_project.get("emoji")
-        ) or ":white_check_mark:"
-        if master_project_emoji and await has_valid_user_config(self, member, False):
-            description += f" {master_project_emoji}"
+        if ctx.guild:
+            event_projects = await self.config.guild(ctx.guild).event_projects() or {}
+            main_projects = {
+                event_project: event_projects[event_project]
+                for event_project in event_projects
+                if event_projects[event_project].get("main")
+            }
+            # The "master project" for the server is hardcoded to be the event project with the abbrev "ever"
+            # - if it is defined and has a custom emoji set, use that
+            # - otherwise, fall back to :white_check_mark: to indicate a mod-added member in this server
+            master_project = main_projects.get("ever")
+            master_project_emoji = (
+                master_project and master_project.get("emoji")
+            ) or ":white_check_mark:"
+            if master_project_emoji and await has_valid_user_config(self, member, False):
+                description += f" {master_project_emoji}"
         embed = make_embed()
         project_stats = await self.get_user_server_projects_stats(ctx, user)
         for (
