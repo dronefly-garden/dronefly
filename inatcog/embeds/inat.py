@@ -1218,7 +1218,9 @@ class INatEmbeds(MixinMeta):
             master_project_emoji = (
                 master_project and master_project.get("emoji")
             ) or ":white_check_mark:"
-            if master_project_emoji and await has_valid_user_config(self, member, False):
+            if master_project_emoji and await has_valid_user_config(
+                self, member, False
+            ):
                 description += f" {master_project_emoji}"
         embed = make_embed()
         project_stats = await self.get_user_server_projects_stats(ctx, user)
