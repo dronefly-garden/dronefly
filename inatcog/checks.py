@@ -101,7 +101,7 @@ def can_manage_users():
 
     async def check(ctx: commands.Context) -> bool:
         """Author is bot owner, guild owner or admin, or has manage users role."""
-        can_manage = await _can_manage(ctx, "users", dm_allowed=False)
+        can_manage = await _can_manage(ctx, "users", dm_allowed=True)
         return bool(can_manage)
 
     return commands.check(check)
