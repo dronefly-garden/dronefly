@@ -64,7 +64,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..users import User
-from ..utils import obs_url_from_v1
+from ..utils import has_valid_user_config, obs_url_from_v1
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -1195,14 +1195,41 @@ class INatEmbeds(MixinMeta):
                 taxa_stats = await self.get_user_project_stats(
                     project_id, user, category="taxa", with_rank=False
                 )
-                stats.append((project_id, abbrev, obs_stats, spp_stats, taxa_stats))
+                emoji = event_projects[abbrev].get("emoji")
+                stats.append(
+                    (project_id, abbrev, emoji, obs_stats, spp_stats, taxa_stats)
+                )
         return stats
 
     async def make_user_embed(self, ctx, member, user):
         """Make an embed for user including user stats."""
-        embed = make_embed(description=f"{member.mention} is {user.profile_link()}")
+        description = f"{member.mention} is {user.profile_link()}"
+        if ctx.guild:
+            event_projects = await self.config.guild(ctx.guild).event_projects() or {}
+            main_projects = {
+                event_project: event_projects[event_project]
+                for event_project in event_projects
+                if event_projects[event_project].get("main")
+            }
+            # The "master project" for the server is hardcoded to be the event project with the abbrev "ever"
+            # - if it is defined and has a custom emoji set, use that
+            # - otherwise, fall back to :white_check_mark: to indicate a mod-added member in this server
+            master_project = main_projects.get("ever")
+            master_project_emoji = (
+                master_project and master_project.get("emoji")
+            ) or ":white_check_mark:"
+            if master_project_emoji and await has_valid_user_config(self, member, False):
+                description += f" {master_project_emoji}"
+        embed = make_embed()
         project_stats = await self.get_user_server_projects_stats(ctx, user)
-        for project_id, abbrev, obs_stats, spp_stats, taxa_stats in project_stats:
+        for (
+            project_id,
+            abbrev,
+            emoji,
+            obs_stats,
+            spp_stats,
+            taxa_stats,
+        ) in project_stats:
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
             taxa_count, _taxa_rank = taxa_stats
@@ -1225,6 +1252,7 @@ class INatEmbeds(MixinMeta):
             embed.add_field(
                 name=f"Obs / Spp / Leaf taxa ({abbrev})", value=fmt, inline=True
             )
+        embed.description = description
         ids = user.identifications_count
         url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
         embed.add_field(name="Ids", value=url, inline=True)

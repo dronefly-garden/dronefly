@@ -28,6 +28,7 @@ from ..obs import get_obs_fields
 from ..utils import obs_url_from_v1
 
 
+
 class CommandsSearch(INatEmbeds, MixinMeta):
     """Mixin providing search command group."""
 

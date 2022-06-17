@@ -824,10 +824,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
         main = {True: " (main)", False: ""}[event["main"]]
         project_id = event["project_id"]
         line = f"**Abbrev:** {abbrev}{main} **Project id:** {project_id}"
-        role = event["role"]
+        role = event.get("role")
         if role:
             line += f" **Role:** <@&{role}>"
-        teams = event["teams"]
+        emoji = event.get("emoji")
+        if emoji:
+            line += f" **Emoji:** {emoji}"
+        teams = event.get("teams")
         if teams:
             line += f" **Teams:** {teams}"
         return line
@@ -841,6 +844,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         project_id: str,
         main: Optional[bool] = False,
         role: Optional[discord.Role] = None,
+        emoji: Optional[discord.Emoji] = None,
         teams: Optional[str] = None,
     ):
         """Add a server event project.
@@ -849,18 +853,21 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - `project_id` Use `[p]prj` or `[p]s prj` to look it up for the project.
         - `main` is a main event for the server, listed in the `[p]user` / `[p]me` display. Please define no more than two of these.
         - `role` identifies a user as a participant of the event project.
+        - `emoji` is a custom emoji to indicate membership in the event project
         - `teams` one or more *event project abbreviations* for other teams of this event, separated by commas.
 
         *Examples:*
         To define two main server projects:
 
-        `[p]inat set event ever 48611 True`
+        `[p]inat set event ever 48611 True :iNat_Heart:`
         `[p]inat set event year 124254 True`
+
+        In the first example, the `ever` project has the custom emoji `:iNat_Heart:` defined to indicate membership in that project.
 
         To define "Team Crustaceans" vs. "Team Cetaceans" bioblitz event:
 
-        `[p]inat set event crustaceans 122951 False "Team Crustaceans" cetaceans`
-        `[p]inat set event cetaceans 122952 False "Team Cetaceans" crustaceans`
+        `[p]inat set event crustaceans 122951 "Team Crustaceans" cetaceans`
+        `[p]inat set event cetaceans 122952 "Team Cetaceans" crustaceans`
         """  # noqa: E501
 
         config = self.config.guild(ctx.guild)
@@ -878,6 +885,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         event_project["main"] = main
         if role or not _event_project:
             event_project["role"] = role.id if role else None
+        if emoji or not _event_project:
+            event_project["emoji"] = str(emoji) if emoji else None
         if teams or not _event_project:
             event_project["teams"] = teams
         await config.event_projects.set(event_projects)
