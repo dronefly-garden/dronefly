@@ -25,7 +25,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
-from ..utils import get_valid_user_config
+from ..utils import get_valid_user_config, has_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -585,7 +585,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # Main pass:
         # - Candidate members are all users known to the bot.
         async for (dmember, iuser) in self.user_table.get_member_pairs(
-            ctx.guild, all_users
+            ctx.guild, all_users, prj_id in main_event_project_ids
         ):
             project_abbrevs = abbrevs_for_user(
                 iuser.user_id, event_project_ids, projects
