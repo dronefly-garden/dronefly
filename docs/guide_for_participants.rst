@@ -217,10 +217,10 @@ to post questions: https://forum.inaturalist.org/
 #progress-and-yearlist is for discussing significant iNat milestones.
 (Please use #bot-commands for status checks.)
 
-Participating - #id-confirmation and #work-party (under Identify)
+Participating - #id-help and #work-party (under iNat Stuff and Teams)
 -----------------------------------------------------------------
 
-Use the #id-confirmation channel for:
+Use the #id-help channel for:
 
 -  Posting an observation where you’ve made an ID and are looking for a
    confirmation.
