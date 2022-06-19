@@ -132,7 +132,7 @@ humorous items in pinned messages.
 
 |image10|
 
-For instance, in the #bot-stuff channel, you’ll find information about
+For instance, in the #bot-commands channel, you’ll find information about
 commands you can use with bots as pinned items.
 
 Other pinned items may be...less useful.
@@ -142,7 +142,7 @@ Other pinned items may be...less useful.
 The member list button (|image12|) at the upper right toggles the member
 list visibility on and off (good if you need more screen space, or if
 you need to contact an Admin or Moderator (server) or Curator or Staff (iNat)
-and want to know who isavailable.) Right clicking on users in the member list
+and want to know who is available.) Right clicking on users in the member list
 allows you to see their profile (which can be helpful when temporary nickname
 changes occur).
 
