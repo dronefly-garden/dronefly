@@ -96,9 +96,9 @@ class INatAPI:
         """Query API, respecting 60 requests per minute rate limit."""
         LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
-            # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, and finally give up
+            # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, 1.6s, 3.2s, and finally give up
             retry_options = ExponentialRetry(
-                attempts=4,
+                attempts=6,
                 exceptions=RETRY_EXCEPTIONS,
             )
             try:
