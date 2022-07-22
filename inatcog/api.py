@@ -18,6 +18,7 @@
     probability of rate limits being exceeded
 """
 from functools import partial
+from json import JSONDecodeError
 from time import time
 from types import SimpleNamespace
 from typing import List, Optional, Union
@@ -49,6 +50,7 @@ RETRY_EXCEPTIONS = [
     ServerDisconnectedError,
     ConnectionResetError,
     ClientConnectorError,
+    JSONDecodeError,
     TimeoutError,
 ]
 
