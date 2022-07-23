@@ -113,19 +113,23 @@ class CommandsProject(INatEmbeds, MixinMeta):
         #
         #      Unprocessable Entity (422)
         #
-        proj_id_groups = [
-            list(filter(None, results))
-            for results in grouper(
-                [
-                    projects[abbrev]
-                    for abbrev in projects
-                    if int(projects[abbrev]) not in self.api.projects_cache
-                ],
-                10,
-            )
-        ]
-        for proj_id_group in proj_id_groups:
-            await self.api.get_projects(proj_id_group)
+        try:
+            proj_id_groups = [
+                list(filter(None, results))
+                for results in grouper(
+                    [
+                        projects[abbrev]
+                        for abbrev in projects
+                        if int(projects[abbrev]) not in self.api.projects_cache
+                    ],
+                    10,
+                )
+            ]
+            for proj_id_group in proj_id_groups:
+                await self.api.get_projects(proj_id_group)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
 
         # Iterate over projects and do a quick cache lookup per project:
         for abbrev in sorted(projects):

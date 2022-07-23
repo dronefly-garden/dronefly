@@ -99,19 +99,23 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         #
         #      Unprocessable Entity (422)
         #
-        place_id_groups = [
-            list(filter(None, results))
-            for results in grouper(
-                [
-                    places[abbrev]
-                    for abbrev in places
-                    if int(places[abbrev]) not in self.api.places_cache
-                ],
-                500,
-            )
-        ]
-        for place_id_group in place_id_groups:
-            await self.api.get_places(place_id_group)
+        try:
+            place_id_groups = [
+                list(filter(None, results))
+                for results in grouper(
+                    [
+                        places[abbrev]
+                        for abbrev in places
+                        if int(places[abbrev]) not in self.api.places_cache
+                    ],
+                    500,
+                )
+            ]
+            for place_id_group in place_id_groups:
+                await self.api.get_places(place_id_group)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
 
         # Iterate over places and do a quick cache lookup per place:
         for abbrev in sorted(places):
