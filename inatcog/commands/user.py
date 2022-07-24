@@ -698,9 +698,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # into matching and non matching names, where "non-matching" is any
         # discrepancy between the role(s) assigned and the project they're in,
         # or when a non-server-member is in the specified event project.
-        (matching_names, non_matching_names) = await self._user_list_match_members(
-            ctx, abbrev, event_projects, filter_role
-        )
+        try:
+            (matching_names, non_matching_names) = await self._user_list_match_members(
+                ctx, abbrev, event_projects, filter_role
+            )
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
         # Placing non matching names first allows an event manager to easily
         # spot and correct mismatches.
         pages = [

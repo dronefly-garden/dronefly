@@ -326,11 +326,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
                 home = await self.get_home(ctx)
-                obs_results = (
-                    await self.api.get_observations(
-                        mat["obs_id"], include_new_projects=1, preferred_place_id=home
-                    )
-                )["results"]
+                obs_results = None
+                try:
+                    obs_results = (
+                        await self.api.get_observations(
+                            mat["obs_id"], include_new_projects=1, preferred_place_id=home
+                        )
+                    )["results"]
+                except LookupError as err:
+                    await apologize(ctx, str(err))
+                    return
                 obs = get_obs_fields(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
