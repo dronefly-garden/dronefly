@@ -1,5 +1,5 @@
 """Module for handling recent history."""
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from typing import NamedTuple
 
@@ -52,7 +52,7 @@ class INatLinkMsg:
         mat = match_obs_link(found)
         obs_id = int(mat["obs_id"])
         url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
-        ago = timeago.format(found.created_at, datetime.utcnow())
+        ago = timeago.format(found.created_at, datetime.utcnow().replace(tzinfo=timezone.utc))
         if found.author.bot:
             name = None
         else:
