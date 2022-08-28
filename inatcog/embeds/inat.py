@@ -1377,7 +1377,7 @@ class INatEmbeds(MixinMeta):
                     msg = await ctx.interaction.followup.send(**kwargs, wait=True)
                 else:
                     await ctx.interaction.response.send_message(**kwargs)
-                    msg = await ctx.interaction.original_message()
+                    msg = await ctx.interaction.original_response()
             return msg
 
         msg = None
