@@ -12,7 +12,7 @@ from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
 from ..core.models.taxon import PLANTAE_ID
-from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
@@ -70,18 +70,21 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         lang = await self.get_lang(ctx)
         full_name = taxon.format_name(lang=lang)
         if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
-            await ctx.send(f"{full_name} is not in Plantae")
+            msg = await ctx.send(f"{full_name} is not in Plantae")
+            await add_reactions_with_cancel(ctx, msg, [])
             return
         if taxon.rank == "genus":
-            await ctx.send(
+            msg = await ctx.send(
                 f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
             )
         elif taxon.rank == "species":
-            await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
+            msg = await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
         else:
-            await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            msg = await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            await add_reactions_with_cancel(ctx, msg, [])
             return
         await (self.bot.get_command("tabulate")(ctx, query=query))
+        await add_reactions_with_cancel(ctx, msg, [])
 
     async def _bold4(self, ctx, query):
         try:
