@@ -47,7 +47,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
 
-        yield query_response
+        yield query_response, _query
 
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
@@ -64,7 +64,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]help reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -81,7 +81,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @taxon.command()
     async def bonap(self, ctx, *, query: Optional[str]):
         """North American flora info from bonap.net."""
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 base_url = "http://bonap.net/MapGallery/County/"
                 maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
@@ -103,10 +103,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         f"{full_name} must be a genus or species, not: {taxon.rank}"
                     )
                     return
-                await (self.bot.get_command("tabulate")(ctx, query=query))
+                await (self.bot.get_command("tabulate")(ctx, query=_query))
 
     async def _bold4(self, ctx, query):
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 taxon = query_response.taxon
                 taxon_name = taxon.name.replace(" ", "+")
@@ -145,7 +145,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return
         place_id = place.place_id
 
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 taxon = query_response.taxon
                 lang = await self.get_lang(ctx)
@@ -179,7 +179,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Search for taxon matching the scientific name."""
         async with self._get_taxon_response(
             ctx, query, scientific_name=True
-        ) as query_response:
+        ) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -188,7 +188,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Search for taxon matching specific locale/language."""
         async with self._get_taxon_response(
             ctx, query, locale=locale
-        ) as query_response:
+        ) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -229,7 +229,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         See `[p]help taxon_query` for help with the query.
         ```
         """
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await ctx.send(query_response.taxon.name)
 
@@ -241,7 +241,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         See `[p]help taxon_query` for query help."""
         async with self._get_taxon_response(
             ctx, query, ranks=["species"]
-        ) as query_response:
+        ) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -283,7 +283,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Default image for a taxon.
 
         See `[p]help taxon_query` for *query* help."""
-        async with self._get_taxon_response(ctx, query) as query_response:
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon_image(ctx, query_response.taxon, number)
 
