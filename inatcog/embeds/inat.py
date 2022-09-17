@@ -1305,7 +1305,7 @@ class INatEmbeds(MixinMeta):
             if _add_user_emojis(query_response)
             else []
         )
-        await add_reactions_with_cancel(ctx, msg, reaction_emojis)
+        return await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
     async def add_taxon_reaction_emojis(
         self,
@@ -1338,7 +1338,7 @@ class INatEmbeds(MixinMeta):
                 if _add_user_emojis(query_response)
                 else []
             )
-        await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
+        return await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
 
     async def send_embed_for_taxon_image(
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False
@@ -1353,7 +1353,7 @@ class INatEmbeds(MixinMeta):
         #   display with taxonomy instead, if they need it.
         # - Note: a tester may still manually add the :regional_indicator_t:
         #   reaction to test the feature in its current, broken state.
-        await self.add_taxon_reaction_emojis(
+        return await self.add_taxon_reaction_emojis(
             ctx, msg, query_response, taxonomy=False, with_keep=with_keep
         )
 
@@ -1366,7 +1366,7 @@ class INatEmbeds(MixinMeta):
                 ctx, query_response, include_ancestors=include_ancestors
             )
         )
-        await self.add_taxon_reaction_emojis(
+        return await self.add_taxon_reaction_emojis(
             ctx, msg, query_response, with_keep=with_keep
         )
 
@@ -1381,6 +1381,7 @@ class INatEmbeds(MixinMeta):
         if cancelled and sound_msg:
             with contextlib.suppress(discord.HTTPException):
                 await sound_msg.delete()
+        return cancelled
 
     def get_inat_url_ids(self, url):
         """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""

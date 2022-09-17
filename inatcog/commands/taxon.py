@@ -1,9 +1,11 @@
 """Module for taxon command group."""
 
+import contextlib
 import re
 import textwrap
 from typing import Optional
 
+import discord
 # TODO: Experimental & doesn't belong here. Migrate out to api.py later.
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -69,6 +71,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         name = re.sub(r" ", "%20", taxon.name)
         lang = await self.get_lang(ctx)
         full_name = taxon.format_name(lang=lang)
+        msg = None
         if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
             msg = await ctx.send(f"{full_name} is not in Plantae")
             await add_reactions_with_cancel(ctx, msg, [])
@@ -83,8 +86,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             msg = await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
             await add_reactions_with_cancel(ctx, msg, [])
             return
-        await (self.bot.get_command("tabulate")(ctx, query=query))
-        await add_reactions_with_cancel(ctx, msg, [])
+        cancelled = await (self.bot.get_command("tabulate")(ctx, query=query))
+        if cancelled and msg:
+            with contextlib.suppress(discord.HTTPException):
+                await msg.delete()
 
     async def _bold4(self, ctx, query):
         try:
