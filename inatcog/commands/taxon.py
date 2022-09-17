@@ -1,10 +1,12 @@
 """Module for taxon command group."""
 
+import contextlib
 from contextlib import asynccontextmanager
 import re
 import textwrap
 from typing import List, Optional
 
+import discord
 from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
@@ -95,8 +97,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     )
                     await add_reactions_with_cancel(ctx, msg, [])
                     return
-                await (self.bot.get_command("tabulate")(ctx, query=_query))
-                await add_reactions_with_cancel(ctx, msg, [])
+                cancelled = await (self.bot.get_command("tabulate")(ctx, query=_query))
+                if cancelled and msg:
+                    with contextlib.suppress(discord.HTTPException):
+                        await msg.delete()
 
     async def _bold4(self, ctx, query):
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
