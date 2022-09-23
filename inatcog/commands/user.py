@@ -560,6 +560,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             main_event_project_ids,
         ) = await self._user_list_event_info(ctx, abbrev, event_projects)
 
+        prj_id = 0
         matching_names = []
         non_matching_names = []
         known_inat_user_ids_in_event = []
