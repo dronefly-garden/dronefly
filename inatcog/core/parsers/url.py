@@ -7,7 +7,7 @@ import re
 WWW_URL_PAT = (
     r"https?://("
     # <partner>.inaturalist.org and the main site [www.]inaturalist.org
-    r"((www|colombia|costarica|panama|ecuador|israel|greece|uk|guatemala)\.)?inaturalist\.org"
+    r"((www|colombia|costarica|panama|ecuador|israel|greece|uk|guatemala|taiwan)\.)?inaturalist\.org"
     # inaturalist.<partner>.<tld>
     r"|inaturalist\.(ala\.org\.au|laji\.fi|mma\.gob\.cl)"
     r"|(www\.)?("
