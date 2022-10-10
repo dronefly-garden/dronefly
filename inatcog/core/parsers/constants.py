@@ -53,6 +53,7 @@ MACROS = {
     "inverts": {"of": "animalia", "opt": ["without_taxon_id=355675"]},
     "spp": {"opt": ["hrank=species"]},
     "species": {"opt": ["hrank=species"]},
+    "unseen": {"not by": "me", "from": "home"}
 }
 VALID_OBS_OPTS = [
     "captive",
