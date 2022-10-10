@@ -156,6 +156,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         __**`Macro`**__`  `__`Expands to`__
         **`my`**`      by me`
         **`home`**`    from home`
+        **`unseen`**`  not by me from home`
         **`rg`**`      opt quality_grade=research`
         **`nid`**`     opt quality_grade=needs_id`
         **`oldest`**`  opt order=asc`
