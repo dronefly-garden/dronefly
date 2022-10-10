@@ -28,6 +28,7 @@ class NaturalParser(UnixlikeParser):
             raise BadArgument(err.args[0]) from err
         opts = []
         macro_by = ""
+        macro_not_by = ""
         macro_from = ""
         macro_of = ""
         expanded_tokens = []
@@ -68,6 +69,8 @@ class NaturalParser(UnixlikeParser):
                 # Discard any prior macro expansions of these; see note below
                 if tok == "--by":
                     macro_by = ""
+                if tok == "--not-by":
+                    macro_not_by = ""
                 if tok == "--from":
                     macro_from = ""
                 if tok == "--of":
@@ -83,6 +86,9 @@ class NaturalParser(UnixlikeParser):
                         _macro_by = macro.get("by")
                         if _macro_by:
                             macro_by = _macro_by
+                        _macro_not_by = macro.get("not by")
+                        if _macro_not_by:
+                            macro_not_by = _macro_not_by
                         _macro_from = macro.get("from")
                         if _macro_from:
                             macro_from = _macro_from
@@ -108,11 +114,14 @@ class NaturalParser(UnixlikeParser):
         # inserted into filtered_args above by appending them:
         if opts:
             expanded_tokens.extend(["--opt", *opts])
-        # Note: There can only be one of macro_by, macro_from, or macro_of until we support
-        # multiple users / places / taxa, so the last user, place, or taxon given wins,
-        # superseding anything given earlier in the query.
+        # Note: There can only be one of macro_by, macro_not_by, macro_from, or
+        # macro_of until we support multiple users / places / taxa, so the last
+        # user, place, or taxon given wins, superseding anything given earlier
+        # in the query.
         if macro_by:
             expanded_tokens.extend(["--by", macro_by])
+        if macro_not_by:
+            expanded_tokens.extend(["--not-by", macro_not_by])
         if macro_from:
             expanded_tokens.extend(["--from", macro_from])
         if macro_of:
