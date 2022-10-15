@@ -3,17 +3,20 @@ from typing import NamedTuple, Optional, Tuple, Union
 import asyncio
 import contextlib
 from copy import copy
+import logging
 import re
+
 import discord
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
-from .common import LOG
 from .converters.base import NaturalQueryConverter
 from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
+
+logger = logging.getLogger('red.dronefly.' + __name__)
 
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.
@@ -224,7 +227,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 with contextlib.suppress(discord.HTTPException):
                     await error_message.delete()
         except Exception:
-            LOG.error(
+            logger.error(
                 "Exception handling %s %s reaction by %s on %s",
                 action,
                 str(emoji),
@@ -251,7 +254,7 @@ class Listeners(INatEmbeds, MixinMeta):
         if member.bot:
             raise ValueError("User is a bot.")
         if self.member_as[(guild_id, member.id)].spammy:
-            LOG.info(
+            logger.info(
                 "Spammy: %d-%d-%d; ignored reaction: %s",
                 guild_id,
                 payload.channel_id,
