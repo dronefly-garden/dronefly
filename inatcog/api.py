@@ -19,6 +19,7 @@
 """
 from functools import partial
 from json import JSONDecodeError
+import logging
 from time import time
 from types import SimpleNamespace
 from typing import List, Optional, Union
@@ -43,7 +44,7 @@ from pyinaturalist import (
 )
 from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
-from .common import LOG
+logger = logging.getLogger("red.dronefly.inatcog." + __name__)
 
 API_BASE_URL = "https://api.inaturalist.org"
 RETRY_EXCEPTIONS = [
@@ -67,7 +68,7 @@ class INatAPI:
         ) -> None:
             current_attempt = trace_config_ctx.trace_request_ctx["current_attempt"]
             if current_attempt > 1:
-                LOG.info("iNat request attempt #%d: %s", current_attempt, repr(params))
+                logger.info("iNat request attempt #%d: %s", current_attempt, repr(params))
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
@@ -94,7 +95,7 @@ class INatAPI:
 
     async def _get_rate_limited(self, full_url, **kwargs):
         """Query API, respecting 60 requests per minute rate limit."""
-        LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
+        logger.debug('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
             # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, 1.6s, 3.2s, and finally give up
             retry_options = ExponentialRetry(
@@ -124,13 +125,13 @@ class INatAPI:
                             # Punt the rest back to bs4 to drop unhandled tags
                             msg = BeautifulSoup(markdown, "html.parser").text
                         lookup_failed_msg = f"Lookup failed: {msg}"
-                        LOG.error(lookup_failed_msg)
+                        logger.error(lookup_failed_msg)
                         raise LookupError(lookup_failed_msg)
             except Exception as e:  # pylint: disable=broad-except,invalid-name
                 if any(isinstance(e, exc) for exc in retry_options.exceptions):
                     attempts = retry_options.attempts
                     msg = f"iNat not responding after {attempts} attempts. Please try again later."
-                    LOG.error(msg)
+                    logger.error(msg)
                     raise LookupError(msg) from e
                 raise e
 
@@ -142,7 +143,7 @@ class INatAPI:
             safe_kwargs["access_token"] = "***REDACTED***"
         else:
             safe_kwargs = kwargs
-        LOG.info(
+        logger.debug(
             "_pyinaturalist_endpoint(%s, %s, %s)",
             endpoint.__name__,
             repr(args),
