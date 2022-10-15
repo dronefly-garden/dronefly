@@ -44,7 +44,7 @@ from pyinaturalist import (
 )
 from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
-logger = logging.getLogger("red.dronefly.inatcog." + __name__)
+logger = logging.getLogger("red.dronefly." + __name__)
 
 API_BASE_URL = "https://api.inaturalist.org"
 RETRY_EXCEPTIONS = [

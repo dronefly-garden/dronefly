@@ -1,11 +1,9 @@
 """Module for common code."""
-import logging
 import re
 from functools import wraps
 from itertools import zip_longest
 
 DEQUOTE = re.compile(r'^"?(.*?)"?$')
-LOG = logging.getLogger("red.dronefly.inatcog")
 
 
 def make_decorator(function):

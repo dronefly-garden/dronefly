@@ -4,6 +4,7 @@ import contextlib
 import copy
 import datetime as dt
 from io import BytesIO
+import logging
 import re
 from typing import Optional, Union
 from urllib.parse import parse_qs, urlsplit
@@ -22,7 +23,6 @@ from ..base_classes import (
     TaxonSummary,
     WWW_BASE_URL,
 )
-from ..common import LOG
 from ..core.models.taxon import RANK_LEVELS
 from ..core.parsers.url import (
     MARKDOWN_LINK,
@@ -62,6 +62,8 @@ from ..taxa import (
 )
 from ..users import User
 from ..utils import has_valid_user_config, obs_url_from_v1
+
+logger = logging.getLogger('red.dronefly.' + __name__)
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -448,7 +450,7 @@ class INatEmbeds(MixinMeta):
             embed = make_embed(url=last.url)
             mat = re.search(PAT_OBS_LINK, last.url)
             obs_id = int(mat["obs_id"])
-            LOG.info("Observation not found for link: %d", obs_id)
+            logger.debug("Observation not found for link: %d", obs_id)
             embed.title = "No observation found for id: %d (deleted?)" % obs_id
 
         shared_by = f"· shared {last.ago}"
@@ -851,11 +853,11 @@ class INatEmbeds(MixinMeta):
             mat = re.search(PAT_OBS_LINK, url)
             if mat:
                 obs_id = int(mat["obs_id"])
-                LOG.info("Observation not found for: %s", obs_id)
+                logger.debug("Observation not found for: %s", obs_id)
                 embed.title = "No observation found for id: %s (deleted?)" % obs_id
             else:
                 # If this happens, it's a bug (i.e. PAT_OBS_LINK should already match)
-                LOG.info("Not an observation: %s", url)
+                logger.error("Not an observation: %s", url)
                 embed.title = "Not an observation:"
                 embed.description = url
 
@@ -993,7 +995,7 @@ class INatEmbeds(MixinMeta):
             obs_cnt = taxon.observations_count
             obs_url = obs_url_from_v1(obs_args)
         else:
-            LOG.error("Invalid input: %s", repr(arg))
+            logger.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
 
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
