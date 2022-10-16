@@ -34,7 +34,8 @@ async def get_valid_user_config(
     """Return iNat user config if known in this server.
 
     Note 1: Even if the user is known in another guild, they are not considered
-    known anywhere until they permit it with `,user set known True`.
+    known anywhere until they permit it with `,user set known True`. This setting
+    is ignored if anywhere=False (e.g. permission checks).
 
     Note 2: A user may be registered to a certain user id#, but the id# is
     invalid (e.g. account deleted). If that is the case, they'll still have
@@ -75,7 +76,7 @@ async def has_valid_user_config(
 
 async def get_home(ctx):
     """Get configured home place for author."""
-    user_config = await get_valid_user_config(ctx, ctx.author, anywhere=False)
+    user_config = await get_valid_user_config(ctx, ctx.author)
     if user_config:
         home = await user_config.home()
     if not home:
@@ -89,7 +90,7 @@ async def get_home(ctx):
 
 async def get_lang(ctx):
     """Get configured preferred language for author."""
-    user_config = await get_valid_user_config(ctx, ctx.author, anywhere=False)
+    user_config = await get_valid_user_config(ctx, ctx.author)
     if user_config:
         lang = await user_config.lang()
     # TODO: support guild and global preferred language
