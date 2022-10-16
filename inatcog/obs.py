@@ -8,6 +8,7 @@ from .core.parsers.url import PAT_OBS_LINK
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields
+from .utils import get_home
 
 
 def get_obs_fields(obs):
@@ -140,7 +141,7 @@ async def maybe_match_obs(cog, ctx, content, id_permitted=False):
         except ValueError:
             pass
     if obs_id:
-        home = await cog.get_home(ctx)
+        home = await get_home(ctx)
         results = (
             await cog.api.get_observations(
                 obs_id, include_new_projects=1, preferred_place_id=home

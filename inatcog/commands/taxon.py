@@ -18,6 +18,7 @@ from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MA
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
+from ..utils import get_lang
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
 
@@ -69,7 +70,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
         taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         full_name = taxon.format_name(lang=lang)
         msg = None
         if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
@@ -142,7 +143,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await apologize(ctx, str(err))
             return
         taxon = query_response.taxon
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         title = taxon.format_name(with_term=True, lang=lang)
         url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
         full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)

@@ -3,6 +3,7 @@
 from .base_classes import Place, WWW_BASE_URL, User
 from .projects import Project
 from .taxa import get_taxon_fields
+from .utils import get_home
 
 
 def get_place(result):
@@ -84,7 +85,7 @@ class INatSiteSearch:
             per_page = 100
         else:
             per_page = 30
-        home = await self.cog.get_home(ctx)
+        home = await get_home(ctx)
         api_kwargs = {"q": query, "per_page": per_page, "preferred_place_id": home}
         api_kwargs.update(kwargs)
         search_results = await self.cog.api.get_search_results(**api_kwargs)

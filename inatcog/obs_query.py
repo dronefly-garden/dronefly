@@ -1,6 +1,7 @@
 """Module to query iNat observations."""
 from .core.query.query import Query
 from .obs import get_obs_fields
+from .utils import get_home
 
 
 class INatObsQuery:
@@ -15,7 +16,7 @@ class INatObsQuery:
         query_response = await self.cog.query.get(ctx, query)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 1
-        home = await self.cog.get_home(ctx)
+        home = await get_home(ctx)
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:
@@ -32,7 +33,7 @@ class INatObsQuery:
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 200
         kwargs["page"] = page
-        home = await self.cog.get_home(ctx)
+        home = await get_home(ctx)
         kwargs["preferred_place_id"] = home
         response = await self.cog.api.get_observations(**kwargs)
         if not response["results"]:

@@ -14,7 +14,7 @@ from .base_classes import (
 from .core.models.taxon import RANK_LEVELS
 from .core.parsers.url import STATIC_URL_PAT
 from .core.query.query import TaxonQuery
-from .utils import obs_url_from_v1
+from .utils import get_home, obs_url_from_v1
 
 
 TAXON_ID_LIFE = 48460
@@ -95,16 +95,16 @@ def format_taxon_names(
     return names_format % delimiter.join(names)
 
 
-async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
+async def get_taxon_preferred_establishment_means(cog, ctx, taxon):
     """Get the preferred establishment means for the taxon."""
     try:
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
-        home = await bot.get_home(ctx)
+        home = await get_home(ctx)
         full_taxon = (
             taxon
             if taxon.listed_taxa
-            else await get_taxon(bot, taxon.id, preferred_place_id=int(home))
+            else await get_taxon(cog, taxon.id, preferred_place_id=int(home))
         )
     except (AttributeError, LookupError):
         return None
