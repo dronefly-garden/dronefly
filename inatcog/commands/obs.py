@@ -20,7 +20,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
-from ..utils import obs_url_from_v1
+from ..utils import get_home, obs_url_from_v1
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 
@@ -382,7 +382,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             obs_id = int(mat["obs_id"])
             url = mat["url"]
 
-            home = await self.get_home(ctx)
+            home = await get_home(ctx)
             results = (
                 await self.api.get_observations(
                     obs_id, include_new_projects=1, preferred_place_id=home

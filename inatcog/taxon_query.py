@@ -6,6 +6,7 @@ from dronefly.core.query.query import Query, TaxonQuery
 
 from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, match_taxon
+from .utils import get_home
 
 
 class INatTaxonQuery:
@@ -221,7 +222,7 @@ class INatTaxonQuery:
         """
         queries = query.split(",")
 
-        preferred_place_id = await self.cog.get_home(ctx)
+        preferred_place_id = await get_home(ctx)
 
         async def get_taxon(query):
             # TODO: extract from the following whatever logic applies

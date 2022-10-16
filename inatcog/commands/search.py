@@ -25,7 +25,7 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource
 from ..obs import get_obs_fields
-from ..utils import obs_url_from_v1
+from ..utils import get_home, obs_url_from_v1
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):
@@ -71,7 +71,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         async def _display_selected(ctx, result):
             mat = re.search(PAT_OBS_LINK, result)
             if mat:
-                home = await self.get_home(ctx)
+                home = await get_home(ctx)
                 obs_results = None
                 try:
                     obs_results = (

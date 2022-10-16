@@ -10,6 +10,7 @@ import inflect
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
+from .base_classes import COG_NAME
 from .commands.event import CommandsEvent
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
@@ -56,7 +57,7 @@ class INatCog(
     CommandsSearch,
     CommandsTaxon,
     CommandsUser,
-    name="iNat",
+    name=COG_NAME,
     metaclass=CompositeMetaClass,
 ):
     """Commands provided by `inatcog`."""

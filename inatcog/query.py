@@ -10,6 +10,7 @@ from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
 from .base_classes import DateSelector, QueryResponse, User
+from .utils import get_home
 
 
 def _get_options(query_options: list):
@@ -102,7 +103,7 @@ class INatQuery:
         """Get all requested iNat entities."""
         args = {}
 
-        preferred_place_id = await self.cog.get_home(ctx)
+        preferred_place_id = await get_home(ctx)
         args["project"] = (
             await self.cog.project_table.get_project(ctx.guild, query.project)
             if has_value(query.project)
