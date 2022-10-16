@@ -8,7 +8,7 @@ from dronefly.core.query.query import TaxonQuery
 from redbot.core.commands import Cog, Context
 
 from .base_classes import User, Place
-from .utils import obs_url_from_v1
+from .utils import get_home, obs_url_from_v1
 
 
 TAXON_ID_LIFE = 48460
@@ -28,7 +28,7 @@ async def get_taxon_preferred_establishment_means(cog: Cog, ctx, taxon):
     try:
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
-        home = await cog.get_home(ctx)
+        home = await get_home(ctx)
         full_taxon = (
             taxon
             if taxon.listed_taxa

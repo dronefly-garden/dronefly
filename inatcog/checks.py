@@ -1,14 +1,6 @@
 """Checks for iNatcog."""
 from redbot.core import commands
-from .utils import has_valid_user_config
-
-
-async def _known_inat_user(ctx, anywhere):
-    cog = ctx.bot.get_cog("iNat")
-    if not cog:
-        return False
-
-    return await has_valid_user_config(cog, ctx.author, anywhere=anywhere)
+from .utils import get_cog, has_valid_user_config
 
 
 def known_inat_user():
@@ -21,7 +13,7 @@ def known_inat_user():
         are not considered known anywhere until they permit it
         with `,user set known True`.
         """
-        return await _known_inat_user(ctx, anywhere=True)
+        return await has_valid_user_config(ctx, ctx.author, anywhere=True)
 
     return commands.check(check)
 
@@ -31,16 +23,13 @@ def known_inat_user_here():
 
     async def check(ctx: commands.Context):
         """Check if iNat user is known here."""
-        return await _known_inat_user(ctx, anywhere=False)
+        return await has_valid_user_config(ctx, ctx.author, anywhere=False)
 
     return commands.check(check)
 
 
 async def _can_manage(ctx: commands.Context, what: str, dm_allowed: False) -> bool:
-    bot = ctx.bot
-    cog = bot.get_cog("iNat")
-    if not cog:
-        return False
+    """Manage permission granted via role."""
     guild = ctx.guild
     if not guild:
         return dm_allowed
@@ -48,11 +37,12 @@ async def _can_manage(ctx: commands.Context, what: str, dm_allowed: False) -> bo
     member = ctx.author
     if (
         member == guild.owner
-        or await bot.is_owner(member)
-        or await bot.is_admin(member)
+        or await ctx.bot.is_owner(member)
+        or await ctx.bot.is_admin(member)
     ):
         return True
 
+    cog = get_cog(ctx)
     guild_config = cog.config.guild(guild)
     role_id = await guild_config.get_raw(f"manage_{what}_role")
     if not role_id:
@@ -73,7 +63,7 @@ def can_manage_places():
         """
         can_manage = await _can_manage(ctx, "places", dm_allowed=False)
         if can_manage is None:
-            return await _known_inat_user(ctx, anywhere=False)
+            return await has_valid_user_config(ctx, ctx.author, anywhere=False)
         return can_manage
 
     return commands.check(check)
@@ -90,7 +80,7 @@ def can_manage_projects():
         """
         can_manage = await _can_manage(ctx, "projects", dm_allowed=False)
         if can_manage is None:
-            return await _known_inat_user(ctx, anywhere=False)
+            return await has_valid_user_config(ctx, ctx.author, anywhere=False)
         return can_manage
 
     return commands.check(check)

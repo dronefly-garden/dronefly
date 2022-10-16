@@ -64,7 +64,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..users import User
-from ..utils import has_valid_user_config, obs_url_from_v1
+from ..utils import get_home, get_lang, has_valid_user_config, obs_url_from_v1
 
 logger = logging.getLogger('red.dronefly.' + __name__)
 
@@ -419,31 +419,6 @@ class INatEmbeds(MixinMeta):
             )
             raise BadArgument(reason)
 
-    async def get_home(self, ctx):
-        """Get configured home place."""
-        user_config = self.config.user(ctx.author)
-        home = await user_config.home()
-        if not home:
-            if ctx.guild:
-                guild_config = self.config.guild(ctx.guild)
-                home = await guild_config.home()
-            else:
-                home = await self.config.home()
-        return home
-
-    async def get_lang(self, ctx):
-        """Get configured preferred language."""
-        user_config = self.config.user(ctx.author)
-        lang = await user_config.lang()
-        # TODO: support guild and global preferred language
-        # if not lang:
-        #    if ctx.guild:
-        #        guild_config = self.config.guild(ctx.guild)
-        #        lang = await guild_config.lang()
-        #    else:
-        #        lang = await self.config.lang()
-        return lang
-
     async def make_last_obs_embed(self, ctx, last):
         """Return embed for recent observation link."""
         if last.obs:
@@ -466,7 +441,7 @@ class INatEmbeds(MixinMeta):
 
     async def make_map_embed(self, ctx, taxa, lang=None):
         """Return embed for an observation link."""
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         title = format_taxon_names_for_embed(
             taxa, with_term=True, names_format="Range map for %s", lang=lang
         )
@@ -852,7 +827,7 @@ class INatEmbeds(MixinMeta):
                 embed.title = title
                 embed.url = url
             else:
-                lang = await self.get_lang(ctx)
+                lang = await get_lang(ctx)
                 embed.title, summary = await self.format_obs(ctx, obs, lang=lang)
                 if error:
                     summary += "\n" + error
@@ -873,7 +848,7 @@ class INatEmbeds(MixinMeta):
 
     async def make_related_embed(self, ctx, taxa):
         """Return embed for related taxa."""
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         names = format_taxon_names_for_embed(
             taxa, with_term=True, names_format="**The taxa:** %s", lang=lang
         )
@@ -891,7 +866,7 @@ class INatEmbeds(MixinMeta):
                 first_taxon_ancestor_ids.index(ancestor_id)
                 for ancestor_id in common_ancestors
             ]
-            preferred_place_id = await self.get_home(ctx)
+            preferred_place_id = await get_home(ctx)
             if not common_ancestor_indices:
                 taxon = await get_taxon(
                     self,
@@ -920,7 +895,7 @@ class INatEmbeds(MixinMeta):
         """Make embed showing default image for taxon."""
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
 
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         title = format_taxon_title(taxon, lang=lang)
         taxon_photo = None
 
@@ -1032,10 +1007,10 @@ class INatEmbeds(MixinMeta):
                 description += "."
             return description
 
-        lang = await self.get_lang(ctx)
+        lang = await get_lang(ctx)
         title = format_taxon_title(taxon, lang=lang)
 
-        preferred_place_id = await self.get_home(ctx)
+        preferred_place_id = await get_home(ctx)
         if place:
             preferred_place_id = place.place_id
         full_record = (
