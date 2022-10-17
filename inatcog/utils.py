@@ -22,7 +22,8 @@ def obs_url_from_v1(params: dict):
     return url
 
 def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
-    cog = cog_or_ctx.bot.get_cog(COG_NAME) if isinstance(cog_or_ctx, commands.Context) else cog_or_ctx
+    bot_attr = getattr(cog_or_ctx, "bot", None)
+    cog = cog_or_ctx.bot.get_cog(COG_NAME) if bot_attr else cog_or_ctx
     if not cog:
         # Something is seriously wrong if we ever get here:
         raise discord.BadArugment(f"Cog not found: {COG_NAME}")
