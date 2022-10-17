@@ -89,6 +89,7 @@ async def valid_user_config(
 
 async def get_home(ctx):
     """Get configured home place for author."""
+    home = None
     async with valid_user_config(ctx, ctx.author) as user_config:
         if user_config:
             home = await user_config.home()
@@ -103,6 +104,7 @@ async def get_home(ctx):
 
 async def get_lang(ctx):
     """Get configured preferred language for author."""
+    lang = None
     async with valid_user_config(ctx, ctx.author) as user_config:
         if user_config:
             lang = await user_config.lang()
