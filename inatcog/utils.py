@@ -1,4 +1,5 @@
 """Utilities module."""
+from contextlib import asynccontextmanager
 from typing import Union
 from urllib.parse import urlencode
 
@@ -75,11 +76,23 @@ async def has_valid_user_config(
         return False
     return True
 
+@asynccontextmanager
+async def valid_user_config(
+    cog_or_ctx=Union[commands.Cog, commands.Context], user=Union[discord.Member, discord.User], anywhere=True
+):
+    user_config = None
+    try:
+        user_config = await get_valid_user_config(cog_or_ctx, user, anywhere)
+    except LookupError:
+        pass
+    yield user_config
+
 async def get_home(ctx):
     """Get configured home place for author."""
-    user_config = await get_valid_user_config(ctx, ctx.author)
-    if user_config:
-        home = await user_config.home()
+    home = None
+    async with valid_user_config(ctx, ctx.author) as user_config:
+        if user_config:
+            home = await user_config.home()
     if not home:
         cog = get_cog(ctx)
         if ctx.guild:
@@ -91,9 +104,10 @@ async def get_home(ctx):
 
 async def get_lang(ctx):
     """Get configured preferred language for author."""
-    user_config = await get_valid_user_config(ctx, ctx.author)
-    if user_config:
-        lang = await user_config.lang()
+    lang = None
+    async with valid_user_config(ctx, ctx.author) as user_config:
+        if user_config:
+            lang = await user_config.lang()
     # TODO: support guild and global preferred language
     # if not lang:
     #    if ctx.guild:
