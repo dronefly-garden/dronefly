@@ -529,8 +529,8 @@ from other nature-related sites:
 
 ``,algae``
 
-- ``https://www.algaebase.org/search/glossary/``
-- nothing entered after (provides link to Algaebase glossary)
+- ``<https://www.algaebase.org/search/species/?name={urlencode:{args}}>``
+- put search term after command
 
 ``,antwiki``
 
@@ -683,11 +683,6 @@ from other nature-related sites:
 
 - ``https://www.inaturalist.org/observations/5890862``
 - everybody's favorite marmot
-
-``,gni``
-
-- ``http://gni.globalnames.org/name_strings?search_term={0:query}&commit=Search``
-- put taxon search terms after command (great for when you know the species but not the genus, for example)
 
 ``,hostplant``
 
