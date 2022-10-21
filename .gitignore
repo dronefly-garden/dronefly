@@ -110,3 +110,6 @@ qgriff.ini
 
 # Red Bot V3 stuff
 red_setup_logs
+
+# Visual Studio Code stuff
+.vscode/

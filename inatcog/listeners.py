@@ -1,23 +1,29 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple, Union
+from typing import NamedTuple, Tuple, Union
 import asyncio
 import contextlib
 from copy import copy
+import logging
 import re
+
 import discord
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
-from .common import LOG
-from .converters import NaturalCompoundQueryConverter
-from .embeds import NoRoomInDisplay
-from .inat_embeds import INatEmbed, INatEmbeds, REACTION_EMOJI
+from .converters.base import NaturalQueryConverter
+from .embeds.common import NoRoomInDisplay
+from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
+
+logger = logging.getLogger('red.dronefly.' + __name__)
 
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.
 DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
+
+# pylint: disable=no-member, assigning-non-slot
+# - See https://github.com/PyCQA/pylint/issues/981
 
 
 class PartialAuthor(NamedTuple):
@@ -52,29 +58,32 @@ class Listeners(INatEmbeds, MixinMeta):
     async def on_message_without_command(self, message: discord.Message) -> None:
         """Handle links to iNat."""
         await self._ready_event.wait()
-        if message.author.bot or message.guild is None:
+        if message.author.bot:
             return
 
         guild = message.guild
         channel = message.channel
 
         # Autoobs and dot_taxon features both need embed_links:
-        if not channel.permissions_for(guild.me).embed_links:
-            return
-        guild_config = self.config.guild(guild)
-
-        # - on_message_without_command only ignores bot prefixes for this instance
-        # - implementation as suggested by Trusty:
-        #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
-        bot_prefixes = await guild_config.bot_prefixes()
-
-        if bot_prefixes:
-            prefixes = r"|".join(re.escape(bot_prefix) for bot_prefix in bot_prefixes)
-            prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
-            if re.match(prefix_pattern, message.content):
+        if guild:
+            if not channel.permissions_for(guild.me).embed_links:
                 return
+            guild_config = self.config.guild(guild)
 
-        channel_autoobs = await self.config.channel(channel).autoobs()
+            # - on_message_without_command only ignores bot prefixes for this instance
+            # - implementation as suggested by Trusty:
+            #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
+            bot_prefixes = await guild_config.bot_prefixes()
+
+            if bot_prefixes:
+                prefixes = r"|".join(
+                    re.escape(bot_prefix) for bot_prefix in bot_prefixes
+                )
+                prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
+                if re.match(prefix_pattern, message.content):
+                    return
+
+        channel_autoobs = not guild or await self.config.channel(channel).autoobs()
         if channel_autoobs is None:
             autoobs = await guild_config.autoobs()
         else:
@@ -87,14 +96,11 @@ class Listeners(INatEmbeds, MixinMeta):
             obs, url = await maybe_match_obs(self, ctx, message.content)
             # Only output if an observation is found
             if obs:
-                await message.channel.send(
-                    embed=await self.make_obs_embed(guild, obs, url, preview=False)
-                )
-                if obs and obs.sounds:
-                    await self.maybe_send_sound_url(channel, obs.sounds[0])
+                embed = await self.make_obs_embed(ctx, obs, url, preview=False)
+                await self.send_obs_embed(ctx, embed, obs)
                 self.bot.dispatch("commandstats_action", ctx)
 
-        channel_dot_taxon = await self.config.channel(channel).dot_taxon()
+        channel_dot_taxon = not guild or await self.config.channel(channel).dot_taxon()
         if channel_dot_taxon is None:
             dot_taxon = await guild_config.dot_taxon()
         else:
@@ -108,24 +114,22 @@ class Listeners(INatEmbeds, MixinMeta):
                     self.bot, guild, channel, message.author, message, "msg dot_taxon"
                 )
                 try:
-                    query = await NaturalCompoundQueryConverter.convert(
-                        ctx, mat["query"]
-                    )
+                    query = await NaturalQueryConverter.convert(ctx, mat["query"])
                     if query.controlled_term:
                         return
-                    filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+                    query_response = await self.query.get(ctx, query)
                 except (BadArgument, LookupError):
                     return
-                if query.user or query.place:
+                if query.user or query.place or query.project:
                     msg = await channel.send(
-                        embed=await self.make_obs_counts_embed(filtered_taxon)
+                        embed=await self.make_obs_counts_embed(query_response)
                     )
-                    self.add_obs_reaction_emojis(msg)
+                    await self.add_obs_reaction_emojis(ctx, msg, query_response)
                 else:
                     msg = await channel.send(
-                        embed=await self.make_taxa_embed(ctx, filtered_taxon)
+                        embed=await self.make_taxa_embed(ctx, query_response)
                     )
-                    self.add_taxon_reaction_emojis(msg, filtered_taxon)
+                    await self.add_taxon_reaction_emojis(ctx, msg, query_response)
                 self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
@@ -150,11 +154,20 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             self.bot.dispatch("commandstats_action", ctx)
 
-        if not message.embeds:
+        if not message.embeds or not message.reactions:
             return
+        reaction = next(
+            (
+                reaction
+                for reaction in message.reactions
+                if reaction.emoji == str(emoji)
+            ),
+            None,
+        )
+        if not reaction or not reaction.me:
+            return
+
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
-        if not inat_embed.taxon_id():
-            return
         msg = copy(message)
         msg.embeds[0] = inat_embed
 
@@ -164,13 +177,13 @@ class Listeners(INatEmbeds, MixinMeta):
                 dispatch_commandstats(message, "react taxonomy")
             elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
-                    await self.maybe_update_member(msg, member, action)
+                    await self.maybe_update_user(msg, member=member, action=action)
                     dispatch_commandstats(message, "react self")
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member
                     )
-                    await self.maybe_update_member_by_name(ctx, msg=msg, user=member)
+                    await self.maybe_update_user_by_name(ctx, msg=msg, member=member)
                     dispatch_commandstats(message, "react user")
             if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:
@@ -188,7 +201,7 @@ class Listeners(INatEmbeds, MixinMeta):
                 with contextlib.suppress(discord.HTTPException):
                     await error_message.delete()
         except Exception:
-            LOG.error(
+            logger.error(
                 "Exception handling %s %s reaction by %s on %s",
                 action,
                 str(emoji),
@@ -199,27 +212,49 @@ class Listeners(INatEmbeds, MixinMeta):
 
     async def maybe_get_reaction(
         self, payload: discord.raw_models.RawReactionActionEvent
-    ) -> (discord.Member, discord.Message):
+    ) -> Tuple[discord.Member, discord.Message]:
         """Return reaction member & message if valid."""
         await self._ready_event.wait()
-        if not payload.guild_id:
-            raise ValueError("Reaction is not on a guild channel.")
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-        if member is None or member.bot:
-            raise ValueError("User is not a guild member.")
+        guild_id = payload.guild_id or 0
+        if not guild_id:
+            # in DM
+            member = self.bot.get_user(payload.user_id)
+        else:
+            guild = self.bot.get_guild(payload.guild_id)
+            member = guild.get_member(payload.user_id)
+            # defensive: not possible?
+            if member is None:
+                raise ValueError("User is not a guild member.")
+        if member.bot:
+            raise ValueError("User is a bot.")
+        if self.member_as[(guild_id, member.id)].spammy:
+            logger.info(
+                "Spammy: %d-%d-%d; ignored reaction: %s",
+                guild_id,
+                payload.channel_id,
+                member.id,
+                payload.emoji,
+            )
+            raise ValueError("Member is being spammy")
         channel = self.bot.get_channel(payload.channel_id)
         try:
             message = next(
                 msg for msg in self.bot.cached_messages if msg.id == payload.message_id
             )
-        except StopIteration:  # too old; have to fetch it
+        except StopIteration as err:  # too old; have to fetch it
+            if guild_id and not channel.permissions_for(guild.me).read_message_history:
+                raise ValueError(
+                    "Message can't be read without read_message_history permission."
+                ) from err
             try:
                 message = await channel.fetch_message(payload.message_id)
             except discord.errors.NotFound:
-                raise ValueError("Message was deleted before reaction handled.")
+                raise ValueError(
+                    "Message was deleted before reaction handled."
+                ) from err
         if message.author != self.bot.user:
             raise ValueError("Reaction is not to our own message.")
+        self.member_as[(guild_id, member.id)].stamp()
         return (member, message)
 
     @commands.Cog.listener()

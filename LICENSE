@@ -1,13 +1,13 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: dronefly
-Source: https://github.com/synrg/dronefly
+Source: https://github.com/dronefly-garden/dronefly
 
 Files: *
 Copyright: 2019-2020 Ben Armstrong and contributors
 License: AGPL-3+
 Comment:
  See CONTRIBUTORS.md at the top-level directory of this distribution
- and https://github.com/synrg/dronefly/blob/master/CONTRIBUTORS.md
+ and https://github.com/dronefly-garden/dronefly/blob/master/CONTRIBUTORS.md
  for a complete list of contributors.
 
 Files: docs/*

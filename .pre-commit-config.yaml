@@ -1,23 +1,23 @@
 default_language_version:
-    python: python3.8
+    python: python3.9
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.1.0
+  rev: v4.0.1
   hooks:
   - id: check-merge-conflict
   - id: debug-statements
 - repo: https://gitlab.com/pycqa/flake8
-  rev: 3.8.3
+  rev: 3.9.2
   hooks:
   - id: flake8
     args: [--max-line-length=100]
 - repo: https://github.com/ambv/black
-  rev: 19.10b0
+  rev: 21.8b0
   hooks:
   - id: black
 - repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
-  rev: v1.0.4
+  rev: v1.0.5
   hooks:
   - id: python-bandit-vulnerability-check
-    args: [-l, --recursive, -x, tests]
+    args: [-l, --recursive, -x, tests, .]
     files: .py$

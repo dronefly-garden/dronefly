@@ -1,38 +1,76 @@
 """Module for project command group."""
 
+import re
+
+import html2markdown
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from inatcog.base_classes import WWW_BASE_URL
-from inatcog.checks import known_inat_user
-from inatcog.common import grouper
-from inatcog.converters import ContextMemberConverter
-from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.places import RESERVED_PLACES
+from ..base_classes import WWW_BASE_URL
+from ..checks import can_manage_projects
+from ..common import grouper
+from ..converters.base import MemberConverter
+from ..embeds.common import apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..places import RESERVED_PLACES
+from ..utils import has_valid_user_config
 
 
 class CommandsProject(INatEmbeds, MixinMeta):
     """Mixin providing project command group."""
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True, aliases=["prj"])
     async def project(self, ctx, *, query):
-        """Show iNat project or abbreviation.
+        """iNat project for name, id number, or abbreviation.
 
         **query** may contain:
         - *id#* of the iNat project
         - *words* in the iNat project name
-        - *abbreviation* defined with `[p]project add`
+        - *abbreviation* defined with `[p]project add`; see `[p]help project add` for details.
         """
         try:
             project = await self.project_table.get_project(ctx.guild, query)
-            await ctx.send(project.url)
+            embed = make_embed(
+                title=project.title,
+                url=project.url,
+                description=html2markdown.convert(
+                    " " + project.description[:MAX_EMBED_DESCRIPTION_LEN]
+                ),
+            )
+            if project.banner_color:
+                embed.color = int(project.banner_color.replace("#", "0x"), 16)
+            if project.icon:
+                embed.set_thumbnail(url=project.icon)
+            embed.add_field(name="Project number", value=project.project_id)
+            if ctx.guild:
+                guild_config = self.config.guild(ctx.guild)
+                projects = await guild_config.projects()
+                proj_abbrevs = [
+                    abbrev
+                    for abbrev in projects
+                    if projects[abbrev] == project.project_id
+                ]
+                if proj_abbrevs:
+                    abbrevs = ", ".join(proj_abbrevs)
+                else:
+                    abbrevs = "*none*"
+                    can_add_projects = await has_valid_user_config(
+                        self, ctx.author, anywhere=False
+                    )
+                    if can_add_projects:
+                        embed.set_footer(
+                            text=f"Add an abbreviation with {ctx.clean_prefix}project add"
+                        )
+                embed.add_field(
+                    name=self.p.plural("Abbreviation", len(proj_abbrevs)), value=abbrevs
+                )
+            await ctx.send(embed=embed)
         except LookupError as err:
             await ctx.send(err)
 
-    @known_inat_user()
+    @can_manage_projects()
     @project.command(name="add")
     async def project_add(self, ctx, abbrev: str, project_number: int):
         """Add project abbreviation for server."""
@@ -59,8 +97,8 @@ class CommandsProject(INatEmbeds, MixinMeta):
         await ctx.send("Project abbreviation added.")
 
     @project.command(name="list")
-    @checks.bot_has_permissions(embed_links=True)
-    async def project_list(self, ctx):
+    @checks.bot_has_permissions(embed_links=True, read_message_history=True)
+    async def project_list(self, ctx, *, match=""):
         """List projects with abbreviations on this server."""
         if not ctx.guild:
             return
@@ -68,18 +106,59 @@ class CommandsProject(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         projects = await config.projects()
         result_pages = []
-        for abbrev in projects:
-            # Only lookup cached projects. Uncached projects will just be shown by number.
+
+        # Prefetch all uncached projects, 10 at a time
+        # - 10 is a maximum determined by testing. beyond that, iNat API
+        #   will respond with:
+        #
+        #      Unprocessable Entity (422)
+        #
+        try:
+            proj_id_groups = [
+                list(filter(None, results))
+                for results in grouper(
+                    [
+                        projects[abbrev]
+                        for abbrev in projects
+                        if int(projects[abbrev]) not in self.api.projects_cache
+                    ],
+                    10,
+                )
+            ]
+            for proj_id_group in proj_id_groups:
+                await self.api.get_projects(proj_id_group)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
+
+        # Iterate over projects and do a quick cache lookup per project:
+        for abbrev in sorted(projects):
             proj_id = int(projects[abbrev])
+            proj_str_text = ""
             if proj_id in self.api.projects_cache:
                 try:
                     project = await self.project_table.get_project(ctx.guild, proj_id)
                     proj_str = f"{abbrev}: [{project.title}]({project.url})"
+                    proj_str_text = f"{abbrev} {project.title}"
                 except LookupError:
+                    # In the unlikely case of the deletion of a project that is cached:
                     proj_str = f"{abbrev}: {proj_id} not found."
+                    proj_str_text = abbrev
             else:
+                # Uncached projects are listed by id (prefetch above should prevent this!)
                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
-            result_pages.append(proj_str)
+                proj_str_text = abbrev
+            if match:
+                words = match.split(" ")
+                if all(
+                    re.search(pat, proj_str_text)
+                    for pat in [
+                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                    ]
+                ):
+                    result_pages.append(proj_str)
+            else:
+                result_pages.append(proj_str)
         pages = [
             "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
         ]
@@ -97,7 +176,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         else:
             await apologize(ctx, "Nothing found")
 
-    @known_inat_user()
+    @can_manage_projects()
     @project.command(name="remove")
     async def project_remove(self, ctx, abbrev: str):
         """Remove project abbreviation for server."""
@@ -119,29 +198,28 @@ class CommandsProject(INatEmbeds, MixinMeta):
     @project.command(name="stats")
     @checks.bot_has_permissions(embed_links=True)
     async def project_stats(self, ctx, project: str, *, user: str = "me"):
-        """Show project stats for the named user.
+        """Project stats for the named user.
 
-        Observation & species count & rank of the user within the project
-        are shown, as well as leaf taxa, which are not ranked. Leaf taxa
-        are explained here:
+        Observation & species count & rank of the user within the project are shown, as well as leaf taxa, which are not ranked. Leaf taxa are explained here:
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
-        """
+        """  # noqa: E501
 
         if project == "":
             await ctx.send_help()
-        try:
-            proj = await self.project_table.get_project(ctx.guild, project)
-        except LookupError as err:
-            await ctx.send(err)
-            return
+        async with ctx.typing():
+            try:
+                proj = await self.project_table.get_project(ctx.guild, project)
+            except LookupError as err:
+                await ctx.send(err)
+                return
 
-        try:
-            ctx_member = await ContextMemberConverter.convert(ctx, user)
-            member = ctx_member.member
-            user = await self.user_table.get_user(member)
-        except (BadArgument, LookupError) as err:
-            await ctx.send(err)
-            return
+            try:
+                ctx_member = await MemberConverter.convert(ctx, user)
+                member = ctx_member.member
+                user = await self.user_table.get_user(member)
+            except (BadArgument, LookupError) as err:
+                await ctx.send(err)
+                return
 
-        embed = await self.make_stats_embed(member, user, proj)
-        await ctx.send(embed=embed)
+            embed = await self.make_stats_embed(member, user, proj)
+            await ctx.send(embed=embed)

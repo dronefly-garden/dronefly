@@ -1,132 +1,22 @@
 """Module for base classes and constants."""
-import re
-from typing import List, NamedTuple, Optional
 from dataclasses import dataclass, field
+import datetime as dt
+import re
+from typing import List, NamedTuple, Optional, Union
+
 from dataclasses_json import config, DataClassJsonMixin
+from discord.utils import escape_markdown
+
+from .controlled_terms import ControlledTermSelector
+from .core import models
+from .core.models.taxon import RANK_LEVELS, TAXON_PRIMARY_RANKS, TRINOMIAL_ABBR
 from .photos import Photo
 from .sounds import Sound
 
-API_BASE_URL = "https://api.inaturalist.org"
+COG_NAME = "iNat"
 WWW_BASE_URL = "https://www.inaturalist.org"
-# Match any iNaturalist partner URL
-# See https://www.inaturalist.org/pages/network
-WWW_URL_PAT = (
-    r"https?://("
-    r"((www|colombia|panama|ecuador|israel|greece)\.)?inaturalist\.org"
-    r"|inaturalist\.ala\.org\.au"
-    r"|(www\.)?("
-    r"inaturalist\.(ca|nz)"
-    r"|naturalista\.mx"
-    r"|biodiversity4all\.org"
-    r"|argentinat\.org"
-    r"|inaturalist\.laji\.fi"
-    r")"
-    r")"
-)
-
-# Match observation URL or command.
-PAT_OBS_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/observations/(?P<obs_id>\d+))\b", re.I
-)
-# Match observation URL from `obs` embed generated for observations matching a
-# specific taxon_id and filtered by optional place_id and/or user_id.
-PAT_OBS_TAXON_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/observations"
-    r"\?taxon_id=(?P<taxon_id>\d+)(&place_id=(?P<place_id>\d+))?(&user_id=(?P<user_id>\d+))?)\b",
-    re.I,
-)
-
-QUERY_PAT = r"\??(?:&?[^=&]*=[^=&]*)*"
-PAT_OBS_QUERY = re.compile(
-    r"(?P<url>" + WWW_URL_PAT + r"/observations" + QUERY_PAT + ")"
-)
-
-# RANK_LEVELS and RANK_EQUIVALENTS are from:
-# - https://github.com/inaturalist/inaturalist/blob/master/app/models/taxon.rb
-RANK_LEVELS = {
-    "stateofmatter": 100,
-    "unranked": 90,  # Invented to make parent check work (this is null in the db)
-    "kingdom": 70,
-    "phylum": 60,
-    "subphylum": 57,
-    "superclass": 53,
-    "class": 50,
-    "subclass": 47,
-    "infraclass": 45,
-    "subterclass": 44,
-    "superorder": 43,
-    "order": 40,
-    "suborder": 37,
-    "infraorder": 35,
-    "parvorder": 34.5,
-    "zoosection": 34,
-    "zoosubsection": 33.5,
-    "superfamily": 33,
-    "epifamily": 32,
-    "family": 30,
-    "subfamily": 27,
-    "supertribe": 26,
-    "tribe": 25,
-    "subtribe": 24,
-    "genus": 20,
-    "genushybrid": 20,
-    "subgenus": 15,
-    "section": 13,
-    "subsection": 12,
-    "complex": 11,
-    "species": 10,
-    "hybrid": 10,
-    "subspecies": 5,
-    "variety": 5,
-    "form": 5,
-    "infrahybrid": 5,
-}
-
-RANK_EQUIVALENTS = {
-    "division": "phylum",
-    "sub-class": "subclass",
-    "super-order": "superorder",
-    "sub-order": "suborder",
-    "super-family": "superfamily",
-    "sub-family": "subfamily",
-    "gen": "genus",
-    "sp": "species",
-    "spp": "species",
-    "infraspecies": "subspecies",
-    "ssp": "subspecies",
-    "sub-species": "subspecies",
-    "subsp": "subspecies",
-    "trinomial": "subspecies",
-    "var": "variety",
-    # 'unranked': None,
-}
-
-RANK_KEYWORDS = tuple(RANK_LEVELS.keys()) + tuple(RANK_EQUIVALENTS.keys())
 
 
-class SimpleQuery(NamedTuple):
-    """A taxon query composed of terms and/or phrases or a code or taxon_id, filtered by ranks."""
-
-    taxon_id: int
-    terms: List[str]
-    phrases: List[str]
-    ranks: List[str]
-    code: str
-
-
-class CompoundQuery(NamedTuple):
-    """A taxon query that may contain another (ancestor) taxon query."""
-
-    main: SimpleQuery
-    ancestor: SimpleQuery
-    user: str
-    place: str
-    controlled_term: str
-    unobserved_by: str
-    per: str
-
-
-# TODO: this should just be Place, as it is a superset
 @dataclass
 class MeansPlace(DataClassJsonMixin):
     """The place for establishment means."""
@@ -301,10 +191,21 @@ class ConservationStatus(DataClassJsonMixin):
 
     def status_description(self):
         """Return a reasonable description of status giving various possible inputs."""
-        if self.status.lower() in ("extinct", "ex"):
-            return "extinct"
+        status_lowered = self.status.lower()
+        # Avoid cases where showing both the name and code
+        # adds no new information, e.g.
+        # - "extinct (EXTINCT)" and "threatened (THREATENED)"
+        # - return "extinct" or "threatened" instead
+        if status_lowered == self.status_name.lower():
+            return status_lowered
         if self.status_name:
             return f"{self.status_name} ({self.status.upper()})"
+        # Avoid "shouting" status codes when no name is given and
+        # they are long (i.e. they're probably names, not actual
+        # status codes)
+        # - e.g. "EXTINCT" or "THREATENED"
+        if len(self.status) > 6:
+            return self.status.lower()
         return self.status.upper()
 
     def description(self):
@@ -320,24 +221,110 @@ class ConservationStatus(DataClassJsonMixin):
         return self.authority
 
 
-class Taxon(NamedTuple):
-    """A taxon."""
+@dataclass
+class _TaxonBase(models.taxon.TaxonBase):
+    """Base class for standard fields of cog Taxon."""
 
-    name: str
-    taxon_id: int
-    common: Optional[str]
-    term: str
-    thumbnail: Optional[str]
-    image: Optional[str]
-    image_attribution: Optional[str]
-    rank: str
-    ancestor_ids: list
-    observations: int
-    ancestor_ranks: list
-    active: bool
-    listed_taxa: list
-    establishment_means: Optional[EstablishmentMeansPartial]
-    conservation_status: Optional[ConservationStatus]
+
+@dataclass
+class _TaxonDefaultsBase(models.taxon.TaxonDefaultsBase):
+    """Base class for optional fields of cog Taxon."""
+
+    establishment_means: Optional[EstablishmentMeansPartial] = None
+    conservation_status: Optional[ConservationStatus] = None
+
+
+@dataclass
+class Taxon(models.taxon.Taxon, _TaxonDefaultsBase, _TaxonBase):
+    """Public class for taxon with cog-specific behaviours."""
+
+    def format_name(
+        self,
+        with_term=False,
+        hierarchy=False,
+        with_rank=True,
+        with_common=True,
+        lang=None,
+    ):
+        """Format taxon name.
+
+        Parameters
+        ----------
+        with_term: bool, optional
+            When with_common=True, non-common / non-name matching term is put in
+            parentheses in place of common name.
+        hierarchy: bool, optional
+            If specified, produces a list item suitable for inclusion in the hierarchy section
+            of a taxon embed. See format_taxon_names() for details.
+        with_rank: bool, optional
+            If specified and hierarchy=False, includes the rank for ranks higher than species.
+        with_common: bool, optional
+            If specified, include common name in parentheses after scientific name.
+        lang: str, optional
+            If specified, prefer the first name with its locale == lang instead of
+            the preferred_common_name.
+
+        Returns
+        -------
+        str
+            A name of the form "Rank Scientific name (Common name)" following the
+            same basic format as iNaturalist taxon pages on the web, i.e.
+
+            - drop the "Rank" keyword for species level and lower
+            - italicize the name (minus any rank abbreviations; see next point) for genus
+            level and lower
+            - for trinomials (must be subspecies level & have exactly 3 names to qualify),
+            insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
+            name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
+        """
+
+        if with_common:
+            preferred_common_name = None
+            if lang and self.names:
+                name = next(
+                    iter([name for name in self.names if name.get("locale") == lang]),
+                    None,
+                )
+                if name:
+                    preferred_common_name = name.get("name")
+            if not preferred_common_name:
+                preferred_common_name = self.preferred_common_name
+            if with_term:
+                common = (
+                    self.matched_term
+                    if self.matched_term not in (self.name, preferred_common_name)
+                    else preferred_common_name
+                )
+            else:
+                if hierarchy:
+                    common = None
+                else:
+                    common = preferred_common_name
+        else:
+            common = None
+        name = self.name
+
+        rank = self.rank
+        rank_level = RANK_LEVELS[rank]
+
+        if rank_level <= RANK_LEVELS["genus"]:
+            name = f"*{name}*"
+        if rank_level > RANK_LEVELS["species"]:
+            if hierarchy:
+                bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
+                name = f"{bold[0]}{name}{bold[1]}"
+            elif with_rank:
+                name = f"{rank.capitalize()} {name}"
+        else:
+            if rank in TRINOMIAL_ABBR.keys():
+                tri = name.split(" ")
+                if len(tri) == 3:
+                    # Note: name already italicized, so close/reopen italics around insertion.
+                    name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
+        full_name = f"{name} ({common})" if common else name
+        if not self.is_active:
+            full_name += " :exclamation: Inactive Taxon"
+        return full_name
 
 
 @dataclass
@@ -362,7 +349,9 @@ class User(DataClassJsonMixin):
 
     def display_name(self):
         """Name to include in displays."""
-        return f"{self.name} ({self.login})" if self.name else self.login
+        if self.name:
+            return f"{escape_markdown(self.name)} ({escape_markdown(self.login)})"
+        return escape_markdown(self.login)
 
     def profile_url(self):
         """User profile url."""
@@ -386,13 +375,289 @@ class Place(DataClassJsonMixin):
         self.url = f"{WWW_BASE_URL}/places/{self.place_id}"
 
 
-class FilteredTaxon(NamedTuple):
-    """A taxon with optional filters."""
+@dataclass
+class Project(DataClassJsonMixin):
+    """A project."""
 
-    taxon: Taxon
-    user: User
-    place: Place
-    unobserved_by: User
+    project_id: int = field(metadata=config(field_name="id"))
+    title: str
+    url: str = field(init=False)
+    description: str
+    icon: str
+    banner_color: str
+
+    def __post_init__(self):
+        """URL for project."""
+        self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
+
+
+class _Params(dict):
+    def set_from(self, obj: object, attr_name: str, param_name: str = None):
+        """Helper for simple one-to-one attribute to param assignments."""
+        if obj:
+            key = param_name or attr_name
+            value = getattr(obj, attr_name)
+            self[key] = value
+
+
+@dataclass
+class DateSelector:
+    """A date selector object."""
+
+    # pylint: disable=invalid-name
+
+    d1: Optional[Union[dt.datetime, str]]
+    d2: Optional[Union[dt.datetime, str]]
+    on: Optional[Union[dt.datetime, str]]
+
+
+@dataclass
+class QueryResponse:
+    """A generic query response object.
+
+    - The parsed QueryResponse contains zero or more objects that are already
+      each queried against the API and, optionally some additional options to
+      apply to secondary entity queries. It is used in these main contexts:
+      - Accessing the details of the primary entity object.
+      - One or more queries for secondary entities related to the primary entity
+        (e.g. observations).
+    - For example, the command `,taxon rg bees by ben` transforms the query as follows:
+      - `bees` is queried and parsed into a `Taxon` object for `/taxa/630955-Anthophila`
+      - `ben`, in the context of a Discord server where this user is registered
+        and is the best match, is parsed into a `User` object for `/people/benarmstrong`
+        (which very likely can be fetched from cache)
+      - `rg` is a macro for `"opt": {"quality_grade": "research"}`
+      - The primary entity displayed by the `,taxon` command is `Anthophila`.
+      - The secondary entities are observations & species counts of
+        `Anthophila` for `benarmstrong` that are `research grade`, shown as a
+        subdisplay.
+    """
+
+    taxon: Optional[Taxon]
+    user: Optional[User]
+    place: Optional[Place]
+    unobserved_by: Optional[User]
+    except_by: Optional[User]
+    id_by: Optional[User]
+    project: Optional[Project]
+    options: Optional[dict]
+    controlled_term: Optional[ControlledTermSelector]
+    observed: Optional[DateSelector]
+    added: Optional[DateSelector]
+    adjectives: Optional[List[str]] = field(init=False)
+
+    def __post_init__(self):
+        adjectives = []
+        if self.options:
+            quality_grade = (self.options.get("quality_grade") or "").split(",")
+            verifiable = self.options.get("verifiable")
+            if "any" not in quality_grade:
+                research = "research" in quality_grade
+                needsid = "needs_id" in quality_grade
+            # If specified, will override any quality_grade set already:
+            if verifiable:
+                if verifiable in ["true", ""]:
+                    research = True
+                    needsid = True
+            if verifiable == "false":
+                adjectives.append("*not Verifiable*")
+            elif research and needsid:
+                adjectives.append("*Verifiable*")
+            else:
+                if research:
+                    adjectives.append("*Research Grade*")
+                if needsid:
+                    adjectives.append("*Needs ID*")
+        self.adjectives = adjectives
+
+    def obs_args(self):
+        """Arguments for an observations query."""
+
+        kwargs = _Params({"verifiable": "true"})
+        kwargs.set_from(self.taxon, "id", "taxon_id")
+        kwargs.set_from(self.user, "user_id")
+        kwargs.set_from(self.project, "project_id")
+        kwargs.set_from(self.place, "place_id")
+        kwargs.set_from(self.id_by, "user_id", "ident_user_id")
+        kwargs.set_from(self.unobserved_by, "user_id", "unobserved_by_user_id")
+        kwargs.set_from(self.except_by, "user_id", "not_user_id")
+        if self.unobserved_by:
+            kwargs["lrank"] = "species"
+        if self.controlled_term:
+            kwargs["term_id"] = self.controlled_term.term.id
+            kwargs["term_value_id"] = self.controlled_term.value.id
+        # In three cases, we need to allow verifiable=any:
+        # 1. when a project is given, let the project rules sort it out, otherwise
+        #    we interfere with searching for observations in projects that allow
+        #    unverifiable observations
+        # 2. when a user is given, which is like pressing "View All" on a taxon
+        #    page, we want to match that feature on the website, i.e. users will
+        #    be confused if they asked for their observations and none were given
+        #    even though they know they have some
+        # 3. same with 'id by' and for the same reason as =any for user
+        #
+        # - 'not by' is not the same. It's the target species a user will
+        #   be looking for and it is undesirable to include unverifiable observations.
+        # - if these defaults don't work for corner cases, they can be
+        #   overridden in the query with: opt verifiable=<value> (i.e.
+        #   self.options overrides are applied below)
+        if (
+            kwargs.get("project_id")
+            or kwargs.get("user_id")
+            or kwargs.get("ident_user_id")
+        ):
+            kwargs["verifiable"] = "any"
+        if self.options:
+            kwargs = {**kwargs, **self.options}
+        if self.observed:
+            if self.observed.on:
+                kwargs["observed_on"] = str(self.observed.on.date())
+            else:
+                if self.observed.d1:
+                    kwargs["d1"] = str(self.observed.d1.date())
+                if self.observed.d2:
+                    kwargs["d2"] = str(self.observed.d2.date())
+        if self.added:
+            if self.added.on:
+                kwargs["created_on"] = str(self.added.on.date())
+            else:
+                if self.added.d1:
+                    kwargs["created_d1"] = self.added.d1.isoformat()
+                if self.added.d2:
+                    kwargs["created_d2"] = self.added.d2.isoformat()
+        return kwargs
+
+    def obs_query_description(self, with_adjectives: bool = True):
+        """Description of an observations query."""
+
+        def _format_date(date: str):
+            return date.strftime("%b %-d, %Y")
+
+        def _format_time(time: str):
+            return time.strftime("%b %-d, %Y %h:%m %p")
+
+        message = ""
+        of_taxa_description = ""
+        without_taxa_description = ""
+        if self.taxon:
+            taxon = self.taxon
+            of_taxa_description = taxon.format_name(with_term=True)
+        if self.options:
+            without_taxon_id = self.options.get("without_taxon_id")
+            iconic_taxa = self.options.get("iconic_taxa")
+            if iconic_taxa == "unknown":
+                of_taxa_description = "Unknown"
+            else:
+                taxon_ids = self.options.get("taxon_ids")
+                # Note: if taxon_ids is given with "of" clause (taxon_id), then
+                # taxon_ids is simply ignored, so we don't handle that case here.
+                if taxon_ids and not self.taxon:
+                    # TODO: support generally; hardwired cases here are for herps
+                    # and lichenish
+                    of_taxa_description = {
+                        "20978,26036": "Amphibia, Reptilia (Herps)",
+                        # Note: the list is getting a bit ridiculously long - maybe
+                        # just call this grouping "Probably lichens"?
+                        "152028,791197,54743,152030,175541,127378,117881,117869": (
+                            "Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
+                            " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
+                            "Verrucariales (Lichenized Fungi)"
+                        ),
+                    }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
+                if without_taxon_id:
+                    # TODO: support generally; hardwired cases here are for
+                    # waspsonly, mothsonly, lichenish, etc.
+                    without_taxa_description = {
+                        "47336,630955": "Formicidae, Anthophila",
+                        "47224": "Papilionoidea",
+                        "352459": "Stictis radiata",
+                        "47125": "Angiospermae",
+                        "211194": "Tracheophyta",
+                        "355675": "Vertebrata",
+                    }.get(without_taxon_id) or "taxon #" + without_taxon_id.replace(
+                        ",", ", "
+                    )
+
+        _taxa_description = []
+        if of_taxa_description:
+            _of = ["of"]
+            if with_adjectives and self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append(of_taxa_description)
+            _taxa_description.append(" ".join(_of))
+        if without_taxa_description:
+            _without = []
+            # If we only have "without" =>
+            #   "of [adjectives] taxa without [taxa]":
+            if not of_taxa_description and with_adjectives:
+                _without.append("of")
+                if with_adjectives and self.adjectives:
+                    _without.append(", ".join(self.adjectives))
+                _without.append("taxa")
+            _without.append("without")
+            _without.append(without_taxa_description)
+            _taxa_description.append(" ".join(_without))
+        if with_adjectives and not _taxa_description:
+            _of = ["of"]
+            if with_adjectives and self.adjectives:
+                _of.append(", ".join(self.adjectives))
+            _of.append("taxa")
+            _taxa_description.append(" ".join(_of))
+        message += " ".join(_taxa_description)
+        if self.project:
+            message += " in " + self.project.title
+        if self.place:
+            message += " from " + self.place.display_name
+        if self.user:
+            message += " by " + self.user.display_name()
+        if self.unobserved_by:
+            message += " unobserved by " + self.unobserved_by.display_name()
+        if self.id_by:
+            message += " identified by " + self.id_by.display_name()
+        if self.except_by:
+            message += " except by " + self.except_by.display_name()
+        if self.observed and self.observed.on or self.observed.d1 or self.observed.d2:
+            message += " observed "
+            if self.observed.on:
+                message += f" on {_format_date(self.observed.on)}"
+            else:
+                if self.observed.d1:
+                    message += f" on or after {_format_date(self.observed.d1)}"
+                if self.observed.d2:
+                    if self.observed.d1:
+                        message += " and "
+                    message += f" on or before {_format_date(self.observed.d2)}"
+        if self.added and self.added.on or self.added.d1 or self.added.d2:
+            message += " added "
+            if self.added.on:
+                message += f" on {_format_date(self.observed.on)}"
+            else:
+                if self.added.d1:
+                    message += f" on or after {_format_time(self.added.d1)}"
+                if self.added.d2:
+                    if self.added.d1:
+                        message += " and "
+                    message += f" on or before {_format_time(self.added.d2)}"
+        if self.controlled_term:
+            (term, term_value) = self.controlled_term
+            desc = f" with {term.label}"
+            desc += f" {term_value.label}"
+            message += desc
+        kwargs = self.obs_args()
+        hrank = kwargs.get("hrank")
+        lrank = kwargs.get("lrank")
+        if lrank or hrank:
+            with_or_and = "with" if not self.controlled_term else "and"
+            if lrank and hrank:
+                message += " {} rank from {} through {}".format(
+                    with_or_and, lrank, hrank
+                )
+            else:
+                higher_or_lower = "higher" if lrank else "lower"
+                message += " {} rank {} or {}".format(
+                    with_or_and, hrank or lrank, higher_or_lower
+                )
+        return re.sub(r"^ ", "", message)
 
 
 class Obs(NamedTuple):
@@ -401,7 +666,7 @@ class Obs(NamedTuple):
     taxon: Taxon or None
     community_taxon: Taxon or None
     obs_id: int
-    obs_on: str
+    obs_on: dt.datetime
     obs_at: str
     user: User
     thumbnail: str
@@ -414,3 +679,4 @@ class Obs(NamedTuple):
     description: str
     project_ids: list
     sounds: List[Sound]
+    time_obs: dt.datetime

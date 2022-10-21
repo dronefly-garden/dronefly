@@ -2,19 +2,15 @@
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import (
-    CompoundQuery,
-    SimpleQuery,
-    Taxon,
-    RANK_EQUIVALENTS,
-    RANK_KEYWORDS,
-)
-from inatcog.converters import NaturalCompoundQueryConverter
-from inatcog.embeds import apologize
-from inatcog.inat_embeds import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.last import INatLinkMsg
-from inatcog.taxa import get_taxon
+from ..base_classes import Taxon
+from ..converters.base import NaturalQueryConverter
+from ..core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
+from ..core.query.query import Query, TaxonQuery
+from ..embeds.common import apologize
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..last import INatLinkMsg
+from ..taxa import get_taxon
 
 
 class CommandsLast(INatEmbeds, MixinMeta):
@@ -23,7 +19,10 @@ class CommandsLast(INatEmbeds, MixinMeta):
     @commands.group()
     @checks.bot_has_permissions(embed_links=True)
     async def last(self, ctx):
-        """Show info for recently mentioned iNat page."""
+        """iNat info for the last message.
+
+        The subcommands of this group show iNat info for the last matching message from the channel history. See the help for each subcommand for additional info displays that can be shown.
+        """  # noqa: E501
 
     async def get_last_obs_from_history(self, ctx):
         """Get last obs from history."""
@@ -39,54 +38,63 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
     async def last_obs(self, ctx):
-        """Show recently mentioned iNat observation."""
+        """Last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
             await apologize(ctx, "Nothing found")
             return
 
-        await ctx.send(embed=await self.make_last_obs_embed(ctx, last))
-        if last.obs.sounds:
-            await self.maybe_send_sound_url(ctx.channel, last.obs.sounds[0])
+        embed = await self.make_last_obs_embed(ctx, last)
+        await self.send_obs_embed(ctx, embed, last.obs)
 
     @last_obs.command(name="img", aliases=["image", "photo"])
     async def last_obs_img(self, ctx, number=None):
-        """Show image for recently mentioned iNat observation."""
+        """Image for last iNat observation.
+
+        An optional image *number* indicates which image to show if the taxon has more than one. The first is shown by default.
+
+        Look for the number to the right of the :camera: emoji on the observation display to see how many images it has.
+
+        For example:
+        `[p]last obs img` first image of the last observation
+        `[p]last obs img 2` second image of the last observation
+        """  # noqa: E501
         last = await self.get_last_obs_from_history(ctx)
-        if last and last.obs and last.obs.taxon:
+        if last and last.obs:
             try:
                 num = 1 if number is None else int(number)
             except ValueError:
                 num = 0
-            await ctx.send(
-                embed=await self.make_obs_embed(
-                    ctx.guild, last.obs, last.url, preview=num
-                )
-            )
+            embed = await self.make_obs_embed(ctx, last.obs, last.url, preview=num)
+            await self.send_obs_embed(ctx, embed, last.obs)
         else:
             await apologize(ctx, "Nothing found")
 
-    async def query_from_last_taxon(self, ctx, taxon: Taxon, query: CompoundQuery):
+    async def query_from_last_taxon(self, ctx, taxon: Taxon, query: Query):
         """Query constructed from last taxon and arguments."""
-        taxon_id = taxon.taxon_id
+        taxon_id = taxon.id
         if query.main:
             raise BadArgument("Taxon search terms can't be used here.")
         if query.controlled_term:
             raise BadArgument("A `with` filter can't be used here.")
-        last_query = CompoundQuery(
-            main=SimpleQuery(taxon_id, [], [], [], ""),
+        last_query = Query(
+            main=TaxonQuery(taxon_id, [], [], [], ""),
             ancestor=None,
             user=query.user,
             place=query.place,
             controlled_term="",
             unobserved_by=query.unobserved_by,
+            except_by=query.except_by,
+            id_by=query.id_by,
             per=query.per,
+            project=query.project,
+            options=query.options,
         )
-        return await self.taxon_query.query_taxon(ctx, last_query)
+        return await self.query.get(ctx, last_query)
 
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_obs_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
-        """Show taxon for recently mentioned iNat observation."""
+    async def last_obs_taxon(self, ctx, *, query: NaturalQueryConverter = None):
+        """Taxon for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         taxon = None
         if last and last.obs and last.obs.taxon:
@@ -104,7 +112,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs_taxon.command(name="img", aliases=["image"])
     async def last_obs_taxon_image(self, ctx, number=1):
-        """Show default taxon image for recently mentioned iNat observation."""
+        """Default taxon images for last iNat observation.
+
+        Like `[p]last taxon image` except for the taxon of the last observation.
+
+        See also `[p]help last taxon image`"""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
             await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
@@ -113,21 +125,20 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_obs.command(name="map", aliases=["m"])
     async def last_obs_map(self, ctx):
-        """Show map for recently mentioned iNat observation."""
+        """Taxon range map for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await ctx.send(embed=await self.make_map_embed([last.obs.taxon]))
+            await ctx.send(embed=await self.make_map_embed(ctx, [last.obs.taxon]))
         else:
             await apologize(ctx, "Nothing found")
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_obs_rank(self, ctx):
-        """Show the `<rank>` of the last observation (e.g. `family`).
+        """Taxon `<rank>` for last obs (e.g. `[p]last obs family`).
 
+        For example:
         `[p]last obs family`      show family of last obs
         `[p]last obs superfamily` show superfamily of last obs
-
-        Any rank known to iNat can be specified.
         """
         last = await self.get_last_obs_from_history(ctx)
         if not (last and last.obs):
@@ -144,7 +155,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if last.obs.taxon.rank == rank_keyword:
                 await self.send_embed_for_taxon(ctx, last.obs.taxon)
             else:
-                full_record = await get_taxon(self, last.obs.taxon.taxon_id)
+                full_record = await get_taxon(self, last.obs.taxon.id)
                 ancestor = await self.taxon_query.get_taxon_ancestor(
                     full_record, rank_keyword
                 )
@@ -158,8 +169,8 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "The last observation has no taxon.")
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
-    async def last_taxon(self, ctx, *, query: NaturalCompoundQueryConverter = None):
-        """Show recently mentioned iNat taxon."""
+    async def last_taxon(self, ctx, *, query: NaturalQueryConverter = None):
+        """Last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         taxon = None
         if last and last.taxon:
@@ -177,17 +188,24 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_taxon.command(name="map", aliases=["m"])
     async def last_taxon_map(self, ctx):
-        """Show map for recently mentioned taxon."""
+        """Range map of last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
             await apologize(ctx, "Nothing found")
             return
 
-        await ctx.send(embed=await self.make_map_embed([last.taxon]))
+        await ctx.send(embed=await self.make_map_embed(ctx, [last.taxon]))
 
     @last_taxon.command(name="image", aliases=["img"])
     async def last_taxon_image(self, ctx, number=1):
-        """Show image for recently mentioned taxon."""
+        """Default image for last taxon.
+
+        An optional image *number* indicates which image to show if the taxon has more than one default image.
+
+        For example:
+        `[p]last t img` default image for the last taxon
+        `[p]last t img 2` 2nd default image for the last taxon
+        """  # noqa: E501
         last = await self.get_last_taxon_from_history(ctx)
         if not (last and last.taxon):
             await apologize(ctx, "Nothing found")
@@ -197,12 +215,11 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
     async def last_taxon_rank(self, ctx):
-        """Show the `<rank>` of the last taxon (e.g. `family`).
+        """Taxon `<rank>` for last taxon (e.g. `[p]last t family`).
 
-        `[p]last taxon family`      show family of last taxon
-        `[p]last taxon superfamily` show superfamily of last taxon
-
-        Any rank known to iNat can be specified.
+        For example:
+        `[p]last t family` family of last taxon
+        `[p]last t superfamily` superfamily of last taxon
         """
         rank = ctx.invoked_with
         if rank == "<rank>":
@@ -218,7 +235,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last.taxon.rank == rank_keyword:
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
-            full_record = await get_taxon(self, last.taxon.taxon_id)
+            full_record = await get_taxon(self, last.taxon.id)
             ancestor = await self.taxon_query.get_taxon_ancestor(
                 full_record, rank_keyword
             )

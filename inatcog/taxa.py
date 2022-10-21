@@ -1,9 +1,9 @@
 """Module to work with iNat taxa."""
+import copy
 import re
 from typing import NamedTuple, Optional, Union
+
 from .base_classes import (
-    WWW_BASE_URL,
-    RANK_LEVELS,
     ConservationStatus,
     EstablishmentMeans,
     EstablishmentMeansPartial,
@@ -11,7 +11,10 @@ from .base_classes import (
     User,
     Place,
 )
-from .common import LOG
+from .core.models.taxon import RANK_LEVELS
+from .core.parsers.url import STATIC_URL_PAT
+from .core.query.query import TaxonQuery
+from .utils import get_home, obs_url_from_v1
 
 
 TAXON_ID_LIFE = 48460
@@ -19,20 +22,15 @@ TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
 TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
 TAXON_COUNTS_HEADER_PAT = re.compile(re.escape(TAXON_COUNTS_HEADER) + "\n")
+TAXON_IDBY_HEADER = "__obs# (spp#) identified by user:__"
+TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
-TAXON_PRIMARY_RANKS = ["kingdom", "phylum", "class", "order", "family"]
-
-TRINOMIAL_ABBR = {"variety": "var.", "subspecies": "ssp.", "form": "f."}
-
-PAT_TAXON_LINK = re.compile(
-    r"\b(?P<url>https?://(www\.)?inaturalist\.(org|ca)/taxa/(?P<taxon_id>\d+))\b", re.I
-)
 
 
 def format_taxon_names(
-    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False
+    taxa, with_term=False, names_format="%s", max_len=0, hierarchy=False, lang=None
 ):
     """Format names of taxa from matched records.
 
@@ -61,7 +59,7 @@ def format_taxon_names(
     delimiter = TAXON_LIST_DELIMITER[int(hierarchy)]
 
     names = [
-        format_taxon_name(taxon, with_term=with_term, hierarchy=hierarchy)
+        taxon.format_name(with_term=with_term, hierarchy=hierarchy, lang=lang)
         for taxon in taxa
     ]
 
@@ -97,75 +95,16 @@ def format_taxon_names(
     return names_format % delimiter.join(names)
 
 
-def format_taxon_name(rec, with_term=False, hierarchy=False):
-    """Format taxon name from matched record.
-
-    Parameters
-    ----------
-    rec: Taxon
-        A matched taxon record.
-    with_term: bool, optional
-        With non-common / non-name matching term in parentheses in place of common name.
-    hierarchy: bool, optional
-        If specified, produces a list item suitable for inclusion in the hierarchy section
-        of a taxon embed. See format_taxon_names() for details.
-
-    Returns
-    -------
-    str
-        A name of the form "Rank Scientific name (Common name)" following the
-        same basic format as iNaturalist taxon pages on the web, i.e.
-
-        - drop the "Rank" keyword for species level and lower
-        - italicize the name (minus any rank abbreviations; see next point) for genus
-          level and lower
-        - for trinomials (must be subspecies level & have exactly 3 names to qualify),
-          insert the appropriate abbreviation, unitalicized, between the 2nd and 3rd
-          name (e.g. "Anser anser domesticus" -> "*Anser anser* var. *domesticus*")
-    """
-    if with_term:
-        common = rec.term if rec.term not in (rec.name, rec.common) else rec.common
-    else:
-        if hierarchy:
-            common = None
-        else:
-            common = rec.common
-    name = rec.name
-
-    rank = rec.rank
-    rank_level = RANK_LEVELS[rank]
-
-    if rank_level <= RANK_LEVELS["genus"]:
-        name = f"*{name}*"
-    if rank_level > RANK_LEVELS["species"]:
-        if hierarchy:
-            # FIXME: List formatting concerns don't belong here. Move them up a level.
-            bold = ("\n> **", "**") if rank in TAXON_PRIMARY_RANKS else ("", "")
-            name = f"{bold[0]}{name}{bold[1]}"
-        else:
-            name = f"{rank.capitalize()} {name}"
-    else:
-        if rank in TRINOMIAL_ABBR.keys():
-            tri = name.split(" ")
-            if len(tri) == 3:
-                # Note: name already italicized, so close/reopen italics around insertion.
-                name = f"{tri[0]} {tri[1]}* {TRINOMIAL_ABBR[rank]} *{tri[2]}"
-    full_name = f"{name} ({common})" if common else name
-    if not rec.active:
-        full_name += " :exclamation: Inactive Taxon"
-    return full_name
-
-
-async def get_taxon_preferred_establishment_means(bot, ctx, taxon):
+async def get_taxon_preferred_establishment_means(cog, ctx, taxon):
     """Get the preferred establishment means for the taxon."""
     try:
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
-        home = await bot.get_home(ctx)
+        home = await get_home(ctx)
         full_taxon = (
             taxon
             if taxon.listed_taxa
-            else await get_taxon(bot, taxon.taxon_id, preferred_place_id=int(home))
+            else await get_taxon(cog, taxon.id, preferred_place_id=int(home))
         )
     except (AttributeError, LookupError):
         return None
@@ -209,7 +148,7 @@ def get_taxon_fields(record):
         # Though default_photo only contains small versions of the image,
         # the original can be obtained for self-hosted images via this
         # transform on the thumbnail image:
-        if re.search(r"https?://static\.inaturalist\.org", thumbnail):
+        if re.search(STATIC_URL_PAT, thumbnail):
             image = re.sub("/square", "/original", thumbnail)
             attribution = photo.get("attribution")
         else:
@@ -247,26 +186,27 @@ def get_taxon_fields(record):
         establishment_means = None
     conservation_status_raw = record.get("conservation_status")
     if conservation_status_raw:
-        LOG.info(conservation_status_raw)
         conservation_status = ConservationStatus.from_dict(conservation_status_raw)
     else:
         conservation_status = None
+    preferred_common_name = record.get("preferred_common_name")
     taxon = Taxon(
-        record["name"],
-        taxon_id,
-        record.get("preferred_common_name"),
-        record.get("matched_term") or "Id: %s" % taxon_id,
-        thumbnail,
-        image,
-        attribution,
-        record["rank"],
-        record["ancestor_ids"],
-        record["observations_count"],
-        ancestor_ranks,
-        record["is_active"],
-        listed_taxa,
-        establishment_means,
-        conservation_status,
+        name=record["name"],
+        id=taxon_id,
+        matched_term=record.get("matched_term") or preferred_common_name,
+        rank=record["rank"],
+        ancestor_ids=record["ancestor_ids"],
+        observations_count=record["observations_count"],
+        ancestor_ranks=ancestor_ranks,
+        is_active=record["is_active"],
+        listed_taxa=listed_taxa,
+        names=record.get("names"),
+        preferred_common_name=preferred_common_name,
+        thumbnail=thumbnail,
+        image=image,
+        image_attribution=attribution,
+        establishment_means=establishment_means,
+        conservation_status=conservation_status,
     )
     return taxon
 
@@ -282,8 +222,8 @@ class NameMatch(NamedTuple):
 NO_NAME_MATCH = NameMatch(None, None, None)
 
 
-def match_name(record, pat):
-    """Match all terms specified.
+def match_pat(record, pat, scientific_name=False, locale=None):
+    """Match specified pattern.
 
     Parameters
     ----------
@@ -293,20 +233,55 @@ def match_name(record, pat):
     pat: re.Pattern or str
         A pattern to match against each name field in the record.
 
+    scientific_name: bool
+        Only search scientific name
+
+    locale: str
+        Only search common names matching locale
+
     Returns
     -------
     NameMatch
         A tuple of search results for the pat for each name in the record.
     """
+    if scientific_name:
+        return NameMatch(
+            None,
+            re.search(pat, record.name),
+            None,
+        )
+    if locale:
+        names = [
+            name["name"]
+            for name in sorted(
+                [
+                    name
+                    for name in record.names
+                    if name["is_valid"] and re.match(locale, name["locale"], re.I)
+                ],
+                key=lambda x: x["position"],
+            )
+        ]
+        for name in names:
+            mat = re.search(pat, name)
+            if mat:
+                return NameMatch(
+                    mat,
+                    None,
+                    mat,
+                )
+        return NO_NAME_MATCH
     return NameMatch(
-        re.search(pat, record.term),
+        re.search(pat, record.matched_term),
         re.search(pat, record.name),
-        re.search(pat, record.common) if record.common else None,
+        re.search(pat, record.preferred_common_name)
+        if record.preferred_common_name
+        else None,
     )
 
 
-def match_exact(record, exact):
-    """Match any exact phrases specified.
+def match_pat_list(record, pat_list, scientific_name=False, locale=None):
+    """Match all of a list of patterns.
 
     Parameters
     ----------
@@ -314,7 +289,7 @@ def match_exact(record, exact):
         A candidate taxon to match.
 
     exact: list
-        A list of exact patterns to match.
+        A list of patterns to match.
 
     Returns
     -------
@@ -325,8 +300,8 @@ def match_exact(record, exact):
     """
     matched = NO_NAME_MATCH
     try:
-        for pat in exact:
-            this_match = match_name(record, pat)
+        for pat in pat_list:
+            this_match = match_pat(record, pat, scientific_name, locale)
             if this_match == NO_NAME_MATCH:
                 matched = this_match
                 raise ValueError("At least one field must match.")
@@ -341,11 +316,18 @@ def match_exact(record, exact):
     return matched
 
 
-def score_match(query, record, all_terms, exact=None):
+def score_match(
+    taxon_query: TaxonQuery,
+    record,
+    all_terms,
+    pat_list=None,
+    scientific_name=False,
+    locale=None,
+):
     """Score a matched record. A higher score is a better match.
     Parameters
     ----------
-    query: SimpleQuery
+    taxon_query: TaxonQuery
         The query for the matched record being scored.
 
     record: Taxon
@@ -354,8 +336,8 @@ def score_match(query, record, all_terms, exact=None):
     all_terms: re.Pattern
         A pattern matching all terms.
 
-    exact: list
-        A list of exact patterns to match.
+    pat_list: list
+        A list of patterns to match.
 
     Returns
     -------
@@ -366,89 +348,117 @@ def score_match(query, record, all_terms, exact=None):
     """
     score = 0
 
-    if query.taxon_id:
+    if taxon_query.taxon_id:
         return 1000  # An id is always the best match
 
-    matched = match_exact(record, exact) if exact else NO_NAME_MATCH
-    all_matched = match_name(record, all_terms) if query.taxon_id else NO_NAME_MATCH
+    matched = (
+        match_pat_list(record, pat_list, scientific_name, locale)
+        if pat_list
+        else NO_NAME_MATCH
+    )
+    all_matched = (
+        match_pat(record, all_terms, scientific_name, locale)
+        if taxon_query.taxon_id
+        else NO_NAME_MATCH
+    )
 
-    if query.code and (query.code == record.term):
-        score = 300
-    elif matched.name or matched.common:
-        score = 210
-    elif matched.term:
-        score = 200
-    elif all_matched.name or all_matched.common:
-        score = 120
-    elif all_matched.term:
-        score = 110
+    if scientific_name:
+        if matched.name:
+            score = 200
+        else:
+            score = -1
+    elif locale:
+        if matched.term:
+            score = 200
+        else:
+            score = -1
     else:
-        score = 100
+        if taxon_query.code and (taxon_query.code == record.matched_term):
+            score = 300
+        elif matched.name or matched.common:
+            score = 210
+        elif matched.term:
+            score = 200
+        elif all_matched.name or all_matched.common:
+            score = 120
+        elif all_matched.term:
+            score = 110
+        else:
+            score = 100
 
     return score
 
 
-def match_taxon(query, records):
+def match_taxon(taxon_query: TaxonQuery, records, scientific_name=False, locale=None):
     """Match a single taxon for the given query among records returned by API."""
-    exact = []
-    all_terms = re.compile(r"^%s$" % re.escape(" ".join(query.terms)), re.I)
-    if query.phrases:
-        for phrase in query.phrases:
+    if taxon_query.ranks and not taxon_query.terms:
+        return records[0] if records else None
+    pat_list = []
+    all_terms = re.compile(r"^%s$" % re.escape(" ".join(taxon_query.terms)), re.I)
+    if taxon_query.phrases:
+        for phrase in taxon_query.phrases:
             pat = re.compile(r"\b%s\b" % re.escape(" ".join(phrase)), re.I)
-            exact.append(pat)
+            pat_list.append(pat)
+    elif scientific_name or locale:
+        for term in taxon_query.terms:
+            pat = re.compile(r"\b%s" % re.escape(term), re.I)
+            pat_list.append(pat)
     scores = [0] * len(records)
 
     for num, record in enumerate(records, start=0):
-        scores[num] = score_match(query, record, all_terms=all_terms, exact=exact)
+        scores[num] = score_match(
+            taxon_query,
+            record,
+            all_terms=all_terms,
+            pat_list=pat_list,
+            scientific_name=scientific_name,
+            locale=locale,
+        )
 
     best_score = max(scores)
     best_record = records[scores.index(best_score)]
-    min_score_met = (best_score >= 0) and ((not exact) or (best_score >= 200))
+    min_score_met = (best_score >= 0) and (
+        (not taxon_query.phrases) or (best_score >= 200)
+    )
 
     return best_record if min_score_met else None
 
 
 async def format_place_taxon_counts(
-    cog, place: Union[Place, str], taxon: Taxon = None, user_id: int = None,
+    cog,
+    place: Union[Place, str],
+    taxon: Taxon = None,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(place, str):
-        place_id = place
         name = "*total*"
     else:
-        place_id = place.place_id
         name = place.display_name
-    obs_opt = {
-        "place_id": place_id,
-        "per_page": 0,
-        "verifiable": "true",
-    }
-    species_opt = {
-        "place_id": place_id,
-        "per_page": 0,
-        "verifiable": "true",
-    }
-    if taxon:
-        taxon_id = taxon.taxon_id
-        obs_opt["taxon_id"] = taxon_id
-        species_opt["taxon_id"] = taxon_id
-    if user_id:
-        obs_opt["user_id"] = user_id
-        species_opt["user_id"] = user_id
-    observations = await cog.api.get_observations(**obs_opt)
-    species = await cog.api.get_observations("species_counts", **species_opt)
+    obs_opt = copy.copy(kwargs)
+    # TODO: Refactor. See same logic in obs_args in taxa.py and comment
+    # explaining why we use verifiable=any in these cases.
+    # - we don't have a QueryResponse here, but perhaps should
+    #   synthesize one from the embed
+    # - however, updating embeds is due to be rewritten soon, so it
+    #   should probably be sorted out in the rewrite
+    count_unverifiable_observations = (
+        kwargs.get("project_id") or kwargs.get("user_id") or kwargs.get("ident_user_id")
+    )
+    if count_unverifiable_observations:
+        obs_opt["verifiable"] = "any"
+    observations = await cog.api.get_observations(per_page=0, **obs_opt)
     if observations:
+        species = await cog.api.get_observations(
+            "species_counts", per_page=0, **obs_opt
+        )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = WWW_BASE_URL + f"/observations?place_id={place_id}&verifiable=true"
-        if taxon:
-            url += f"&taxon_id={taxon_id}"
-        if user_id:
-            url += f"&user_id={user_id}"
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-            link = f"[{observations_count}]({url}) {name}"
+            link = f"[{observations_count:,}]({url}) {name}"
         else:
-            link = f"[{observations_count} ({species_count})]({url}) {name}"
+            link = f"[{observations_count:,} ({species_count:,})]({url}) {name}"
         return f"{link} "
 
     return ""
@@ -458,55 +468,40 @@ async def format_user_taxon_counts(
     cog,
     user: Union[User, str],
     taxon: Taxon = None,
-    place_id: int = None,
-    unobserved: bool = False,
+    **kwargs,
 ):
     """Format user observation & species counts for taxon."""
     if isinstance(user, str):
-        user_id = user
         login = "*total*"
     else:
-        user_id = user.user_id
         login = user.login
-    if unobserved:
-        obs_opt = {
-            "unobserved_by_user_id": user_id,
-            "lrank": "species",
-            "per_page": 0,
-        }
-        species_opt = {
-            "unobserved_by_user_id": user_id,
-            "lrank": "species",
-            "per_page": 0,
-        }
-    else:
-        obs_opt = {"user_id": user_id, "per_page": 0}
-        species_opt = {"user_id": user_id, "per_page": 0}
-    if taxon:
-        taxon_id = taxon.taxon_id
-        obs_opt["taxon_id"] = taxon_id
-        species_opt["taxon_id"] = taxon_id
-    if place_id:
-        obs_opt["place_id"] = place_id
-        species_opt["place_id"] = place_id
-    observations = await cog.api.get_observations(**obs_opt)
-    species = await cog.api.get_observations("species_counts", **species_opt)
+    obs_opt = copy.copy(kwargs)
+    # TODO: Refactor. See same logic in obs_args in taxa.py and comment
+    # explaining why we use verifiable=any in these cases.
+    # - we don't have a QueryResponse here, but perhaps should
+    #   synthesize one from the embed
+    # - however, updating embeds is due to be rewritten soon, so it
+    #   should probably be sorted out in the rewrite
+    count_unverifiable_observations = (
+        kwargs.get("project_id") or kwargs.get("user_id") or kwargs.get("ident_user_id")
+    )
+    if count_unverifiable_observations:
+        obs_opt["verifiable"] = "any"
+    species_opt = copy.copy(obs_opt)
+    if kwargs.get("unobserved_by_user_id"):
+        obs_opt["lrank"] = "species"
+    observations = await cog.api.get_observations(per_page=0, **obs_opt)
     if observations:
+        species = await cog.api.get_observations(
+            "species_counts", per_page=0, **species_opt
+        )
         observations_count = observations["total_results"]
         species_count = species["total_results"]
-        url = WWW_BASE_URL + "/observations?verifiable=any"
-        if taxon:
-            url += f"&taxon_id={taxon_id}"
-        if unobserved:
-            url += f"&unobserved_by_user_id={user_id}&lrank=species"
-        else:
-            url += f"&user_id={user_id}"
-        if place_id:
-            url += f"&place_id={place_id}"
+        url = obs_url_from_v1(obs_opt)
         if taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]:
-            link = f"[{observations_count}]({url}) {login}"
+            link = f"[{observations_count:,}]({url}) {login}"
         else:
-            link = f"[{observations_count} ({species_count})]({url}) {login}"
+            link = f"[{observations_count:,} ({species_count:,})]({url}) {login}"
         return f"{link} "
 
     return ""

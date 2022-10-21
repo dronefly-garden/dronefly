@@ -1,14 +1,16 @@
 """Module for handling recent history."""
-from typing import NamedTuple
 from datetime import datetime
 import re
-from discord import User
+from typing import NamedTuple
 
+from discord import User
 import timeago
 
-from .base_classes import WWW_BASE_URL, PAT_OBS_LINK
+from .base_classes import WWW_BASE_URL
+from .core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from .obs import get_obs_fields
-from .taxa import get_taxon, PAT_TAXON_LINK
+from .taxa import get_taxon
+from .utils import get_home
 
 
 class ObsLinkMsg(NamedTuple):
@@ -62,7 +64,7 @@ class INatLinkMsg:
             else:
                 name = found.author.nick or found.author.name
 
-        home = await self.cog.get_home(ctx)
+        home = await get_home(ctx)
         results = (
             await self.cog.api.get_observations(
                 obs_id, include_new_projects=1, preferred_place_id=home
@@ -94,7 +96,7 @@ class INatLinkMsg:
         mat = match_taxon_link(found)
         taxon_id = int(mat["taxon_id"])
         url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
-        home = await self.cog.get_home(ctx)
+        home = await get_home(ctx)
         taxon = await get_taxon(self.cog, taxon_id, preferred_place_id=home)
 
         return TaxonLinkMsg(url, taxon)

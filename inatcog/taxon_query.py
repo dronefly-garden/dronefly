@@ -1,10 +1,10 @@
 """Module to query iNat taxa."""
-import re
 from redbot.core.commands import BadArgument
-from .common import DEQUOTE
-from .converters import ContextMemberConverter, NaturalCompoundQueryConverter
+
+from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, get_taxon_fields, match_taxon
-from .base_classes import CompoundQuery, FilteredTaxon, RANK_EQUIVALENTS, RANK_LEVELS
+from .core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS
+from .core.query.query import Query, TaxonQuery
 
 
 class INatTaxonQuery:
@@ -35,104 +35,139 @@ class INatTaxonQuery:
             return ancestor
         return None
 
-    async def maybe_match_taxon(self, query, ancestor_id=None, preferred_place_id=None):
+    async def maybe_match_taxon(
+        self,
+        taxon_query: TaxonQuery,
+        ancestor_id: int = None,
+        preferred_place_id: int = None,
+        scientific_name: bool = False,
+        locale: str = None,
+    ):
         """Get taxon and return a match, if any."""
         kwargs = {}
+        taxon = None
+        records_read = 0
+        total_records = 0
+
+        if locale:
+            kwargs["locale"] = locale
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
-        if query.taxon_id:
-            records = (await self.cog.api.get_taxa(query.taxon_id, **kwargs))["results"]
+        if taxon_query.taxon_id:
+            response = await self.cog.api.get_taxa(taxon_query.taxon_id, **kwargs)
+            if response:
+                records = response.get("results")
+            if records:
+                taxon = match_taxon(taxon_query, list(map(get_taxon_fields, records)))
         else:
-            kwargs["q"] = " ".join(query.terms)
-            if query.ranks:
-                kwargs["rank"] = ",".join(query.ranks)
+            if taxon_query.terms:
+                kwargs["q"] = " ".join(taxon_query.terms)
+            if taxon_query.ranks:
+                kwargs["rank"] = ",".join(taxon_query.ranks)
             if ancestor_id:
                 kwargs["taxon_id"] = ancestor_id
-            records = (await self.cog.api.get_taxa(**kwargs))["results"]
-
-        if not records:
-            raise LookupError("No matching taxon found")
-
-        taxon = match_taxon(query, list(map(get_taxon_fields, records)))
+            for page in range(11):
+                if page == 0:
+                    kwargs["per_page"] = 30
+                else:
+                    # restart numbering, as we are using a different endpoint
+                    # now with different page size:
+                    if page == 1:
+                        records_read = 0
+                    kwargs["page"] = page
+                    kwargs["per_page"] = 200
+                response = await self.cog.api.get_taxa(**kwargs)
+                if response:
+                    total_records = response.get("total_results") or 0
+                    records = response.get("results")
+                if not records:
+                    break
+                records_read += len(records)
+                taxon = match_taxon(
+                    taxon_query,
+                    list(map(get_taxon_fields, records)),
+                    scientific_name=scientific_name,
+                    locale=locale,
+                )
+                if taxon:
+                    break
+                if records_read >= total_records:
+                    break
 
         if not taxon:
-            raise LookupError("No exact match")
+            if records_read >= total_records:
+                raise LookupError("No matching taxon found.")
+
+            raise LookupError(
+                f"No {'exact ' if taxon_query.phrases else ''}match "
+                f"found in {'scientific name of ' if scientific_name else ''}{records_read}"
+                f" of {total_records} total records containing those terms."
+            )
 
         return taxon
 
-    async def maybe_match_taxon_compound(self, compound_query, preferred_place_id=None):
+    async def maybe_match_taxon_compound(
+        self,
+        query: Query,
+        preferred_place_id=None,
+        scientific_name=False,
+        locale=None,
+    ):
         """Get one or more taxa and return a match, if any.
 
         Currently the grammar supports only one ancestor taxon
         and one child taxon.
         """
-        query_main = compound_query.main
-        query_ancestor = compound_query.ancestor
-        if query_ancestor:
-            ancestor = await self.maybe_match_taxon(
-                query_ancestor, preferred_place_id=preferred_place_id
-            )
-            if ancestor:
-                if query_main.ranks:
-                    max_query_rank_level = max(
-                        [RANK_LEVELS[rank] for rank in query_main.ranks]
-                    )
-                    ancestor_rank_level = RANK_LEVELS[ancestor.rank]
-                    if max_query_rank_level >= ancestor_rank_level:
-                        raise LookupError(
-                            "Child rank%s: `%s` must be below ancestor rank: `%s`"
-                            % (
-                                "s" if len(query_main.ranks) > 1 else "",
-                                ",".join(query_main.ranks),
-                                ancestor.rank,
-                            )
-                        )
-                taxon = await self.maybe_match_taxon(
-                    query_main,
-                    ancestor_id=ancestor.taxon_id,
+        if query.ancestor:
+            ancestor = None
+            try:
+                ancestor = await self.maybe_match_taxon(
+                    query.ancestor,
                     preferred_place_id=preferred_place_id,
+                    scientific_name=scientific_name,
+                    locale=locale,
                 )
+                if ancestor:
+                    if query.main.ranks:
+                        max_query_rank_level = max(
+                            [RANK_LEVELS[rank] for rank in query.main.ranks]
+                        )
+                        ancestor_rank_level = RANK_LEVELS[ancestor.rank]
+                        if max_query_rank_level >= ancestor_rank_level:
+                            raise LookupError(
+                                "Child rank%s: `%s` must be below ancestor rank: `%s`"
+                                % (
+                                    "s" if len(query.main.ranks) > 1 else "",
+                                    ",".join(query.main.ranks),
+                                    ancestor.rank,
+                                )
+                            )
+                    taxon = await self.maybe_match_taxon(
+                        query.main,
+                        ancestor_id=ancestor.id,
+                        preferred_place_id=preferred_place_id,
+                        scientific_name=scientific_name,
+                        locale=locale,
+                    )
+            except LookupError as err:
+                reason = (
+                    str(err) + "\nPerhaps instead of `in` (ancestor), you meant\n"
+                    "`from` (place) or `in prj` (project)?"
+                )
+                if ancestor:
+                    reason = f"{reason}\n\nAncestor taxon: {ancestor.format_name(with_term=True)}"
+                else:
+                    reason = f"{reason}\n\nAncestor taxon not found."
+                raise LookupError(reason) from err
         else:
             taxon = await self.maybe_match_taxon(
-                query_main, preferred_place_id=preferred_place_id
+                query.main,
+                preferred_place_id=preferred_place_id,
+                scientific_name=scientific_name,
+                locale=locale,
             )
 
         return taxon
-
-    async def query_taxon(self, ctx, query: CompoundQuery):
-        """Query for taxon and return single taxon if found."""
-        taxon = None
-        place = None
-        user = None
-        unobserved_by = None
-        preferred_place_id = await self.cog.get_home(ctx)
-        if query.place:
-            place = await self.cog.place_table.get_place(
-                ctx.guild, query.place, ctx.author
-            )
-        if place:
-            preferred_place_id = place.place_id
-        if query.main:
-            taxon = await self.maybe_match_taxon_compound(
-                query, preferred_place_id=preferred_place_id
-            )
-        if query.user:
-            try:
-                who = await ContextMemberConverter.convert(
-                    ctx, re.sub(DEQUOTE, r"\1", query.user)
-                )
-            except BadArgument as err:
-                raise LookupError(str(err))
-            user = await self.cog.user_table.get_user(who.member)
-        if query.unobserved_by:
-            try:
-                who = await ContextMemberConverter.convert(
-                    ctx, re.sub(DEQUOTE, r"\1", query.unobserved_by)
-                )
-            except BadArgument as err:
-                raise LookupError(str(err))
-            unobserved_by = await self.cog.user_table.get_user(who.member)
-        return FilteredTaxon(taxon, user, place, unobserved_by)
 
     async def query_taxa(self, ctx, query):
         """Query for one or more taxa and return list of matching taxa, if any."""
@@ -142,11 +177,11 @@ class INatTaxonQuery:
         taxa = {}
         for query_str in queries:
             try:
-                query = await NaturalCompoundQueryConverter.convert(ctx, query_str)
-                filtered_taxon = await self.cog.taxon_query.query_taxon(ctx, query)
-                if filtered_taxon.taxon:
-                    taxon = filtered_taxon.taxon
-                    taxa[str(taxon.taxon_id)] = taxon
+                query = await NaturalQueryConverter.convert(ctx, query_str)
+                query_response = await self.cog.query.get(ctx, query)
+                if query_response.taxon:
+                    taxon = query_response.taxon
+                    taxa[str(taxon.id)] = taxon
             except (BadArgument, LookupError):
                 pass
 

@@ -73,7 +73,7 @@ class INatMapURL:
     async def get_map_url_for_taxa(self, taxa):
         """Get a map url for taxa from the provided coords."""
 
-        taxon_ids = [taxon.taxon_id for taxon in taxa]
+        taxon_ids = [taxon.id for taxon in taxa]
         map_coords = await self.get_map_coords_for_taxon_ids(taxon_ids)
         zoom_lat_lon = "/".join(map(str, map_coords))
         taxon_ids_str = ",".join(map(str, taxon_ids))

@@ -5,3 +5,6 @@ html2markdown
 inflect
 timeago
 aiolimiter
+aiohttp-retry
+pyinaturalist
+dateparser

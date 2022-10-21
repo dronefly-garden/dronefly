@@ -33,7 +33,7 @@ those which are used more frequently, should provide the least distraction
 from what is said by humans, just showing the essential information required
 at the moment, and linking to www.inaturalist.org for the rest.
 
-- https://github.com/synrg/dronefly/issues/27 is an example issue to help with this goal
+- https://github.com/dronefly-garden/dronefly/issues/27 is an example issue to help with this goal
 
 ----------------------------------------------------------------------
 Make use of context from the conversation to avoid needless repetition
@@ -43,7 +43,7 @@ It is tedious to have to tell the bot again what has already been established
 as context for the current discussion. It should recognize from patterns in the
 conversation key elements that can help provide default context for queries.
 
-- https://github.com/synrg/dronefly/issues/25 is an example issue to help with this goal
+- https://github.com/dronefly-garden/dronefly/issues/25 is an example issue to help with this goal
 
 -----------------------------------------------------------------------------------------
 Provide additional context from who the user is or where the conversation is taking place
@@ -56,8 +56,8 @@ provide that information over and over again, e.g.
   are filtered by preferred location, preferred taxa, etc.
 - Similarly, on channels devoted to discussion of certain taxa, some queries
   might default to be specific to those taxa.
-- https://github.com/synrg/dronefly/issues/14 and
-  https://github.com/synrg/dronefly/issues/15 are example issues to help with
+- https://github.com/dronefly-garden/dronefly/issues/14 and
+  https://github.com/dronefly-garden/dronefly/issues/15 are example issues to help with
   this goal, and the following goal "Support making & improving social
   connections"
 
@@ -85,8 +85,8 @@ Improve comprehension of the subject matter being discussed with visuals
 ------------------------------------------------------------------------
 
 Example issues supporting this goal are
-https://github.com/synrg/dronefly/issues/19 and
-https://github.com/synrg/dronefly/issues/18 to provide at-a-glance overviews of
+https://github.com/dronefly-garden/dronefly/issues/19 and
+https://github.com/dronefly-garden/dronefly/issues/18 to provide at-a-glance overviews of
 where taxa are found with maps, without a time-consuming & more bandwidth-heavy
 trip out to the web.
 

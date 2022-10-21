@@ -1,16 +1,9 @@
 """Module to handle users."""
-import re
 from typing import Union
-from .base_classes import Place, WWW_URL_PAT
-from .converters import QuotedContextMemberConverter
 
-# Match place link from any partner site.
-PAT_PLACE_LINK = re.compile(
-    r"\b(?P<url>" + WWW_URL_PAT + r"/places"
-    r"/((?P<place_id>\d+)|(?P<place_slug>[a-z][-_a-z0-9]{2,39}))"
-    r")\b",
-    re.I,
-)
+from .base_classes import Place
+from .converters.base import QuotedContextMemberConverter
+from .utils import get_valid_user_config
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 
@@ -32,8 +25,18 @@ class INatPlaceTable:
         if isinstance(query, str):
             abbrev = query.lower()
             if abbrev == "home" and user:
-                user_config = self.cog.config.user(user)
-                home_id = await user_config.home()
+                try:
+                    user_config = await get_valid_user_config(
+                        self.cog, user, anywhere=True
+                    )
+                    home_id = await user_config.home()
+                except LookupError:
+                    pass
+                if not home_id and guild:
+                    guild_config = self.cog.config.guild(guild)
+                    home_id = await guild_config.home()
+                if not home_id:
+                    home_id = await self.cog.config.home()
         if home_id or isinstance(query, int) or query.isnumeric():
             place_id = home_id or query
             response = await self.cog.api.get_places(int(place_id))

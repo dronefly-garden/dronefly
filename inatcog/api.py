@@ -1,24 +1,86 @@
-"""Module to access iNaturalist API."""
+"""Module to access iNaturalist API.
+
+- Note: Most methods use aiohttp directly, whereas some now use pyinaturalist. Please note
+  that for each of these we're working on moving from homegrown approaches to built-in
+  capabilities in pyinaturalist for:
+  - caching
+  - rate-limiting
+- Until migration to pyinaturalist is complete, mismatches between the two approaches might
+  lead to:
+  - any old code that depends on specific caching behaviours may not work correctly with
+    new pyinaturalist-based replacements
+  - there's an outside chance that rate limits may be exceeded, since neither rate-limiter
+    is aware of the rate buckets collected by the other.
+- Therefore, take care to add transitional code that mixes the two underlying libraries
+  sparingly, and in particular:
+  - prefer adding new methods over modifying existing ones to use pyinaturalist
+  - focus on methods for commands that are infrequently called to reduce the
+    probability of rate limits being exceeded
+"""
+from functools import partial
+from json import JSONDecodeError
+import logging
 from time import time
-from typing import Union
+from types import SimpleNamespace
+from typing import List, Optional, Union
+
+from aiohttp import (
+    ClientConnectorError,
+    ClientSession,
+    ContentTypeError,
+    ServerDisconnectedError,
+    TraceConfig,
+    TraceRequestStartParams,
+)
+from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-import aiohttp
-from .common import LOG
-from .base_classes import API_BASE_URL
+from pyinaturalist import (
+    add_project_users,
+    delete_project_users,
+    get_taxa_autocomplete,
+    get_projects_by_id,
+)
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
+
+logger = logging.getLogger("red.dronefly." + __name__)
+
+API_BASE_URL = "https://api.inaturalist.org"
+RETRY_EXCEPTIONS = [
+    ServerDisconnectedError,
+    ConnectionResetError,
+    ClientConnectorError,
+    JSONDecodeError,
+    TimeoutError,
+]
 
 
 class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
 
     def __init__(self):
+        # pylint: disable=unused-argument
+        async def on_request_start(
+            session: ClientSession,
+            trace_config_ctx: SimpleNamespace,
+            params: TraceRequestStartParams,
+        ) -> None:
+            current_attempt = trace_config_ctx.trace_request_ctx["current_attempt"]
+            if current_attempt > 1:
+                logger.info("iNat request attempt #%d: %s", current_attempt, repr(params))
+
+        trace_config = TraceConfig()
+        trace_config.on_request_start.append(on_request_start)
+        self.session = RetryClient(
+            raise_for_status=False,
+            trace_configs=[trace_config],
+        )
         self.request_time = time()
         self.places_cache = {}
         self.projects_cache = {}
         self.users_cache = {}
         self.users_login_cache = {}
-        self.session = aiohttp.ClientSession()
         self.taxa_cache = {}
         # api_v1_limiter:
         # ---------------
@@ -33,32 +95,64 @@ class INatAPI:
 
     async def _get_rate_limited(self, full_url, **kwargs):
         """Query API, respecting 60 requests per minute rate limit."""
-        LOG.info('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
+        logger.debug('_get_rate_limited("%s", %s)', full_url, repr(kwargs))
         async with self.api_v1_limiter:
-            async with self.session.get(full_url, params=kwargs) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    try:
-                        json = await response.json()
-                        msg = f"{json.get('error')} ({json.get('status')})"
-                    except aiohttp.ContentTypeError:
-                        data = await response.text()
-                        document = BeautifulSoup(data, "html.parser")
-                        # Only use the body, if present
-                        if document.body:
-                            text = document.body.find().text
-                        else:
-                            text = document
-                        # Treat as much as we can as markdown
-                        markdown = html2markdown.convert(text)
-                        # Punt the rest back to bs4 to drop unhandled tags
-                        msg = BeautifulSoup(markdown, "html.parser").text
-                    lookup_failed_msg = f"Lookup failed: {msg}"
-                    LOG.error(lookup_failed_msg)
-                    raise LookupError(lookup_failed_msg)
+            # i.e. wait 0.1s, 0.2s, 0.4s, 0.8s, 1.6s, 3.2s, and finally give up
+            retry_options = ExponentialRetry(
+                attempts=6,
+                exceptions=RETRY_EXCEPTIONS,
+            )
+            try:
+                async with self.session.get(
+                    full_url, params=kwargs, retry_options=retry_options
+                ) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        try:
+                            json = await response.json()
+                            msg = f"{json.get('error')} ({json.get('status')})"
+                        except ContentTypeError:
+                            data = await response.text()
+                            document = BeautifulSoup(data, "html.parser")
+                            # Only use the body, if present
+                            if document.body:
+                                text = document.body.find().text
+                            else:
+                                text = document
+                            # Treat as much as we can as markdown
+                            markdown = html2markdown.convert(text)
+                            # Punt the rest back to bs4 to drop unhandled tags
+                            msg = BeautifulSoup(markdown, "html.parser").text
+                        lookup_failed_msg = f"Lookup failed: {msg}"
+                        logger.error(lookup_failed_msg)
+                        raise LookupError(lookup_failed_msg)
+            except Exception as e:  # pylint: disable=broad-except,invalid-name
+                if any(isinstance(e, exc) for exc in retry_options.exceptions):
+                    attempts = retry_options.attempts
+                    msg = f"iNat not responding after {attempts} attempts. Please try again later."
+                    logger.error(msg)
+                    raise LookupError(msg) from e
+                raise e
 
         return None
+
+    async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
+        if "access_token" in kwargs:
+            safe_kwargs = {**kwargs}
+            safe_kwargs["access_token"] = "***REDACTED***"
+        else:
+            safe_kwargs = kwargs
+        logger.debug(
+            "_pyinaturalist_endpoint(%s, %s, %s)",
+            endpoint.__name__,
+            repr(args),
+            repr(safe_kwargs),
+        )
+
+        return await ctx.bot.loop.run_in_executor(
+            None, partial(endpoint, *args, **kwargs)
+        )
 
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
@@ -97,9 +191,17 @@ class INatAPI:
 
         # Select endpoint based on call signature:
         # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-        endpoint = "/v1/taxa/autocomplete" if "q" in kwargs else "/v1/taxa"
+        endpoint = (
+            "/v1/taxa/autocomplete"
+            if "q" in kwargs and "page" not in kwargs
+            else "/v1/taxa"
+        )
         id_arg = f"/{args[0]}" if args else ""
         full_url = f"{API_BASE_URL}{endpoint}{id_arg}"
+        _kwargs = {
+            "all_names": "true",
+            **kwargs,
+        }
 
         # Cache lookup by id#, as those should be stable.
         # - note: we could support splitting a list of id#s and caching each
@@ -108,13 +210,13 @@ class INatAPI:
         if args and (isinstance(args[0], int) or args[0].isnumeric()):
             taxon_id = int(args[0])
             if refresh_cache or taxon_id not in self.taxa_cache:
-                taxon = await self._get_rate_limited(full_url, **kwargs)
+                taxon = await self._get_rate_limited(full_url, **_kwargs)
                 if taxon:
                     self.taxa_cache[taxon_id] = taxon
             return self.taxa_cache[taxon_id] if taxon_id in self.taxa_cache else None
 
         # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **kwargs)
+        return await self._get_rate_limited(full_url, **_kwargs)
 
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
@@ -156,40 +258,65 @@ class INatAPI:
         full_url = f"{API_BASE_URL}{endpoint}"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    async def get_places(self, query: Union[int, str], refresh_cache=False, **kwargs):
-        """Query API for places matching place ID or params."""
+    async def get_places(
+        self, query: Union[int, str, list], refresh_cache=False, **kwargs
+    ):
+        """Get places for the specified ids or text query."""
 
-        # Select endpoint based on call signature:
-        request = f"/v1/places/{query}"
+        first_place_id = None
+        if isinstance(query, list):
+            cached = set(query).issubset(set(self.places_cache))
+            request = f"/v1/places/{','.join(map(str, query))}"
+        elif isinstance(query, int):
+            cached = query in self.places_cache
+            if cached:
+                first_place_id = query
+            request = f"/v1/places/{query}"
+        else:
+            cached = False
+            request = f"/v1/places/{query}"
         full_url = f"{API_BASE_URL}{request}"
 
-        # Cache lookup by id#, as those should be stable.
-        if isinstance(query, int) or query.isnumeric():
-            place_id = int(query)
-            if refresh_cache or place_id not in self.places_cache:
-                place = await self._get_rate_limited(full_url, **kwargs)
-                if place:
-                    self.places_cache[place_id] = place
-            return (
-                self.places_cache[place_id] if place_id in self.places_cache else None
-            )
+        if refresh_cache or not cached:
+            results = await self._get_rate_limited(full_url, **kwargs)
+            if results:
+                places = results.get("results") or []
+                for place in places:
+                    key = place.get("id")
+                    if key:
+                        if not first_place_id:
+                            first_place_id = key
+                        record = {
+                            "total_results": 1,
+                            "page": 1,
+                            "per_page": 1,
+                            "results": [place],
+                        }
+                        self.places_cache[key] = record
 
-        # Skip the cache for text queries which are not stable.
-        return await self._get_rate_limited(full_url, **kwargs)
+        if isinstance(query, list):
+            return {
+                place_id: self.places_cache[place_id]
+                for place_id in query
+                if self.places_cache[place_id]
+            }
+        if first_place_id in self.places_cache:
+            return self.places_cache[first_place_id]
+        return None
 
     async def get_projects(
         self, query: Union[str, int, list], refresh_cache=False, **kwargs
     ):
-        """Get the project for the specified id."""
+        """Get projects for the specified ids or text query."""
 
-        last_project_id = None
+        first_project_id = None
         if isinstance(query, list):
             cached = set(query).issubset(set(self.projects_cache))
             request = f"/v1/projects/{','.join(map(str, query))}"
         elif isinstance(query, int):
             cached = query in self.projects_cache
             if cached:
-                last_project_id = query
+                first_project_id = query
             request = f"/v1/projects/{query}"
         else:
             cached = False
@@ -203,7 +330,8 @@ class INatAPI:
                 for project in projects:
                     key = project.get("id")
                     if key:
-                        last_project_id = key
+                        if not first_project_id:
+                            first_project_id = key
                         record = {
                             "total_results": 1,
                             "page": 1,
@@ -218,15 +346,15 @@ class INatAPI:
                 for project_id in query
                 if self.projects_cache[project_id]
             }
-        if last_project_id in self.projects_cache:
-            return self.projects_cache[last_project_id]
+        if first_project_id in self.projects_cache:
+            return self.projects_cache[first_project_id]
         return None
 
-    async def get_project_observers_stats(self, **kwargs):
-        """Query API for user counts & rankings in a project."""
+    async def get_observers_stats(self, **kwargs):
+        """Query API for user counts & rankings."""
         request = "/v1/observations/observers"
         # TODO: validate kwargs includes project_id
-        # TODO: support projects with > 500 observers (one page, default)
+        # TODO: support queries with > 500 observers (one page, default)
         full_url = f"{API_BASE_URL}{request}"
         return await self._get_rate_limited(full_url, **kwargs)
 
@@ -238,12 +366,43 @@ class INatAPI:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    async def get_users(self, query: Union[int, str], refresh_cache=False, **kwargs):
+    # Some thin wrappers around pyinaturalist endpoints:
+    async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Add users to a project's rules."""
+        return await self._pyinaturalist_endpoint(
+            add_project_users, ctx, project_id, user_ids, **kwargs
+        )
+
+    async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
+        """Remove users from a project's rules."""
+        return await self._pyinaturalist_endpoint(
+            delete_project_users, ctx, project_id, user_ids, **kwargs
+        )
+
+    async def get_projects_by_id(self, ctx, project_id, **kwargs):
+        """Get projects by id."""
+        return await self._pyinaturalist_endpoint(
+            get_projects_by_id, ctx, project_id, **kwargs
+        )
+
+    async def get_taxa_autocomplete(self, ctx, **kwargs):
+        """Get taxa using autocomplete."""
+        # - TODO: support user settings for home place, language
+        return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
+
+    # end of pyinaturalist shims
+
+    async def get_users(
+        self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs
+    ):
         """Get the users for the specified login, user_id, or query."""
+        request = f"/v1/users/{query}"
         if isinstance(query, int) or query.isnumeric():
             user_id = int(query)
-            request = f"/v1/users/{query}"
             key = user_id
+        elif by_login_id:
+            user_id = None
+            key = query
         else:
             user_id = None
             request = f"/v1/users/autocomplete?q={query}"
@@ -324,31 +483,59 @@ class INatAPI:
             return self.users_cache[user_id]
         return None
 
-    async def get_observers_from_projects(self, project_ids: list):
+    async def get_observers_from_projects(
+        self, project_ids: Optional[List] = None, user_ids: Optional[List] = None
+    ):
         """Get observers for a list of project ids.
 
         Since the cache is filled as a side effect, this method can be
         used to prime the cache prior to fetching multiple users at once
         by id.
+
+        Users may also be specified, and in that case, project ids may be
+        omitted. The cache will then be primed from a list of user ids.
         """
-        if not project_ids:
+        if not (project_ids or user_ids):
             return
 
-        response = await self.get_observations(
-            "observers", project_id=",".join(map(str, project_ids))
-        )
+        page = 1
+        more = True
         users = []
-        results = response.get("results") or []
-        for observer in results:
-            user = observer.get("user")
-            if user:
-                user_id = user.get("id")
-                if user_id:
-                    # Synthesize a single result as if returned by a get_users
-                    # lookup of a single user_id, and cache it:
-                    user_json = {}
-                    user_json["results"] = [user]
-                    self.users_cache[user_id] = user_json
-                    self.users_login_cache[user["login"]] = user_id
+        # Note: This will only handle up to 10,000 users. Anything more
+        # needs to set id_above and id_below. With luck, we won't ever
+        # need to deal with projects this big!
+        while more:
+            params = {"page": page}
+            if project_ids:
+                params["project_id"] = ",".join(map(str, project_ids))
+            if user_ids:
+                params["user_id"] = ",".join(map(str, user_ids))
+            response = await self.get_observations("observers", **params)
+            results = response.get("results") or []
+            for observer in results:
+                user = observer.get("user")
+                if user:
+                    user_id = user.get("id")
+                    if user_id:
+                        # Synthesize a single result as if returned by a get_users
+                        # lookup of a single user_id, and cache it:
+                        user_json = {}
+                        user_json["results"] = [user]
+                        users.append(user)
+                        self.users_cache[user_id] = user_json
+                        self.users_login_cache[user["login"]] = user_id
+            # default values provided defensively to exit loop if missing
+            per_page = response.get("per_page") or len(results)
+            total_results = response.get("total_results") or len(results)
+            if results and (page * per_page < total_results):
+                page += 1
+            else:
+                more = False
 
-        return users
+        # return all user results as a single page
+        return {
+            "total_results": len(users),
+            "pages": 1,
+            "per_page": len(users),
+            "results": users,
+        }

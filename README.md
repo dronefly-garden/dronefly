@@ -1,5 +1,6 @@
 [![Red cogs](https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg)](https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop)
 [![discord.py](https://img.shields.io/badge/discord-py-blue.svg)](https://github.com/Rapptz/discord.py)
+[![ReadTheDocs](https://img.shields.io/readthedocs/dronefly/latest?label=documentation)](https://dronefly.readthedocs.io)
 
 # Dronefly bot
 
@@ -12,7 +13,7 @@ are welcome to join our community using this invite link:
 https://discord.gg/uskv2yx
 
 Join the Dronefly support Discord server with this invite
-https://discord.gg/jWUq7Dg if:
+https://discord.gg/pUbZFDbDdD if:
 
 - you own a Discord server and want Dronefly on it
 - you already use Dronefly and need support
@@ -22,7 +23,7 @@ https://discord.gg/jWUq7Dg if:
 
 Dronefly bot is based on [Red Discord
 Bot](https://github.com/Cog-Creators/Red-DiscordBot) but it is also the name
-of the approved by Red cog repository for the bot on GitHub. The latter
+of the Red cog repository for the bot on GitHub. The latter
 provides the components that interact with sites of interest to its users,
 such as iNaturalist.
 
@@ -215,7 +216,7 @@ If you have not already, load the Red V3 downloader cog:
 Then add the Dronefly repo and install the desired cog(s) as per:
 
 ```
-[p]repo add Dronefly https://github.com/synrg/dronefly
+[p]repo add Dronefly https://github.com/dronefly-garden/dronefly
 [p]cog install Dronefly [cog-name]
 ```
 
@@ -289,4 +290,4 @@ An example command to verify the alias works:
 
 ## TODO
 
-Check the [Issues](https://github.com/synrg/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
+Check the [Issues](https://github.com/dronefly-garden/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.

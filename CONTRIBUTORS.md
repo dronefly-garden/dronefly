@@ -23,7 +23,7 @@ and moral support.
 - **[mws](https://www.inaturalist.org/people/mws)**
     - Came up with the name "Dronefly" for the project.
     - Suggestions for & testing of new features. See mentions in
-      [issues](https://github.com/synrg/dronefly/search?q=mws&type=Issues).
+      [issues](https://github.com/dronefly-garden/dronefly/search?q=mws&type=Issues).
 
 - **[coniontises](https://www.inaturalist.org/people/coniontises)**
     - Dronefly profile picture artwork, used both on the iNaturalist
@@ -32,5 +32,5 @@ and moral support.
 - **[upupa-epops](https://www.inaturalist.org/people/upupa-epops)**
     - Relied on for input & testing when developing new features, as well as starting
       to file some issues.
-    - See mentions in [issues](https://github.com/synrg/dronefly/search?q=upupa-epops&unscoped_q=upupa-epops&type=Issues)
-      and [their issues](https://github.com/synrg/dronefly/search?q=7-ate-9&type=Issues).
+    - See mentions in [issues](https://github.com/dronefly-garden/dronefly/search?q=upupa-epops&unscoped_q=upupa-epops&type=Issues)
+      and [their issues](https://github.com/dronefly-garden/dronefly/search?q=7-ate-9&type=Issues).

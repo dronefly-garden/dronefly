@@ -1,25 +1,45 @@
-name: Dronefly
+name: Dronefly-main
 
-on: [push]
+on: 
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+env:
+  LATEST_PY_VERSION: '3.9'
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
+      fail-fast: false
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+          python-version: ${{ matrix.python-version }}
+    - uses: snok/install-poetry@v1.2
+      with:
+        version: 1.2.0b1
+        virtualenvs-in-project: true
+
+    # Cache packages per python version, and reuse until lockfile changes
+    - name: Cache python packages
+      id: cache
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install red-discordbot pyparsing ebird-api dataclasses-json html2markdown inflect aiolimiter
-        pip install timeago
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: poetry install -v
+
     - name: Test with pytest
       run: |
-        pip install pytest
+        source .venv/bin/activate
         pytest
-

@@ -132,7 +132,7 @@ humorous items in pinned messages.
 
 |image10|
 
-For instance, in the #bot-stuff channel, you’ll find information about
+For instance, in the #bot-commands channel, you’ll find information about
 commands you can use with bots as pinned items.
 
 Other pinned items may be...less useful.
@@ -142,7 +142,7 @@ Other pinned items may be...less useful.
 The member list button (|image12|) at the upper right toggles the member
 list visibility on and off (good if you need more screen space, or if
 you need to contact an Admin or Moderator (server) or Curator or Staff (iNat)
-and want to know who isavailable.) Right clicking on users in the member list
+and want to know who is available.) Right clicking on users in the member list
 allows you to see their profile (which can be helpful when temporary nickname
 changes occur).
 
@@ -217,10 +217,10 @@ to post questions: https://forum.inaturalist.org/
 #progress-and-yearlist is for discussing significant iNat milestones.
 (Please use #bot-commands for status checks.)
 
-Participating - #id-confirmation and #work-party (under Identify)
+Participating - #id-help and #work-party (under iNat Stuff and Teams)
 -----------------------------------------------------------------
 
-Use the #id-confirmation channel for:
+Use the #id-help channel for:
 
 -  Posting an observation where you’ve made an ID and are looking for a
    confirmation.
@@ -276,7 +276,7 @@ Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
 
-`Dronefly <https://github.com/synrg/dronefly/>`__ (``,``) - Accesses
+`Dronefly <https://github.com/dronefly-garden/dronefly/>`__ (``,``) - Accesses
 iNaturalist and other naturalist-related web platforms.
 
 Dumbo (``-``) - For general purpose admin & info functions, not strictly
@@ -457,8 +457,8 @@ Tabulate subcommands
 
 - Additionally...
     - double-quotes can be used around exact words in the name
-    - rank keywords will filter by rank (species, family, etc.)
-      - Note: Dronefly supports ``,species`` (``,sp`` or ``,t sp``) directly.
+    - rank keywords will filter by rank (``rank species``, ``rank family``, etc.)
+      - Note: Dronefly supports ``,species`` (``,sp``) as an alias for ``,t ... rank species``.
     - taxon ``in`` an ancestor taxon (e.g. ``,t prunella in plants``)
    
 Taxon subcommands
@@ -642,11 +642,6 @@ from other nature-related sites:
 - ``https://idtools.net/idAids/searchResults.cfm?searchString={0:query}&searchType=1``
 - put insect genus or binomial after command
 
-``,idsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?ident_user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's identifications)
-
 ``,ilwild``
 
 - ``https://illinoiswildflowers.info/plant_insects/plants/{0:query}_spp.html``
@@ -683,11 +678,6 @@ from other nature-related sites:
 - nothing entered after (displays image of iNaturalist map key)
 
 |image73|
-
-``,maverick``
-
-- ``https://www.inaturalist.org/identifications?category=maverick&user_id={0:query}``
-- put iNaturalist username after command (case sensitive) (returns specified user's Maverick identifications)
 
 ``,meglossary``
 
@@ -755,16 +745,6 @@ from other nature-related sites:
 - ``https://www.ncbi.nlm.nih.gov/nuccore/?term={0:query}``
 - put taxa of interest after command
 
-``,observers``
-
-- ``https://www.inaturalist.org/observations?place_id={0:query}&subview=table&view=observers``
-- put iNaturalist Place ID number after command
-
-``,obsheatmap``
-
-- ``https://www.inaturalist.org/observations/map?user_id={0:query}#2/0/0``
-- put iNaturalist username after command (returns heatmap of specified user's observations)
-
 ``,paflora``
 
 - ``http://paflora.org/original/sp-page.php?submitted=true&criteria={0:query}``
@@ -799,16 +779,6 @@ from other nature-related sites:
 
 - ``http://tolweb.org/{0:query}``
 - put taxon at family level or above after command
-
-``,topids``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=identifiers``
-- put iNaturalist Taxon ID number after command
-
-``,topobs``
-
-- ``https://www.inaturalist.org/observations?place_id=any&taxon_id={0:query}&view=observers``
-- put iNaturalist Taxon ID number after command
 
 ``,unknowns``
 

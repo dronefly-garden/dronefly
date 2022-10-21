@@ -1,16 +1,26 @@
 """Module for taxon command group."""
 
+import contextlib
 import re
+import textwrap
+from typing import Optional
 
+import discord
+# TODO: Experimental & doesn't belong here. Migrate out to api.py later.
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.base_classes import WWW_BASE_URL
-from inatcog.converters import NaturalCompoundQueryConverter
-from inatcog.embeds import apologize, make_embed
-from inatcog.inat_embeds import INatEmbeds
-from inatcog.interfaces import MixinMeta
-from inatcog.taxa import format_taxon_name, get_taxon
+from ..base_classes import WWW_BASE_URL
+from ..converters.base import NaturalQueryConverter
+from ..converters.reply import TaxonReplyConverter
+from ..core.models.taxon import PLANTAE_ID
+from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.inat import INatEmbeds
+from ..interfaces import MixinMeta
+from ..taxa import get_taxon
+from ..utils import get_lang
+
+BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
@@ -18,71 +28,106 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.group(aliases=["t"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def taxon(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Show taxon best matching the query.
+    async def taxon(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Taxon information.
 
-        `Aliases: [p]t`
-        **query** may contain:
-        - *id#* of the iNat taxon
-        - *initial letters* of scientific or common names
-        - *double-quotes* around exact words in the name
-        - *rank keywords* filter by ranks (`sp`, `family`, etc.)
-        - *4-letter AOU codes* for birds
-        - *taxon* `in` *an ancestor taxon*
-        **Examples:**
-        ```
-        [p]taxon family bear
-           -> Ursidae (Bears)
-        [p]taxon prunella
-           -> Prunella (self-heals)
-        [p]taxon prunella in animals
-           -> Prunella (Accentors)
-        [p]taxon wtsp
-           -> Zonotrichia albicollis (White-throated Sparrow)
-        ```
+        - *Taxon query terms* match a single taxon to display.
+        - *Observation query terms* match observation filters.
+        - *Reply* to another display to display its taxon.
+        - The *query* is optional when that display contains a taxon.
+        **Related help topics:**
+        - `[p]help taxon_query` for *taxon query* terms
+        - `[p]help query` for help with other *query* terms
+        - `[p]help reactions` describes the *reaction buttons*
+        - `[p]help s taxa` to search and browse matching taxa
         """
+        _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
-            self.check_taxon_query(ctx, query)
+            self.check_taxon_query(ctx, _query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, _query)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
-        await self.send_embed_for_taxon(ctx, filtered_taxon)
+        await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command()
-    async def bonap(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Show info from bonap.net for taxon."""
+    async def bonap(self, ctx, *, query: NaturalQueryConverter):
+        """North American flora info from bonap.net."""
         try:
             self.check_taxon_query(ctx, query)
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         base_url = "http://bonap.net/MapGallery/County/"
         maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
-        taxon = filtered_taxon.taxon
+        taxon = query_response.taxon
         name = re.sub(r" ", "%20", taxon.name)
-        full_name = format_taxon_name(taxon)
+        lang = await get_lang(ctx)
+        full_name = taxon.format_name(lang=lang)
+        msg = None
+        if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
+            msg = await ctx.send(f"{full_name} is not in Plantae")
+            await add_reactions_with_cancel(ctx, msg, [])
+            return
         if taxon.rank == "genus":
-            await ctx.send(
+            msg = await ctx.send(
                 f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
             )
         elif taxon.rank == "species":
-            await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
+            msg = await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
         else:
-            await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            msg = await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            await add_reactions_with_cancel(ctx, msg, [])
+            return
+        cancelled = await (self.bot.get_command("tabulate")(ctx, query=query))
+        if cancelled and msg:
+            with contextlib.suppress(discord.HTTPException):
+                await msg.delete()
+
+    async def _bold4(self, ctx, query):
+        try:
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            self.check_taxon_query(ctx, _query)
+            query_response = await self.query.get(ctx, _query)
+        except (BadArgument, LookupError) as err:
+            await apologize(ctx, str(err))
+            return
+
+        taxon = query_response.taxon
+        taxon_name = taxon.name.replace(" ", "+")
+        name = taxon.format_name(with_common=False)
+        common = (
+            f" ({taxon.preferred_common_name})" if taxon.preferred_common_name else ""
+        )
+        taxon_id = taxon.id
+        taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
+        embed = make_embed(
+            title=f"BOLD v4: {name}",
+            url=f"{BOLD_BASE_URL}?searchtype=records&query={taxon_name}",
+            description=(f"iNat Taxon: [{name}]({taxon_url}){common}\n"),
+        )
+        await ctx.send(embed=embed)
+
+    @taxon.command(name="bold4")
+    async def taxon_bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Barcode records from BOLD v4 (alias `[p]bold4`)."""
+        await self._bold4(ctx, query)
+
+    @commands.command()
+    async def bold4(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Barcode records from BOLD v4 (alias `[p]t bold4`)."""
+        await self._bold4(ctx, query)
 
     @taxon.command(name="means")
-    async def taxon_means(
-        self, ctx, place_query: str, *, query: NaturalCompoundQueryConverter
-    ):
+    async def taxon_means(self, ctx, place_query: str, *, query: NaturalQueryConverter):
         """Show establishment means for taxon from the specified place."""
         try:
             place = await self.place_table.get_place(ctx.guild, place_query, ctx.author)
@@ -93,14 +138,15 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         try:
             self.check_taxon_query(ctx, query)
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except (BadArgument, LookupError) as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
-        taxon = filtered_taxon.taxon
-        title = format_taxon_name(taxon, with_term=True)
-        url = f"{WWW_BASE_URL}/taxa/{taxon.taxon_id}"
-        full_taxon = await get_taxon(self, taxon.taxon_id, preferred_place_id=place_id)
+        taxon = query_response.taxon
+        lang = await get_lang(ctx)
+        title = taxon.format_name(with_term=True, lang=lang)
+        url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
+        full_taxon = await get_taxon(self, taxon.id, preferred_place_id=place_id)
         description = f"Establishment means unknown in: {place.display_name}"
         try:
             place_id = full_taxon.establishment_means.place.id
@@ -116,37 +162,99 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             pass
         await ctx.send(embed=make_embed(title=title, url=url, description=description))
 
-    @commands.command()
-    async def tname(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Show taxon name best matching the query.
+    @taxon.command(name="sci")
+    async def taxon_sci(self, ctx, *, query: NaturalQueryConverter):
+        """Search for taxon matching the scientific name."""
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await apologize(ctx, str(err))
+            return
 
-        See `[p]help taxon` for help with the query.
+        try:
+            query_response = await self.query.get(ctx, query, scientific_name=True)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
+
+        await self.send_embed_for_taxon(ctx, query_response)
+
+    @taxon.command(name="lang")
+    async def taxon_loc(self, ctx, locale: str, *, query: NaturalQueryConverter):
+        """Search for taxon matching specific locale/language."""
+        try:
+            self.check_taxon_query(ctx, query)
+        except BadArgument as err:
+            await apologize(ctx, str(err))
+            return
+
+        try:
+            query_response = await self.query.get(ctx, query, locale=locale)
+        except LookupError as err:
+            await apologize(ctx, str(err))
+            return
+
+        await self.send_embed_for_taxon(ctx, query_response)
+
+    @commands.command(hidden=True)
+    async def ttest(self, ctx, *, query: str):
+        """Taxon via pyinaturalist (test)."""
+        response = await self.api.get_taxa_autocomplete(ctx, q=query)
+        if response:
+            results = response.get("results")
+            if results:
+                taxon = results[0]
+                embed = make_embed()
+                # Show enough of the record for a satisfying test.
+                embed.title = taxon.get("name")
+                embed.url = f"{WWW_BASE_URL}/taxa/{taxon.get('id')}"
+                default_photo = taxon.get("default_photo")
+                if default_photo:
+                    medium_url = default_photo.get("medium_url")
+                    if medium_url:
+                        embed.set_image(url=medium_url)
+                        embed.set_footer(text=default_photo.get("attribution"))
+                embed.description = (
+                    "```py\n"
+                    + textwrap.shorten(
+                        f"{repr(taxon)}",
+                        width=MAX_EMBED_DESCRIPTION_LEN
+                        - 10,  # i.e. minus the code block markup
+                        placeholder="…",
+                    )
+                    + "\n```"
+                )
+                await ctx.send(embed=embed)
+
+    @commands.command()
+    async def tname(self, ctx, *, query: NaturalQueryConverter):
+        """Taxon name only.
+
+        See `[p]help taxon_query` for help with the query.
         ```
         """
 
         try:
             self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, query)
+            query_response = await self.query.get(ctx, query)
         except LookupError as err:
-            reason = err.args[0]
+            reason = str(err)
             await ctx.send(reason)
             return
 
-        await ctx.send(filtered_taxon.taxon.name)
+        await ctx.send(query_response.taxon.name)
 
     @commands.command(aliases=["sp"])
     @checks.bot_has_permissions(embed_links=True)
-    async def species(self, ctx, *, query: NaturalCompoundQueryConverter):
-        """Show species best matching the query.
+    async def species(self, ctx, *, query: NaturalQueryConverter):
+        """Species information. (alias `[p]t` *query* `rank sp`)
 
-        `Aliases: [p]sp, [p]t sp`
-
-        See `[p]help taxon` for query help."""
+        See `[p]help taxon_query` for query help."""
         query_species = query
         query_species.main.ranks.append("species")
         await self.taxon(ctx, query=query_species)
@@ -161,7 +269,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         [p]related 24255,24267
         [p]related boreal chorus frog,western chorus frog
         ```
-        See `[p]help taxon` for help specifying taxa.
+        See `[p]help taxon_query` for help specifying taxa.
         """
 
         if not taxa_list:
@@ -171,55 +279,27 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         await ctx.send(embed=await self.make_related_embed(ctx, taxa))
 
     @commands.command(aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
-    async def image(self, ctx, *, taxon_query: NaturalCompoundQueryConverter):
-        """Show default image for taxon query.
+    async def image(self, ctx, *, query: NaturalQueryConverter):
+        """Default image for a taxon.
 
-        `Aliases: [p]img`
-
-        See `[p]help taxon` for `taxon_query` format."""
+        See `[p]help taxon_query` for *query* help."""
         try:
-            self.check_taxon_query(ctx, taxon_query)
+            self.check_taxon_query(ctx, query)
         except BadArgument as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
         try:
-            filtered_taxon = await self.taxon_query.query_taxon(ctx, taxon_query)
+            query_response = await self.query.get(ctx, query)
         except LookupError as err:
-            await apologize(ctx, err.args[0])
+            await apologize(ctx, str(err))
             return
 
-        await self.send_embed_for_taxon_image(ctx, filtered_taxon.taxon)
-
-    @commands.command()
-    @checks.bot_has_permissions(embed_links=True)
-    async def map(self, ctx, *, taxa_list):
-        """Show range map for a list of one or more taxa.
-
-        **Examples:**
-        ```
-        [p]map polar bear
-        [p]map 24255,24267
-        [p]map boreal chorus frog,western chorus frog
-        ```
-        See `[p]help taxon` for help specifying taxa.
-        """
-
-        if not taxa_list:
-            await ctx.send_help()
-            return
-
-        try:
-            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-            return
-
-        await ctx.send(embed=await self.make_map_embed(taxa))
+        await self.send_embed_for_taxon_image(ctx, query_response.taxon)
