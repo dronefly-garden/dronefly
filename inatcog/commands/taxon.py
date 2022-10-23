@@ -13,7 +13,7 @@ from redbot.core.commands import BadArgument
 from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
-from ..core.models.taxon import PLANTAE_ID
+from ..core.models.taxon import TRACHEOPHYTA_ID
 from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
@@ -73,8 +73,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         lang = await get_lang(ctx)
         full_name = taxon.format_name(lang=lang)
         msg = None
-        if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
-            msg = await ctx.send(f"{full_name} is not in Plantae")
+        if TRACHEOPHYTA_ID not in taxon.ancestor_ids:
+            msg = await ctx.send(f"{full_name} is not in Tracheophyta (Vascular Plants)")
             await add_reactions_with_cancel(ctx, msg, [])
             return
         if taxon.rank == "genus":

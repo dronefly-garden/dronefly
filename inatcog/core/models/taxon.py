@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+TRACHEOPHYTA_ID = 211194
 PLANTAE_ID = 47126
 
 # RANK_LEVELS and RANK_EQUIVALENTS are from:
