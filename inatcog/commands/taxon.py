@@ -11,7 +11,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
 )
-from dronefly.core.models.taxon import PLANTAE_ID
+from dronefly.core.models.taxon import TRACHEOPHYTA_ID
 from dronefly.core.query.query import Query
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -92,8 +92,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 name = re.sub(r" ", "%20", taxon.name)
                 lang = await get_lang(ctx)
                 full_name = format_taxon_name(taxon, lang=lang)
-                if PLANTAE_ID not in taxon.ancestor_ids:  # Plantae
-                    msg = await ctx.send(f"{full_name} is not in Plantae")
+                if TRACHEOPHYTA_ID not in taxon.ancestor_ids:
+                    msg = await ctx.send(f"{full_name} is not in Tracheophyta (Vascular Plants)")
                     await add_reactions_with_cancel(ctx, msg, [])
                     return
                 if taxon.rank == "genus":
