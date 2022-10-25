@@ -142,7 +142,7 @@ async def maybe_match_obs(cog, ctx, content, id_permitted=False):
         except ValueError:
             pass
     if obs_id:
-        home = get_home(ctx)
+        home = await get_home(ctx)
         results = (
             await cog.api.get_observations(
                 obs_id, include_new_projects=1, preferred_place_id=home
