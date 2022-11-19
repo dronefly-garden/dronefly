@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.8.1,<3.10"
 dronefly-core = { path = "../dronefly-core", develop = true }
-Red-DiscordBot = { path = "../Red-DiscordBot", develop = true }
+Red-DiscordBot = { git = "https://github.com/Cog-Creators/Red-DiscordBot", rev = "V3/develop"}
 dataclasses-json = "^0.5.5"
 ebird-api = "^3.0.6"
 html2markdown = "^0.1.7"
