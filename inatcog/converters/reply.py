@@ -34,18 +34,25 @@ class TaxonReplyConverter:
                         "I need Read Message History permission to read that message."
                     )
                 msg = await ctx.channel.fetch_message(ref.message_id)
-            if msg and msg.embeds:
-                inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
-                if query_str:
-                    # Fully parse the user's parameters to check validity, then
-                    # combine it with the parameters from the embed back into a
-                    # new query_str.
-                    reply_query = await NaturalQueryConverter.convert(ctx, query_str)
-                    query_str = str(inat_embed.query(reply_query))
-                else:
-                    # Otherwise, just derive a query_str from the embed.
-                    query_str = str(inat_embed.query())
-            if not query_str:
+            if msg and msg.author.bot and msg.embeds:
+                embed = next((embed for embed in msg.embeds if embed.type == 'rich'), None)
+                if embed:
+                    inat_embed = INatEmbed.from_discord_embed(embed)
+                    if query_str:
+                        reply_query = await NaturalQueryConverter.convert(ctx, query_str)
+                        query_str = str(inat_embed.query(reply_query))
+                    else:
+                        query_str = str(inat_embed.query())
+
+        # We might want to change this at some point in future to make it consistent,
+        # i.e. the messages will be shown when the user replied with no arguments
+        # but we couldn't fetch the message or find useful content, but not if
+        # arguments were supplied. This is because BadArgument always triggers
+        # help when the converter is used in the command definition, but we catch
+        # and display the message when used in the body of the command (i.e. the
+        # "no arguments" case).
+        if not query_str:
+            if ref:
                 if not msg:
                     raise BadArgument("I couldn't fetch the message for that reply.")
                 raise BadArgument(
