@@ -37,6 +37,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     ):
         """Yield a query_response for one or more taxa and related info."""
         query_response = None
+        _query = None
         try:
             _query = await TaxonReplyConverter.convert(ctx, query)
             if ranks:
