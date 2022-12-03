@@ -22,6 +22,7 @@ class TaxonReplyConverter:
         async def get_query_from_ref_msg(ref, query_str: str):
             """Return a query string from the referenced embed."""
             msg = ref.cached_message
+            _query_str = query_str
             if not msg:
                 # See comment below for why the user won't see this message with our current approach:
                 if (
@@ -39,31 +40,32 @@ class TaxonReplyConverter:
                 if embed:
                     inat_embed = INatEmbed.from_discord_embed(embed)
                     if query_str:
-                        reply_query = await NaturalQueryConverter.convert(ctx, query_str)
-                        query_str = str(inat_embed.query(reply_query))
+                        reply_query = await NaturalQueryConverter.convert(ctx, _query_str)
+                        _query_str = str(inat_embed.query(reply_query))
                     else:
-                        query_str = str(inat_embed.query())
+                        _query_str = str(inat_embed.query())
 
-        # We might want to change this at some point in future to make it consistent,
-        # i.e. the messages will be shown when the user replied with no arguments
-        # but we couldn't fetch the message or find useful content, but not if
-        # arguments were supplied. This is because BadArgument always triggers
-        # help when the converter is used in the command definition, but we catch
-        # and display the message when used in the body of the command (i.e. the
-        # "no arguments" case).
-        if not query_str:
-            if ref:
-                if not msg:
-                    raise BadArgument("I couldn't fetch the message for that reply.")
-                raise BadArgument(
-                    "I couldn't recognize the message content for that reply."
-                )
-            return query_str
+            # We might want to change this at some point in future to make it consistent,
+            # i.e. the messages will be shown when the user replied with no arguments
+            # but we couldn't fetch the message or find useful content, but not if
+            # arguments were supplied. This is because BadArgument always triggers
+            # help when the converter is used in the command definition, but we catch
+            # and display the message when used in the body of the command (i.e. the
+            # "no arguments" case).
+            if not _query_str:
+                if ref:
+                    if not msg:
+                        raise BadArgument("I couldn't fetch the message for that reply.")
+                    raise BadArgument(
+                        "I couldn't recognize the message content for that reply."
+                    )
+            return _query_str
 
         ref = ctx.message.reference
-        query_str = argument
         if ref:
-            query_str = await get_query_from_ref_msg(ref, query_str)
+            query_str = await get_query_from_ref_msg(ref, argument)
+        else:
+            query_str = argument
         if not query_str:
             raise EmptyArgument("This command requires an argument.")
 
