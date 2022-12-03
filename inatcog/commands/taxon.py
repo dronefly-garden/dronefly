@@ -300,4 +300,4 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def image_alias(
         self, ctx, number: Optional[int] = 1, *, query: Optional[str]
     ):
-        await (self.bot.get_command("taxon image")(ctx, query=query))
+        await (self.bot.get_command("taxon image")(ctx, number, query=query))
