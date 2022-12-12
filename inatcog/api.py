@@ -86,8 +86,8 @@ class INatAPI:
         # api_v1_limiter:
         # ---------------
         # - Allow up to 50 requests over a 50 second time period (i.e.
-        #   a burst of up to 50 within the period, after which it will
-        #   block and only allow 1 per second)
+        #   a burst of up to 50 within the period, after which requests
+        #   are throttled until more capacity is available)
         # - This honours "try to keep it to 60 requests per minute or lower"
         #   - https://api.inaturalist.org/v1/docs/
         self.api_v1_limiter = AsyncLimiter(50, 50)
