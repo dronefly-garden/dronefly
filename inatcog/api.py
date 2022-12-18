@@ -84,12 +84,12 @@ class INatAPI:
         self.taxa_cache = {}
         # api_v1_limiter:
         # ---------------
-        # - Allow up to 50 requests over a 50 second time period (i.e.
+        # - Allow up to 50 requests over a 60 second time period (i.e.
         #   a burst of up to 50 within the period, after which requests
         #   are throttled until more capacity is available)
         # - This honours "try to keep it to 60 requests per minute or lower"
         #   - https://api.inaturalist.org/v1/docs/
-        self.api_v1_limiter = AsyncLimiter(50, 50)
+        self.api_v1_limiter = AsyncLimiter(50, 60)
 
     async def _get_rate_limited(self, full_url, **kwargs):
         """Query API, respecting 60 requests per minute rate limit."""
