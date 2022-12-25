@@ -20,7 +20,7 @@ from ..interfaces import MixinMeta
 from ..taxa import get_taxon
 from ..utils import get_lang
 
-BOLD_BASE_URL = "http://www.boldsystems.org/index.php/Public_BINSearch"
+BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
@@ -111,7 +111,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon_url = f"{WWW_BASE_URL}/taxa/{taxon_id}"
         embed = make_embed(
             title=f"BOLD v4: {name}",
-            url=f"{BOLD_BASE_URL}?searchtype=records&query={taxon_name}",
+            url=f"{BOLD_BASE_URL}/Taxbrowser_Taxonpage?taxon={taxon_name}",
             description=(f"iNat Taxon: [{name}]({taxon_url}){common}\n"),
         )
         await ctx.send(embed=embed)
