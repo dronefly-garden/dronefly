@@ -562,13 +562,6 @@ from other nature-related sites:
 - ``https://v3.boldsystems.org/index.php/Public_SearchTerms?query={0:query}``
 - put genus or binomial after command
 
-``,bold4``
-
-- ``http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records&query={0:query}``
-- see http://www.boldsystems.org/index.php/Public_BINSearch?searchtype=records for
-  support of quotes, exclusions, and bracketed clarifications: [geo], [ids], [inst],
-  [researcher], [tax]
-
 ``,bonapkey``
 
 - Retrigger
