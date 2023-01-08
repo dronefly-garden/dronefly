@@ -227,8 +227,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         def get_inactive_query_args(query):
             kwargs = {}
-            url = f"{WWW_BASE_URL}/taxa/search?q={urllib.parse.quote_plus(query)}"
-            url += f"&sources={keyword}"
+            url = (
+                f"{WWW_BASE_URL}/taxa/search?"
+                f"q={urllib.parse.quote_plus(query)}"
+                "&is_active=any&sources=inactive"
+            )
             kwargs["is_active"] = "any"
             return (url, kwargs)
 
@@ -258,10 +261,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             kwargs["per_page"] = 200
             return (query_title, url, kwargs)
 
-        async def get_query_args(query):
+        async def get_query_args(query, keyword):
             kwargs = {}
             kw_lowered = ""
             query_title = ""
+            url = ""
             if isinstance(query, str):
                 query_title = query
                 url = f"{WWW_BASE_URL}/search?q={urllib.parse.quote_plus(query)}"
@@ -276,7 +280,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     url += f"&sources={keyword}"
             return (kw_lowered, query_title, url, kwargs)
 
-        async def query_formatted_results(query, query_type, kwargs):
+        async def query_formatted_results(query, kwargs):
             thumbnails = []
             (results, total_results, per_api_page) = await self.site_search.search(
                 ctx, query, **kwargs
@@ -368,7 +372,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     _query = EMPTY_QUERY
             else:
                 _query = query
-            query_type, query_title, url, kwargs = await get_query_args(_query)
+            query_type, query_title, url, kwargs = await get_query_args(_query, keyword)
             if query_type == "obs":
                 (
                     results,
@@ -382,7 +386,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     thumbnails,
                     per_api_page,
                     per_embed_page,
-                ) = await query_formatted_results(_query, query_type, kwargs)
+                ) = await query_formatted_results(_query, kwargs)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return

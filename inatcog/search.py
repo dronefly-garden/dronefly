@@ -39,7 +39,7 @@ def get_taxon(result):
 
 def get_taxon2(result):
     """Get taxon result (/v1/taxa)."""
-    taxon = Taxon.from_json(result.get("record"))
+    taxon = Taxon.from_json(result)
     return (
         f":green_circle: [{format_taxon_name(taxon, with_term=True)}]"
         f"({WWW_BASE_URL}/taxa/{taxon.id})"
