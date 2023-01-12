@@ -145,7 +145,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         A *query* or *taxon query* may include *macros* which are expanded to other query terms described below.
 
-        See also: `[p]query`, `[p]taxon_query`, and `[p]groups`.
+        See also: `[p]query`, `[p]taxon_query`, `[p]groups`, and `[p]groups2`.
 
         __**`Macro`**__`  `__`Expands to`__
         **`my`**`      by me`
@@ -165,9 +165,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @commands.command(name="groups", aliases=["group"])
     async def topic_groups(self, ctx):
-        """\u200b*Query* macros that are *taxonomic groups*.
+        """\u200b*Query* macros that are *taxonomic groups* (1/2).
 
-        See also: `[p]macros`, and `[p]query`.
+        See also: `[p]groups2`, `[p]macros`, and `[p]query`.
 
         **`herps`**`       opt taxon_ids=`
         **`       `**`       20978,26036`
@@ -189,6 +189,20 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`       `**`       without_taxon_id=211194`
         **`inverts`**`     animalia opt`
         **`       `**`       without_taxon_id=355675`
+        """  # noqa: E501
+        await ctx.send_help()
+
+    @commands.command(name="groups2", aliases=["group2"])
+    async def topic_groups2(self, ctx):
+        """\u200b*Query* macros that are *taxonomic groups* (2/2).
+
+        See also: `[p]groups`, `[p]macros`, and `[p]query`.
+
+        **`seaslugs`**`    opt taxon_ids=`
+        **`       `**`       130687,775798,775804,`
+        **`       `**`       49784,500752,47113,`
+        **`       `**`       775801,775833,775805,`
+        **`       `**`       495793,47801,801507`
         """  # noqa: E501
         await ctx.send_help()
 

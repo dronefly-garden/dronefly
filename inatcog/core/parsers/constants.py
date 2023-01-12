@@ -51,6 +51,14 @@ MACROS = {
         "opt": ["without_taxon_id=211194"],
     },
     "inverts": {"of": "animalia", "opt": ["without_taxon_id=355675"]},
+    "seaslugs": {
+        "opt": [
+            (
+                "taxon_ids=130687,775798,775804,49784,500752,47113,775801,"
+                "775833,775805,495793,47801,801507"
+            ),
+        ],
+    },
     "spp": {"opt": ["hrank=species"]},
     "species": {"opt": ["hrank=species"]},
     "unseen": {"not by": "me", "from": "home"}

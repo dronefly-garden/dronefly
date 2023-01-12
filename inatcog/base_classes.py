@@ -552,8 +552,8 @@ class QueryResponse:
                 # Note: if taxon_ids is given with "of" clause (taxon_id), then
                 # taxon_ids is simply ignored, so we don't handle that case here.
                 if taxon_ids and not self.taxon:
-                    # TODO: support generally; hardwired cases here are for herps
-                    # and lichenish
+                    # TODO: support generally; hardwired cases here are for herps,
+                    # lichenish, and seaslugs
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
                         # Note: the list is getting a bit ridiculously long - maybe
@@ -562,6 +562,10 @@ class QueryResponse:
                             "Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
                             " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
                             "Verrucariales (Lichenized Fungi)"
+                        ),
+                        "130687,775798,775804,49784,500752,47113,775801,775833,775805,495793,47801,801507": (
+                            "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
+                            "other marine slugs)"
                         ),
                     }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
                 if without_taxon_id:
