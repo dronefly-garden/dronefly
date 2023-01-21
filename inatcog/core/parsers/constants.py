@@ -27,12 +27,21 @@ MACROS = {
     "oldest": {"opt": ["order=asc", "order_by=observed_on"]},
     "newest": {"opt": ["order=desc", "order_by=observed_on"]},
     "reverse": {"opt": ["order=asc"]},
-    # Because there are no iconic taxa for these three taxa, they must be specifically
-    # excluded in order to match only actual unknowns (Bacteria, Archaea, & Viruses):
-    "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
     "my": {"by": "me"},
     "home": {"from": "home"},
     "faves": {"opt": ["popular", "order_by=votes"]},
+    "spp": {"opt": ["hrank=species"]},
+    "species": {"opt": ["hrank=species"]},
+    "unseen": {"not by": "me", "from": "home"}
+}
+# Groups of taxa:
+# - can't function in place of a single taxon, and are typically only used in
+#   observation searches & counts
+# - must not be expanded when adjacent to other taxon keywords in the query
+GROUP_MACROS = {
+    # Because there are no iconic taxa for these three taxa, they must be specifically
+    # excluded in order to match only actual unknowns (Bacteria, Archaea, & Viruses):
+    "unknown": {"opt": ["iconic_taxa=unknown", "without_taxon_id=67333,151817,131236"]},
     "waspsonly": {"of": "apocrita", "opt": ["without_taxon_id=47336,630955"]},
     "mothsonly": {"of": "lepidoptera", "opt": ["without_taxon_id=47224"]},
     "herps": {"opt": ["taxon_ids=20978,26036"]},
@@ -59,9 +68,6 @@ MACROS = {
             ),
         ],
     },
-    "spp": {"opt": ["hrank=species"]},
-    "species": {"opt": ["hrank=species"]},
-    "unseen": {"not by": "me", "from": "home"}
 }
 VALID_OBS_OPTS = [
     "captive",
