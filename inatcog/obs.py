@@ -3,8 +3,9 @@ import datetime as dt
 from operator import itemgetter
 import re
 
+from dronefly.core.parsers.url import PAT_OBS_LINK
+
 from .base_classes import WWW_BASE_URL, Obs, User
-from .core.parsers.url import PAT_OBS_LINK
 from .photos import Photo
 from .sounds import Sound
 from .taxa import get_taxon_fields

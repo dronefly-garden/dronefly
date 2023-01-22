@@ -14,14 +14,14 @@ from ..base_classes import WWW_BASE_URL
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
-from ..core.parsers.url import (
+from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
     PAT_PLACE_LINK,
     PAT_PROJECT_LINK,
     PAT_TAXON_LINK,
     PAT_USER_LINK,
 )
-from ..core.query.query import EMPTY_QUERY, Query
+from dronefly.core.query.query import EMPTY_QUERY, Query
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta

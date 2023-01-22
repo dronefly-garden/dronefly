@@ -24,14 +24,14 @@ from ..base_classes import (
     WWW_BASE_URL,
 )
 from ..core.models.taxon import RANK_LEVELS
-from ..core.parsers.url import (
+from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
     PAT_TAXON_LINK,
 )
-from ..core.query.query import EMPTY_QUERY, Query, TaxonQuery
+from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 from ..embeds.common import (
     add_reactions_with_cancel,
     format_items_for_embed,

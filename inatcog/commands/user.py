@@ -20,7 +20,7 @@ from ..converters.base import (
     QuotedContextMemberConverter,
     NaturalQueryConverter,
 )
-from ..core.parsers.url import PAT_USER_LINK
+from dronefly.core.parsers.url import PAT_USER_LINK
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta

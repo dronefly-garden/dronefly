@@ -12,8 +12,8 @@ from .base_classes import (
     Place,
 )
 from .core.models.taxon import RANK_LEVELS
-from .core.parsers.url import STATIC_URL_PAT
-from .core.query.query import TaxonQuery
+from dronefly.core.parsers.url import STATIC_URL_PAT
+from dronefly.core.query.query import TaxonQuery
 from .utils import get_home, obs_url_from_v1
 
 

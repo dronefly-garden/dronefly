@@ -5,7 +5,7 @@ from redbot.core.commands import BadArgument
 from ..base_classes import Taxon
 from ..converters.base import NaturalQueryConverter
 from ..core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
-from ..core.query.query import Query, TaxonQuery
+from dronefly.core.query.query import Query, TaxonQuery
 from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
