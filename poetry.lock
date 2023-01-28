@@ -672,17 +672,21 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.2.0"
+version = "0.3.0"
 description = "Core dronefly components"
 category = "main"
 optional = false
-python-versions = "*"
-files = []
-develop = true
+python-versions = ">=3.8.1,<3.10"
+files = [
+    {file = "dronefly_core-0.3.0-py3-none-any.whl", hash = "sha256:d5dabb23cd567ea9daec588e43fc827544e68a10f7ead6b0375eacf605f26c81"},
+    {file = "dronefly_core-0.3.0.tar.gz", hash = "sha256:5d58f07b71877cfd0f8f8ec748987f3a9cde0e7f6bd5d307153d69fee96f05cf"},
+]
 
-[package.source]
-type = "directory"
-url = "../dronefly-core"
+[package.dependencies]
+dateparser = ">=1.1.1,<2.0.0"
+inflect = ">=5.3.0,<6.0.0"
+pyinaturalist = ">=0.17.0,<0.18.0"
+rich = ">=10.9,<14"
 
 [[package]]
 name = "ebird-api"
@@ -1954,4 +1958,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "9b74bc7a7e57cd16fa539d57291842b33b5cdfb5a377bf5f2aa2d23e18b600e4"
+content-hash = "e1a65b69c9212d37f7baac0b513931d6414578bb11cfe2a61abd4e19da13dbb8"
