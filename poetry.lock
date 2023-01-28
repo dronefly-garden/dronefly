@@ -676,21 +676,13 @@ version = "0.2.0"
 description = "Core dronefly components"
 category = "main"
 optional = false
-python-versions = ">=3.8.1,<3.10"
+python-versions = "*"
 files = []
-develop = false
-
-[package.dependencies]
-dateparser = "^1.1.1"
-inflect = "^5.3.0"
-pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist"}
-rich = ">=10.9,<14"
+develop = true
 
 [package.source]
-type = "git"
-url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "HEAD"
-resolved_reference = "1efefd8c5d3b71a7a7b567c4d0310f84a56c165f"
+type = "directory"
+url = "../dronefly-core"
 
 [[package]]
 name = "ebird-api"
@@ -1144,13 +1136,15 @@ files = [
 
 [[package]]
 name = "pyinaturalist"
-version = "0.18.0"
+version = "0.17.4"
 description = "iNaturalist API client for python"
 category = "main"
 optional = false
-python-versions = "^3.7"
-files = []
-develop = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "pyinaturalist-0.17.4-py3-none-any.whl", hash = "sha256:56a6d913af417aff77eb19d8fc72339b9f3f245e3dabd42d854a33bc91131ae7"},
+    {file = "pyinaturalist-0.17.4.tar.gz", hash = "sha256:d1f4c5eecc717de306370ed941f70aef19566bc463fdc399ac72adc58f9cb462"},
+]
 
 [package.dependencies]
 attrs = ">=21.2"
@@ -1159,19 +1153,12 @@ platformdirs = ">=2.5"
 python-dateutil = ">=2.0"
 python-forge = ">=18.6"
 requests = ">=2.22"
-requests-cache = ">=1.0.0b0"
+requests-cache = ">=1.0.0a1"
 requests-ratelimiter = ">=0.3.2"
 rich = ">=10.9"
 
 [package.extras]
-all = ["ujson (>=5.4.0,<6.0.0)"]
-docs = ["furo (>=2022.9,<2023.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.18,<0.19)", "nbsphinx (>=0.8,<0.9)", "sphinx (>=5.2,<6.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.2.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/pyinat/pyinaturalist"
-reference = "HEAD"
-resolved_reference = "261776db460c155adbbcf120fdee93880b3e3ae4"
+docs = ["furo (>=2022.2.14.1,<2023.0.0.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.17.0,<0.18.0)", "nbsphinx (>=0.8.5,<0.9.0)", "sphinx (>=4.2.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-copybutton (>=0.5)", "sphinx-inline-tabs (>=2022.1.2b11,<2023.0.0)", "sphinx-panels (>=0.6.0,<0.7.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "pynacl"
@@ -1950,21 +1937,21 @@ multidict = ">=4.0"
 
 [[package]]
 name = "zipp"
-version = "3.11.0"
+version = "3.12.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "zipp-3.11.0-py3-none-any.whl", hash = "sha256:83a28fcb75844b5c0cdaf5aa4003c2d728c77e05f5aeabe8e95e56727005fbaa"},
-    {file = "zipp-3.11.0.tar.gz", hash = "sha256:a7a22e05929290a67401440b39690ae6563279bced5f314609d9d03798f56766"},
+    {file = "zipp-3.12.0-py3-none-any.whl", hash = "sha256:9eb0a4c5feab9b08871db0d672745b53450d7f26992fd1e4653aa43345e97b86"},
+    {file = "zipp-3.12.0.tar.gz", hash = "sha256:73efd63936398aac78fd92b6f4865190119d6c91b531532e798977ea8dd402eb"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)"]
+docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "0a00b6a666ef1246f0efd4f973bc5df68fabd502397e71e2bdfba739a92e7d3c"
+content-hash = "9b74bc7a7e57cd16fa539d57291842b33b5cdfb5a377bf5f2aa2d23e18b600e4"
