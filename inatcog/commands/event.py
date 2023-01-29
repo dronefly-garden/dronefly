@@ -39,7 +39,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         event_project = event_projects.get(abbrev)
         event_project_id = int(event_project["project_id"]) if event_project else 0
         if not (event_project and event_project_id > 0):
-            await ctx.send(f"Event project not known.")
+            await ctx.send("Event project not known.")
             return
         response = await self.api.get_projects_by_id(ctx, event_project_id)
         if not response:
@@ -97,7 +97,10 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 )
                 if user_id if action == "join" else not user_id:
                     await ctx.send(
-                        f"Succesfully {_ACTION[action]} {inat_user.login} {_ACTION_PREP[action]} {project.title}."
+                        (
+                            f"Succesfully {_ACTION[action]} {inat_user.login} "
+                            f"{_ACTION_PREP[action]} {project.title}."
+                        )
                     )
                     return
             await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")

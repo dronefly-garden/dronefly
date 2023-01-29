@@ -24,7 +24,8 @@ class TaxonReplyConverter:
             msg = ref.cached_message
             _query_str = query_str
             if not msg:
-                # See comment below for why the user won't see this message with our current approach:
+                # See comment below for why the user won't see this message with
+                # our current approach:
                 if (
                     ctx.guild
                     and not ctx.channel.permissions_for(

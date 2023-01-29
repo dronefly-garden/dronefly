@@ -243,7 +243,10 @@ class QueryResponse:
                             " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
                             "Verrucariales (Lichenized Fungi)"
                         ),
-                        "130687,775798,775804,49784,500752,47113,775801,775833,775805,495793,47801,801507": (
+                        (
+                            "130687,775798,775804,49784,500752,47113,775801,"
+                            "775833,775805,495793,47801,801507"
+                        ): (
                             "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
                             "other marine slugs)"
                         ),

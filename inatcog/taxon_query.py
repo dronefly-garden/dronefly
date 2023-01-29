@@ -161,7 +161,10 @@ class INatTaxonQuery:
                     "`from` (place) or `in prj` (project)?"
                 )
                 if ancestor:
-                    reason = f"{reason}\n\nAncestor taxon: {format_taxon_name(ancestor, with_term=True)}"
+                    reason = (
+                        f"{reason}\n\n"
+                        f"Ancestor taxon: {format_taxon_name(ancestor, with_term=True)}"
+                    )
                 else:
                     reason = f"{reason}\n\nAncestor taxon not found."
                 raise LookupError(reason) from err

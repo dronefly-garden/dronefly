@@ -122,7 +122,10 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             )
             embeds = [embed]
         else:
-            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {ceil(self._total_results / self.per_page)})"
+            title = (
+                f"Search: {self._query_title} (page {menu.current_page + 1} "
+                f"of {ceil(self._total_results / self.per_page)})"
+            )
             fmt_entries = []
             for i, obs in enumerate(entries, start=start):
                 fmt_entry = await self._format_obs(obs)
@@ -147,7 +150,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                     if not embeds:
                         embeds.append(embed)
             if embeds:
-                embeds[0].description = f"\n".join(fmt_entries)
+                embeds[0].description = "\n".join(fmt_entries)
                 embeds[0].title = title
         # Only dpy2 and higher supports multi images via multiple embeds with
         # matching url per embed.
@@ -254,7 +257,10 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
             )
             embeds = [embed]
         else:
-            title = f"Search: {self._query_title} (page {menu.current_page + 1} of {ceil(self._total_results / self.per_page)})"
+            title = (
+                f"Search: {self._query_title} (page {menu.current_page + 1} "
+                f"of {ceil(self._total_results / self.per_page)})"
+            )
             fmt_entries = []
             for i, obs in enumerate(entries, start=start):
                 fmt_entry = await self._format_taxon(obs)
@@ -279,7 +285,7 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                     if not embeds:
                         embeds.append(embed)
             if embeds:
-                embeds[0].description = f"\n".join(fmt_entries)
+                embeds[0].description = "\n".join(fmt_entries)
                 embeds[0].title = title
         # Only dpy2 and higher supports multi images via multiple embeds with
         # matching url per embed.

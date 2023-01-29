@@ -28,7 +28,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def describe(self, ctx):
         """Describe iNat features, terms, and syntax.
 
-        Note: Each subcommand provides a help page. All of the `[p]describe` subcommands are also aliased as hidden commands, e.g. `[p]cheatsheet` is a shorter way to type `[p]describe cheatsheet`, etc."""
+        Note: Each subcommand provides a help page. All of the `[p]describe` subcommands are also aliased as hidden commands, e.g. `[p]cheatsheet` is a shorter way to type `[p]describe cheatsheet`, etc."""  # noqa: E501
 
     @describe.command(name="autoobs")
     async def describe_autoobs(self, ctx):

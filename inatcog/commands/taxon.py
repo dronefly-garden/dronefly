@@ -12,12 +12,10 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.models.taxon import TRACHEOPHYTA_ID
-from dronefly.core.query.query import Query
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
 from ..base_classes import WWW_BASE_URL
-from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import (
     add_reactions_with_cancel,
@@ -106,7 +104,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     return
                 if taxon.rank == "genus":
                     msg = await ctx.send(
-                        f"{full_name} species maps: {maps_url}{name}\nGenus map: {base_url}Genus/{name}.png"
+                        (
+                            f"{full_name} species maps: {maps_url}{name}\n"
+                            f"Genus map: {base_url}Genus/{name}.png"
+                        )
                     )
                 elif taxon.rank == "species":
                     msg = await ctx.send(f"{full_name} map:\n{base_url}{name}.png")

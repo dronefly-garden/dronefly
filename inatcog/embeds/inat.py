@@ -12,7 +12,6 @@ from urllib.parse import parse_qs, urlsplit
 import discord
 from discord import DMChannel, File
 from dronefly.core.formatters.generic import (
-    RANK_LEVELS,
     format_taxon_conservation_status,
     format_taxon_establishment_means,
     format_taxon_name,
@@ -29,7 +28,7 @@ from dronefly.core.parsers.url import (
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 from pyinaturalist.models import IconPhoto, TaxonSummary
-from redbot.core.commands import BadArgument, Context
+from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
@@ -709,7 +708,10 @@ class INatEmbeds(MixinMeta):
                     means = taxon_summary.listed_taxon
                     status = taxon_summary.conservation_status
                     if status:
-                        status_link = f"\nConservation Status: {format_taxon_conservation_status(status)}"
+                        status_link = (
+                            "\nConservation Status: "
+                            f"{format_taxon_conservation_status(status)}"
+                        )
                     if means:
                         means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
@@ -887,7 +889,10 @@ class INatEmbeds(MixinMeta):
                     refresh_cache=False,
                 )
 
-        description = f"{names}\n**are related by {taxon.rank}**: {format_taxon_name(taxon, lang=lang)}"
+        description = (
+            f"{names}\n**are related by {taxon.rank}**: "
+            f"{format_taxon_name(taxon, lang=lang)}"
+        )
 
         return make_embed(title="Closest related taxon", description=description)
 
@@ -1188,9 +1193,11 @@ class INatEmbeds(MixinMeta):
                 for event_project in event_projects
                 if event_projects[event_project].get("main")
             }
-            # The "master project" for the server is hardcoded to be the event project with the abbrev "ever"
+            # The "master project" for the server is hardcoded to be the event
+            # project with the abbrev "ever"
             # - if it is defined and has a custom emoji set, use that
-            # - otherwise, fall back to :white_check_mark: to indicate a mod-added member in this server
+            # - otherwise, fall back to :white_check_mark: to indicate a
+            #   mod-added member in this server
             master_project = main_projects.get("ever")
             master_project_emoji = (
                 master_project and master_project.get("emoji")
