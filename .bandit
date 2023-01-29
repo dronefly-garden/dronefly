@@ -1,0 +1,3 @@
+[bandit]
+assert_used:
+  skips: ["*/test_*.py", "*/test_*.py"]

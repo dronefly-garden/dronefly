@@ -141,7 +141,7 @@ class INatAPI:
     async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
         if "access_token" in kwargs:
             safe_kwargs = {**kwargs}
-            safe_kwargs["access_token"] = "***REDACTED***"
+            safe_kwargs["access_token"] = "***REDACTED***"  # nosec B105
         else:
             safe_kwargs = kwargs
         logger.debug(
