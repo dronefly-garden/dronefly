@@ -63,7 +63,7 @@ from ..taxa import (
 from ..users import User
 from ..utils import get_home, get_lang, has_valid_user_config, obs_url_from_v1
 
-logger = logging.getLogger('red.dronefly.' + __name__)
+logger = logging.getLogger("red.dronefly." + __name__)
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -1202,7 +1202,9 @@ class INatEmbeds(MixinMeta):
             master_project_emoji = (
                 master_project and master_project.get("emoji")
             ) or ":white_check_mark:"
-            if master_project_emoji and await has_valid_user_config(self, member, False):
+            if master_project_emoji and await has_valid_user_config(
+                self, member, False
+            ):
                 description += f" {master_project_emoji}"
         embed = make_embed()
         project_stats = await self.get_user_server_projects_stats(ctx, user)
@@ -1315,7 +1317,9 @@ class INatEmbeds(MixinMeta):
                 if _add_user_emojis(query_response)
                 else []
             )
-        return await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
+        return await add_reactions_with_cancel(
+            ctx, msg, reaction_emojis, with_keep=with_keep
+        )
 
     async def send_embed_for_taxon_image(
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False

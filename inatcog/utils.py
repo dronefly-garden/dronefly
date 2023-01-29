@@ -22,6 +22,7 @@ def obs_url_from_v1(params: dict):
         url += "?" + urlencode(_params)
     return url
 
+
 def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
     bot_attr = getattr(cog_or_ctx, "bot", None)
     cog = cog_or_ctx.bot.get_cog(COG_NAME) if bot_attr else cog_or_ctx
@@ -30,8 +31,11 @@ def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
         raise discord.BadArugment(f"Cog not found: {COG_NAME}")
     return cog
 
+
 async def get_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context], user=Union[discord.Member, discord.User], anywhere=True
+    cog_or_ctx=Union[commands.Cog, commands.Context],
+    user=Union[discord.Member, discord.User],
+    anywhere=True,
 ):
     """Return iNat user config if known in this server.
 
@@ -63,8 +67,11 @@ async def get_valid_user_config(
         raise LookupError(f"iNat user not known{where}.")
     return user_config
 
+
 async def has_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context], user=Union[discord.Member, discord.User], anywhere=True
+    cog_or_ctx=Union[commands.Cog, commands.Context],
+    user=Union[discord.Member, discord.User],
+    anywhere=True,
 ):
     """Check if user is known in the specified scope.
 
@@ -76,9 +83,12 @@ async def has_valid_user_config(
         return False
     return True
 
+
 @asynccontextmanager
 async def valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context], user=Union[discord.Member, discord.User], anywhere=True
+    cog_or_ctx=Union[commands.Cog, commands.Context],
+    user=Union[discord.Member, discord.User],
+    anywhere=True,
 ):
     user_config = None
     try:
@@ -86,6 +96,7 @@ async def valid_user_config(
     except LookupError:
         pass
     yield user_config
+
 
 async def get_home(ctx):
     """Get configured home place for author."""
@@ -101,6 +112,7 @@ async def get_home(ctx):
         else:
             home = await cog.config.home()
     return home
+
 
 async def get_lang(ctx):
     """Get configured preferred language for author."""

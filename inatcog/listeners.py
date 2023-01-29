@@ -16,7 +16,7 @@ from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
 
-logger = logging.getLogger('red.dronefly.' + __name__)
+logger = logging.getLogger("red.dronefly." + __name__)
 
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.

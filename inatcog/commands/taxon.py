@@ -6,6 +6,7 @@ import textwrap
 from typing import Optional
 
 import discord
+
 # TODO: Experimental & doesn't belong here. Migrate out to api.py later.
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -14,7 +15,12 @@ from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
 from ..core.models.taxon import TRACHEOPHYTA_ID
-from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.common import (
+    add_reactions_with_cancel,
+    apologize,
+    make_embed,
+    MAX_EMBED_DESCRIPTION_LEN,
+)
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
@@ -74,7 +80,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         full_name = taxon.format_name(lang=lang)
         msg = None
         if TRACHEOPHYTA_ID not in taxon.ancestor_ids:
-            msg = await ctx.send(f"{full_name} is not in Tracheophyta (Vascular Plants)")
+            msg = await ctx.send(
+                f"{full_name} is not in Tracheophyta (Vascular Plants)"
+            )
             await add_reactions_with_cancel(ctx, msg, [])
             return
         if taxon.rank == "genus":
@@ -84,7 +92,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         elif taxon.rank == "species":
             msg = await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
         else:
-            msg = await ctx.send(f"{full_name} must be a genus or species, not: {taxon.rank}")
+            msg = await ctx.send(
+                f"{full_name} must be a genus or species, not: {taxon.rank}"
+            )
             await add_reactions_with_cancel(ctx, msg, [])
             return
         cancelled = await (self.bot.get_command("tabulate")(ctx, query=query))
