@@ -1,3 +1,9 @@
+[tool.bandit]
+exclude_dirs = ["tests"]
+
+[tool.flake8]
+max-line-length = 100
+
 [tool.poetry]
 name = "dronefly"
 version = "0.1.0"
@@ -22,8 +28,8 @@ dateparser = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
-pytest = "^6.2.5"
-pytest-mock = "^3.6.1"
+pytest = "^7.2.1"
+pytest-mock = "^3.10.0"
 pylint = "^2.10.2"
 pytest-asyncio = "^0.20.3"
 
