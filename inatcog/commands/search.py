@@ -76,7 +76,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 try:
                     obs_results = (
                         await self.api.get_observations(
-                            mat["obs_id"], include_new_projects=1, preferred_place_id=home
+                            mat["obs_id"],
+                            include_new_projects=1,
+                            preferred_place_id=home,
                         )
                     )["results"]
                 except LookupError as err:

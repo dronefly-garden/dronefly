@@ -36,11 +36,15 @@ class TaxonReplyConverter:
                     )
                 msg = await ctx.channel.fetch_message(ref.message_id)
             if msg and msg.author.bot and msg.embeds:
-                embed = next((embed for embed in msg.embeds if embed.type == 'rich'), None)
+                embed = next(
+                    (embed for embed in msg.embeds if embed.type == "rich"), None
+                )
                 if embed:
                     inat_embed = INatEmbed.from_discord_embed(embed)
                     if query_str:
-                        reply_query = await NaturalQueryConverter.convert(ctx, _query_str)
+                        reply_query = await NaturalQueryConverter.convert(
+                            ctx, _query_str
+                        )
                         _query_str = str(inat_embed.query(reply_query))
                     else:
                         _query_str = str(inat_embed.query())
@@ -55,7 +59,9 @@ class TaxonReplyConverter:
             if not _query_str:
                 if ref:
                     if not msg:
-                        raise BadArgument("I couldn't fetch the message for that reply.")
+                        raise BadArgument(
+                            "I couldn't fetch the message for that reply."
+                        )
                     raise BadArgument(
                         "I couldn't recognize the message content for that reply."
                     )

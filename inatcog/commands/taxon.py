@@ -19,7 +19,12 @@ from redbot.core.commands import BadArgument
 from ..base_classes import WWW_BASE_URL
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
-from ..embeds.common import add_reactions_with_cancel, apologize, make_embed, MAX_EMBED_DESCRIPTION_LEN
+from ..embeds.common import (
+    add_reactions_with_cancel,
+    apologize,
+    make_embed,
+    MAX_EMBED_DESCRIPTION_LEN,
+)
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
@@ -94,7 +99,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 lang = await get_lang(ctx)
                 full_name = format_taxon_name(taxon, lang=lang)
                 if TRACHEOPHYTA_ID not in taxon.ancestor_ids:
-                    msg = await ctx.send(f"{full_name} is not in Tracheophyta (Vascular Plants)")
+                    msg = await ctx.send(
+                        f"{full_name} is not in Tracheophyta (Vascular Plants)"
+                    )
                     await add_reactions_with_cancel(ctx, msg, [])
                     return
                 if taxon.rank == "genus":
@@ -186,18 +193,20 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @taxon.command(name="sci")
     async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
-        async with self._get_taxon_response(
-            ctx, query, scientific_name=True
-        ) as (query_response, _query):
+        async with self._get_taxon_response(ctx, query, scientific_name=True) as (
+            query_response,
+            _query,
+        ):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
     async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
-        async with self._get_taxon_response(
-            ctx, query, locale=locale
-        ) as (query_response, _query):
+        async with self._get_taxon_response(ctx, query, locale=locale) as (
+            query_response,
+            _query,
+        ):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
@@ -248,9 +257,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]help taxon_query` for query help."""
-        async with self._get_taxon_response(
-            ctx, query, ranks=["species"]
-        ) as (query_response, _query):
+        async with self._get_taxon_response(ctx, query, ranks=["species"]) as (
+            query_response,
+            _query,
+        ):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 

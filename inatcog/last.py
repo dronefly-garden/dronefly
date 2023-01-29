@@ -53,7 +53,9 @@ class INatLinkMsg:
         mat = match_obs_link(found)
         obs_id = int(mat["obs_id"])
         url = mat["url"] or WWW_BASE_URL + "/observations/" + str(obs_id)
-        ago = timeago.format(found.created_at, datetime.utcnow().replace(tzinfo=timezone.utc))
+        ago = timeago.format(
+            found.created_at, datetime.utcnow().replace(tzinfo=timezone.utc)
+        )
         if found.author.bot:
             name = None
         else:

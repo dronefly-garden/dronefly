@@ -66,7 +66,7 @@ from ..taxa import (
 from ..users import User
 from ..utils import get_home, get_lang, has_valid_user_config, obs_url_from_v1
 
-logger = logging.getLogger('red.dronefly.' + __name__)
+logger = logging.getLogger("red.dronefly." + __name__)
 
 HIERARCHY_PAT = re.compile(r".*?(?=>)", re.DOTALL)
 NO_TAXONOMY_PAT = re.compile(r"(\n__.*)?$", re.DOTALL)
@@ -1310,7 +1310,9 @@ class INatEmbeds(MixinMeta):
                 if _add_user_emojis(query_response)
                 else []
             )
-        return await add_reactions_with_cancel(ctx, msg, reaction_emojis, with_keep=with_keep)
+        return await add_reactions_with_cancel(
+            ctx, msg, reaction_emojis, with_keep=with_keep
+        )
 
     async def send_embed_for_taxon_image(
         self, ctx, query_response: Union[QueryResponse, Taxon], index=1, with_keep=False

@@ -69,7 +69,9 @@ class INatAPI:
         ) -> None:
             current_attempt = trace_config_ctx.trace_request_ctx["current_attempt"]
             if current_attempt > 1:
-                logger.info("iNat request attempt #%d: %s", current_attempt, repr(params))
+                logger.info(
+                    "iNat request attempt #%d: %s", current_attempt, repr(params)
+                )
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
