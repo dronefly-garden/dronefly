@@ -26,7 +26,6 @@ pytest = "^6.2.5"
 pytest-mock = "^3.6.1"
 pylint = "^2.10.2"
 pytest-asyncio = "^0.20.3"
-pre-commit = "^3.0.1"
 
 [build-system]
 requires = ["poetry-core"]
