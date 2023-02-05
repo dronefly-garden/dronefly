@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Dronefly"
-copyright = "2020-2021, Ben Armstrong and Michael Pirrello"
+copyright = "2020-2023, Ben Armstrong and Michael Pirrello"
 author = "Ben Armstrong, Michael Pirrello"
 
 
@@ -37,7 +37,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.doctest",
     "sphinx.ext.imgconverter",
-    "sphinxcontrib_trio",
+    # "sphinxcontrib_trio",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

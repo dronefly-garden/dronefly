@@ -1,3 +1,9 @@
+[tool.bandit]
+exclude_dirs = ["tests"]
+
+[tool.flake8]
+max-line-length = 100
+
 [tool.poetry]
 name = "dronefly"
 version = "0.1.0"
@@ -21,7 +27,7 @@ pyinaturalist = "^0.17.0"
 dateparser = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^21.8-beta.0"
+black = "^22.12.0"
 pytest = "^6.2.5"
 
 [tool.poetry.group.docs.dependencies]
