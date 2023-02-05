@@ -1,13 +1,15 @@
 version: 2
 
-#formats:
-#  - pdf
-
 build:
-  image: latest
+  os: "ubuntu-22.04"
+  tools:
+    python: "3.9"
+  jobs:
+    post_create_environment:
+      - pip install poetry
+    post_install:
+      - poetry install --with docs
 
-python:
-  version: 3.8
-  install:
-    - requirements: requirements.txt
-    - requirements: docs/requirements.txt
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: false
