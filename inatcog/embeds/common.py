@@ -66,7 +66,7 @@ async def add_reactions_with_cancel(
     ctx: Context,
     msg: discord.Message,
     emojis: Iterable[Union[str, discord.Emoji]],
-    timeout: int = 30,
+    timeout: int = 45,
     with_keep: bool = False,
 ):
     """Add reactions with, for a limited time, author-only cancel."""
