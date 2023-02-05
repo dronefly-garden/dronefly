@@ -31,8 +31,9 @@ class INatTaxonQuery:
             A Taxon object for the matching ancestor, if any, else None.
         """
         rank = RANK_EQUIVALENTS.get(rank) or rank
-        if rank in taxon.ancestor_ranks:
-            rank_index = taxon.ancestor_ranks.index(rank)
+        taxon_ancestor_ranks = taxon.ancestor_ranks()
+        if rank in taxon_ancestor_ranks:
+            rank_index = taxon_ancestor_ranks.index(rank)
             ancestor = await get_taxon(self.cog, ctx, taxon.ancestor_ids[rank_index])
             return ancestor
         return None
