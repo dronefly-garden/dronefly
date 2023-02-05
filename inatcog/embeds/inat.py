@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 import discord
 from discord import DMChannel, File
 import html2markdown
+from pyinaturalist.constants import ROOT_TAXON_ID
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -50,7 +51,6 @@ from ..taxa import (
     get_taxon,
     get_taxon_fields,
     get_taxon_preferred_establishment_means,
-    TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
     TAXON_PLACES_HEADER,
@@ -862,7 +862,7 @@ class INatEmbeds(MixinMeta):
             if not common_ancestor_indices:
                 taxon = await get_taxon(
                     self,
-                    TAXON_ID_LIFE,
+                    ROOT_TAXON_ID,
                     preferred_place_id=preferred_place_id,
                     refresh_cache=False,
                 )
@@ -1195,9 +1195,11 @@ class INatEmbeds(MixinMeta):
                 for event_project in event_projects
                 if event_projects[event_project].get("main")
             }
-            # The "master project" for the server is hardcoded to be the event project with the abbrev "ever"
+            # The "master project" for the server is hardcoded to be the event
+            # project with the abbrev "ever"
             # - if it is defined and has a custom emoji set, use that
-            # - otherwise, fall back to :white_check_mark: to indicate a mod-added member in this server
+            # - otherwise, fall back to :white_check_mark: to indicate a
+            #   mod-added member in this server
             master_project = main_projects.get("ever")
             master_project_emoji = (
                 master_project and master_project.get("emoji")
