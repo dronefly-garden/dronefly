@@ -556,25 +556,29 @@ class QueryResponse:
                     # lichenish, and seaslugs
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
-                        # Note: the list is getting a bit ridiculously long - maybe
-                        # just call this grouping "Probably lichens"?
-                        "152028,791197,54743,152030,175541,127378,117881,117869": (
-                            "Arthoniomycetes, Coniocybomycetes, Lecanoromycetes,"
-                            " Lichinomycetes, Multiclavula, Mycocaliciales, Pyrenulales,"
-                            "Verrucariales (Lichenized Fungi)"
+                        (
+                            "152028,152550,791197,54743,152030,175541,"
+                            "127378,117881,117869"
+                        ): (
+                            "Lecanoromycetes, Arthoniomycetes, etc. (Lichenized Fungi)"
                         ),
-                        "130687,775798,775804,49784,500752,47113,775801,775833,775805,495793,47801,801507": (
+                        (
+                            "130687,775798,775804,49784,500752,47113,"
+                            "775801,775833,775805,495793,47801,801507"
+                        ): (
                             "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
                             "other marine slugs)"
                         ),
                     }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
-                if without_taxon_id:
+                # Note: "without Stictis radiata" (352459) is intentionally
+                # omitted from the "lichenish" description to keep it from
+                # being needlessly wordy.
+                if without_taxon_id and without_taxon_id not in ["352459"]:
                     # TODO: support generally; hardwired cases here are for
                     # waspsonly, mothsonly, lichenish, etc.
                     without_taxa_description = {
                         "47336,630955": "Formicidae, Anthophila",
                         "47224": "Papilionoidea",
-                        "352459": "Stictis radiata",
                         "47125": "Angiospermae",
                         "211194": "Tracheophyta",
                         "355675": "Vertebrata",
