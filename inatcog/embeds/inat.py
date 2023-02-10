@@ -27,6 +27,8 @@ from dronefly.core.parsers.url import (
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
+
+# from pyinaturalist.constants import ROOT_TAXON_ID
 from pyinaturalist.models import IconPhoto, TaxonSummary
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
@@ -52,7 +54,6 @@ from ..taxa import (
     format_user_taxon_counts,
     get_taxon,
     get_taxon_preferred_establishment_means,
-    TAXON_ID_LIFE,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
     TAXON_PLACES_HEADER,
@@ -101,6 +102,7 @@ TAXON_PLACE_REACTION_EMOJIS = list(
 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["home", "place"]))
 OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
 OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
+ROOT_TAXON_ID = 48460
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
@@ -873,7 +875,7 @@ class INatEmbeds(MixinMeta):
                 taxon = await get_taxon(
                     self,
                     ctx,
-                    TAXON_ID_LIFE,
+                    ROOT_TAXON_ID,
                     preferred_place_id=preferred_place_id,
                     refresh_cache=False,
                 )

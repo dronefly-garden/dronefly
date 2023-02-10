@@ -11,7 +11,6 @@ from .base_classes import User, Place
 from .utils import get_home, obs_url_from_v1
 
 
-TAXON_ID_LIFE = 48460
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
 TAXON_COUNTS_HEADER = "__obs# (spp#) by user:__"
