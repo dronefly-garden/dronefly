@@ -12,7 +12,8 @@ from urllib.parse import parse_qs, urlsplit
 import discord
 from discord import DMChannel, File
 import html2markdown
-from pyinaturalist.constants import ROOT_TAXON_ID
+
+# from pyinaturalist.constants import ROOT_TAXON_ID
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -99,6 +100,7 @@ TAXON_PLACE_REACTION_EMOJIS = list(
 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["home", "place"]))
 OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
 OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
+ROOT_TAXON_ID = 48460
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
