@@ -13,7 +13,7 @@ license = "AGPL-3.0-or-later"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-dronefly-core = "^0.3.1"
+dronefly-core = "^0.3.2"
 python = ">=3.8.1,<3.10"
 Red-DiscordBot = "^3.4.18"
 dataclasses-json = "^0.5.5"
