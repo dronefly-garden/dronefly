@@ -557,7 +557,7 @@ class QueryResponse:
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
                         (
-                            "152028,152550,791197,54743,152030,175541,"
+                            "152028,942664,791197,54743,152030,175541,"
                             "127378,117881,117869"
                         ): (
                             "Lecanoromycetes, Arthoniomycetes, etc. (Lichenized Fungi)"
@@ -568,6 +568,10 @@ class QueryResponse:
                         ): (
                             "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
                             "other marine slugs)"
+                        ),
+                        "47178,47273,797045,85497": (
+                            "Actinopterygii, Agnatha, Elasmobranchii, Sarcopterygii "
+                            "(Extant Fish)"
                         ),
                     }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
                 # Note: "without Stictis radiata" (352459) is intentionally
