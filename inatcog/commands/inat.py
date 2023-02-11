@@ -239,6 +239,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`       `**`       49784,500752,47113,`
         **`       `**`       775801,775833,775805,`
         **`       `**`       495793,47801,801507`
+        **`allfish`**`     opt taxon_ids=`
+        **`       `**`       47178,47273,797045,85497`
         """  # noqa: E501
         await ctx.send_help()
 
