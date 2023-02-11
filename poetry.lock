@@ -833,7 +833,7 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.1"
+version = "0.3.2"
 description = "Core dronefly components"
 category = "main"
 optional = false
