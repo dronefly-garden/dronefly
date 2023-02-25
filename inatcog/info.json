@@ -13,7 +13,7 @@
     "aiolimiter>=1.0.0,<2.0.0",
     "aiohttp-retry>=2.4.5,<3.0.0",
     "dronefly-core>=0.3.2,<0.4.0",
-    "pyinaturalist=git+https://github.com/pyinat/pyinaturalist.git@main",
+    "pyinaturalist==git+https://github.com/pyinat/pyinaturalist.git@main",
     "dateparser>=1.0.0,<2.0.0"
   ],
   "tags": ["inaturalist", "naturalist", "nature"],
