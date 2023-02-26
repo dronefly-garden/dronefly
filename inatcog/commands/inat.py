@@ -909,7 +909,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
             await ctx.send(err)
 
     @staticmethod
-    def format_event(abbrev, event):
+    def format_event(ctx, abbrev, event):
         """Format an event description."""
         main = {True: " (main)", False: ""}[event["main"]]
         project_id = event["project_id"]
@@ -920,6 +920,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         emoji = event.get("emoji")
         if emoji:
             line += f" **Emoji:** {emoji}"
+        message = event.get("message")
+        if message:
+            (channel_id, message_id) = message.split("-")
+            link = f"[menu](https://discord.com/channels/{ctx.guild.id}/{channel_id}/{message_id})"
+            line += f" **Message:** {link}"
         teams = event.get("teams")
         if teams:
             line += f" **Teams:** {teams}"
@@ -934,7 +939,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         project_id: str,
         main: Optional[bool] = False,
         role: Optional[discord.Role] = None,
-        emoji: Optional[discord.Emoji] = None,
+        message: Optional[discord.Message] = None,
+        emoji: Optional[Union[discord.Emoji, str]] = None,
         teams: Optional[str] = None,
     ):
         """Add a server event project.
@@ -943,7 +949,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - `project_id` Use `[p]prj` or `[p]s prj` to look it up for the project.
         - `main` is a main event for the server, listed in the `[p]user` / `[p]me` display. Please define no more than two of these.
         - `role` identifies a user as a participant of the event project.
-        - `emoji` is a custom emoji to indicate membership in the event project
+        - `message` is a message with the menu to self-assign the `role` by reacting with the `emoji`.
+        - `emoji` is a custom emoji to indicate membership in the event project.
         - `teams` one or more *event project abbreviations* for other teams of this event, separated by commas.
 
         *Examples:*
@@ -956,8 +963,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         To define "Team Crustaceans" vs. "Team Cetaceans" bioblitz event:
 
-        `[p]inat set event crustaceans 122951 "Team Crustaceans" cetaceans`
-        `[p]inat set event cetaceans 122952 "Team Cetaceans" crustaceans`
+        `[p]inat set event crustaceans 122951 "Team Crustaceans" 525739006667784213-1078982546953605151 :shrimp: cetaceans`
+        `[p]inat set event cetaceans 122952 "Team Cetaceans" 525739006667784213-1078982546953605151 :whale: crustaceans`
+
         """  # noqa: E501
 
         config = self.config.guild(ctx.guild)
@@ -967,7 +975,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         description = ""
         if _event_project:
-            line = self.format_event(project_abbrev, event_project)
+            line = self.format_event(ctx, project_abbrev, event_project)
             description = f"was:\n{line}\n"
 
         event_project["project_id"] = project_id
@@ -975,12 +983,16 @@ class CommandsInat(INatEmbeds, MixinMeta):
         event_project["main"] = main
         if role or not _event_project:
             event_project["role"] = role.id if role else None
+        if message or not _event_project:
+            event_project["message"] = (
+                f"{message.channel.id}-{message.id}" if message else None
+            )
         if emoji or not _event_project:
             event_project["emoji"] = str(emoji) if emoji else None
         if teams or not _event_project:
             event_project["teams"] = teams
         await config.event_projects.set(event_projects)
-        line = self.format_event(project_abbrev, event_project)
+        line = self.format_event(ctx, project_abbrev, event_project)
         if _event_project:
             description += f"now:\n{line}"
         else:
@@ -1012,7 +1024,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         description = ""
         for abbrev in event_projects:
             event = event_projects[abbrev]
-            line = self.format_event(abbrev, event)
+            line = self.format_event(ctx, abbrev, event)
             description += line + "\n"
         embed.description = description
         await ctx.send(embed=embed)

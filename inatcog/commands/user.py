@@ -434,9 +434,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         await self.user_show_settings(ctx, config, "lang")
 
-    async def _user_list_filter_role(self, ctx, abbrev, config, event_projects):
+    async def _user_list_filters(self, ctx, abbrev, config, event_projects):
         filter_role = None
         filter_role_id = None
+        filter_message = None
         if abbrev:
             if abbrev in ["active", "inactive"]:
                 filter_role_id = await (
@@ -469,11 +470,34 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     f" To update it, use: `{ctx.clean_prefix}inat set event`"
                 )
 
-        return filter_role
+        filter_emoji = None
+        filter_message = None
+        project = event_projects.get(abbrev) if abbrev else None
+        if project:
+            message = project.get("message")
+            if message:
+                filter_emoji = project.get("emoji")
+                if not filter_emoji:
+                    raise BadArgument(
+                        f"Project {abbrev} has a menu message but no emoji."
+                        f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                    )
+                try:
+                    (channel_id, message_id) = message.split("-")
+                    channel = await ctx.guild.fetch_channel(int(channel_id))
+                    filter_message = await channel.fetch_message(int(message_id))
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    raise BadArgument(
+                        f"Project {abbrev} menu message can't be fetched."
+                        f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                    )
+
+        return (filter_role, filter_emoji, filter_message)
 
     async def _user_list_event_info(self, ctx, abbrev, event_projects):
         team_roles = []
         team_abbrevs = []
+        team_emojis = []
         event_project_ids = {}
 
         main_event_project_ids = {
@@ -502,10 +526,19 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                     if team_role:
                         team_roles.append(team_role)
+                    emoji = prj.get("emoji")
+                    if emoji:
+                        team_emojis.append(emoji)
         else:
             event_project_ids = main_event_project_ids
 
-        return (team_roles, team_abbrevs, event_project_ids, main_event_project_ids)
+        return (
+            team_roles,
+            team_abbrevs,
+            team_emojis,
+            event_project_ids,
+            main_event_project_ids,
+        )
 
     async def _user_list_get_projects(
         self, ctx, event_project_ids, main_event_project_ids
@@ -534,6 +567,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
         abbrev,
         event_projects,
         filter_role,
+        filter_emoji,
+        filter_message,
     ):
         def abbrevs_for_user(user_id: int, event_project_ids, projects):
             return [
@@ -554,13 +589,17 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 user_is = ":ghost: *(unknown user)* is "
             if isinstance(iuser, User):
                 profile_link = iuser.profile_link()
-            else:
+            elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
+            else:
+                profile_link = "not added in this server"
+                user_is = ":grey_question: " + user_is
             return f"{user_is}{profile_link}\n{' '.join(project_abbrevs)}"
 
         (
             team_roles,
             team_abbrevs,
+            team_emojis,
             event_project_ids,
             main_event_project_ids,
         ) = await self._user_list_event_info(ctx, abbrev, event_projects)
@@ -573,6 +612,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
         all_users = await self.config.all_users()
         guild_id = ctx.guild.id
         known_user_ids_by_inat_id = {}
+        checked_user_ids = []
+        menu_reactions_by_user = {}
         for (discord_user_id, user_config) in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
             if inat_user_id:
@@ -588,6 +629,17 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if prj_id:
                 all_user_ids = projects[prj_id].observed_by_ids()
 
+        if filter_message:
+            event_emojis = [filter_emoji, *team_emojis]
+            for reaction in filter_message.reactions:
+                emoji = str(reaction.emoji)
+                if emoji in event_emojis:
+                    async for user in reaction.users():
+                        if not user.bot:
+                            if user.id not in menu_reactions_by_user:
+                                menu_reactions_by_user[user.id] = []
+                            menu_reactions_by_user[user.id].append(emoji)
+
         # Main pass:
         # - Candidate members are all users known to the bot.
         async for (dmember, iuser) in self.user_table.get_member_pairs(
@@ -597,30 +649,44 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 iuser.user_id, event_project_ids, projects
             )
             candidate = not abbrev or abbrev in project_abbrevs
-            if filter_role and not candidate:
-                candidate = filter_role in dmember.roles
+            if not candidate:
+                candidate = (
+                    filter_role in dmember.roles or dmember.id in menu_reactions_by_user
+                )
+            checked_user_ids.append(dmember.id)
             if not candidate:
                 continue
             line = formatted_user(dmember, iuser, project_abbrevs)
-            if filter_role:
-                # Partition into those whose role matches the event they signed
-                # up for vs. those who don't match, and therefore need attention
-                # by a project admin.
-                known_inat_user_ids_in_event.append(iuser.user_id)
+            known_inat_user_ids_in_event.append(iuser.user_id)
+            if filter_role or filter_message:
+                # Partition into those whose role and reactions match the event
+                # they signed up for vs. those who don't match, and therefore
+                # need attention by a project admin.
                 has_opposite_team_role = False
-                for role in [filter_role, *team_roles]:
-                    if role in dmember.roles:
-                        line += f" {role.mention}"
-                        if role in team_roles:
-                            has_opposite_team_role = True
+                if filter_role:
+                    for role in [filter_role, *team_roles]:
+                        if role in dmember.roles:
+                            line += f" {role.mention}"
+                            if role in team_roles:
+                                has_opposite_team_role = True
+                if filter_message:
+                    reaction_emojis = menu_reactions_by_user.get(dmember.id)
+                    if reaction_emojis:
+                        line += " " + " ".join(reaction_emojis)
+                    reaction_matches = (
+                        len(reaction_emojis) == 1 and reaction_emojis[0] == filter_emoji
+                    )
+                else:
+                    reaction_matches = True
+
                 role_strictly_matches_project = (
                     abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
                     and filter_role in dmember.roles
                     and not has_opposite_team_role
+                    and reaction_matches
                 )
             else:
-                known_inat_user_ids_in_event.append(iuser.user_id)
                 role_strictly_matches_project = True
             if role_strictly_matches_project:
                 matching_names.append(line)
@@ -646,6 +712,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     except LookupError:
                         pass
                 if known_discord_user_id:
+                    checked_user_ids.append(known_discord_user_id)
                     discord_member = ctx.guild.get_member(known_discord_user_id)
                     # i.e. added in this server, but not a Discord server member anymore
                     if not discord_member:
@@ -669,6 +736,19 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                     non_matching_names.append(line)
 
+        # Third pass:
+        # - Discord users who reacted but are not a candidate above:
+        #   - this should only happen if the user is not registered to the bot
+        #   - this can happen for either current members or someone who reacted
+        #     and then left
+        for discord_user_id in menu_reactions_by_user:
+            if discord_user_id not in checked_user_ids:
+                discord_user = self.bot.get_user(discord_user_id)
+                line = formatted_user(
+                    discord_user or discord_user_id, None, project_abbrevs
+                )
+                non_matching_names.append(line)
+
         return (matching_names, non_matching_names)
 
     @user.command(name="list")
@@ -689,7 +769,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
         try:
-            filter_role = await self._user_list_filter_role(
+            (filter_role, filter_emoji, filter_message) = await self._user_list_filters(
                 ctx, abbrev, config, event_projects
             )
         except BadArgument as err:
@@ -706,7 +786,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # or when a non-server-member is in the specified event project.
         try:
             (matching_names, non_matching_names) = await self._user_list_match_members(
-                ctx, abbrev, event_projects, filter_role
+                ctx, abbrev, event_projects, filter_role, filter_emoji, filter_message
             )
         except LookupError as err:
             await apologize(ctx, str(err))
