@@ -613,7 +613,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
-                profile_link = "not added in this server"
+                if isinstance(dmember, discord.Member):
+                    profile_link = "not added in this server"
+                else:
+                    profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
             return f"{user_is}{profile_link}\n{' '.join(project_abbrevs)}"
 
