@@ -579,7 +579,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             has_opposite_team_role = False
             reaction_matches = False
             # i.e. only members can have roles
-            if filter_role and getattr(dmember, "roles"):
+            if filter_role and getattr(dmember, "roles", None):
                 for role in [filter_role, *team_roles]:
                     if role in dmember.roles:
                         roles_and_reactions += f" {role.mention}"
