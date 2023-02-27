@@ -670,9 +670,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     reaction_emojis = menu_reactions_by_user.get(dmember.id)
                     if reaction_emojis:
                         line += " " + " ".join(reaction_emojis)
-                    reaction_matches = (
-                        len(reaction_emojis) == 1 and reaction_emojis[0] == filter_emoji
-                    )
+                        reaction_matches = (
+                            len(reaction_emojis) == 1
+                            and reaction_emojis[0] == filter_emoji
+                        )
+                    else:
+                        reaction_matches = False
                 else:
                     reaction_matches = True
 
