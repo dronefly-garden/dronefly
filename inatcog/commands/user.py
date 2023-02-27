@@ -12,7 +12,7 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from redbot.core.utils.predicates import MessagePredicate
 
-from ..base_classes import User, WWW_BASE_URL
+from ..base_classes import User
 from ..checks import can_manage_users, known_inat_user
 from ..common import DEQUOTE, grouper
 from ..converters.base import (
@@ -25,7 +25,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
-from ..utils import get_valid_user_config, has_valid_user_config
+from ..utils import get_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -420,7 +420,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 try:
                     if not re.search(r"^[a-z-]+$", lang):
                         raise LookupError(
-                            "Language must contain only letters or a dash, e.g. `en`, `de`, `zh`, `zh-CN`."
+                            "Language must contain only letters or a dash, "
+                            "e.g. `en`, `de`, `zh`, `zh-CN`."
                         )
                     await config.lang.set(_lang)
                     await ctx.send(
@@ -445,7 +446,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
                 if not filter_role_id:
                     raise BadArgument(
-                        f"The {abbrev} role is undefined. To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
+                        f"The {abbrev} role is undefined. "
+                        f"To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
                     )
             elif abbrev in event_projects:
                 filter_role_id = event_projects[abbrev]["role"]
@@ -479,8 +481,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                 try:
                     (channel_id, message_id) = message.split("-")
-                    channel = await ctx.guild.fetch_channel(int(channel_id))
-                    filter_message = await channel.fetch_message(int(message_id))
+                    channel = ctx.guild.get_channel(int(channel_id))
+                    filter_message = channel.get_message(int(message_id))
+                    if not filter_message:
+                        filter_message = await channel.fetch_message(int(message_id))
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                     raise BadArgument(
                         f"Project {abbrev} menu message can't be fetched."
@@ -800,7 +804,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             elif abbrev:
                 list_name = f"Membership report for event: {abbrev}"
             else:
-                list_name = f"Known server members"
+                list_name = "Known server members"
             embeds = [
                 make_embed(
                     title=f"{list_name} (page {index} of {pages_len})",
@@ -810,7 +814,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             ]
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send(f"No known members matched.")
+            await ctx.send("No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()
