@@ -707,18 +707,22 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.2"
+version = "0.3.3"
 description = "Core dronefly components"
 category = "main"
 optional = false
-python-versions = "*"
-files = []
-develop = false
+python-versions = ">=3.8.1,<3.12"
+files = [
+    {file = "dronefly_core-0.3.3-py3-none-any.whl", hash = "sha256:6346200af13bfb995f6696b79e6fa9a31b5c88efd5c16f751954b0188a672c4a"},
+    {file = "dronefly_core-0.3.3.tar.gz", hash = "sha256:02ed9b42a386bffe385371ccd47d32b733ca8a9b401e0500111a9994f371646d"},
+]
 
-[package.source]
-type = "git"
-url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "1efefd8c5d3b71a7a7b567c4d0310f84a56c165f"
+[package.dependencies]
+attrs = ">=21.2"
+dateparser = ">=1.1.1,<2.0.0"
+inflect = ">=5.3.0,<6.0.0"
+pyinaturalist = ">=0.18,<0.19"
+rich = ">=10.9,<14"
 
 [[package]]
 name = "ebird-api"
@@ -822,14 +826,14 @@ testing = ["flake8 (<5)", "flufl.flake8", "importlib-resources (>=1.3)", "packag
 
 [[package]]
 name = "importlib-resources"
-version = "5.10.2"
+version = "5.12.0"
 description = "Read resources from Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "importlib_resources-5.10.2-py3-none-any.whl", hash = "sha256:7d543798b0beca10b6a01ac7cafda9f822c54db9e8376a6bf57e0cbd74d486b6"},
-    {file = "importlib_resources-5.10.2.tar.gz", hash = "sha256:e4a96c8cc0339647ff9a5e0550d9f276fc5a01ffa276012b58ec108cfd7b8484"},
+    {file = "importlib_resources-5.12.0-py3-none-any.whl", hash = "sha256:7b1deeebbf351c7578e09bf2f63fa2ce8b5ffec296e0d349139d43cca061a81a"},
+    {file = "importlib_resources-5.12.0.tar.gz", hash = "sha256:4be82589bf5c1d7999aedf2a45159d10cb3ca4f19b2271f8792bc8e6da7b22f6"},
 ]
 
 [package.dependencies]
@@ -1058,14 +1062,14 @@ marshmallow = ">=2.0.0"
 
 [[package]]
 name = "more-itertools"
-version = "9.0.0"
+version = "9.1.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "more-itertools-9.0.0.tar.gz", hash = "sha256:5a6257e40878ef0520b1803990e3e22303a41b5714006c32a3fd8304b26ea1ab"},
-    {file = "more_itertools-9.0.0-py3-none-any.whl", hash = "sha256:250e83d7e81d0c87ca6bd942e6aeab8cc9daa6096d12c5308f3f92fa5e5c1f41"},
+    {file = "more-itertools-9.1.0.tar.gz", hash = "sha256:cabaa341ad0389ea83c17a94566a53ae4c9d07349861ecb14dc6d0345cf9ac5d"},
+    {file = "more_itertools-9.1.0-py3-none-any.whl", hash = "sha256:d2bc7f02446e86a68911e58ded76d6561eea00cddfb2a91e7019bbb586c799f3"},
 ]
 
 [[package]]
@@ -1262,14 +1266,14 @@ files = [
 
 [[package]]
 name = "pyinaturalist"
-version = "0.17.4"
+version = "0.18.0"
 description = "iNaturalist API client for python"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "pyinaturalist-0.17.4-py3-none-any.whl", hash = "sha256:56a6d913af417aff77eb19d8fc72339b9f3f245e3dabd42d854a33bc91131ae7"},
-    {file = "pyinaturalist-0.17.4.tar.gz", hash = "sha256:d1f4c5eecc717de306370ed941f70aef19566bc463fdc399ac72adc58f9cb462"},
+    {file = "pyinaturalist-0.18.0-py3-none-any.whl", hash = "sha256:74dd0d73cd85b8701bc63d8f3ad1e9fa9ac84f32c71c280d019b77b79c52c488"},
+    {file = "pyinaturalist-0.18.0.tar.gz", hash = "sha256:4a2a2cd2e274b39520d88cc0c8bb357755fac386838efa07b7e02dc9d859dd75"},
 ]
 
 [package.dependencies]
@@ -1279,12 +1283,13 @@ platformdirs = ">=2.5"
 python-dateutil = ">=2.0"
 python-forge = ">=18.6"
 requests = ">=2.22"
-requests-cache = ">=1.0.0a1"
+requests-cache = ">=1.0.0b0"
 requests-ratelimiter = ">=0.3.2"
 rich = ">=10.9"
 
 [package.extras]
-docs = ["furo (>=2022.2.14.1,<2023.0.0.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.17.0,<0.18.0)", "nbsphinx (>=0.8.5,<0.9.0)", "sphinx (>=4.2.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-copybutton (>=0.5)", "sphinx-inline-tabs (>=2022.1.2b11,<2023.0.0)", "sphinx-panels (>=0.6.0,<0.7.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
+all = ["ujson (>=5.4.0,<6.0.0)"]
+docs = ["furo (>=2022.9,<2023.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=0.18,<0.19)", "nbsphinx (>=0.8,<0.9)", "sphinx (>=5.2,<6.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.2.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "pynacl"
@@ -1324,14 +1329,14 @@ tests = ["hypothesis (>=3.27.0)", "pytest (>=3.2.1,!=3.3.0)"]
 
 [[package]]
 name = "pyrate-limiter"
-version = "2.9.0"
+version = "2.10.0"
 description = "Python Rate-Limiter using Leaky-Bucket Algorithm"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "pyrate_limiter-2.9.0-py3-none-any.whl", hash = "sha256:90bc85de0739cbda32bc80b9df19a8307150c0b503d4d22fc31e2135d7d9524d"},
-    {file = "pyrate_limiter-2.9.0.tar.gz", hash = "sha256:a5ca4f53723cd1c565ae25654b1ee22ca221d904270cb13361e1d7c5ce34f4b4"},
+    {file = "pyrate_limiter-2.10.0-py3-none-any.whl", hash = "sha256:a99e52159f5ed5eb58118bed8c645e30818e7c0e0d127a0585c8277c776b0f7f"},
+    {file = "pyrate_limiter-2.10.0.tar.gz", hash = "sha256:98cc52cdbe058458e945ae87d4fd5a73186497ffa545ee6e98372f8599a5bd34"},
 ]
 
 [package.extras]
@@ -1828,14 +1833,14 @@ jeepney = ">=0.6"
 
 [[package]]
 name = "setuptools"
-version = "67.2.0"
+version = "67.4.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.2.0-py3-none-any.whl", hash = "sha256:16ccf598aab3b506593c17378473978908a2734d7336755a8769b480906bec1c"},
-    {file = "setuptools-67.2.0.tar.gz", hash = "sha256:b440ee5f7e607bb8c9de15259dba2583dd41a38879a7abc1d43a71c59524da48"},
+    {file = "setuptools-67.4.0-py3-none-any.whl", hash = "sha256:f106dee1b506dee5102cc3f3e9e68137bbad6d47b616be7991714b0c62204251"},
+    {file = "setuptools-67.4.0.tar.gz", hash = "sha256:e5fd0a713141a4a105412233c63dc4e17ba0090c8e8334594ac790ec97792330"},
 ]
 
 [package.extras]
@@ -1869,14 +1874,14 @@ files = [
 
 [[package]]
 name = "soupsieve"
-version = "2.3.2.post1"
+version = "2.4"
 description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "soupsieve-2.3.2.post1-py3-none-any.whl", hash = "sha256:3b2503d3c7084a42b1ebd08116e5f81aadfaea95863628c80a3b774a11b7c759"},
-    {file = "soupsieve-2.3.2.post1.tar.gz", hash = "sha256:fc53893b3da2c33de295667a0e19f078c14bf86544af307354de5fcf12a3f30d"},
+    {file = "soupsieve-2.4-py3-none-any.whl", hash = "sha256:49e5368c2cda80ee7e84da9dbe3e110b70a4575f196efb74e51b94549d921955"},
+    {file = "soupsieve-2.4.tar.gz", hash = "sha256:e28dba9ca6c7c00173e34e4ba57448f0688bb681b7c5e8bf4971daafc093d69a"},
 ]
 
 [[package]]
@@ -2273,21 +2278,21 @@ multidict = ">=4.0"
 
 [[package]]
 name = "zipp"
-version = "3.13.0"
+version = "3.15.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "zipp-3.13.0-py3-none-any.whl", hash = "sha256:e8b2a36ea17df80ffe9e2c4fda3f693c3dad6df1697d3cd3af232db680950b0b"},
-    {file = "zipp-3.13.0.tar.gz", hash = "sha256:23f70e964bc11a34cef175bc90ba2914e1e4545ea1e3e2f67c079671883f9cb6"},
+    {file = "zipp-3.15.0-py3-none-any.whl", hash = "sha256:48904fc76a60e542af151aded95726c1a5c34ed43ab4134b597665c86d7ad556"},
+    {file = "zipp-3.15.0.tar.gz", hash = "sha256:112929ad649da941c23de50f356a2b5570c954b65150642bccdd66bf194d224b"},
 ]
 
 [package.extras]
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
+testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.10"
-content-hash = "3d40b02a67a5045ff2513408a469373b7ecc6327af2313f520ffcdd8fc3074bd"
+content-hash = "1be217e64dc708ce07325db4b9d28473535cda5ce6119a7ad55cada6e9616215"
