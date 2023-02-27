@@ -615,7 +615,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
             elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
-                if isinstance(dmember, discord.Member):
+                iuser_id = iuser.id if isinstance(iuser, User) else iuser
+                if iuser_id not in known_user_ids_by_inat_id:
                     profile_link = "not added in this server"
                 else:
                     profile_link = "not a member of this server"
