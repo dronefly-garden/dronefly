@@ -3,6 +3,7 @@ import asyncio
 import contextlib
 from datetime import datetime
 import re
+from typing import Union
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
@@ -574,10 +575,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if user_id in projects[int(project_id)].observed_by_ids()
             ]
 
-        def check_roles_and_reactions(dmember):
+        def check_roles_and_reactions(
+            dmember: Union[discord.Member, discord.User, int]
+        ):
             roles_and_reactions = ""
             has_opposite_team_role = False
-            reaction_matches = False
+            reaction_mismatch = False
             # i.e. only members can have roles
             if filter_role and isinstance(dmember, discord.Member):
                 for role in [filter_role, *team_roles]:
@@ -585,20 +588,19 @@ class CommandsUser(INatEmbeds, MixinMeta):
                         roles_and_reactions += f" {role.mention}"
                         if role in team_roles:
                             has_opposite_team_role = True
+            # i.e. only users can react
             if filter_message and isinstance(dmember, discord.User):
                 reaction_emojis = menu_reactions_by_user.get(dmember.id)
                 if reaction_emojis:
                     roles_and_reactions += " " + " ".join(reaction_emojis)
-                    reaction_matches = (
-                        len(reaction_emojis) == 1 and reaction_emojis[0] == filter_emoji
-                    )
+                    reaction_mismatch = [reaction_emojis] != [filter_emoji]
                 else:
-                    reaction_matches = False
-            else:
-                reaction_matches = True
-            return (roles_and_reactions, has_opposite_team_role, reaction_matches)
+                    reaction_mismatch = True
+            return (roles_and_reactions, has_opposite_team_role, reaction_mismatch)
 
-        def formatted_user(dmember, iuser, project_abbrevs):
+        def formatted_user(
+            dmember: Union[discord.Member, discord.User], iuser, project_abbrevs
+        ):
             if dmember:
                 if isinstance(dmember, discord.User) or isinstance(
                     dmember, discord.Member
@@ -619,10 +621,17 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
             response = f"{user_is}{profile_link}\n"
-            if iuser:
+            if project_abbrevs:
                 response += f"{' '.join(project_abbrevs)}"
             return response
 
+        # All Discord users known to the bot, whether or not they are known in
+        # this server via `,user add`:
+        all_users = await self.config.all_users()
+
+        # Event project attributes as defined by `,inat set event`:
+        prj_id = 0
+        guild_id = ctx.guild.id
         (
             team_roles,
             team_abbrevs,
@@ -630,17 +639,21 @@ class CommandsUser(INatEmbeds, MixinMeta):
             event_project_ids,
             main_event_project_ids,
         ) = await self._user_list_event_info(ctx, abbrev, event_projects)
+        projects = await self._user_list_get_projects(
+            ctx, event_project_ids, main_event_project_ids
+        )
 
-        prj_id = 0
-        matching_names = []
-        non_matching_names = []
-        known_inat_user_ids_in_event = []
-        all_user_ids = []
-        all_users = await self.config.all_users()
-        guild_id = ctx.guild.id
+        # Current event project members:
+        event_user_ids = []
+        if abbrev in event_projects:
+            prj = event_projects[abbrev]
+            prj_id = int(prj["project_id"])
+            if prj_id:
+                event_user_ids = projects[prj_id].observed_by_ids()
+
+        # Every server member known to the bot that has a known iNat user ID
+        # (i.e. `,user add` performed in this server):
         known_user_ids_by_inat_id = {}
-        checked_user_ids = []
-        menu_reactions_by_user = {}
         for (discord_user_id, user_config) in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
             if inat_user_id:
@@ -648,16 +661,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     discord_member = ctx.guild.get_member(discord_user_id)
                     if discord_member:
                         known_user_ids_by_inat_id[inat_user_id] = discord_user_id
-        projects = await self._user_list_get_projects(
-            ctx, event_project_ids, main_event_project_ids
-        )
 
-        if abbrev in event_projects:
-            prj = event_projects[abbrev]
-            prj_id = int(prj["project_id"])
-            if prj_id:
-                all_user_ids = projects[prj_id].observed_by_ids()
-
+        # Every Discord user's reactions to the event menu message (if any),
+        # whether or not they are presently a server member or are known
+        # in this server to the bot.
+        menu_reactions_by_user = {}
         if filter_message:
             event_emojis = [filter_emoji, *team_emojis]
             for reaction in filter_message.reactions:
@@ -669,112 +677,163 @@ class CommandsUser(INatEmbeds, MixinMeta):
                                 menu_reactions_by_user[user.id] = []
                             menu_reactions_by_user[user.id].append(emoji)
 
-        # Main pass:
-        # - Candidate members are all users known to the bot.
+        # Event project consistency report:
+        # =================================
+        # Checked in three passes below:
+        # 1. Discord members with known iNat IDs in this server
+        # 2. Members of the event project
+        # 3. Discord users who have reacted to the event menu
+
+        # First pass:
+        # -----------
+        # - Check all Discord members known to the bot (i.e. `,user add` has
+        #   been performed for them in this server).
+        checked_user_ids = []
+        known_inat_user_ids_in_event = []
+        matching_names = []
+        non_matching_names = []
+        # Restrict event lists to only users registered in this server, but
+        # allow `,user list` to show also `known_all` users.
+        anywhere = prj_id in main_event_project_ids
         async for (dmember, iuser) in self.user_table.get_member_pairs(
-            ctx.guild, all_users, prj_id in main_event_project_ids
+            ctx.guild, all_users, anywhere
         ):
             project_abbrevs = abbrevs_for_user(
                 iuser.user_id, event_project_ids, projects
             )
-            candidate = not abbrev or abbrev in project_abbrevs
-            if not candidate:
-                candidate = (
-                    filter_role in dmember.roles or dmember.id in menu_reactions_by_user
+            # Candidacy for event project membership is based on one of the
+            # following:
+            # 1. no project abbreviation (i.e. `,user list` shows all users)
+            # 2. user is in the event project
+            # 3. the member holds the event role
+            # 4. the member has reacted to the menu to join the event
+            candidate = (
+                not abbrev
+                or abbrev in project_abbrevs
+                or filter_role in dmember.roles
+                or (
+                    filter_message
+                    and dmember.id in menu_reactions_by_user
+                    and filter_emoji in menu_reactions_by_user[dmember.id]
                 )
+            )
+            # This removes the member from further checks later.
             checked_user_ids.append(dmember.id)
+            # Non-candidates are skipped (i.e. nothing indicates they are in,
+            # or wanted to be in the event).
             if not candidate:
                 continue
-            line = formatted_user(dmember, iuser, project_abbrevs)
+
             known_inat_user_ids_in_event.append(iuser.user_id)
+
+            line = formatted_user(dmember, iuser, project_abbrevs)
+            (
+                roles_and_reactions,
+                has_opposite_team_role,
+                reaction_mismatch,
+            ) = check_roles_and_reactions(dmember)
+            line += roles_and_reactions
+
+            # Partition into those whose role and reactions match the event
+            # they signed up for vs. those who don't match, and therefore
+            # need attention by a project admin.
             if filter_role or filter_message:
-                # Partition into those whose role and reactions match the event
-                # they signed up for vs. those who don't match, and therefore
-                # need attention by a project admin.
-                (
-                    roles_and_reactions,
-                    has_opposite_team_role,
-                    reaction_matches,
-                ) = check_roles_and_reactions(dmember)
-                line += roles_and_reactions
-                role_strictly_matches_project = (
+                event_membership_is_consistent = (
                     abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
                     and filter_role in dmember.roles
                     and not has_opposite_team_role
-                    and reaction_matches
+                    and not reaction_mismatch
                 )
             else:
-                role_strictly_matches_project = True
-            if role_strictly_matches_project:
+                event_membership_is_consistent = True
+            if event_membership_is_consistent:
                 matching_names.append(line)
             else:
                 non_matching_names.append(line)
 
         # Second pass:
-        # - Project members who are not (or are no longer) Discord server members:
-        #   - i.e. user erroneously added when not a Discord server member, or
-        #     they were added when they were a server member, but later left
-        #   - Note: Discord user ID intentionally not shown even if known to the
-        #     bot for a different server but not in this one
-        for inat_user_id in all_user_ids:
-            if inat_user_id not in known_inat_user_ids_in_event:
-                known_discord_user_id = known_user_ids_by_inat_id.get(inat_user_id)
-                inat_user = None
-                if inat_user_id in self.api.users_cache:
-                    try:
-                        user_json = await self.api.get_users(inat_user_id)
-                        results = user_json.get("results")
-                        if results:
-                            inat_user = User.from_dict(results[0])
-                    except LookupError:
-                        pass
-                discord_member = ctx.guild.get_member(known_discord_user_id)
-                if known_discord_user_id:
-                    checked_user_ids.append(known_discord_user_id)
-                    # i.e. added in this server, but not a Discord server member anymore
-                    if not discord_member:
-                        discord_user = self.bot.get_user(known_discord_user_id)
-                        if inat_user:
-                            project_abbrevs = abbrevs_for_user(
-                                inat_user_id, event_project_ids, projects
-                            )
-                            line = ":ghost: " + formatted_user(
-                                discord_user or known_discord_user_id,
-                                inat_user or inat_user_id,
-                                project_abbrevs,
-                            )
-                            non_matching_names.append(line)
-                else:
-                    # User is in the event project observer rules and may or may
-                    # not be known to the bot, but is not known in this server.
-                    # In either case, we only list them as "unknown user".
-                    line = formatted_user(
-                        discord_member, inat_user or inat_user_id, project_abbrevs
-                    )
-                    non_matching_names.append(line)
+        # ------------
+        # Check members of the event project and report any that aren't
+        # candidates for a couple of possible reasons:
+        #   1. Not known in this server, which could mean:
+        #      - removed from bot since they joined
+        #      - added to event project in error
+        #   2. Known in this server, but no longer a server member.
+        unchecked_inat_user_ids = [
+            inat_id
+            for inat_id in event_user_ids
+            if inat_id not in known_inat_user_ids_in_event
+        ]
+        for inat_user_id in unchecked_inat_user_ids:
+            inat_user = None
+            # All users known in this server who are in the main projects are
+            # cached already. If they aren't one of those, we don't want to
+            # slow things down to look them up, so we just link to their
+            # iNat user ID instead. The mod reviewing the report can click
+            # the link to find out who they are and take further action.
+            if inat_user_id in self.api.users_cache:
+                try:
+                    user_json = await self.api.get_users(inat_user_id)
+                    results = user_json.get("results")
+                    if results:
+                        inat_user = User.from_dict(results[0])
+                except LookupError:
+                    pass
+            project_abbrevs = abbrevs_for_user(
+                inat_user_id, event_project_ids, projects
+            )
+
+            known_discord_user_id = known_user_ids_by_inat_id.get(inat_user_id)
+            if not known_discord_user_id:
+                # 1. Not known in this server (can show only iNat info)
+                line = formatted_user(None, inat_user or inat_user_id, project_abbrevs)
+                non_matching_names.append(line)
+                continue
+
+            # 2. Known in this server, but not a server member
+            # - by process of elimination since the first pass processed all
+            #   known server members
+            # - we can show iNat info and some Discord info from the discord.User
+            #   object (reactions, but not roles since only members can have roles)
+            checked_user_ids.append(known_discord_user_id)
+            discord_user = self.bot.get_user(known_discord_user_id)
+            line = ":ghost: " + formatted_user(
+                discord_user or known_discord_user_id,
+                inat_user or inat_user_id,
+                project_abbrevs,
+            )
+            (
+                roles_and_reactions,
+                _has_opposite_team_role,
+                _reaction_mismatch,
+            ) = check_roles_and_reactions(user)
+            line += roles_and_reactions
+            non_matching_names.append(line)
 
         # Third pass:
-        # - Discord users who reacted but are not a candidate above:
-        #   - this should only happen if the user is not registered to the bot
-        #   - this can happen for either current members or someone who reacted
-        #     and then left
-        for discord_user_id in menu_reactions_by_user:
-            if discord_user_id not in checked_user_ids:
-                discord_user = None
-                discord_member = ctx.guild.get_member(discord_user_id)
-                if not discord_member:
-                    discord_user = self.bot.get_user(discord_user_id)
-                user = discord_member or discord_user
-                line = formatted_user(user or discord_user_id, None, None)
-                if user:
-                    (
-                        roles_and_reactions,
-                        _has_opposite_team_role,
-                        _reaction_matches,
-                    ) = check_roles_and_reactions(user)
-                line += roles_and_reactions
-                non_matching_names.append(line)
+        # -----------
+        # Discord users who reacted to the menu but whose candidacy was not
+        # determined in either of the 1st two passes, i.e.
+        # - They are not known to the bot in this server (first pass)
+        #     AND
+        # - They are not in the event project (second pass)
+        reaction_user_ids = [
+            user_id
+            for user_id in menu_reactions_by_user
+            if user_id not in checked_user_ids
+        ]
+        for discord_user_id in reaction_user_ids:
+            discord_user = self.bot.get_user(discord_user_id)
+            line = formatted_user(discord_user or discord_user_id, None, None)
+            if discord_user:
+                (
+                    roles_and_reactions,
+                    _has_opposite_team_role,
+                    _reaction_mismatch,
+                ) = check_roles_and_reactions(user)
+            line += roles_and_reactions
+            non_matching_names.append(line)
 
         return (matching_names, non_matching_names)
 
