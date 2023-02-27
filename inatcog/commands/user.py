@@ -726,9 +726,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
                             inat_user = User.from_dict(results[0])
                     except LookupError:
                         pass
+                discord_member = ctx.guild.get_member(known_discord_user_id)
                 if known_discord_user_id:
                     checked_user_ids.append(known_discord_user_id)
-                    discord_member = ctx.guild.get_member(known_discord_user_id)
                     # i.e. added in this server, but not a Discord server member anymore
                     if not discord_member:
                         discord_user = self.bot.get_user(known_discord_user_id)
