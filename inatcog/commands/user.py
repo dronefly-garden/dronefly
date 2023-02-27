@@ -617,7 +617,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 else:
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
-            return f"{user_is}{profile_link}\n{' '.join(project_abbrevs)}"
+            response = f"{user_is}{profile_link}\n"
+            if iuser:
+                response += f"{' '.join(project_abbrevs)}"
+            return response
 
         (
             team_roles,
@@ -762,13 +765,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if not discord_member:
                     discord_user = self.bot.get_user(discord_user_id)
                 user = discord_member or discord_user
-                line = formatted_user(user or discord_user_id, None, project_abbrevs)
+                line = formatted_user(user or discord_user_id, None, None)
                 if user:
                     (
                         roles_and_reactions,
                         _has_opposite_team_role,
                         _reaction_matches,
-                    ) = check_roles_and_reactions(discord_user)
+                    ) = check_roles_and_reactions(user)
                 line += roles_and_reactions
                 non_matching_names.append(line)
 
