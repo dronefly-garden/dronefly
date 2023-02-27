@@ -482,7 +482,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 try:
                     (channel_id, message_id) = message.split("-")
                     channel = ctx.guild.get_channel(int(channel_id))
-                    filter_message = channel.fetch_message(int(message_id))
+                    filter_message = await channel.fetch_message(int(message_id))
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                     raise BadArgument(
                         f"Project {abbrev} menu message can't be fetched."
