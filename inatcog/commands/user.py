@@ -638,7 +638,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             inat_user_id = user_config.get("inat_user_id")
             if inat_user_id:
                 if guild_id in user_config.get("known_in"):
-                    known_user_ids_by_inat_id[inat_user_id] = discord_user_id
+                    discord_member = ctx.guild.get_member(discord_user_id)
+                    if discord_member:
+                        known_user_ids_by_inat_id[inat_user_id] = discord_user_id
         projects = await self._user_list_get_projects(
             ctx, event_project_ids, main_event_project_ids
         )
