@@ -746,7 +746,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     # not be known to the bot, but is not known in this server.
                     # In either case, we only list them as "unknown user".
                     line = formatted_user(
-                        None, inat_user or inat_user_id, project_abbrevs
+                        discord_member, inat_user or inat_user_id, project_abbrevs
                     )
                     non_matching_names.append(line)
 
