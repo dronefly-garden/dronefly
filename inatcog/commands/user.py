@@ -419,10 +419,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 try:
                     if not re.search(r"^[a-z-]+$", lang):
                         raise LookupError(
-                            (
-                                "Language must contain only letters or a dash, "
-                                "e.g. `en`, `de`, `zh`, `zh-CN`."
-                            )
+                            "Language must contain only letters or a dash, "
+                            "e.g. `en`, `de`, `zh`, `zh-CN`."
                         )
                     await config.lang.set(_lang)
                     await ctx.send(
@@ -447,10 +445,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 )
                 if not filter_role_id:
                     raise BadArgument(
-                        (
-                            f"The {abbrev} role is undefined. To set it, "
-                            f"use: `{ctx.clean_prefix}inat set {abbrev}`"
-                        )
+                        f"The {abbrev} role is undefined. "
+                        f"To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
                     )
             elif abbrev in event_projects:
                 filter_role_id = event_projects[abbrev]["role"]
@@ -484,7 +480,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
                 try:
                     (channel_id, message_id) = message.split("-")
-                    channel = await ctx.guild.fetch_channel(int(channel_id))
+                    channel = ctx.guild.get_channel(int(channel_id))
                     filter_message = await channel.fetch_message(int(message_id))
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                     raise BadArgument(
@@ -673,9 +669,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     reaction_emojis = menu_reactions_by_user.get(dmember.id)
                     if reaction_emojis:
                         line += " " + " ".join(reaction_emojis)
-                    reaction_matches = (
-                        len(reaction_emojis) == 1 and reaction_emojis[0] == filter_emoji
-                    )
+                        reaction_matches = (
+                            len(reaction_emojis) == 1
+                            and reaction_emojis[0] == filter_emoji
+                        )
+                    else:
+                        reaction_matches = False
                 else:
                     reaction_matches = True
 
