@@ -574,6 +574,29 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if user_id in projects[int(project_id)].observed_by_ids()
             ]
 
+        def check_roles_and_reactions(dmember):
+            roles_and_reactions = ""
+            has_opposite_team_role = False
+            reaction_matches = False
+            if filter_role:
+                for role in [filter_role, *team_roles]:
+                    if role in dmember.roles:
+                        roles_and_reactions += f" {role.mention}"
+                        if role in team_roles:
+                            has_opposite_team_role = True
+            if filter_message:
+                reaction_emojis = menu_reactions_by_user.get(dmember.id)
+                if reaction_emojis:
+                    roles_and_reactions += " " + " ".join(reaction_emojis)
+                    reaction_matches = (
+                        len(reaction_emojis) == 1 and reaction_emojis[0] == filter_emoji
+                    )
+                else:
+                    reaction_matches = False
+            else:
+                reaction_matches = True
+            return (roles_and_reactions, has_opposite_team_role, reaction_matches)
+
         def formatted_user(dmember, iuser, project_abbrevs):
             if dmember:
                 if isinstance(dmember, discord.User) or isinstance(
@@ -659,26 +682,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 # Partition into those whose role and reactions match the event
                 # they signed up for vs. those who don't match, and therefore
                 # need attention by a project admin.
-                has_opposite_team_role = False
-                if filter_role:
-                    for role in [filter_role, *team_roles]:
-                        if role in dmember.roles:
-                            line += f" {role.mention}"
-                            if role in team_roles:
-                                has_opposite_team_role = True
-                if filter_message:
-                    reaction_emojis = menu_reactions_by_user.get(dmember.id)
-                    if reaction_emojis:
-                        line += " " + " ".join(reaction_emojis)
-                        reaction_matches = (
-                            len(reaction_emojis) == 1
-                            and reaction_emojis[0] == filter_emoji
-                        )
-                    else:
-                        reaction_matches = False
-                else:
-                    reaction_matches = True
-
+                (
+                    roles_and_reactions,
+                    has_opposite_team_role,
+                    reaction_matches,
+                ) = check_roles_and_reactions(dmember)
+                line += roles_and_reactions
                 role_strictly_matches_project = (
                     abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
@@ -743,10 +752,21 @@ class CommandsUser(INatEmbeds, MixinMeta):
         #     and then left
         for discord_user_id in menu_reactions_by_user:
             if discord_user_id not in checked_user_ids:
-                discord_user = self.bot.get_user(discord_user_id)
+                discord_user = None
+                discord_member = ctx.guild.get_member(discord_user_id)
+                if not discord_member:
+                    discord_user = self.bot.get_user(discord_user_id)
+                user = discord_member or discord_user
                 line = formatted_user(
                     discord_user or discord_user_id, None, project_abbrevs
                 )
+                if discord_user:
+                    (
+                        roles_and_reactions,
+                        _has_opposite_team_role,
+                        _reaction_matches,
+                    ) = check_roles_and_reactions(discord_user)
+                line += roles_and_reactions
                 non_matching_names.append(line)
 
         return (matching_names, non_matching_names)
