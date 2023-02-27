@@ -762,10 +762,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if not discord_member:
                     discord_user = self.bot.get_user(discord_user_id)
                 user = discord_member or discord_user
-                line = formatted_user(
-                    discord_user or discord_user_id, None, project_abbrevs
-                )
-                if discord_user:
+                line = formatted_user(user or discord_user_id, None, project_abbrevs)
+                if user:
                     (
                         roles_and_reactions,
                         _has_opposite_team_role,
