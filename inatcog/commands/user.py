@@ -631,7 +631,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for reaction in filter_message.reactions:
                 emoji = str(reaction.emoji)
                 if emoji in event_emojis:
-                    for user in reaction.users():
+                    async for user in reaction.users():
                         if not user.bot:
                             if user.id not in menu_reactions_by_user:
                                 menu_reactions_by_user[user.id] = []
