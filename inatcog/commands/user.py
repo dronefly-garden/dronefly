@@ -589,11 +589,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
                         if role in team_roles:
                             has_opposite_team_role = True
             # i.e. only users can react
-            if filter_message and isinstance(dmember, discord.User):
+            if filter_message and not isinstance(dmember, int):
                 reaction_emojis = menu_reactions_by_user.get(dmember.id)
                 if reaction_emojis:
                     roles_and_reactions += " " + " ".join(reaction_emojis)
-                    reaction_mismatch = [reaction_emojis] != [filter_emoji]
+                    reaction_mismatch = reaction_emojis != [filter_emoji]
                 else:
                     reaction_mismatch = True
             return (roles_and_reactions, has_opposite_team_role, reaction_mismatch)
