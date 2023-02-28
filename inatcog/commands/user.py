@@ -618,6 +618,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
+                discord_member = None
                 if discord_user_id:
                     discord_member = ctx.guild.get_member(discord_user_id)
                 if discord_member:
@@ -835,7 +836,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
             line = formatted_user(user, None, None)
-            if discord_user:
+            roles_and_reactions = ""
+            if discord_member or discord_user:
                 (
                     roles_and_reactions,
                     _has_opposite_team_role,
