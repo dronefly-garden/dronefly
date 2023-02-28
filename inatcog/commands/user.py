@@ -836,7 +836,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 _reaction_mismatch,
             ) = check_roles_and_reactions(discord_user_id, discord_member)
             line += roles_and_reactions
-            non_matching_names.append(line)
+            if discord_member:
+                non_matching_names.insert(0, line)
+            else:
+                non_matching_names.append(line)
 
         return (matching_names, non_matching_names)
 
