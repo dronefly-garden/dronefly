@@ -830,13 +830,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ]
         for discord_user_id in reaction_user_ids:
             discord_user = self.bot.get_user(discord_user_id)
-            line = formatted_user(discord_user or discord_user_id, None, None)
+            if discord_user:
+                discord_member = ctx.guild.get_member(discord_user_id)
+            user = discord_member or discord_user or discord_user_id
+            line = formatted_user(user, None, None)
             if discord_user:
                 (
                     roles_and_reactions,
                     _has_opposite_team_role,
                     _reaction_mismatch,
-                ) = check_roles_and_reactions(discord_user)
+                ) = check_roles_and_reactions(user)
             line += roles_and_reactions
             non_matching_names.append(line)
 
