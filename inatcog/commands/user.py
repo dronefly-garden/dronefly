@@ -830,6 +830,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ]
         for discord_user_id in reaction_user_ids:
             discord_user = self.bot.get_user(discord_user_id)
+            discord_member = None
             if discord_user:
                 discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
