@@ -576,30 +576,32 @@ class CommandsUser(INatEmbeds, MixinMeta):
             ]
 
         def check_roles_and_reactions(
-            dmember: Union[discord.Member, discord.User, int]
+            discord_user_id: int, discord_member: discord.Member = None
         ):
-            roles_and_reactions = ""
+            response = ""
             has_opposite_team_role = False
             reaction_mismatch = False
             # i.e. only members can have roles
-            if filter_role and isinstance(dmember, discord.Member):
+            if filter_role and discord_member:
                 for role in [filter_role, *team_roles]:
-                    if role in dmember.roles:
-                        roles_and_reactions += f" {role.mention}"
+                    if role in discord_member.roles:
+                        response += f" {role.mention}"
                         if role in team_roles:
                             has_opposite_team_role = True
             # i.e. only users can react
-            if filter_message and not isinstance(dmember, int):
-                reaction_emojis = menu_reactions_by_user.get(dmember.id)
+            if filter_message:
+                reaction_emojis = menu_reactions_by_user.get(discord_user_id)
                 if reaction_emojis:
-                    roles_and_reactions += " " + " ".join(reaction_emojis)
+                    response += " " + " ".join(reaction_emojis)
                     reaction_mismatch = reaction_emojis != [filter_emoji]
                 else:
                     reaction_mismatch = True
-            return (roles_and_reactions, has_opposite_team_role, reaction_mismatch)
+            return (response, has_opposite_team_role, reaction_mismatch)
 
         def formatted_user(
-            dmember: Union[discord.Member, discord.User, int], iuser, project_abbrevs
+            dmember: Union[discord.Member, discord.User, int],
+            iuser: User = None,
+            project_abbrevs: list = [],
         ):
             is_member = False
             if dmember:
@@ -731,7 +733,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 roles_and_reactions,
                 has_opposite_team_role,
                 reaction_mismatch,
-            ) = check_roles_and_reactions(dmember)
+            ) = check_roles_and_reactions(dmember.id, dmember)
             line += roles_and_reactions
 
             # Partition into those whose role and reactions match the event
@@ -807,7 +809,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 roles_and_reactions,
                 _has_opposite_team_role,
                 _reaction_mismatch,
-            ) = check_roles_and_reactions(discord_user)
+            ) = check_roles_and_reactions(known_discord_user_id, discord_user)
             line += roles_and_reactions
             non_matching_names.append(line)
 
@@ -825,18 +827,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ]
         for discord_user_id in reaction_user_ids:
             discord_user = self.bot.get_user(discord_user_id)
-            discord_member = None
-            if discord_user:
-                discord_member = ctx.guild.get_member(discord_user_id)
+            discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
-            line = formatted_user(user, None, None)
-            roles_and_reactions = ""
-            if discord_member or discord_user:
-                (
-                    roles_and_reactions,
-                    _has_opposite_team_role,
-                    _reaction_mismatch,
-                ) = check_roles_and_reactions(user)
+            line = formatted_user(user)
+            (
+                roles_and_reactions,
+                _has_opposite_team_role,
+                _reaction_mismatch,
+            ) = check_roles_and_reactions(discord_user_id, discord_member)
             line += roles_and_reactions
             non_matching_names.append(line)
 
