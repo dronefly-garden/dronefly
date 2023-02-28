@@ -599,14 +599,17 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return (roles_and_reactions, has_opposite_team_role, reaction_mismatch)
 
         def formatted_user(
-            dmember: Union[discord.Member, discord.User], iuser, project_abbrevs
+            dmember: Union[discord.Member, discord.User, int], iuser, project_abbrevs
         ):
+            discord_user_id = None
             if dmember:
                 if isinstance(dmember, discord.User) or isinstance(
                     dmember, discord.Member
                 ):
+                    discord_user_id = dmember.id
                     user_is = f"{dmember.mention} is "
                 else:
+                    discord_user_id = dmember
                     user_is = f"<@{dmember}> is "
             else:
                 user_is = ":ghost: *(unknown user)* is "
@@ -615,8 +618,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
-                iuser_id = iuser.id if isinstance(iuser, User) else iuser
-                if iuser_id not in known_user_ids_by_inat_id:
+                if discord_user_id:
+                    discord_member = ctx.guild.get_member(discord_user_id)
+                if discord_member:
                     profile_link = "not added in this server"
                 else:
                     profile_link = "not a member of this server"
