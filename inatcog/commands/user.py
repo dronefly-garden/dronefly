@@ -812,7 +812,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 roles_and_reactions,
                 _has_opposite_team_role,
                 _reaction_mismatch,
-            ) = check_roles_and_reactions(user)
+            ) = check_roles_and_reactions(discord_user)
             line += roles_and_reactions
             non_matching_names.append(line)
 
@@ -836,7 +836,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     roles_and_reactions,
                     _has_opposite_team_role,
                     _reaction_mismatch,
-                ) = check_roles_and_reactions(user)
+                ) = check_roles_and_reactions(discord_user)
             line += roles_and_reactions
             non_matching_names.append(line)
 
