@@ -2,8 +2,6 @@
 from typing import Union
 
 import discord
-from dronefly.core.commands import Context as DroneflyContext
-from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import checks, commands
 from pyinaturalist.models import Project
 from pyinaturalist.exceptions import AuthenticationError
@@ -65,15 +63,12 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         if manager_inat_id not in required_admins:
             await ctx.send("You are not an admin or manager of this project.")
             return
-        async with ctx.typing():
+
+        update_response = None
+        async with self.client.set_ctx(ctx, typing=True) as client:
             try:
-                dronefly_ctx = DroneflyContext()
-                user = DroneflyUser()
-                user.id = ctx.author.id
-                user.inat_user_id = manager_inat_user.user_id
-                response = await self.api.update_project_users(
+                update_response = await client.update_project_users(
                     ctx,
-                    dronefly_ctx=dronefly_ctx,
                     action=action,
                     project_id=project.id,
                     user_ids=inat_user_id,
@@ -81,26 +76,26 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             except (AuthenticationError, HTTPError) as err:
                 await ctx.send(str(err))
                 return
-            if response:
-                user_id = next(
-                    iter(
-                        [
-                            rule["operand_id"]
-                            for rule in response.project_observation_rules
-                            if rule["operand_type"] == "User"
-                            and rule["operator"] == "observed_by_user?"
-                            if rule["operand_id"] == inat_user_id
-                        ]
-                    ),
-                    None,
+        if update_response:
+            user_id = next(
+                iter(
+                    [
+                        rule["operand_id"]
+                        for rule in response.project_observation_rules
+                        if rule["operand_type"] == "User"
+                        and rule["operator"] == "observed_by_user?"
+                        if rule["operand_id"] == inat_user_id
+                    ]
+                ),
+                None,
+            )
+            if user_id if action == "join" else not user_id:
+                await ctx.send(
+                    f"Succesfully {_ACTION[action]} {inat_user.login} "
+                    f"{_ACTION_PREP[action]} {project.title}."
                 )
-                if user_id if action == "join" else not user_id:
-                    await ctx.send(
-                        f"Succesfully {_ACTION[action]} {inat_user.login} "
-                        f"{_ACTION_PREP[action]} {project.title}."
-                    )
-                    return
-            await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")
+                return
+        await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")
 
     @event.command(name="join")
     async def event_join(

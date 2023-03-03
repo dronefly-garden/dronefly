@@ -40,7 +40,7 @@ from redbot.core.commands import Context, Cog
 from dronefly.core.clients.inat import iNatClient as CoreiNatClient
 from dronefly.core.commands import Context as DroneflyContext
 import html2markdown
-from pyinaturalist import get_access_token, get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -378,27 +378,6 @@ class INatAPI:
         else:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
-
-    async def update_project_users(
-        self,
-        ctx: Context,
-        dronefly_ctx: DroneflyContext,
-        action: str,
-        project_id: int,
-        user_ids: Union[int, List],
-    ):
-        """Add or remove users from a project's 'observed by' rules."""
-        if action not in ("join", "leave"):
-            raise ValueError(f"Unknown action: {action}")
-        with self.inat.set_ctx(ctx, dronefly_ctx) as inat:
-            token = get_access_token()
-            if action == "join":
-                endpoint = inat.projects.add_users
-            else:
-                endpoint = inat.projects.delete_users
-            return await inat.loop.run_in_executor(
-                None, partial(endpoint, project_id, user_ids, access_token=token)
-            )
 
     # Some thin wrappers around pyinaturalist endpoints:
     # - TODO: convert to use `self.inat` client.

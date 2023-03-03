@@ -1,10 +1,12 @@
 """Utilities module."""
 from contextlib import asynccontextmanager
-from typing import Union
+from typing import Optional, Union
 from urllib.parse import urlencode
 
 import discord
-from redbot.core import commands
+from dronefly.core.commands import Context as DroneflyContext
+from dronefly.core.models.user import User as DroneflyUser
+from redbot.core import commands, config
 
 from .base_classes import COG_NAME, WWW_BASE_URL
 
@@ -30,6 +32,24 @@ def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
         # Something is seriously wrong if we ever get here:
         raise discord.BadArugment(f"Cog not found: {COG_NAME}")
     return cog
+
+
+async def get_dronefly_ctx(
+    ctx: commands.Context,
+    user=Optional[Union[discord.Member, discord.User]],
+    anywhere=True,
+):
+    _user = user or ctx.author
+    user_config = await get_valid_user_config(ctx, _user, anywhere)
+    inat_user_id = await user_config.inat_user_id() if user_config else None
+    inat_place_id = await get_home(ctx, user_config=user_config)
+    dronefly_user = DroneflyUser(
+        id=_user.id,
+        inat_user_id=inat_user_id,
+        inat_place_id=inat_place_id,
+    )
+
+    return DroneflyContext(author=dronefly_user)
 
 
 async def get_valid_user_config(
@@ -98,12 +118,21 @@ async def valid_user_config(
     yield user_config
 
 
-async def get_home(ctx):
+async def get_home(
+    ctx,
+    user: Optional[Union[discord.Member, discord.User]],
+    user_config: Optional[config.Group],
+):
     """Get configured home place for author."""
     home = None
-    async with valid_user_config(ctx, ctx.author) as user_config:
-        if user_config:
-            home = await user_config.home()
+    _user = user or ctx.author
+
+    if user_config:
+        home = await user_config.home()
+    else:
+        async with valid_user_config(ctx, _user) as config:
+            if config:
+                home = await config.home()
     if not home:
         cog = get_cog(ctx)
         if ctx.guild:
@@ -114,17 +143,26 @@ async def get_home(ctx):
     return home
 
 
-async def get_lang(ctx):
+async def get_lang(
+    ctx,
+    user: Optional[Union[discord.Member, discord.User]],
+    user_config: Optional[config.Group],
+):
     """Get configured preferred language for author."""
     lang = None
-    async with valid_user_config(ctx, ctx.author) as user_config:
-        if user_config:
-            lang = await user_config.lang()
+    _user = user or ctx.author
+    if user_config:
+        lang = await user_config.lang()
+    else:
+        async with valid_user_config(ctx, _user) as config:
+            if config:
+                lang = await config.lang()
     # TODO: support guild and global preferred language
     # if not lang:
+    #    cog = get_cog(ctx)
     #    if ctx.guild:
-    #        guild_config = self.config.guild(ctx.guild)
+    #        guild_config = cog.config.guild(ctx.guild)
     #        lang = await guild_config.lang()
     #    else:
-    #        lang = await self.config.lang()
+    #        lang = await cog.config.lang()
     return lang
