@@ -42,7 +42,7 @@ from pyinaturalist import (
     get_taxa_autocomplete,
     get_projects_by_id,
 )
-from pyinaturalist.session import Session as PyinatSession
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -78,7 +78,6 @@ class INatAPI:
             raise_for_status=False,
             trace_configs=[trace_config],
         )
-        self.pyinat_session = PyinatSession(cache_control=False)
         self.request_time = time()
         self.places_cache = {}
         self.projects_cache = {}
@@ -141,7 +140,7 @@ class INatAPI:
     async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
         if "access_token" in kwargs:
             safe_kwargs = {**kwargs}
-            safe_kwargs["access_token"] = "***REDACTED***"  # nosec B105
+            safe_kwargs["access_token"] = "***REDACTED***"
         else:
             safe_kwargs = kwargs
         logger.debug(
@@ -371,23 +370,13 @@ class INatAPI:
     async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
         """Add users to a project's rules."""
         return await self._pyinaturalist_endpoint(
-            add_project_users,
-            ctx,
-            project_id,
-            user_ids,
-            session=self.pyinat_session,
-            **kwargs,
+            add_project_users, ctx, project_id, user_ids, **kwargs
         )
 
     async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
         """Remove users from a project's rules."""
         return await self._pyinaturalist_endpoint(
-            delete_project_users,
-            ctx,
-            project_id,
-            user_ids,
-            session=self.pyinat_session,
-            **kwargs,
+            delete_project_users, ctx, project_id, user_ids, **kwargs
         )
 
     async def get_projects_by_id(self, ctx, project_id, **kwargs):
