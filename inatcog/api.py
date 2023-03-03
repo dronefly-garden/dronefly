@@ -376,7 +376,6 @@ class INatAPI:
             project_id,
             user_ids,
             session=self.pyinat_session,
-            cache_control=False,
             **kwargs,
         )
 
@@ -387,7 +386,6 @@ class INatAPI:
             ctx,
             project_id,
             user_ids,
-            cache_control=False,
             session=self.pyinat_session,
             **kwargs,
         )
