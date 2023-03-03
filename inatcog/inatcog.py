@@ -75,7 +75,7 @@ class INatCog(
         super().__init__()
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1607)
-        self.api = INatAPI()
+        self.api = INatAPI(self)
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)

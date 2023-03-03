@@ -17,6 +17,7 @@
   - focus on methods for commands that are infrequently called to reduce the
     probability of rate limits being exceeded
 """
+from contextlib import contextmanager
 from functools import partial
 from json import JSONDecodeError
 import logging
@@ -35,14 +36,11 @@ from aiohttp import (
 from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
+from redbot.core.commands import Context, Cog
+from dronefly.core.clients.inat import iNatClient as CoreiNatClient
+from dronefly.core.commands import Context as DroneflyContext
 import html2markdown
-from pyinaturalist import (
-    add_project_users,
-    delete_project_users,
-    get_taxa_autocomplete,
-    get_projects_by_id,
-)
-from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import get_access_token, get_taxa_autocomplete, get_projects_by_id
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -56,10 +54,23 @@ RETRY_EXCEPTIONS = [
 ]
 
 
+class iNatClient(CoreiNatClient):
+    def add_client_settings(self, *args, **kwargs):
+        request_kwargs = super().add_client_settings(*args, **kwargs)
+        return request_kwargs
+
+    @contextmanager
+    def set_ctx(self, ctx: Context, dronefly_ctx: DroneflyContext):
+        """A client operating both within Red and Dronefly contexts."""
+        self.red_ctx = ctx
+        self.ctx = dronefly_ctx
+        yield self
+
+
 class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
 
-    def __init__(self):
+    def __init__(self, cog: Cog):
         # pylint: disable=unused-argument
         async def on_request_start(
             session: ClientSession,
@@ -74,6 +85,8 @@ class INatAPI:
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
+        self.cog = cog
+        self.inat = iNatClient(loop=cog.bot.loop, cache_control=False)
         self.session = RetryClient(
             raise_for_status=False,
             trace_configs=[trace_config],
@@ -140,7 +153,7 @@ class INatAPI:
     async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
         if "access_token" in kwargs:
             safe_kwargs = {**kwargs}
-            safe_kwargs["access_token"] = "***REDACTED***"
+            safe_kwargs["access_token"] = "***REDACTED***"  # nosec B105 ok
         else:
             safe_kwargs = kwargs
         logger.debug(
@@ -366,19 +379,29 @@ class INatAPI:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
 
+    async def update_project_users(
+        self,
+        ctx: Context,
+        dronefly_ctx: DroneflyContext,
+        action: str,
+        project_id: int,
+        user_ids: Union[int, List],
+    ):
+        """Add or remove users from a project's 'observed by' rules."""
+        if action not in ("join", "leave"):
+            raise ValueError(f"Unknown action: {action}")
+        with self.inat.set_ctx(ctx, dronefly_ctx) as inat:
+            token = get_access_token()
+            if action == "join":
+                endpoint = inat.projects.add_users
+            else:
+                endpoint = inat.projects.delete_users
+            return await inat.loop.run_in_executor(
+                None, partial(endpoint, project_id, user_ids, access_token=token)
+            )
+
     # Some thin wrappers around pyinaturalist endpoints:
-    async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
-        """Add users to a project's rules."""
-        return await self._pyinaturalist_endpoint(
-            add_project_users, ctx, project_id, user_ids, **kwargs
-        )
-
-    async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
-        """Remove users from a project's rules."""
-        return await self._pyinaturalist_endpoint(
-            delete_project_users, ctx, project_id, user_ids, **kwargs
-        )
-
+    # - TODO: convert to use `self.inat` client.
     async def get_projects_by_id(self, ctx, project_id, **kwargs):
         """Get projects by id."""
         return await self._pyinaturalist_endpoint(

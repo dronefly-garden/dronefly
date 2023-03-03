@@ -2,10 +2,11 @@
 from typing import Union
 
 import discord
+from dronefly.core.commands import Context as DroneflyContext
+from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import checks, commands
-from pyinaturalist import get_access_token
-from pyinaturalist.exceptions import AuthenticationError
 from pyinaturalist.models import Project
+from pyinaturalist.exceptions import AuthenticationError
 from requests.exceptions import HTTPError
 
 from ..checks import can_manage_users
@@ -39,7 +40,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         event_project = event_projects.get(abbrev)
         event_project_id = int(event_project["project_id"]) if event_project else 0
         if not (event_project and event_project_id > 0):
-            await ctx.send(f"Event project not known.")
+            await ctx.send("Event project not known.")
             return
         response = await self.api.get_projects_by_id(ctx, event_project_id)
         if not response:
@@ -64,22 +65,20 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         if manager_inat_id not in required_admins:
             await ctx.send("You are not an admin or manager of this project.")
             return
-        try:
-            token = get_access_token()
-        except AuthenticationError:
-            await ctx.send("I am not authorized to login to iNaturalist.")
-            return
         async with ctx.typing():
             try:
-                method = (
-                    self.api.add_project_users
-                    if action == "join"
-                    else self.api.delete_project_users
+                dronefly_ctx = DroneflyContext()
+                user = DroneflyUser()
+                user.id = ctx.author.id
+                user.inat_user_id = manager_inat_user.user_id
+                response = await self.api.update_project_users(
+                    ctx,
+                    dronefly_ctx=dronefly_ctx,
+                    action=action,
+                    project_id=project.id,
+                    user_ids=inat_user_id,
                 )
-                response = await method(
-                    ctx, project.id, inat_user_id, access_token=token
-                )
-            except HTTPError as err:
+            except (AuthenticationError, HTTPError) as err:
                 await ctx.send(str(err))
                 return
             if response:
@@ -87,7 +86,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                     iter(
                         [
                             rule["operand_id"]
-                            for rule in response["project_observation_rules"]
+                            for rule in response.project_observation_rules
                             if rule["operand_type"] == "User"
                             and rule["operator"] == "observed_by_user?"
                             if rule["operand_id"] == inat_user_id
@@ -97,7 +96,8 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 )
                 if user_id if action == "join" else not user_id:
                     await ctx.send(
-                        f"Succesfully {_ACTION[action]} {inat_user.login} {_ACTION_PREP[action]} {project.title}."
+                        f"Succesfully {_ACTION[action]} {inat_user.login} "
+                        f"{_ACTION_PREP[action]} {project.title}."
                     )
                     return
             await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")
