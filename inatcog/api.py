@@ -78,7 +78,7 @@ class INatAPI:
             raise_for_status=False,
             trace_configs=[trace_config],
         )
-        self.pyinat_session = PyinatSession()
+        self.pyinat_session = PyinatSession(cache_control=False)
         self.request_time = time()
         self.places_cache = {}
         self.projects_cache = {}
