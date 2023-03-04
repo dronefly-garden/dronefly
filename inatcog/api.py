@@ -70,7 +70,7 @@ class iNatClient(CoreiNatClient):
 class INatAPI:
     """Access the iNat API and assets via (api|static).inaturalist.org."""
 
-    def __init__(self, cog: Cog):
+    def __init__(self):
         # pylint: disable=unused-argument
         async def on_request_start(
             session: ClientSession,
@@ -85,8 +85,6 @@ class INatAPI:
 
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
-        self.cog = cog
-        self.inat = iNatClient(loop=cog.bot.loop, cache_control=False)
         self.session = RetryClient(
             raise_for_status=False,
             trace_configs=[trace_config],
@@ -380,7 +378,8 @@ class INatAPI:
         return await self._get_rate_limited(full_url, **kwargs)
 
     # Some thin wrappers around pyinaturalist endpoints:
-    # - TODO: convert to use `self.inat` client.
+    # - TODO: move these to `self.client` on the bot, and convert to no longer
+    #   wrap the individual endpoints, but use a pyinat controller instead.
     async def get_projects_by_id(self, ctx, project_id, **kwargs):
         """Get projects by id."""
         return await self._pyinaturalist_endpoint(
