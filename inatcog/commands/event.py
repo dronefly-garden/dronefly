@@ -1,19 +1,26 @@
 """Module for event command group."""
+import json
+import logging
 from typing import Union
 
 import discord
-from redbot.core import checks, commands
-from pyinaturalist.models import Project
 from pyinaturalist.exceptions import AuthenticationError
+from pyinaturalist.models import Project
+from redbot.core import checks, config, commands
 from requests.exceptions import HTTPError
 
+from ..base_classes import User
 from ..checks import can_manage_users
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 
-_ACTION = {"join": "added", "leave": "removed"}
-_ACTION_PREP = {"join": "to", "leave": "from"}
+_ACTION = {
+    "join": {"verb": "added", "prep": "to"},
+    "leave": {"verb": "removed", "prep": "from"},
+}
 _DRONEFLY_INAT_ID = 3969847
+
+logger = logging.getLogger(__name__)
 
 
 class CommandsEvent(INatEmbeds, MixinMeta):
@@ -24,59 +31,61 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     async def event(self, ctx):
         """Commands to manage server events."""
 
-    async def _event_action(self, ctx, action, abbrev, user):
-        try:
-            manager_inat_user = await self.user_table.get_user(
-                ctx.author, anywhere=False
-            )
-            manager_inat_id = manager_inat_user.user_id
-        except LookupError:
-            await ctx.send("Your iNat login is not known here.")
-            return
-        config = self.config.guild(ctx.guild)
-        event_projects = await config.event_projects()
-        event_project = event_projects.get(abbrev)
-        event_project_id = int(event_project["project_id"]) if event_project else 0
-        if not (event_project and event_project_id > 0):
-            await ctx.send("Event project not known.")
-            return
-        response = await self.api.get_projects_by_id(ctx, event_project_id)
-        if not response:
-            await ctx.send("iNat project not found.")
-            return
-        project = Project.from_json(response["results"][0])
-        try:
-            inat_user = await self.user_table.get_user(user, anywhere=False)
-        except LookupError as err:
-            await ctx.send(str(err))
-            return
-        inat_user_id = inat_user.user_id
-        required_admins = [
-            admin.id
-            for admin in project.admins
-            if admin.id in [manager_inat_id, _DRONEFLY_INAT_ID]
-            and admin.role in ["admin", "manager"]
-        ]
-        if _DRONEFLY_INAT_ID not in required_admins:
-            await ctx.send("I am not an admin or manager of this project.")
-            return
-        if manager_inat_id not in required_admins:
-            await ctx.send("You are not an admin or manager of this project.")
-            return
-
-        update_response = None
-        async with self.client.set_ctx(ctx, typing=True) as client:
+    async def _event_action(
+        self,
+        ctx: commands.Context,
+        action: str,
+        abbrev: str,
+        user: Union[discord.Member, discord.User],
+    ):
+        async def get_manager_inat_user(ctx: commands.Context):
             try:
-                update_response = await client.update_project_users(
-                    ctx,
-                    action=action,
-                    project_id=project.id,
-                    user_ids=inat_user_id,
+                manager_inat_user = await self.user_table.get_user(
+                    ctx.author, anywhere=False
                 )
-            except (AuthenticationError, HTTPError) as err:
-                await ctx.send(str(err))
-                return
-        if update_response:
+            except LookupError as err:
+                raise LookupError("Your iNat login is not known here.") from err
+            return manager_inat_user
+
+        async def get_event_project_id(guild_config: config.Group, abbrev: str):
+            event_projects = await guild_config.event_projects()
+            event_project = event_projects.get(abbrev)
+            event_project_id = int(event_project["project_id"]) if event_project else 0
+            if not (event_project and event_project_id > 0):
+                raise LookupError("Event project not known.")
+            return event_project_id
+
+        async def get_event_project(ctx: commands.Context, abbrev: str):
+            guild_config = self.config.guild(ctx.guild)
+            event_project_id = await get_event_project_id(guild_config, abbrev)
+            response = await self.api.get_projects_by_id(ctx, event_project_id)
+            if not response:
+                raise LookupError("iNat project not found.")
+            return Project.from_json(response["results"][0])
+
+        async def check_manager(project: Project, manager_inat_user: User):
+            # checks the validity of the bot user and the manager user:
+            required_admins = [
+                admin.id
+                for admin in project.admins
+                if admin.id in [manager_inat_user.user_id, _DRONEFLY_INAT_ID]
+                and admin.role in ["admin", "manager"]
+            ]
+            if _DRONEFLY_INAT_ID not in required_admins:
+                raise AuthenticationError(
+                    "I am not an admin or manager of this project."
+                )
+            if manager_inat_user.user_id not in required_admins:
+                raise AuthenticationError(
+                    "You are not an admin or manager of this project."
+                )
+
+        async def get_inat_user(user: Union[discord.Member, discord.User]):
+            return await self.user_table.get_user(user, anywhere=False)
+
+        def match_user_in_response(inat_user: User, response: dict):
+            if not response:
+                raise ValueError()
             user_id = next(
                 iter(
                     [
@@ -84,35 +93,92 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                         for rule in response.project_observation_rules
                         if rule["operand_type"] == "User"
                         and rule["operator"] == "observed_by_user?"
-                        if rule["operand_id"] == inat_user_id
+                        if rule["operand_id"] == inat_user.user_id
                     ]
                 ),
                 None,
             )
-            if user_id if action == "join" else not user_id:
-                await ctx.send(
-                    f"Succesfully {_ACTION[action]} {inat_user.login} "
-                    f"{_ACTION_PREP[action]} {project.title}."
+            return user_id
+
+        async def get_command_response(
+            inat_user: User, project: Project, update_response: dict
+        ):
+            valid_response = False
+            (verb, prep) = (_ACTION[action]["verb"], _ACTION[action]["prep"])
+
+            command_response = f"Something went wrong! User not {verb}."
+            try:
+                user_id = match_user_in_response(inat_user, update_response)
+            except (ValueError, AttributeError):
+                try:
+                    pretty_response = json.dumps(
+                        pretty_response, sort_keys=True, indent=4
+                    )
+                except TypeError:
+                    pretty_response = repr(update_response)
+                if pretty_response.len > 40:
+                    pretty_response = "\n" + pretty_response
+                logger.error(
+                    "%sevent %s - invalid response: %s",
+                    ctx.clean_prefix,
+                    action,
+                    pretty_response,
                 )
-                return
-        await ctx.send(f"Something went wrong! User not {_ACTION[action]}.")
+            if action == "join":
+                valid_response = user_id
+            else:
+                valid_response = not user_id
+            if valid_response:
+                command_response = (
+                    f"Succesfully {verb} {inat_user.login} {prep} {project.title}."
+                )
+
+            return command_response
+
+        try:
+            manager_inat_user = await get_manager_inat_user(ctx)
+            project = await get_event_project(ctx, abbrev)
+            await check_manager(project, manager_inat_user)
+            inat_user = await get_inat_user(user)
+
+            async with self.client.set_ctx(ctx, typing=True) as client:
+                update_response = await client.update_event_project_user(
+                    action, project, inat_user
+                )
+                command_response = await get_command_response(
+                    inat_user, project, update_response
+                )
+                await ctx.send(command_response)
+        except (
+            commands.CommandError,
+            LookupError,
+            AuthenticationError,
+            HTTPError,
+        ) as err:
+            await ctx.send(str(err))
 
     @event.command(name="join")
     async def event_join(
-        self, ctx, abbrev: str, user: Union[discord.Member, discord.User]
+        self,
+        ctx: commands.Context,
+        abbrev: str,
+        user: Union[discord.Member, discord.User],
     ):
         """Join member to server event."""
-        await self._event_action(ctx, "join", abbrev, user)
+        await self._event_action(ctx, action="join", abbrev=abbrev, user=user)
 
     @event.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
-    async def event_list(self, ctx, abbrev: str):
+    async def event_list(self, ctx: commands.Context, abbrev: str):
         """List members of server event."""
         await self.user_list(ctx, abbrev)
 
     @event.command(name="leave")
     async def event_leave(
-        self, ctx, abbrev: str, user: Union[discord.Member, discord.User]
+        self,
+        ctx: commands.Context,
+        abbrev: str,
+        user: Union[discord.Member, discord.User],
     ):
         """Remove member from server event."""
-        await self._event_action(ctx, "leave", abbrev, user)
+        await self._event_action(ctx, action="leave", abbrev=abbrev, user=user)

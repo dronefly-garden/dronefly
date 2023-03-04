@@ -36,9 +36,6 @@ from aiohttp import (
 from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
-from redbot.core.commands import Context, Cog
-from dronefly.core.clients.inat import iNatClient as CoreiNatClient
-from dronefly.core.commands import Context as DroneflyContext
 import html2markdown
 from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
@@ -52,19 +49,6 @@ RETRY_EXCEPTIONS = [
     JSONDecodeError,
     TimeoutError,
 ]
-
-
-class iNatClient(CoreiNatClient):
-    def add_client_settings(self, *args, **kwargs):
-        request_kwargs = super().add_client_settings(*args, **kwargs)
-        return request_kwargs
-
-    @contextmanager
-    def set_ctx(self, ctx: Context, dronefly_ctx: DroneflyContext):
-        """A client operating both within Red and Dronefly contexts."""
-        self.red_ctx = ctx
-        self.ctx = dronefly_ctx
-        yield self
 
 
 class INatAPI:

@@ -35,14 +35,14 @@ def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
 
 
 async def get_dronefly_ctx(
-    ctx: commands.Context,
-    user=Optional[Union[discord.Member, discord.User]],
+    red_ctx: commands.Context,
+    user: Optional[Union[discord.Member, discord.User]] = None,
     anywhere=True,
 ):
-    _user = user or ctx.author
-    user_config = await get_valid_user_config(ctx, _user, anywhere)
+    _user = user or red_ctx.author
+    user_config = await get_valid_user_config(red_ctx, _user, anywhere)
     inat_user_id = await user_config.inat_user_id() if user_config else None
-    inat_place_id = await get_home(ctx, user_config=user_config)
+    inat_place_id = await get_home(red_ctx, user_config=user_config)
     dronefly_user = DroneflyUser(
         id=_user.id,
         inat_user_id=inat_user_id,
@@ -53,9 +53,9 @@ async def get_dronefly_ctx(
 
 
 async def get_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
-    anywhere=True,
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     """Return iNat user config if known in this server.
 
@@ -89,9 +89,9 @@ async def get_valid_user_config(
 
 
 async def has_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
-    anywhere=True,
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     """Check if user is known in the specified scope.
 
@@ -106,9 +106,9 @@ async def has_valid_user_config(
 
 @asynccontextmanager
 async def valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
-    anywhere=True,
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     user_config = None
     try:
@@ -120,8 +120,8 @@ async def valid_user_config(
 
 async def get_home(
     ctx,
-    user: Optional[Union[discord.Member, discord.User]],
-    user_config: Optional[config.Group],
+    user: Optional[Union[discord.Member, discord.User]] = None,
+    user_config: Optional[config.Group] = None,
 ):
     """Get configured home place for author."""
     home = None
@@ -145,8 +145,8 @@ async def get_home(
 
 async def get_lang(
     ctx,
-    user: Optional[Union[discord.Member, discord.User]],
-    user_config: Optional[config.Group],
+    user: Optional[Union[discord.Member, discord.User]] = None,
+    user_config: Optional[config.Group] = None,
 ):
     """Get configured preferred language for author."""
     lang = None
