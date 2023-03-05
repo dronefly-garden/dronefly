@@ -142,9 +142,10 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             inat_user = await get_inat_user(user)
 
             async with self.client.set_ctx(ctx, typing=True) as client:
-                update_response = await client.update_event_project_user(
-                    action, project, inat_user
-                )
+                if action == "join":
+                    update_response = await client.projects.async_add_users(project.id, inat_user.user_id, auth=True)
+                else:
+                    update_response = await client.projects.async_delete_users(project.id, inat_user.user_id, auth=True)
                 command_response = await get_command_response(
                     inat_user, project, update_response
                 )
