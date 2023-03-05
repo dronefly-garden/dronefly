@@ -6,11 +6,12 @@ from typing import Union
 import discord
 from pyinaturalist.exceptions import AuthenticationError
 from pyinaturalist.models import Project
-from redbot.core import checks, config, commands
+from redbot.core import checks, commands
 from requests.exceptions import HTTPError
 
 from ..base_classes import User
 from ..checks import can_manage_users
+from ..client import iNatClient
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 
@@ -38,8 +39,9 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         abbrev: str,
         user: Union[discord.Member, discord.User],
     ):
-        async def get_manager_inat_user(ctx: commands.Context):
+        async def get_manager_inat_user(client: iNatClient):
             try:
+                ctx = client.red_ctx
                 manager_inat_user = await self.user_table.get_user(
                     ctx.author, anywhere=False
                 )
@@ -47,7 +49,9 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 raise LookupError("Your iNat login is not known here.") from err
             return manager_inat_user
 
-        async def get_event_project_id(guild_config: config.Group, abbrev: str):
+        async def get_event_project_id(client: iNatClient, abbrev: str):
+            ctx = client.red_ctx
+            guild_config = self.config.guild(ctx.guild)
             event_projects = await guild_config.event_projects()
             event_project = event_projects.get(abbrev)
             event_project_id = int(event_project["project_id"]) if event_project else 0
@@ -55,13 +59,12 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 raise LookupError("Event project not known.")
             return event_project_id
 
-        async def get_event_project(ctx: commands.Context, abbrev: str):
-            guild_config = self.config.guild(ctx.guild)
-            event_project_id = await get_event_project_id(guild_config, abbrev)
-            response = await self.api.get_projects_by_id(ctx, event_project_id)
+        async def get_event_project(client: iNatClient, abbrev: str):
+            event_project_id = await get_event_project_id(client, abbrev)
+            response = await client.projects.async_from_ids(event_project_id)
             if not response:
                 raise LookupError("iNat project not found.")
-            return Project.from_json(response["results"][0])
+            return response.one()
 
         async def check_manager(project: Project, manager_inat_user: User):
             # checks the validity of the bot user and the manager user:
@@ -136,12 +139,12 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             return command_response
 
         try:
-            manager_inat_user = await get_manager_inat_user(ctx)
-            project = await get_event_project(ctx, abbrev)
-            await check_manager(project, manager_inat_user)
-            inat_user = await get_inat_user(user)
-
             async with self.client.set_ctx(ctx, typing=True) as client:
+                manager_inat_user = await get_manager_inat_user(client)
+                project = await get_event_project(client, abbrev)
+                await check_manager(project, manager_inat_user)
+                inat_user = await get_inat_user(user)
+
                 if action == "join":
                     update_response = await client.projects.async_add_users(project.id, inat_user.user_id, auth=True)
                 else:
@@ -149,6 +152,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 command_response = await get_command_response(
                     inat_user, project, update_response
                 )
+
                 await ctx.send(command_response)
         except (
             commands.CommandError,

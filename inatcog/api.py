@@ -37,7 +37,7 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import get_taxa_autocomplete
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -364,12 +364,6 @@ class INatAPI:
     # Some thin wrappers around pyinaturalist endpoints:
     # - TODO: move these to `self.client` on the bot, and convert to no longer
     #   wrap the individual endpoints, but use a pyinat controller instead.
-    async def get_projects_by_id(self, ctx, project_id, **kwargs):
-        """Get projects by id."""
-        return await self._pyinaturalist_endpoint(
-            get_projects_by_id, ctx, project_id, **kwargs
-        )
-
     async def get_taxa_autocomplete(self, ctx, **kwargs):
         """Get taxa using autocomplete."""
         # - TODO: support user settings for home place, language

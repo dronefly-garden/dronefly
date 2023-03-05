@@ -25,6 +25,11 @@ class ProjectController(pyic.ProjectController):
             None, partial(self.delete_users, *args, **kwargs)
         )
 
+    async def async_from_ids(self, *args, **kwargs):
+        return await self.client.loop.run_in_executor(
+            None, partial(self.from_ids, *args, **kwargs)
+        )
+
 
 class iNatClient(CoreiNatClient):
     def __init__(
