@@ -210,8 +210,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def ttest(self, ctx, *, query: str):
         """Taxon via pyinaturalist (test)."""
         async with self.client.set_ctx(ctx, typing=True) as client:
-            taxon = client.taxa.autocomplete(q=query).one()
-        if taxon:
+            taxa = await client.taxa.autocomplete(q=query, limit=1).async_all()
+        if taxa:
+            taxon = taxa[0]
             embed = make_embed()
             # Show enough of the record for a satisfying test.
             embed.title = taxon.name
