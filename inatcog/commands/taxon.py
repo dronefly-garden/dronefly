@@ -209,32 +209,30 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: str):
         """Taxon via pyinaturalist (test)."""
-        response = await self.api.get_taxa_autocomplete(ctx, q=query)
-        if response:
-            results = response.get("results")
-            if results:
-                taxon = results[0]
-                embed = make_embed()
-                # Show enough of the record for a satisfying test.
-                embed.title = taxon.get("name")
-                embed.url = f"{WWW_BASE_URL}/taxa/{taxon.get('id')}"
-                default_photo = taxon.get("default_photo")
-                if default_photo:
-                    medium_url = default_photo.get("medium_url")
-                    if medium_url:
-                        embed.set_image(url=medium_url)
-                        embed.set_footer(text=default_photo.get("attribution"))
-                embed.description = (
-                    "```py\n"
-                    + textwrap.shorten(
-                        f"{repr(taxon)}",
-                        width=MAX_EMBED_DESCRIPTION_LEN
-                        - 10,  # i.e. minus the code block markup
-                        placeholder="…",
-                    )
-                    + "\n```"
+        async with self.client.set_ctx(ctx, typing=True) as client:
+            taxon = client.taxa.autocomplete(q=query).one()
+        if taxon:
+            embed = make_embed()
+            # Show enough of the record for a satisfying test.
+            embed.title = taxon.name
+            embed.url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
+            default_photo = taxon.default_photo
+            if default_photo:
+                medium_url = default_photo.medium_url
+                if medium_url:
+                    embed.set_image(url=medium_url)
+                    embed.set_footer(text=default_photo.attribution)
+            embed.description = (
+                "```py\n"
+                + textwrap.shorten(
+                    f"{repr(taxon)}",
+                    width=MAX_EMBED_DESCRIPTION_LEN
+                    - 10,  # i.e. minus the code block markup
+                    placeholder="…",
                 )
-                await ctx.send(embed=embed)
+                + "\n```"
+            )
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def tname(self, ctx, *, query: NaturalQueryConverter):
