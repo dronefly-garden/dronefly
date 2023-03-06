@@ -209,7 +209,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: str):
         """Taxon via pyinaturalist (test)."""
-        async with self.client.set_ctx(ctx, typing=True) as client:
+        async with self.inat_client.set_ctx(ctx, typing=True) as client:
             taxa = await client.taxa.autocomplete(q=query, limit=1).async_all()
         if taxa:
             taxon = taxa[0]
