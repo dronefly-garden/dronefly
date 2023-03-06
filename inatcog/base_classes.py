@@ -556,10 +556,7 @@ class QueryResponse:
                     # lichenish, and seaslugs
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
-                        (
-                            "152028,942664,791197,54743,152030,175541,"
-                            "127378,117881,117869"
-                        ): (
+                        ("152028,942664,54743,152030,175541," "127378,117881,117869"): (
                             "Lecanoromycetes, Arthoniomycetes, etc. (Lichenized Fungi)"
                         ),
                         (
@@ -574,10 +571,15 @@ class QueryResponse:
                             "(Extant Fish)"
                         ),
                     }.get(taxon_ids) or "taxon #" + taxon_ids.replace(",", ", ")
-                # Note: "without Stictis radiata" (352459) is intentionally
+                # Note: "without" for each of these taxa are intentionally
                 # omitted from the "lichenish" description to keep it from
                 # being needlessly wordy.
-                if without_taxon_id and without_taxon_id not in ["352459"]:
+                if without_taxon_id and without_taxon_id not in [
+                    "372831",
+                    "1040687",
+                    "1040689",
+                    "352459",
+                ]:
                     # TODO: support generally; hardwired cases here are for
                     # waspsonly, mothsonly, lichenish, etc.
                     without_taxa_description = {
