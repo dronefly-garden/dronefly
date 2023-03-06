@@ -575,10 +575,7 @@ class QueryResponse:
                 # omitted from the "lichenish" description to keep it from
                 # being needlessly wordy.
                 if without_taxon_id and without_taxon_id not in [
-                    "372831",
-                    "1040687",
-                    "1040689",
-                    "352459",
+                    "372831,1040687,1040689,352459"
                 ]:
                     # TODO: support generally; hardwired cases here are for
                     # waspsonly, mothsonly, lichenish, etc.
