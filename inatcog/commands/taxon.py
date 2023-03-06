@@ -24,7 +24,7 @@ from ..embeds.common import (
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
-from ..utils import get_lang, use_client
+from ..utils import ContextWithClient, get_lang, use_client
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
 
@@ -208,7 +208,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @use_client
     @commands.command(hidden=True)
-    async def ttest(self, ctx, *, query: str):
+    async def ttest(self, ctx: ContextWithClient, *, query: str):
         """Taxon via pyinaturalist (test)."""
         taxa = await ctx.inat_client.taxa.autocomplete(q=query, limit=1).async_all()
         if taxa:

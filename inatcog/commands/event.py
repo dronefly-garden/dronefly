@@ -14,7 +14,7 @@ from ..checks import can_manage_users
 from ..client import iNatClient
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
-from ..utils import use_client
+from ..utils import ContextWithClient, use_client
 
 _ACTION = {
     "join": {"verb": "added", "prep": "to"},
@@ -170,7 +170,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     @event.command(name="join")
     async def event_join(
         self,
-        ctx: commands.Context,
+        ctx: ContextWithClient,
         abbrev: str,
         user: Union[discord.Member, discord.User],
     ):
@@ -189,7 +189,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     @event.command(name="leave")
     async def event_leave(
         self,
-        ctx: commands.Context,
+        ctx: ContextWithClient,
         abbrev: str,
         user: Union[discord.Member, discord.User],
     ):
