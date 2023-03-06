@@ -14,6 +14,7 @@ from ..checks import can_manage_users
 from ..client import iNatClient
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
+from ..utils import use_client
 
 _ACTION = {
     "join": {"verb": "added", "prep": "to"},
@@ -35,6 +36,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
     async def _event_action(
         self,
         ctx: commands.Context,
+        client: iNatClient,
         action: str,
         abbrev: str,
         user: Union[discord.Member, discord.User],
@@ -49,8 +51,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                 raise LookupError("Your iNat login is not known here.") from err
             return manager_inat_user
 
-        async def get_event_project_id(client: iNatClient, abbrev: str):
-            ctx = client.red_ctx
+        async def get_event_project_id(ctx: commands.Context, abbrev: str):
             guild_config = self.config.guild(ctx.guild)
             event_projects = await guild_config.event_projects()
             event_project = event_projects.get(abbrev)
@@ -60,7 +61,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             return event_project_id
 
         async def get_event_project(client: iNatClient, abbrev: str):
-            event_project_id = await get_event_project_id(client, abbrev)
+            event_project_id = await get_event_project_id(client.red_ctx, abbrev)
             response = await client.projects.async_from_ids(event_project_id)
             if not response:
                 raise LookupError("iNat project not found.")
@@ -115,7 +116,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             except (ValueError, AttributeError):
                 try:
                     pretty_response = json.dumps(
-                        pretty_response, sort_keys=True, indent=4
+                        update_response, sort_keys=True, indent=4
                     )
                 except TypeError:
                     pretty_response = repr(update_response)
@@ -139,21 +140,24 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             return command_response
 
         try:
-            async with self.client.set_ctx(ctx, typing=True) as client:
-                manager_inat_user = await get_manager_inat_user(client)
-                project = await get_event_project(client, abbrev)
-                await check_manager(project, manager_inat_user)
-                inat_user = await get_inat_user(user)
+            manager_inat_user = await get_manager_inat_user(client)
+            project = await get_event_project(client, abbrev)
+            await check_manager(project, manager_inat_user)
+            inat_user = await get_inat_user(user)
 
-                if action == "join":
-                    update_response = await client.projects.async_add_users(project.id, inat_user.user_id, auth=True)
-                else:
-                    update_response = await client.projects.async_delete_users(project.id, inat_user.user_id, auth=True)
-                command_response = await get_command_response(
-                    inat_user, project, update_response
+            if action == "join":
+                update_response = await client.projects.async_add_users(
+                    project.id, inat_user.user_id, auth=True
                 )
+            else:
+                update_response = await client.projects.async_delete_users(
+                    project.id, inat_user.user_id, auth=True
+                )
+            command_response = await get_command_response(
+                inat_user, project, update_response
+            )
 
-                await ctx.send(command_response)
+            await ctx.send(command_response)
         except (
             commands.CommandError,
             LookupError,
@@ -162,6 +166,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         ) as err:
             await ctx.send(str(err))
 
+    @use_client
     @event.command(name="join")
     async def event_join(
         self,
@@ -170,7 +175,9 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         user: Union[discord.Member, discord.User],
     ):
         """Join member to server event."""
-        await self._event_action(ctx, action="join", abbrev=abbrev, user=user)
+        await self._event_action(
+            ctx, client=ctx.inat_client, action="join", abbrev=abbrev, user=user
+        )
 
     @event.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
@@ -178,6 +185,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         """List members of server event."""
         await self.user_list(ctx, abbrev)
 
+    @use_client
     @event.command(name="leave")
     async def event_leave(
         self,
@@ -186,4 +194,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         user: Union[discord.Member, discord.User],
     ):
         """Remove member from server event."""
-        await self._event_action(ctx, action="leave", abbrev=abbrev, user=user)
+        await self._event_action(
+            ctx, client=ctx.inat_client, action="leave", abbrev=abbrev, user=user
+        )

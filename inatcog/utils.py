@@ -1,5 +1,7 @@
 """Utilities module."""
+import asyncio
 from contextlib import asynccontextmanager
+import functools
 from typing import Optional, Union
 from urllib.parse import urlencode
 
@@ -9,6 +11,37 @@ from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands, config
 
 from .base_classes import COG_NAME, WWW_BASE_URL
+
+
+def use_client(coro_or_command):
+    is_command = isinstance(coro_or_command, commands.Command)
+    if not is_command and not asyncio.iscoroutinefunction(coro_or_command):
+        raise TypeError(
+            "@use_client can only be used on commands or `async def` functions"
+        )
+
+    coro = coro_or_command.callback if is_command else coro_or_command
+
+    @functools.wraps(coro)
+    async def wrapped(*args, **kwargs):
+        context: commands.Context = None
+        cog: commands.Cog = None
+
+        for arg in args:
+            if isinstance(arg, commands.Context):
+                context = arg
+                cog = get_cog(context)
+                break
+        async with cog.inat_client.set_ctx(context, typing=True) as inat_client:
+            context.inat_client = inat_client
+            await coro(*args, **kwargs)
+
+    if not is_command:
+        return wrapped
+    else:
+        wrapped.__module__ = coro_or_command.callback.__module__
+        coro_or_command.callback = wrapped
+        return coro_or_command
 
 
 def obs_url_from_v1(params: dict):
