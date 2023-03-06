@@ -556,12 +556,12 @@ class QueryResponse:
                     # lichenish, and seaslugs
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
-                        ("152028,942664,54743,152030,175541," "127378,117881,117869"): (
+                        ("152028,54743,152030,175541,127378,117881,117869,175246"): (
                             "Lecanoromycetes, Arthoniomycetes, etc. (Lichenized Fungi)"
                         ),
                         (
                             "130687,775798,775804,49784,500752,47113,"
-                            "775801,775833,775805,495793,47801,801507,175246"
+                            "775801,775833,775805,495793,47801,801507"
                         ): (
                             "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
                             "other marine slugs)"
@@ -575,10 +575,7 @@ class QueryResponse:
                 # omitted from the "lichenish" description to keep it from
                 # being needlessly wordy.
                 if without_taxon_id and without_taxon_id not in [
-                    "372831",
-                    "1040687",
-                    "1040689",
-                    "352459",
+                    "372831,1040687,1040689,352459"
                 ]:
                     # TODO: support generally; hardwired cases here are for
                     # waspsonly, mothsonly, lichenish, etc.
