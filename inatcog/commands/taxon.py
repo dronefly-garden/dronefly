@@ -24,7 +24,7 @@ from ..embeds.common import (
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
-from ..utils import get_lang
+from ..utils import get_lang, use_client
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
 
@@ -206,11 +206,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         await self.send_embed_for_taxon(ctx, query_response)
 
+    @use_client
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: str):
         """Taxon via pyinaturalist (test)."""
-        async with self.inat_client.set_ctx(ctx, typing=True) as client:
-            taxa = await client.taxa.autocomplete(q=query, limit=1).async_all()
+        taxa = await ctx.inat_client.taxa.autocomplete(q=query, limit=1).async_all()
         if taxa:
             taxon = taxa[0]
             embed = make_embed()
