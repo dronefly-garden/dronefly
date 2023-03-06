@@ -1,23 +1,4 @@
-"""Module to access iNaturalist API.
-
-- Note: Most methods use aiohttp directly, whereas some now use pyinaturalist. Please note
-  that for each of these we're working on moving from homegrown approaches to built-in
-  capabilities in pyinaturalist for:
-  - caching
-  - rate-limiting
-- Until migration to pyinaturalist is complete, mismatches between the two approaches might
-  lead to:
-  - any old code that depends on specific caching behaviours may not work correctly with
-    new pyinaturalist-based replacements
-  - there's an outside chance that rate limits may be exceeded, since neither rate-limiter
-    is aware of the rate buckets collected by the other.
-- Therefore, take care to add transitional code that mixes the two underlying libraries
-  sparingly, and in particular:
-  - prefer adding new methods over modifying existing ones to use pyinaturalist
-  - focus on methods for commands that are infrequently called to reduce the
-    probability of rate limits being exceeded
-"""
-from functools import partial
+"""Module to access iNaturalist API."""
 from json import JSONDecodeError
 import logging
 from time import time
@@ -36,14 +17,6 @@ from aiohttp_retry import RetryClient, ExponentialRetry
 from aiolimiter import AsyncLimiter
 from bs4 import BeautifulSoup
 import html2markdown
-from pyinaturalist import (
-    add_project_users,
-    delete_project_users,
-    get_taxa,
-    get_taxa_autocomplete,
-    get_taxa_by_id,
-    get_projects_by_id,
-)
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -137,23 +110,6 @@ class INatAPI:
                 raise e
 
         return None
-
-    async def _pyinaturalist_endpoint(self, endpoint, ctx, *args, **kwargs):
-        if "access_token" in kwargs:
-            safe_kwargs = {**kwargs}
-            safe_kwargs["access_token"] = "***REDACTED***"  # nosec B105
-        else:
-            safe_kwargs = kwargs
-        logger.debug(
-            "_pyinaturalist_endpoint(%s, %s, %s)",
-            endpoint.__name__,
-            repr(args),
-            repr(safe_kwargs),
-        )
-
-        return await ctx.bot.loop.run_in_executor(
-            None, partial(endpoint, *args, **kwargs)
-        )
 
     async def get_controlled_terms(self, *args, **kwargs):
         """Query API for controlled terms."""
@@ -368,44 +324,6 @@ class INatAPI:
         else:
             full_url = f"{API_BASE_URL}/v1/search"
         return await self._get_rate_limited(full_url, **kwargs)
-
-    # Some thin wrappers around pyinaturalist endpoints:
-    async def add_project_users(self, ctx, project_id, user_ids, **kwargs):
-        """Add users to a project's rules."""
-        return await self._pyinaturalist_endpoint(
-            add_project_users, ctx, project_id, user_ids, **kwargs
-        )
-
-    async def delete_project_users(self, ctx, project_id, user_ids, **kwargs):
-        """Remove users from a project's rules."""
-        return await self._pyinaturalist_endpoint(
-            delete_project_users, ctx, project_id, user_ids, **kwargs
-        )
-
-    async def get_projects_by_id(self, ctx, project_id, **kwargs):
-        """Get projects by id."""
-        return await self._pyinaturalist_endpoint(
-            get_projects_by_id, ctx, project_id, **kwargs
-        )
-
-    async def get_taxa_autocomplete(self, ctx, **kwargs):
-        """Get taxa using autocomplete."""
-        # - TODO: support user settings for home place, language
-        return await self._pyinaturalist_endpoint(get_taxa_autocomplete, ctx, **kwargs)
-
-    async def get_taxa_by_id(self, ctx, taxon_id, **kwargs):
-        """Get taxa by id."""
-        # - TODO: support user settings for home place, language
-        return await self._pyinaturalist_endpoint(
-            get_taxa_by_id, ctx, taxon_id, **kwargs
-        )
-
-    async def get_taxa_pyinat(self, ctx, **kwargs):
-        """Get taxa."""
-        # - TODO: support user settings for home place, language
-        return await self._pyinaturalist_endpoint(get_taxa, ctx, **kwargs)
-
-    # end of pyinaturalist shims
 
     async def get_users(
         self, query: Union[int, str], refresh_cache=False, by_login_id=False, **kwargs

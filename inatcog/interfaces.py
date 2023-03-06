@@ -9,6 +9,7 @@ from redbot.core import Config
 from redbot.core.bot import Red
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
+from .client import iNatClient
 from .obs_query import INatObsQuery
 from .places import INatPlaceTable
 from .projects import INatProjectTable
@@ -28,6 +29,7 @@ class MixinMeta(ABC):
     def __init__(self, *_args):
         self.config: Config
         self.api: INatAPI
+        self.inat_client: iNatClient
         self.bot: Red
         self.p: engine  # pylint: disable=invalid-name
         self.user_table: INatUserTable

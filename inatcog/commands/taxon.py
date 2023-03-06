@@ -26,7 +26,7 @@ from ..embeds.common import (
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..taxa import get_taxon
-from ..utils import get_lang
+from ..utils import get_lang, use_client
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
 
@@ -211,35 +211,34 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
 
+    @use_client
     @commands.command(hidden=True)
     async def ttest(self, ctx, *, query: Optional[str]):
         """Taxon via pyinaturalist (test)."""
-        response = await self.api.get_taxa_autocomplete(ctx, q=query)
-        if response:
-            results = response.get("results")
-            if results:
-                taxon = results[0]
-                embed = make_embed()
-                # Show enough of the record for a satisfying test.
-                embed.title = taxon.get("name")
-                embed.url = f"{WWW_BASE_URL}/taxa/{taxon.get('id')}"
-                default_photo = taxon.get("default_photo")
-                if default_photo:
-                    medium_url = default_photo.get("medium_url")
-                    if medium_url:
-                        embed.set_image(url=medium_url)
-                        embed.set_footer(text=default_photo.get("attribution"))
-                embed.description = (
-                    "```py\n"
-                    + textwrap.shorten(
-                        f"{repr(taxon)}",
-                        width=MAX_EMBED_DESCRIPTION_LEN
-                        - 10,  # i.e. minus the code block markup
-                        placeholder="…",
-                    )
-                    + "\n```"
+        taxa = await ctx.inat_client.taxa.autocomplete(q=query, limit=1).async_all()
+        if taxa:
+            taxon = taxa[0]
+            embed = make_embed()
+            # Show enough of the record for a satisfying test.
+            embed.title = taxon.name
+            embed.url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
+            default_photo = taxon.default_photo
+            if default_photo:
+                medium_url = default_photo.medium_url
+                if medium_url:
+                    embed.set_image(url=medium_url)
+                    embed.set_footer(text=default_photo.attribution)
+            embed.description = (
+                "```py\n"
+                + textwrap.shorten(
+                    f"{repr(taxon)}",
+                    width=MAX_EMBED_DESCRIPTION_LEN
+                    - 10,  # i.e. minus the code block markup
+                    placeholder="…",
                 )
-                await ctx.send(embed=embed)
+                + "\n```"
+            )
+            await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
     async def tname(self, ctx, *, query: Optional[str]):

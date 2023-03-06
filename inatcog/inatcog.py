@@ -11,6 +11,7 @@ from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
 from .base_classes import COG_NAME
+from .client import iNatClient
 from .commands.event import CommandsEvent
 from .commands.inat import CommandsInat
 from .commands.last import CommandsLast
@@ -71,11 +72,12 @@ class INatCog(
         (timedelta(minutes=3), 45),
     ]
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
+        self.inat_client = iNatClient(loop=bot.loop, cache_control=False)
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)

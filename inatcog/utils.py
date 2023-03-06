@@ -1,12 +1,47 @@
 """Utilities module."""
+import asyncio
 from contextlib import asynccontextmanager
-from typing import Union
+import functools
+from typing import Optional, Union
 from urllib.parse import urlencode
 
 import discord
-from redbot.core import commands
+from dronefly.core.commands import Context as DroneflyContext
+from dronefly.core.models.user import User as DroneflyUser
+from redbot.core import commands, config
 
 from .base_classes import COG_NAME, WWW_BASE_URL
+
+
+def use_client(coro_or_command):
+    is_command = isinstance(coro_or_command, commands.Command)
+    if not is_command and not asyncio.iscoroutinefunction(coro_or_command):
+        raise TypeError(
+            "@use_client can only be used on commands or `async def` functions"
+        )
+
+    coro = coro_or_command.callback if is_command else coro_or_command
+
+    @functools.wraps(coro)
+    async def wrapped(*args, **kwargs):
+        context: commands.Context = None
+        cog: commands.Cog = None
+
+        for arg in args:
+            if isinstance(arg, commands.Context):
+                context = arg
+                cog = get_cog(context)
+                break
+        async with cog.inat_client.set_ctx_from_user(context, typing=True) as inat_client:
+            context.inat_client = inat_client
+            await coro(*args, **kwargs)
+
+    if not is_command:
+        return wrapped
+    else:
+        wrapped.__module__ = coro_or_command.callback.__module__
+        coro_or_command.callback = wrapped
+        return coro_or_command
 
 
 def obs_url_from_v1(params: dict):
@@ -32,10 +67,28 @@ def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]):
     return cog
 
 
-async def get_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
+async def get_dronefly_ctx(
+    red_ctx: commands.Context,
+    user: Optional[Union[discord.Member, discord.User]] = None,
     anywhere=True,
+):
+    _user = user or red_ctx.author
+    user_config = await get_valid_user_config(red_ctx, _user, anywhere)
+    inat_user_id = await user_config.inat_user_id() if user_config else None
+    inat_place_id = await get_home(red_ctx, user_config=user_config)
+    dronefly_user = DroneflyUser(
+        id=_user.id,
+        inat_user_id=inat_user_id,
+        inat_place_id=inat_place_id,
+    )
+
+    return DroneflyContext(author=dronefly_user)
+
+
+async def get_valid_user_config(
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     """Return iNat user config if known in this server.
 
@@ -69,9 +122,9 @@ async def get_valid_user_config(
 
 
 async def has_valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
-    anywhere=True,
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     """Check if user is known in the specified scope.
 
@@ -86,9 +139,9 @@ async def has_valid_user_config(
 
 @asynccontextmanager
 async def valid_user_config(
-    cog_or_ctx=Union[commands.Cog, commands.Context],
-    user=Union[discord.Member, discord.User],
-    anywhere=True,
+    cog_or_ctx: Union[commands.Cog, commands.Context],
+    user: Union[discord.Member, discord.User],
+    anywhere: bool = True,
 ):
     user_config = None
     try:
@@ -98,12 +151,21 @@ async def valid_user_config(
     yield user_config
 
 
-async def get_home(ctx):
+async def get_home(
+    ctx,
+    user: Optional[Union[discord.Member, discord.User]] = None,
+    user_config: Optional[config.Group] = None,
+):
     """Get configured home place for author."""
     home = None
-    async with valid_user_config(ctx, ctx.author) as user_config:
-        if user_config:
-            home = await user_config.home()
+    _user = user or ctx.author
+
+    if user_config:
+        home = await user_config.home()
+    else:
+        async with valid_user_config(ctx, _user) as config:
+            if config:
+                home = await config.home()
     if not home:
         cog = get_cog(ctx)
         if ctx.guild:
@@ -114,17 +176,26 @@ async def get_home(ctx):
     return home
 
 
-async def get_lang(ctx):
+async def get_lang(
+    ctx,
+    user: Optional[Union[discord.Member, discord.User]] = None,
+    user_config: Optional[config.Group] = None,
+):
     """Get configured preferred language for author."""
     lang = None
-    async with valid_user_config(ctx, ctx.author) as user_config:
-        if user_config:
-            lang = await user_config.lang()
+    _user = user or ctx.author
+    if user_config:
+        lang = await user_config.lang()
+    else:
+        async with valid_user_config(ctx, _user) as config:
+            if config:
+                lang = await config.lang()
     # TODO: support guild and global preferred language
     # if not lang:
+    #    cog = get_cog(ctx)
     #    if ctx.guild:
-    #        guild_config = self.config.guild(ctx.guild)
+    #        guild_config = cog.config.guild(ctx.guild)
     #        lang = await guild_config.lang()
     #    else:
-    #        lang = await self.config.lang()
+    #        lang = await cog.config.lang()
     return lang

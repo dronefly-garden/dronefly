@@ -202,10 +202,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`herps`**`       opt taxon_ids=`
         **`       `**`       20978,26036`
         **`lichenish`**`   opt taxon_ids=`
-        **`       `**`       152028,152550,791197,`
-        **`       `**`       54743,152030,175541,`
-        **`       `**`       127378,117881,117869`
-        **`       `**`       without_taxon_id=352459`
+        **`       `**`       152028,54743,`
+        **`       `**`       152030,175541,127378,`
+        **`       `**`       117881,117869,175246`
+        **`       `**`       without_taxon_id=372831,`
+        **`       `**`       1040687,1040689,352459`
         **`mothsonly`**`   lepidoptera opt`
         **`       `**`       without_taxon_id=47224`
         **`unknown`**`     opt iconic_taxa=unknown`
