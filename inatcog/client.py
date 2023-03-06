@@ -61,7 +61,7 @@ class iNatClient(CoreiNatClient):
         self.users = pyic.UserController(self)
 
     @asynccontextmanager
-    async def set_ctx(
+    async def set_ctx_from_user(
         self,
         red_ctx: commands.Context,
         author: Optional[Union[discord.Member, discord.User]] = None,
