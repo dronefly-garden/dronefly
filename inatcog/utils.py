@@ -2,7 +2,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 import functools
-from typing import Optional, TYPE_CHECKING, Union
+from typing import Optional, Union
 from urllib.parse import urlencode
 
 import discord
@@ -11,14 +11,6 @@ from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands, config
 
 from .base_classes import COG_NAME, WWW_BASE_URL
-from .client import iNatClient
-
-
-if TYPE_CHECKING:
-    from redbot.core.commands import Context
-
-    class ContextWithClient(Context):
-        inat_client: iNatClient
 
 
 def use_client(coro_or_command):
