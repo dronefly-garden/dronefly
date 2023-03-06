@@ -556,12 +556,12 @@ class QueryResponse:
                     # lichenish, and seaslugs
                     of_taxa_description = {
                         "20978,26036": "Amphibia, Reptilia (Herps)",
-                        ("152028,54743,152030,175541,127378,117881,117869"): (
+                        ("152028,54743,152030,175541,127378,117881,117869,175246"): (
                             "Lecanoromycetes, Arthoniomycetes, etc. (Lichenized Fungi)"
                         ),
                         (
                             "130687,775798,775804,49784,500752,47113,"
-                            "775801,775833,775805,495793,47801,801507,175246"
+                            "775801,775833,775805,495793,47801,801507"
                         ): (
                             "Nudibranchia, Aplysiida, etc. (Nudibranchs, Sea Hares, "
                             "other marine slugs)"
