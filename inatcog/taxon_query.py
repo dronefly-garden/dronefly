@@ -34,7 +34,7 @@ class INatTaxonQuery:
         ranks = taxon_ancestor_ranks(taxon)
         if rank in ranks:
             rank_index = ranks.index(rank)
-            ancestor = await get_taxon(self.cog, ctx, taxon.ancestor_ids[rank_index])
+            ancestor = await get_taxon(ctx, taxon.ancestor_ids[rank_index])
             return ancestor
         return None
 
