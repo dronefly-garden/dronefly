@@ -717,9 +717,7 @@ class INatEmbeds(MixinMeta):
                     if means:
                         means_link = f"\n{format_taxon_establishment_means(means)}"
                 if lang:
-                    community_taxon = await get_taxon(
-                        self, ctx, obs.community_taxon.id, refresh_cache=False
-                    )
+                    community_taxon = await get_taxon(ctx, obs.community_taxon.id)
                 else:
                     community_taxon = obs.community_taxon
                 summary = (
@@ -759,7 +757,7 @@ class INatEmbeds(MixinMeta):
             return None
 
         if lang and obs.taxon:
-            taxon = await get_taxon(self, ctx, obs.taxon.id, refresh_cache=False)
+            taxon = await get_taxon(ctx, obs.taxon.id)
         else:
             taxon = obs.taxon
         user = obs.user
@@ -873,22 +871,18 @@ class INatEmbeds(MixinMeta):
             preferred_place_id = await get_home(ctx)
             if not common_ancestor_indices:
                 taxon = await get_taxon(
-                    self,
                     ctx,
                     ROOT_TAXON_ID,
                     preferred_place_id=preferred_place_id,
-                    refresh_cache=False,
                 )
             else:
                 common_ancestor_id = first_taxon_ancestor_ids[
                     max(common_ancestor_indices)
                 ]
                 taxon = await get_taxon(
-                    self,
                     ctx,
                     common_ancestor_id,
                     preferred_place_id=preferred_place_id,
-                    refresh_cache=False,
                 )
 
         description = (
@@ -920,11 +914,7 @@ class INatEmbeds(MixinMeta):
                 #   the photo will be set from the full-quality original in
                 #   taxon_photos.
                 if not taxon.taxon_photos or len(taxon.taxon_photos) == 0:
-                    response = await self.api.get_taxa(ctx, taxon.id)
-                    try:
-                        _taxon = Taxon.from_json(response["results"][0])
-                    except (TypeError, KeyError, IndexError):
-                        _taxon = None
+                    _taxon = ctx.inat_client.taxa.from_ids(ctx, taxon.id, limit=1).one()
                 else:
                     _taxon = taxon
                 if _taxon and index <= len(_taxon.taxon_photos):
@@ -1020,13 +1010,8 @@ class INatEmbeds(MixinMeta):
         preferred_place_id = await get_home(ctx)
         if place:
             preferred_place_id = place.place_id
-        full_record = (
-            await self.api.get_taxa(
-                ctx, taxon.id, preferred_place_id=preferred_place_id
-            )
-        )["results"][0]
-        full_taxon = Taxon.from_json(full_record)
-        means = await get_taxon_preferred_establishment_means(self, ctx, full_taxon)
+        full_taxon = ctx.inat_client.taxa.from_ids(taxon.id, limit=1, preferred_place_id=preferred_place_id).one()
+        means = await get_taxon_preferred_establishment_means(ctx, full_taxon)
         if means:
             means_fmtd = format_taxon_establishment_means(means)
         else:
@@ -1418,9 +1403,7 @@ class INatEmbeds(MixinMeta):
         counts_pat = r"(\n|^)\[[0-9, \(\)]+\]\(.*?\) " + inat_user.login
         inat_embed = msg.embeds[0]
         if inat_embed.taxon_id():
-            taxon = await get_taxon(
-                self, ctx, inat_embed.taxon_id(), refresh_cache=False
-            )
+            taxon = await get_taxon(ctx, inat_embed.taxon_id())
         else:
             taxon = None
         # Observed by count add/remove for taxon:
@@ -1454,9 +1437,7 @@ class INatEmbeds(MixinMeta):
             update_place.display_name
         )
         if inat_embed.taxon_id():
-            taxon = await get_taxon(
-                self, ctx, inat_embed.taxon_id(), refresh_cache=False
-            )
+            taxon = await get_taxon(ctx, inat_embed.taxon_id())
         else:
             taxon = None
         await self.edit_place_totals_locked(
@@ -1579,10 +1560,7 @@ class INatEmbeds(MixinMeta):
         description = inat_embed.description or ""
         new_description = re.sub(TAXONOMY_PAT, "", description)
         if new_description == description:
-            response = await self.api.get_taxa(
-                ctx, inat_embed.taxon_id(), refresh_cache=False
-            )
-            full_taxon = Taxon.from_json(response["results"][0])
+            full_taxon = ctx.inat_client.taxa.from_ids(inat_embed.taxon_id(), limit=1).one()
             if full_taxon:
                 formatted_names = format_taxon_names(
                     full_taxon.ancestors, hierarchy=True

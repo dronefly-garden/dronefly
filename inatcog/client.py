@@ -66,15 +66,10 @@ class iNatClient(CoreiNatClient):
         red_ctx: commands.Context,
         author: Optional[Union[discord.Member, discord.User]] = None,
         dronefly_ctx: Optional[DroneflyContext] = None,
-        typing: bool = False,
     ):
         """A client with both Red and Dronefly command contexts."""
         self.red_ctx = red_ctx
         self.ctx = dronefly_ctx or await get_dronefly_ctx(
             self.red_ctx, author or red_ctx.author
         )
-        if typing:
-            async with red_ctx.typing():
-                yield self
-        else:
-            yield self
+        yield self

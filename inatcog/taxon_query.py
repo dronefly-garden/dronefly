@@ -58,11 +58,9 @@ class INatTaxonQuery:
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if taxon_query.taxon_id:
-            response = await self.cog.api.get_taxa(ctx, taxon_query.taxon_id, **kwargs)
+            response = ctx.inat_client.taxa.from_ids(taxon_query.taxon_id, **kwargs)
             if response:
-                records = response.get("results")
-            if records:
-                taxon = match_taxon(taxon_query, list(map(Taxon.from_json, records)))
+                taxon = match_taxon(taxon_query, await response.async_all())
         else:
             if taxon_query.terms:
                 kwargs["q"] = " ".join(taxon_query.terms)
@@ -72,24 +70,27 @@ class INatTaxonQuery:
                 kwargs["taxon_id"] = ancestor_id
             for page in range(11):
                 if page == 0:
-                    kwargs["per_page"] = 30
+                    per_page = 30
+                    endpoint = ctx.inat_client.taxa.autocomplete
                 else:
                     # restart numbering, as we are using a different endpoint
                     # now with different page size:
                     if page == 1:
                         records_read = 0
                     kwargs["page"] = page
-                    kwargs["per_page"] = 200
-                response = await self.cog.api.get_taxa(ctx, **kwargs)
+                    per_page = 200
+                    endpoint = ctx.inat_client.taxa.search
+                kwargs["per_page"] = per_page
+                response = endpoint(limit=per_page, **kwargs)
                 if response:
-                    total_records = response.get("total_results") or 0
-                    records = response.get("results")
+                    total_records = response.count()
+                    records = await response.async_all()
                 if not records:
                     break
                 records_read += len(records)
                 taxon = match_taxon(
                     taxon_query,
-                    list(map(Taxon.from_json, records)),
+                    records,
                     scientific_name=scientific_name,
                     locale=locale,
                 )

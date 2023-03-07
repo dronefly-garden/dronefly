@@ -22,7 +22,7 @@ TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
 
 
-async def get_taxon_preferred_establishment_means(cog: Cog, ctx, taxon):
+async def get_taxon_preferred_establishment_means(ctx, taxon):
     """Get the preferred establishment means for the taxon."""
     try:
         establishment_means = taxon.establishment_means
@@ -31,7 +31,7 @@ async def get_taxon_preferred_establishment_means(cog: Cog, ctx, taxon):
         full_taxon = (
             taxon
             if taxon.listed_taxa
-            else await get_taxon(cog, ctx, taxon.id, preferred_place_id=int(home))
+            else await get_taxon(ctx, taxon.id, preferred_place_id=int(home))
         )
     except (AttributeError, LookupError):
         return None
@@ -338,7 +338,7 @@ async def format_user_taxon_counts(
     return ""
 
 
-async def get_taxon(cog: Cog, ctx: Context, taxon_id, **kwargs):
+async def get_taxon(ctx: Context, taxon_id, **kwargs):
     """Get taxon by id."""
-    results = (await cog.api.get_taxa(ctx, taxon_id, **kwargs))["results"]
-    return Taxon.from_json(results[0]) if results else None
+    taxa = ctx.inat_client.taxa.from_ids(taxon_id, limit=1, **kwargs).one()
+    return taxa

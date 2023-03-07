@@ -32,7 +32,7 @@ def use_client(coro_or_command):
                 context = arg
                 cog = get_cog(context)
                 break
-        async with cog.inat_client.set_ctx_from_user(context, typing=True) as inat_client:
+        async with cog.inat_client.set_ctx_from_user(context) as inat_client:
             context.inat_client = inat_client
             await coro(*args, **kwargs)
 

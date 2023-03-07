@@ -10,6 +10,7 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..last import INatLinkMsg
 from ..taxa import get_taxon
+from ..utils import use_client
 
 
 class CommandsLast(INatEmbeds, MixinMeta):
@@ -17,6 +18,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
 
     @commands.group()
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def last(self, ctx):
         """iNat info for the last message.
 
@@ -36,6 +38,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         return await inat_link_msg.get_last_taxon_msg(ctx, msgs)
 
     @last.group(name="obs", aliases=["observation"], invoke_without_command=True)
+    @use_client
     async def last_obs(self, ctx):
         """Last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
@@ -47,6 +50,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         await self.send_obs_embed(ctx, embed, last.obs)
 
     @last_obs.command(name="img", aliases=["image", "photo"])
+    @use_client
     async def last_obs_img(self, ctx, number=None):
         """Image for last iNat observation.
 
@@ -92,6 +96,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         return await self.query.get(ctx, last_query)
 
     @last_obs.group(name="taxon", aliases=["t"], invoke_without_command=True)
+    @use_client
     async def last_obs_taxon(self, ctx, *, query: NaturalQueryConverter = None):
         """Taxon for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
@@ -110,6 +115,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
 
     @last_obs_taxon.command(name="img", aliases=["image"])
+    @use_client
     async def last_obs_taxon_image(self, ctx, number=1):
         """Default taxon images for last iNat observation.
 
@@ -123,6 +129,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
 
     @last_obs.command(name="map", aliases=["m"])
+    @use_client
     async def last_obs_map(self, ctx):
         """Taxon range map for last iNat observation."""
         last = await self.get_last_obs_from_history(ctx)
@@ -132,6 +139,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
+    @use_client
     async def last_obs_rank(self, ctx):
         """Taxon `<rank>` for last obs (e.g. `[p]last obs family`).
 
@@ -154,7 +162,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             if last.obs.taxon.rank == rank_keyword:
                 await self.send_embed_for_taxon(ctx, last.obs.taxon)
             else:
-                full_record = await get_taxon(self, ctx, last.obs.taxon.id)
+                full_record = await get_taxon(ctx, last.obs.taxon.id)
                 ancestor = await self.taxon_query.get_taxon_ancestor(
                     full_record, rank_keyword
                 )
@@ -168,6 +176,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "The last observation has no taxon.")
 
     @last.group(name="taxon", aliases=["t"], invoke_without_command=True)
+    @use_client
     async def last_taxon(self, ctx, *, query: NaturalQueryConverter = None):
         """Last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
@@ -186,6 +195,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
 
     @last_taxon.command(name="map", aliases=["m"])
+    @use_client
     async def last_taxon_map(self, ctx):
         """Range map of last iNat taxon."""
         last = await self.get_last_taxon_from_history(ctx)
@@ -196,6 +206,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         await ctx.send(embed=await self.make_map_embed(ctx, [last.taxon]))
 
     @last_taxon.command(name="image", aliases=["img"])
+    @use_client
     async def last_taxon_image(self, ctx, number=1):
         """Default image for last taxon.
 
@@ -213,6 +224,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         await self.send_embed_for_taxon_image(ctx, last.taxon, number)
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
+    @use_client
     async def last_taxon_rank(self, ctx):
         """Taxon `<rank>` for last taxon (e.g. `[p]last t family`).
 
@@ -234,7 +246,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         if last.taxon.rank == rank_keyword:
             await self.send_embed_for_taxon(ctx, last.taxon)
         else:
-            full_record = await get_taxon(self, ctx, last.taxon.id)
+            full_record = await get_taxon(ctx, last.taxon.id)
             ancestor = await self.taxon_query.get_taxon_ancestor(
                 ctx, full_record, rank_keyword
             )

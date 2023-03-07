@@ -118,65 +118,6 @@ class INatAPI:
         full_url = f"{API_BASE_URL}{endpoint}"
         return await self._get_rate_limited(full_url, **kwargs)
 
-    # refresh_cache: Boolean
-    # - Unlike places and projects which change infrequently, we usually want the
-    #   latest, uncached taxon record.
-    async def get_taxa(self, ctx, *args, refresh_cache=True, **kwargs):
-        """Query API for taxa matching parameters.
-
-        Parameters
-        ----------
-        *args
-            - If first positional argument is given, it is passed through
-              as-is, appended to the /v1/taxa endpoint.
-            - If it's a number, the resulting record will be cached.
-
-        refresh_cache: bool
-            - Unlike places and projects which change infrequently, we
-              usually want the latest, uncached taxon record, as changes
-              are frequently made at the website (e.g. observations count).
-            - Specify refresh_cache=True when the latest data from the site
-              is not needed, e.g. to show names of ancestors for an existing
-              taxon display.
-
-        **kwargs
-            - All kwargs are passed as params on the API call.
-            - If kwargs["q"] is present, the /v1/taxa/autocomplete endpoint
-              is selected, as that gives the best results, most closely
-              matching the iNat web taxon lookup experience.
-        """
-
-        # Add default kwargs:
-        _kwargs = {
-            "all_names": "true",
-            **kwargs,
-        }
-        # Select endpoint based on call signature:
-        # - /v1/taxa is needed for id# lookup (i.e. no kwargs["q"])
-        if "q" in kwargs and "page" not in kwargs:
-            return await self.get_taxa_autocomplete(ctx, **_kwargs)
-        else:
-            # Cache lookup by id#, as those should be stable.
-            # - note: we could support splitting a list of id#s and caching each
-            #   one, but currently we don't make use of that call, so only cache
-            #   when a single ID is specified
-            if args:
-                if isinstance(args[0], int) or args[0].isnumeric():
-                    taxon_id = int(args[0])
-                    if refresh_cache or taxon_id not in self.taxa_cache:
-                        taxon = await self.get_taxa_by_id(ctx, *args, **_kwargs)
-                        if taxon:
-                            self.taxa_cache[taxon_id] = taxon
-                    return (
-                        self.taxa_cache[taxon_id]
-                        if taxon_id in self.taxa_cache
-                        else None
-                    )
-                else:
-                    return await self.get_taxa_by_id(ctx, args[0], **_kwargs)
-            else:
-                return await self.get_taxa_pyinat(ctx, **_kwargs)
-
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
 

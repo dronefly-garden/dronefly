@@ -58,6 +58,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def taxon(self, ctx, *, query: Optional[str]):
         """Taxon information.
 
@@ -76,16 +77,19 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="map")
+    @use_client
     async def taxon_map(self, ctx, *, taxa_list):
         """Show range map for one or more taxa."""
         await (self.bot.get_command("map")(ctx, taxa_list=taxa_list))
 
     @taxon.command(name="search")
+    @use_client
     async def taxon_search(self, ctx, *, query):
         """Search for matching taxa."""
         await (self.bot.get_command("search taxa")(ctx, query=query))
 
     @taxon.command()
+    @use_client
     async def bonap(self, ctx, *, query: Optional[str]):
         """North American flora info from bonap.net."""
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
@@ -143,16 +147,19 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await ctx.send(embed=embed)
 
     @taxon.command(name="bold4")
+    @use_client
     async def taxon_bold4(self, ctx, *, query: Optional[str]):
         """Barcode records from BOLD v4 (alias `[p]bold4`)."""
         await self._bold4(ctx, query)
 
     @commands.command(hidden="true")
+    @use_client
     async def bold4(self, ctx, *, query: Optional[str]):
         """Barcode records from BOLD v4 (alias `[p]t bold4`)."""
         await self._bold4(ctx, query)
 
     @taxon.command(name="means")
+    @use_client
     async def taxon_means(self, ctx, place_query: str, *, query: Optional[str]):
         """Show establishment means for taxon from the specified place."""
         try:
@@ -169,7 +176,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 title = format_taxon_name(taxon, with_term=True, lang=lang)
                 url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
                 full_taxon = await get_taxon(
-                    self, ctx, taxon.id, preferred_place_id=place_id
+                    ctx, taxon.id, preferred_place_id=place_id
                 )
                 description = f"Establishment means unknown in: {place.display_name}"
                 try:
@@ -192,6 +199,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 )
 
     @taxon.command(name="sci")
+    @use_client
     async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
         async with self._get_taxon_response(ctx, query, scientific_name=True) as (
@@ -202,6 +210,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await self.send_embed_for_taxon(ctx, query_response)
 
     @taxon.command(name="lang")
+    @use_client
     async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
         async with self._get_taxon_response(ctx, query, locale=locale) as (
@@ -213,6 +222,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @use_client
     @commands.command(hidden=True)
+    @use_client
     async def ttest(self, ctx, *, query: Optional[str]):
         """Taxon via pyinaturalist (test)."""
         taxa = await ctx.inat_client.taxa.autocomplete(q=query, limit=1).async_all()
@@ -241,6 +251,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await ctx.send(embed=embed)
 
     @commands.command(hidden=True)
+    @use_client
     async def tname(self, ctx, *, query: Optional[str]):
         """Taxon name only.
 
@@ -253,6 +264,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["sp"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def species(self, ctx, *, query: Optional[str]):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
@@ -266,6 +278,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @taxon.command(name="related")
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def taxon_related(self, ctx, *, taxa_list: str):
         """Relatedness of a list of taxa.
 
@@ -291,11 +304,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def related(self, ctx, *, taxa_list: str):
         await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
 
     @taxon.command(name="image", aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def taxon_image(
         self, ctx, number: Optional[int] = 1, *, query: Optional[str]
     ):

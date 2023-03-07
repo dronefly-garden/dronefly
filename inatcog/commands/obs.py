@@ -20,7 +20,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
-from ..utils import get_home, obs_url_from_v1
+from ..utils import get_home, obs_url_from_v1, use_client
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 
@@ -108,6 +108,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.hybrid_group(aliases=["observation"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
 
@@ -193,6 +194,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Tabulate iNaturalist data.
 
@@ -216,6 +218,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
+            if ctx.interaction:
+                await ctx.interaction.response.defer(thinking=True)
+            else:
+                await ctx.typing()
             query_response = await self.query.get(ctx, _query)
             msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
             return await self.add_obs_reaction_emojis(ctx, msg, query_response)
@@ -234,6 +240,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             if not _query.user:
                 _query.user = "me"
+            if ctx.interaction:
+                await ctx.interaction.response.defer(thinking=True)
+            else:
+                await ctx.typing()
             query_response = await self.query.get(ctx, _query)
             if not query_response.user:
                 raise BadArgument("iNat user not found")
@@ -279,6 +289,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         _query = query or await TaxonReplyConverter.convert(ctx, "")
         try:
+            if ctx.interaction:
+                await ctx.interaction.response.defer(thinking=True)
+            else:
+                await ctx.typing()
             query_response = await self.query.get(ctx, _query)
             obs_opt_view = "identifiers" if view == "ids" else "observers"
             obs_opt = query_response.obs_args()
