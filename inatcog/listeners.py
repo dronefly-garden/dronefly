@@ -27,16 +27,10 @@ DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
 # - See https://github.com/PyCQA/pylint/issues/981
 
 
-class PartialAuthor(NamedTuple):
-    """Partial Author to satisfy bot check."""
-
-    bot: bool
-
-
 class PartialMessage(NamedTuple):
     """Partial Message to satisfy bot & guild checks."""
 
-    author: PartialAuthor
+    author: discord.User
     guild: discord.Guild
 
 
@@ -102,11 +96,11 @@ class Listeners(INatEmbeds, MixinMeta):
             ctx = PartialContext(
                 self.bot, guild, channel, message.author, message, "msg autoobs", None
             )
-            async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
-                ctx.inat_client = inat_client
-                obs, url = await maybe_match_obs(self, ctx, message.content)
+            obs, url = await maybe_match_obs(self, ctx, message.content)
+            if obs:
                 # Only output if an observation is found
-                if obs:
+                async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                    ctx.inat_client = inat_client
                     embed = await self.make_obs_embed(ctx, obs, url, preview=False)
                     await self.send_obs_embed(ctx, embed, obs)
                     self.bot.dispatch("commandstats_action", ctx)
@@ -160,14 +154,13 @@ class Listeners(INatEmbeds, MixinMeta):
     ):
         """Central handler for member reactions."""
 
-        def fake_command_context(message, command):
-            partial_author = PartialAuthor(bot=False)
-            fake_command_message = PartialMessage(partial_author, message.guild)
+        def fake_command_context(message, command, member):
+            fake_command_message = PartialMessage(member, message.guild)
             ctx = PartialContext(
                 self.bot,
                 message.guild,
                 message.channel,
-                message.author,
+                member,
                 fake_command_message,
                 command,
                 None,
@@ -198,7 +191,7 @@ class Listeners(INatEmbeds, MixinMeta):
             if str(emoji) == REACTION_EMOJI["taxonomy"]:
                 command = "react taxonomy"
                 # TODO: DRY up with a context manager:
-                ctx = fake_command_context(message, command)
+                ctx = fake_command_context(message, command, member)
                 async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
                     ctx.inat_client = inat_client
                     await self.maybe_update_taxonomy(ctx, msg)
@@ -206,7 +199,7 @@ class Listeners(INatEmbeds, MixinMeta):
             elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
                     command = "react self"
-                    ctx = fake_command_context(message, command)
+                    ctx = fake_command_context(message, command, member)
                     async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
                         ctx.inat_client = inat_client
                         await self.maybe_update_user(
@@ -226,14 +219,14 @@ class Listeners(INatEmbeds, MixinMeta):
             if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:
                     command = "react home"
-                    ctx = fake_command_context(message, command)
+                    ctx = fake_command_context(message, command, member)
                     async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
                         ctx.inat_client = inat_client
                         await self.maybe_update_place(ctx, msg, member, action)
                         dispatch_commandstats(ctx)
                 elif str(emoji) == REACTION_EMOJI["place"]:
                     command = "react place"
-                    ctx = fake_command_context(message, command)
+                    ctx = fake_command_context(message, command, member)
                     async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
                         ctx.inat_client = inat_client
                         await self.maybe_update_place_by_name(ctx, msg, member)
