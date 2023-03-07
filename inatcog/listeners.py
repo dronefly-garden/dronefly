@@ -1,5 +1,6 @@
 """Listeners module for inatcog."""
-from typing import NamedTuple, Optional, Tuple, Union
+from attrs import define
+from typing import Optional, Tuple, Union
 import asyncio
 import contextlib
 from copy import copy
@@ -27,16 +28,16 @@ DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
 # - See https://github.com/PyCQA/pylint/issues/981
 
 
-class PartialMessage(NamedTuple):
+@define
+class PartialMessage():
     """Partial Message to satisfy bot & guild checks."""
-
     author: discord.User
     guild: discord.Guild
 
 
-class PartialContext(NamedTuple):
+@define
+class PartialContext():
     "Partial Context synthesized from objects passed into listeners."
-
     bot: Red
     guild: discord.Guild
     channel: discord.ChannelType
@@ -45,7 +46,7 @@ class PartialContext(NamedTuple):
     command: Optional[str] = ""
     assume_yes: bool = True
     interaction: Optional[discord.Interaction] = None
-    client: iNatClient = None
+    inat_client: iNatClient = None
 
 
 class Listeners(INatEmbeds, MixinMeta):
