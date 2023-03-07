@@ -3,8 +3,8 @@ import datetime as dt
 from operator import itemgetter
 import re
 
-from dronefly.core.models.taxon import Taxon
 from dronefly.core.parsers.url import PAT_OBS_LINK
+from pyinaturalist.models import Taxon
 
 from .base_classes import WWW_BASE_URL, Obs, User
 from .photos import Photo

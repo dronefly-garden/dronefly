@@ -7,7 +7,7 @@ from typing import List, NamedTuple, Optional, Union
 from dataclasses_json import config, DataClassJsonMixin
 from discord.utils import escape_markdown
 from dronefly.core.formatters.generic import format_taxon_name
-from dronefly.core.models.taxon import Taxon
+from pyinaturalist.models import Taxon
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo

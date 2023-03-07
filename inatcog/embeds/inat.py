@@ -17,7 +17,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
 )
 from dronefly.core.formatters.discord import format_taxon_names
-from dronefly.core.models.taxon import RANK_LEVELS, Taxon
+from dronefly.core.models.taxon import RANK_LEVELS
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -28,8 +28,8 @@ from dronefly.core.parsers.url import (
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 
-# from pyinaturalist.constants import ROOT_TAXON_ID
-from pyinaturalist.models import IconPhoto, TaxonSummary
+from pyinaturalist.constants import ROOT_TAXON_ID
+from pyinaturalist.models import IconPhoto, Taxon, TaxonSummary
 from redbot.core.commands import BadArgument
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -102,7 +102,6 @@ TAXON_PLACE_REACTION_EMOJIS = list(
 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS = list(map(REACTION_EMOJI.get, ["home", "place"]))
 OBS_REACTION_EMOJIS = NO_PARENT_TAXON_REACTION_EMOJIS
 OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
-ROOT_TAXON_ID = 48460
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981

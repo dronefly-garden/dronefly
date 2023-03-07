@@ -3,9 +3,10 @@ import copy
 import re
 from typing import NamedTuple, Optional, Union
 
-from dronefly.core.models.taxon import RANK_LEVELS, Taxon
+from dronefly.core.models.taxon import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
-from redbot.core.commands import Cog, Context
+from pyinaturalist.models import Taxon
+from redbot.core.commands import Context
 
 from .base_classes import User, Place
 from .utils import get_home, obs_url_from_v1
