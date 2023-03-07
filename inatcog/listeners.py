@@ -10,6 +10,7 @@ import discord
 from redbot.core import commands
 from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
+from .client import iNatClient
 from .converters.base import NaturalQueryConverter
 from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
@@ -50,6 +51,7 @@ class PartialContext(NamedTuple):
     command: Optional[str] = ""
     assume_yes: bool = True
     interaction: Optional[discord.Interaction] = None
+    client: iNatClient = None
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -100,12 +102,14 @@ class Listeners(INatEmbeds, MixinMeta):
             ctx = PartialContext(
                 self.bot, guild, channel, message.author, message, "msg autoobs", None
             )
-            obs, url = await maybe_match_obs(self, ctx, message.content)
-            # Only output if an observation is found
-            if obs:
-                embed = await self.make_obs_embed(ctx, obs, url, preview=False)
-                await self.send_obs_embed(ctx, embed, obs)
-                self.bot.dispatch("commandstats_action", ctx)
+            async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                ctx.inat_client = inat_client
+                obs, url = await maybe_match_obs(self, ctx, message.content)
+                # Only output if an observation is found
+                if obs:
+                    embed = await self.make_obs_embed(ctx, obs, url, preview=False)
+                    await self.send_obs_embed(ctx, embed, obs)
+                    self.bot.dispatch("commandstats_action", ctx)
 
         channel_dot_taxon = not guild or await self.config.channel(channel).dot_taxon()
         if channel_dot_taxon is None:
@@ -126,24 +130,26 @@ class Listeners(INatEmbeds, MixinMeta):
                     "msg dot_taxon",
                     None,
                 )
-                try:
-                    query = await NaturalQueryConverter.convert(ctx, mat["query"])
-                    if query.controlled_term:
+                async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                    ctx.inat_client = inat_client
+                    try:
+                        query = await NaturalQueryConverter.convert(ctx, mat["query"])
+                        if query.controlled_term:
+                            return
+                        query_response = await self.query.get(ctx, query)
+                    except (BadArgument, LookupError):
                         return
-                    query_response = await self.query.get(ctx, query)
-                except (BadArgument, LookupError):
-                    return
-                if query.user or query.place or query.project:
-                    msg = await channel.send(
-                        embed=await self.make_obs_counts_embed(query_response)
-                    )
-                    await self.add_obs_reaction_emojis(ctx, msg, query_response)
-                else:
-                    msg = await channel.send(
-                        embed=await self.make_taxa_embed(ctx, query_response)
-                    )
-                    await self.add_taxon_reaction_emojis(ctx, msg, query_response)
-                self.bot.dispatch("commandstats_action", ctx)
+                    if query.user or query.place or query.project:
+                        msg = await channel.send(
+                            embed=await self.make_obs_counts_embed(query_response)
+                        )
+                        await self.add_obs_reaction_emojis(ctx, msg, query_response)
+                    else:
+                        msg = await channel.send(
+                            embed=await self.make_taxa_embed(ctx, query_response)
+                        )
+                        await self.add_taxon_reaction_emojis(ctx, msg, query_response)
+                    self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
         self,
@@ -193,31 +199,45 @@ class Listeners(INatEmbeds, MixinMeta):
                 command = "react taxonomy"
                 # TODO: DRY up with a context manager:
                 ctx = fake_command_context(message, command)
-                await self.maybe_update_taxonomy(ctx, msg)
-                dispatch_commandstats(ctx)
+                async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                    ctx.inat_client = inat_client
+                    await self.maybe_update_taxonomy(ctx, msg)
+                    dispatch_commandstats(ctx)
             elif not inat_embed.has_places():
                 if str(emoji) == REACTION_EMOJI["self"]:
                     command = "react self"
                     ctx = fake_command_context(message, command)
-                    await self.maybe_update_user(ctx, msg, member=member, action=action)
-                    dispatch_commandstats(ctx)
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        await self.maybe_update_user(
+                            ctx, msg, member=member, action=action
+                        )
+                        dispatch_commandstats(ctx)
                 elif str(emoji) == REACTION_EMOJI["user"]:
                     ctx = PartialContext(
                         self.bot, message.guild, message.channel, member, None
                     )
-                    await self.maybe_update_user_by_name(ctx, msg=msg, member=member)
-                    dispatch_commandstats(ctx)
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        await self.maybe_update_user_by_name(
+                            ctx, msg=msg, member=member
+                        )
+                        dispatch_commandstats(ctx)
             if not (inat_embed.has_users() or inat_embed.has_not_by_users()):
                 if str(emoji) == REACTION_EMOJI["home"]:
                     command = "react home"
                     ctx = fake_command_context(message, command)
-                    await self.maybe_update_place(ctx, msg, member, action)
-                    dispatch_commandstats(ctx)
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        await self.maybe_update_place(ctx, msg, member, action)
+                        dispatch_commandstats(ctx)
                 elif str(emoji) == REACTION_EMOJI["place"]:
                     command = "react place"
                     ctx = fake_command_context(message, command)
-                    await self.maybe_update_place_by_name(ctx, msg, member)
-                    dispatch_commandstats(ctx)
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        await self.maybe_update_place_by_name(ctx, msg, member)
+                        dispatch_commandstats(ctx)
         except NoRoomInDisplay as err:
             if message.id not in self.predicate_locks:
                 self.predicate_locks[message.id] = asyncio.Lock()
