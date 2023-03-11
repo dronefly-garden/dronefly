@@ -25,7 +25,7 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource
 from ..obs import get_obs_fields
-from ..utils import get_home, obs_url_from_v1
+from ..utils import get_home, obs_url_from_v1, use_client
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):
@@ -439,6 +439,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
+    @use_client
     async def search(self, ctx, *, query):
         """Search iNat.
 
@@ -464,6 +465,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
     @search.command(name="my")
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def search_my(self, ctx, *, query: Optional[str] = ""):
         """Search your observations (alias `[p]s obs [query] by me`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
@@ -471,12 +473,14 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
     @search.command(name="home")
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def search_home(self, ctx, *, query: Optional[str] = ""):
         """Search obs from home (alias `[p]s obs [query] from home`)."""
         _query = await TaxonReplyConverter.convert(ctx, f"{query} from home")
         await self._search(ctx, _query, "obs")
 
     @search.command(name="places", aliases=["place"])
+    @use_client
     async def search_places(self, ctx, *, query):
         """Search iNat places.
 
@@ -488,6 +492,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "places")
 
     @search.command(name="projects", aliases=["prj", "project"])
+    @use_client
     async def search_projects(self, ctx, *, query):
         """Search iNat projects.
 
@@ -499,6 +504,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "projects")
 
     @search.command(name="taxa", aliases=["taxon"])
+    @use_client
     async def search_taxa(self, ctx, *, query):
         """Search iNat taxa.
 
@@ -512,6 +518,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "taxa")
 
     @search.command(name="inactive")
+    @use_client
     async def search_inactive(self, ctx, *, query):
         """Search iNat taxa (includes inactive).
 
@@ -527,6 +534,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "inactive")
 
     @search.command(name="users", aliases=["user", "person", "people"])
+    @use_client
     async def search_users(self, ctx, *, query):
         """Search iNat users.
 
@@ -542,6 +550,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         await self._search(ctx, query, "users")
 
     @search.command(name="obs", aliases=["observation", "observations"])
+    @use_client
     async def search_obs(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Search iNat observations.
 
