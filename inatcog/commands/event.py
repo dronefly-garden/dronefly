@@ -147,11 +147,11 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
             if action == "join":
                 update_response = await client.projects.async_add_users(
-                    project.id, inat_user.user_id, auth=True
+                    project.id, inat_user.user_id
                 )
             else:
                 update_response = await client.projects.async_delete_users(
-                    project.id, inat_user.user_id, auth=True
+                    project.id, inat_user.user_id
                 )
             command_response = await get_command_response(
                 inat_user, project, update_response
