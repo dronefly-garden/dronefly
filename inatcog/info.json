@@ -18,5 +18,5 @@
   ],
   "tags": ["inaturalist", "naturalist", "nature"],
   "hidden": false,
-  "min_bot_version": "3.4.6"
+  "min_bot_version": "3.5.0"
 }
