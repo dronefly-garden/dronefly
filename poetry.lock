@@ -845,7 +845,7 @@ develop = true
 attrs = ">=21.2"
 dateparser = "^1.1.1"
 inflect = "^5.3.0"
-pyinaturalist = ">=0.18,<0.19"
+pyinaturalist = ">=0.18,<0.20"
 rich = ">=10.9,<14"
 
 [package.source]
@@ -1678,7 +1678,7 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyinaturalist"
-version = "0.18.1"
+version = "0.19.0"
 description = "iNaturalist API client for python"
 category = "main"
 optional = false
@@ -1705,22 +1705,22 @@ docs = ["furo (>=2022.9,<2023.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (
 type = "git"
 url = "https://github.com/pyinat/pyinaturalist"
 reference = "HEAD"
-resolved_reference = "264eb6310f1b66f8438ed44b73925c68836265c4"
+resolved_reference = "d09c0f0878d0c4ba22fa38a3084bda01e26d11d9"
 
 [[package]]
 name = "pylint"
-version = "2.16.4"
+version = "2.17.0"
 description = "python code static checker"
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "pylint-2.16.4-py3-none-any.whl", hash = "sha256:4a770bb74fde0550fa0ab4248a2ad04e7887462f9f425baa0cd8d3c1d098eaee"},
-    {file = "pylint-2.16.4.tar.gz", hash = "sha256:8841f26a0dbc3503631b6a20ee368b3f5e0e5461a1d95cf15d103dab748a0db3"},
+    {file = "pylint-2.17.0-py3-none-any.whl", hash = "sha256:e097d8325f8c88e14ad12844e3fe2d963d3de871ea9a8f8ad25ab1c109889ddc"},
+    {file = "pylint-2.17.0.tar.gz", hash = "sha256:1460829b6397cb5eb0cdb0b4fc4b556348e515cdca32115f74a1eb7c20b896b4"},
 ]
 
 [package.dependencies]
-astroid = ">=2.14.2,<=2.16.0-dev0"
+astroid = ">=2.15.0,<=2.17.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = {version = ">=0.2", markers = "python_version < \"3.11\""}
 isort = ">=4.2.5,<6"
@@ -2051,7 +2051,7 @@ dev = ["black (==22.1.0)", "flake8 (==4.0.1)", "isort (==5.10.1)"]
 
 [[package]]
 name = "Red-DiscordBot"
-version = "3.5.0.dev322+gd9c46342d.dirty"
+version = "3.5.0.dev324+g2ab204438"
 description = "A highly customisable Discord bot"
 category = "main"
 optional = false
@@ -2361,14 +2361,14 @@ jeepney = ">=0.6"
 
 [[package]]
 name = "setuptools"
-version = "67.5.1"
+version = "67.6.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.5.1-py3-none-any.whl", hash = "sha256:1c39d42bda4cb89f7fdcad52b6762e3c309ec8f8715b27c684176b7d71283242"},
-    {file = "setuptools-67.5.1.tar.gz", hash = "sha256:15136a251127da2d2e77ac7a1bc231eb504654f7e3346d93613a13f2e2787535"},
+    {file = "setuptools-67.6.0-py3-none-any.whl", hash = "sha256:b78aaa36f6b90a074c1fa651168723acbf45d14cb1196b6f02c0fd07f17623b2"},
+    {file = "setuptools-67.6.0.tar.gz", hash = "sha256:2ee892cd5f29f3373097f5a814697e397cf3ce313616df0af11231e2ad118077"},
 ]
 
 [package.extras]
@@ -2706,14 +2706,14 @@ six = "*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.14"
+version = "1.26.15"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 files = [
-    {file = "urllib3-1.26.14-py2.py3-none-any.whl", hash = "sha256:75edcdc2f7d85b137124a6c3c9fc3933cdeaa12ecb9a6a959f22797a0feca7e1"},
-    {file = "urllib3-1.26.14.tar.gz", hash = "sha256:076907bf8fd355cde77728471316625a4d2f7e713c125f51953bb5b3eecf4f72"},
+    {file = "urllib3-1.26.15-py2.py3-none-any.whl", hash = "sha256:aa751d169e23c7479ce47a0cb0da579e3ede798f994f5816a74e4f4500dcea42"},
+    {file = "urllib3-1.26.15.tar.gz", hash = "sha256:8a388717b9476f934a21484e8c8e61875ab60644d29b9b39e11e4b9dc1c6b305"},
 ]
 
 [package.extras]
