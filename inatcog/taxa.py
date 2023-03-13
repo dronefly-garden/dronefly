@@ -341,5 +341,6 @@ async def format_user_taxon_counts(
 
 async def get_taxon(ctx: Context, taxon_id, **kwargs):
     """Get taxon by id."""
-    taxa = ctx.inat_client.taxa.from_ids(taxon_id, limit=1, **kwargs).one()
-    return taxa
+    paginator = ctx.inat_client.taxa.from_ids(taxon_id, limit=1, **kwargs)
+    taxa = await paginator.async_all() if paginator else None
+    return taxa[0] if taxa else None

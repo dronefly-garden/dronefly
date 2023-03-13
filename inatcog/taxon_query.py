@@ -58,9 +58,7 @@ class INatTaxonQuery:
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if taxon_query.taxon_id:
-            response = ctx.inat_client.taxa.from_ids(taxon_query.taxon_id, **kwargs)
-            if response:
-                taxon = match_taxon(taxon_query, await response.async_all())
+            taxon = await get_taxon(taxon_query.taxon_id)
         else:
             if taxon_query.terms:
                 kwargs["q"] = " ".join(taxon_query.terms)
@@ -81,10 +79,10 @@ class INatTaxonQuery:
                     per_page = 200
                     endpoint = ctx.inat_client.taxa.search
                 kwargs["per_page"] = per_page
-                response = endpoint(limit=per_page, **kwargs)
-                if response:
-                    total_records = response.count()
-                    records = await response.async_all()
+                paginator = endpoint(limit=per_page, **kwargs)
+                if paginator:
+                    records = await paginator.async_all()
+                    total_records = paginator.count()
                 if not records:
                     break
                 records_read += len(records)
@@ -229,7 +227,7 @@ class INatTaxonQuery:
 
         preferred_place_id = await get_home(ctx)
 
-        async def get_taxon(query):
+        async def _get_taxon(query):
             # TODO: extract from the following whatever logic applies
             # to our taxon search and redo in a more modular way:
             # - components:
@@ -252,7 +250,7 @@ class INatTaxonQuery:
         for query_str in queries:
             try:
                 _query = await NaturalQueryConverter.convert(ctx, query_str)
-                taxon = await get_taxon(_query)
+                taxon = await _get_taxon(_query)
                 if taxon:
                     taxa[str(taxon.id)] = taxon
             except (BadArgument, LookupError):

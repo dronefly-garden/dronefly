@@ -62,10 +62,11 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
         async def get_event_project(client: iNatClient, abbrev: str):
             event_project_id = await get_event_project_id(client.red_ctx, abbrev)
-            response = await client.projects.from_ids(event_project_id)
-            if not response:
-                raise LookupError("iNat project not found.")
-            return response.one()
+            paginator = client.projects.from_ids(event_project_id, limit=1)
+            projects = await paginator.async_all() if paginator else None
+            if projects:
+                return projects[0]
+            raise LookupError("iNat project not found.")
 
         async def check_manager(project: Project, manager_inat_user: User):
             # checks the validity of the bot user and the manager user:

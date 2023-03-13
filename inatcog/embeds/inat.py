@@ -913,7 +913,7 @@ class INatEmbeds(MixinMeta):
                 #   the photo will be set from the full-quality original in
                 #   taxon_photos.
                 if not taxon.taxon_photos or len(taxon.taxon_photos) == 0:
-                    _taxon = ctx.inat_client.taxa.from_ids(ctx, taxon.id, limit=1).one()
+                    _taxon = await get_taxon(ctx, taxon.id)
                 else:
                     _taxon = taxon
                 if _taxon and index <= len(_taxon.taxon_photos):
@@ -1009,12 +1009,9 @@ class INatEmbeds(MixinMeta):
         preferred_place_id = await get_home(ctx)
         if place:
             preferred_place_id = place.place_id
-        full_taxon = ctx.inat_client.taxa.from_ids(taxon.id, limit=1, preferred_place_id=preferred_place_id).one()
+        full_taxon = await get_taxon(ctx, taxon_id=taxon.id, preferred_place_id=preferred_place_id)
         means = await get_taxon_preferred_establishment_means(ctx, full_taxon)
-        if means:
-            means_fmtd = format_taxon_establishment_means(means)
-        else:
-            means_fmtd = None
+        means_fmtd = format_taxon_establishment_means(means) if means else None
         status = full_taxon.conservation_status
         # Workaround for neither conservation_status record has both status_name and url:
         # - /v1/taxa/autocomplete result has 'threatened' as status_name for
@@ -1559,7 +1556,7 @@ class INatEmbeds(MixinMeta):
         description = inat_embed.description or ""
         new_description = re.sub(TAXONOMY_PAT, "", description)
         if new_description == description:
-            full_taxon = ctx.inat_client.taxa.from_ids(inat_embed.taxon_id(), limit=1).one()
+            full_taxon = await get_taxon(inat_embed.taxon_id())
             if full_taxon:
                 formatted_names = format_taxon_names(
                     full_taxon.ancestors, hierarchy=True

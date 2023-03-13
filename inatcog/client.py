@@ -21,7 +21,6 @@ class iNatClient(CoreiNatClient):
         super().__init__(*args, **kwargs)
         self.projects.add_users = asyncify(self, self.projects.add_users)
         self.projects.delete_users = asyncify(self, self.projects.delete_users)
-        self.projects.from_ids = asyncify(self, self.projects.from_ids)
 
     @asynccontextmanager
     async def set_ctx_from_user(
