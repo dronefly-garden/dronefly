@@ -62,7 +62,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
         async def get_event_project(client: iNatClient, abbrev: str):
             event_project_id = await get_event_project_id(client.red_ctx, abbrev)
-            response = await client.projects.async_from_ids(event_project_id)
+            response = await client.projects.from_ids(event_project_id)
             if not response:
                 raise LookupError("iNat project not found.")
             return response.one()
@@ -146,11 +146,11 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             inat_user = await get_inat_user(user)
 
             if action == "join":
-                update_response = await client.projects.async_add_users(
+                update_response = await client.projects.add_users(
                     project.id, inat_user.user_id
                 )
             else:
-                update_response = await client.projects.async_delete_users(
+                update_response = await client.projects.delete_users(
                     project.id, inat_user.user_id
                 )
             command_response = await get_command_response(
