@@ -58,7 +58,7 @@ class INatTaxonQuery:
         if preferred_place_id:
             kwargs["preferred_place_id"] = int(preferred_place_id)
         if taxon_query.taxon_id:
-            taxon = await get_taxon(taxon_query.taxon_id)
+            taxon = await get_taxon(ctx, taxon_query.taxon_id)
         else:
             if taxon_query.terms:
                 kwargs["q"] = " ".join(taxon_query.terms)

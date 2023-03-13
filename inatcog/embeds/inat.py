@@ -912,8 +912,8 @@ class INatEmbeds(MixinMeta):
                 # - In either case, we retrieve the full record via taxon_id so
                 #   the photo will be set from the full-quality original in
                 #   taxon_photos.
-                if not taxon.taxon_photos or len(taxon.taxon_photos) == 0:
-                    _taxon = await get_taxon(ctx, taxon.id)
+                if getattr(taxon, 'taxon_photos', None) is None or len(taxon.taxon_photos) == 0:
+                    _taxon = await ctx.inat_client.taxa.populate(taxon)
                 else:
                     _taxon = taxon
                 if _taxon and index <= len(_taxon.taxon_photos):
@@ -1005,11 +1005,7 @@ class INatEmbeds(MixinMeta):
 
         lang = await get_lang(ctx)
         title = format_taxon_title(taxon, lang=lang)
-
-        preferred_place_id = await get_home(ctx)
-        if place:
-            preferred_place_id = place.place_id
-        full_taxon = await get_taxon(ctx, taxon_id=taxon.id, preferred_place_id=preferred_place_id)
+        full_taxon = await ctx.inat_client.taxa.populate(taxon)
         means = await get_taxon_preferred_establishment_means(ctx, full_taxon)
         means_fmtd = format_taxon_establishment_means(means) if means else None
         status = full_taxon.conservation_status

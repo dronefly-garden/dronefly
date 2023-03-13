@@ -29,16 +29,13 @@ async def get_taxon_preferred_establishment_means(ctx, taxon):
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
         home = await get_home(ctx)
-        full_taxon = (
-            taxon
-            if taxon.listed_taxa
-            else await get_taxon(ctx, taxon.id, preferred_place_id=int(home))
-        )
+        if getattr(taxon, 'listed_taxa', None) is None:
+            taxon = await ctx.client.taxa.populate(taxon)
     except (AttributeError, LookupError):
         return None
 
     find_means = (
-        means for means in full_taxon.listed_taxa if means.place.id == place_id
+        means for means in taxon.listed_taxa if means.place.id == place_id
     )
     return next(find_means, establishment_means)
 

@@ -99,7 +99,7 @@ class INatQuery:
         )
         return controlled_term
 
-    async def get(self, ctx: Context, query: Query, scientific_name=False, locale=None):
+    async def get(self, ctx: Context, query: Query, scientific_name=False, locale=None, **kwargs):
         """Get all requested iNat entities."""
         args = {}
 
