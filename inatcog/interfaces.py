@@ -43,4 +43,5 @@ class MixinMeta(ABC):
         self.query: INatQuery
         self.user_cache_init: dict
         self.member_as: DefaultDict[Tuple[int, int], AntiSpam]
+        self._log_ignored_reactions: bool
         self._ready_event: Event

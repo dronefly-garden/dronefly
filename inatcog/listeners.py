@@ -17,12 +17,15 @@ from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
+from .utils import has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
 # Minimum 4 characters, first dot must not be followed by a space. Last dot
 # must not be preceded by a space.
 DOT_TAXON_PAT = re.compile(r"(^|\s)\.(?P<query>[^\s\.].{2,}?[^\s\.])\.(\s|$)")
+KNOWN_REACTION_EMOJIS = REACTION_EMOJI.values()
+UNKNOWN_REACTION_MSG = "Not a known reaction."
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
@@ -255,6 +258,8 @@ class Listeners(INatEmbeds, MixinMeta):
     ) -> Tuple[discord.Member, discord.Message]:
         """Return reaction member & message if valid."""
         await self._ready_event.wait()
+        if str(payload.emoji) not in KNOWN_REACTION_EMOJIS:
+            raise ValueError(UNKNOWN_REACTION_MSG)
         guild_id = payload.guild_id or 0
         if not guild_id:
             # in DM
@@ -287,7 +292,26 @@ class Listeners(INatEmbeds, MixinMeta):
                     "Message can't be read without read_message_history permission."
                 ) from err
             try:
-                message = await channel.fetch_message(payload.message_id)
+                # Reacting to old messages is an API call, so is a privilege only
+                # extended to users added in this server.
+                if await has_valid_user_config(self, member, anywhere=False):
+                    # TODO: antispam to prevent exceeded fetch messages > 24 hrs
+                    # rate limit. We need different buckets for different classes
+                    # of use:
+                    # - reasonable limit globally over 24 hrs
+                    # - reasonable limit per member over 24 hrs
+                    logger.debug(
+                        "Handling reaction %s by %d to uncached message: %s-%s",
+                        payload.channel_id,
+                        payload.message_id,
+                        payload.emoji,
+                        member.id,
+                    )
+                    message = await channel.fetch_message(payload.message_id)
+                else:
+                    raise ValueError(
+                        "Discarded reaction to uncached message by member not known in this server."
+                    ) from err
             except discord.errors.NotFound:
                 raise ValueError(
                     "Message was deleted before reaction handled."
@@ -304,7 +328,9 @@ class Listeners(INatEmbeds, MixinMeta):
         """Central handler for reactions added to bot messages."""
         try:
             (member, message) = await self.maybe_get_reaction(payload)
-        except ValueError:
+        except ValueError as err:
+            if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
+                logger.debug(str(err) + "\n" + repr(payload))
             return
         await self.handle_member_reaction(payload.emoji, member, message, "add")
 
@@ -315,6 +341,8 @@ class Listeners(INatEmbeds, MixinMeta):
         """Central handler for reactions removed from bot messages."""
         try:
             (member, message) = await self.maybe_get_reaction(payload)
-        except ValueError:
+        except ValueError as err:
+            if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
+                logger.debug(str(err) + "\n" + repr(payload))
             return
         await self.handle_member_reaction(payload.emoji, member, message, "remove")
