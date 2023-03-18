@@ -40,7 +40,7 @@ from redbot.core.commands import Context, Cog
 from dronefly.core.clients.inat import iNatClient as CoreiNatClient
 from dronefly.core.commands import Context as DroneflyContext
 import html2markdown
-from pyinaturalist import get_access_token, get_taxa_autocomplete, get_projects_by_id
+from pyinaturalist import get_taxa_autocomplete, get_projects_by_id
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -391,13 +391,12 @@ class INatAPI:
         if action not in ("join", "leave"):
             raise ValueError(f"Unknown action: {action}")
         with self.inat.set_ctx(ctx, dronefly_ctx) as inat:
-            token = get_access_token()
             if action == "join":
                 endpoint = inat.projects.add_users
             else:
                 endpoint = inat.projects.delete_users
             return await inat.loop.run_in_executor(
-                None, partial(endpoint, project_id, user_ids, access_token=token)
+                None, partial(endpoint, project_id, user_ids)
             )
 
     # Some thin wrappers around pyinaturalist endpoints:
