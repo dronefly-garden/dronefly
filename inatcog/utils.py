@@ -163,6 +163,8 @@ async def get_dronefly_user_config(
     cog = get_cog(ctx)
     global_config = cog.config
     guild_config = cog.config.guild(ctx.guild) if ctx.guild else None
+    guild_config_dict = None
+    global_config_dict = None
     try:
         user_config = await get_valid_user_config(ctx, user or ctx.author, anywhere)
         user_config_dict = await user_config.all()
@@ -175,9 +177,11 @@ async def get_dronefly_user_config(
         if user_config_dict:
             value = user_config_dict.get(cog_key)
         if value is None and cog_key in COG_HAS_USER_DEFAULTS:
-            value = guild_config.get_attr(cog_key)
+            guild_config_dict = guild_config_dict or await guild_config.all()
+            value = guild_config.get(cog_key)
             if value is None:
-                value = global_config.get_attr(cog_key)
+                global_config_dict = global_config_dict or await global_config.all()
+                value = global_config.get(cog_key)
         dronefly_config[core_key] = value
     return dronefly_config
 
