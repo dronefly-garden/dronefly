@@ -10,7 +10,6 @@ from .common import DEQUOTE
 from .controlled_terms import ControlledTerm, match_controlled_term
 from .converters.base import MemberConverter
 from .base_classes import DateSelector, QueryResponse, User
-from .utils import get_home
 
 
 def _get_options(query_options: list):
@@ -103,7 +102,6 @@ class INatQuery:
         """Get all requested iNat entities."""
         args = {}
 
-        preferred_place_id = await get_home(ctx)
         args["project"] = (
             await self.cog.project_table.get_project(ctx.guild, query.project)
             if has_value(query.project)
@@ -114,16 +112,14 @@ class INatQuery:
             if has_value(query.place)
             else None
         )
+        taxon_params = {
+            "scientific_name": scientific_name,
+            "locale": locale,
+        }
         if args["place"]:
-            preferred_place_id = args["place"].place_id
+            taxon_params["preferred_place_id"] = args["place"].place_id
         args["taxon"] = (
-            await self.cog.taxon_query.maybe_match_taxon_compound(
-                ctx,
-                query,
-                preferred_place_id=preferred_place_id,
-                scientific_name=scientific_name,
-                locale=locale,
-            )
+            await self.cog.taxon_query.maybe_match_taxon_compound(ctx, query, **taxon_params)
             if has_value(query.main)
             else None
         )

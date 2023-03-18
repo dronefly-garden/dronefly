@@ -6,7 +6,6 @@ from dronefly.core.query.query import Query, TaxonQuery
 
 from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, match_taxon
-from .utils import get_home
 
 
 class INatTaxonQuery:
@@ -225,8 +224,6 @@ class INatTaxonQuery:
         """
         queries = query.split(",")
 
-        preferred_place_id = await get_home(ctx)
-
         async def _get_taxon(query):
             # TODO: extract from the following whatever logic applies
             # to our taxon search and redo in a more modular way:
@@ -239,11 +236,7 @@ class INatTaxonQuery:
             #   the whole result set is fully enumerated (can't be done
             #   efficiently with an arbitrary result set! might work for
             #   single "root" taxon for `in` though)
-            return await self.cog.taxon_query.maybe_match_taxon_compound(
-                ctx,
-                query,
-                preferred_place_id=preferred_place_id,
-            )
+            return await self.cog.taxon_query.maybe_match_taxon_compound(ctx, query)
 
         # De-duplicate the query via dict:
         taxa = {}

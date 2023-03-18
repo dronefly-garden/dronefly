@@ -9,7 +9,7 @@ from pyinaturalist.models import Taxon
 from redbot.core.commands import Context
 
 from .base_classes import User, Place
-from .utils import get_home, obs_url_from_v1
+from .utils import obs_url_from_v1
 
 
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
@@ -28,7 +28,6 @@ async def get_taxon_preferred_establishment_means(ctx, taxon):
     try:
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
-        home = await get_home(ctx)
         if getattr(taxon, 'listed_taxa', None) is None:
             taxon = await ctx.client.taxa.populate(taxon)
     except (AttributeError, LookupError):

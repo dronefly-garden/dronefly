@@ -98,7 +98,6 @@ class INatLinkMsg:
         mat = match_taxon_link(found)
         taxon_id = int(mat["taxon_id"])
         url = mat["url"] or WWW_BASE_URL + "/taxa/" + str(taxon_id)
-        home = await get_home(ctx)
-        taxon = await get_taxon(ctx, taxon_id, preferred_place_id=home)
+        taxon = await get_taxon(ctx, taxon_id)
 
         return TaxonLinkMsg(url, taxon)

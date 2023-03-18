@@ -64,7 +64,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER_PAT,
 )
 from ..users import User
-from ..utils import get_home, get_lang, has_valid_user_config, obs_url_from_v1
+from ..utils import get_lang, has_valid_user_config, obs_url_from_v1
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -867,22 +867,13 @@ class INatEmbeds(MixinMeta):
                 first_taxon_ancestor_ids.index(ancestor_id)
                 for ancestor_id in common_ancestors
             ]
-            preferred_place_id = await get_home(ctx)
             if not common_ancestor_indices:
-                taxon = await get_taxon(
-                    ctx,
-                    ROOT_TAXON_ID,
-                    preferred_place_id=preferred_place_id,
-                )
+                taxon = await get_taxon(ctx, ROOT_TAXON_ID)
             else:
                 common_ancestor_id = first_taxon_ancestor_ids[
                     max(common_ancestor_indices)
                 ]
-                taxon = await get_taxon(
-                    ctx,
-                    common_ancestor_id,
-                    preferred_place_id=preferred_place_id,
-                )
+                taxon = await get_taxon(ctx, common_ancestor_id)
 
         description = (
             f"{names}\n**are related by {taxon.rank}**: "
