@@ -3,7 +3,7 @@ import copy
 import re
 from typing import NamedTuple, Optional, Union
 
-from dronefly.core.models.taxon import RANK_LEVELS
+from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
 from pyinaturalist.models import Taxon
 from redbot.core.commands import Context

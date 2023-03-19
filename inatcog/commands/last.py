@@ -1,7 +1,7 @@
 """Module for last command group."""
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
-from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_KEYWORDS
+from dronefly.core.constants import RANK_EQUIVALENTS, RANK_KEYWORDS
 from dronefly.core.query.query import Query, TaxonQuery
 from pyinaturalist.models import Taxon
 

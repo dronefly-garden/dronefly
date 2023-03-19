@@ -1,8 +1,9 @@
 """Module to query iNat taxa."""
 from redbot.core.commands import BadArgument, Context
+from dronefly.core.constants import RANK_EQUIVALENTS, RANK_LEVELS
 from dronefly.core.formatters.generic import format_taxon_name
-from dronefly.core.models.taxon import RANK_EQUIVALENTS, RANK_LEVELS, taxon_ancestor_ranks
 from dronefly.core.query.query import Query, TaxonQuery
+from pyinaturalist.models import Taxon
 
 from .converters.base import NaturalQueryConverter
 from .taxa import get_taxon, match_taxon
@@ -29,6 +30,13 @@ class INatTaxonQuery:
         Taxon
             A Taxon object for the matching ancestor, if any, else None.
         """
+        def taxon_ancestor_ranks(taxon: Taxon):
+            return (
+                ["stateofmatter"] + [ancestor.rank for ancestor in taxon.ancestors]
+                if taxon.ancestors
+                else []
+            )
+
         rank = RANK_EQUIVALENTS.get(rank) or rank
         ranks = taxon_ancestor_ranks(taxon)
         if rank in ranks:
