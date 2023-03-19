@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 import urllib.parse
 
-from dronefly.core.models.taxon import RANK_LEVELS
+from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument

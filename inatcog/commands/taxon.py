@@ -11,7 +11,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
 )
-from dronefly.core.models.taxon import TRACHEOPHYTA_ID
+from dronefly.core.constants import TRACHEOPHYTA_ID
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 

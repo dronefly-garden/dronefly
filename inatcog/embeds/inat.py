@@ -11,13 +11,13 @@ from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
+from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
     format_taxon_establishment_means,
     format_taxon_name,
 )
 from dronefly.core.formatters.discord import format_taxon_names
-from dronefly.core.models.taxon import RANK_LEVELS
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
