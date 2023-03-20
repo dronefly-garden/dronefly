@@ -16,8 +16,9 @@ from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
     format_taxon_establishment_means,
     format_taxon_name,
+    format_taxon_names,
+    TaxonFormatter as CoreTaxonFormatter,
 )
-from dronefly.core.formatters.discord import format_taxon_names
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -27,10 +28,10 @@ from dronefly.core.parsers.url import (
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
-
-from pyinaturalist.constants import ROOT_TAXON_ID
+import inflect
+from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
 from pyinaturalist.models import IconPhoto, Taxon, TaxonSummary
-from redbot.core.commands import BadArgument
+from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
@@ -53,7 +54,6 @@ from ..taxa import (
     format_place_taxon_counts,
     format_user_taxon_counts,
     get_taxon,
-    get_taxon_preferred_establishment_means,
     TAXON_COUNTS_HEADER,
     TAXON_COUNTS_HEADER_PAT,
     TAXON_PLACES_HEADER,
@@ -105,6 +105,78 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
+
+p = inflect.engine()
+
+
+class TaxonFormatter(CoreTaxonFormatter):
+    def format(
+        self,
+        with_ancestors: bool = True
+    ):
+        """Format the taxon as markdown.
+
+        with_ancestors: bool, optional
+            When False, omit ancestors
+        """
+        description = self.format_taxon_description()
+        if with_ancestors and self.taxon.ancestors:
+            description += (
+                " in: "
+                + format_taxon_names(
+                    self.taxon.ancestors,
+                    hierarchy=True,
+                    max_len=self.max_len,
+                )
+            )
+        else:
+            description += "."
+        return description
+
+
+class QueryResponseFormatter(TaxonFormatter):
+    def __init__(
+            self,
+            query_response: QueryResponse,
+            observations: JsonResponse=None,
+            **kwargs,
+        ):
+        super().__init__(**kwargs)
+        self.query_response = query_response
+        self.observations = observations
+        self.obs_count_formatter = self.ObsCountFormatter(query_response.taxon, query_response, observations)
+
+    class ObsCountFormatter(TaxonFormatter.ObsCountFormatter):
+        def __init__(self, taxon: Taxon, query_response: QueryResponse=None, observations: JsonResponse=None):
+            super().__init__(taxon)
+            self.query_response = query_response
+            self.observations = observations
+
+        def count(self):
+            if self.observations:
+                count = self.observations.get('total_results')
+            else:
+                count = self.taxon.observations_count
+            return count
+
+        def url(self):
+            return obs_url_from_v1(self.query_response.obs_args())
+
+        def description(self):
+            count = self.link()
+            count_str = "uncounted" if count is None else str(count)
+            adjectives = self.query_response.adjectives # rg, nid, etc.
+            query_without_taxon = copy.copy(self.query_response)
+            query_without_taxon.taxon = None
+            description = [
+                count_str,
+                *adjectives,
+                p.plural('observation', count),
+            ]
+            filter = query_without_taxon.obs_query_description(with_adjectives=False) # place, prj, etc.
+            if filter:
+                description.append(filter)
+            return " ".join(description)
 
 
 class INatEmbed(discord.Embed):
@@ -921,13 +993,15 @@ class INatEmbeds(MixinMeta):
         return embed
 
     async def make_taxa_embed(
-        self, ctx, arg: Union[QueryResponse, Taxon], include_ancestors=True
+        self, ctx: Context, arg: Union[QueryResponse, Taxon], include_ancestors=True
     ):
         """Make embed describing taxa record."""
-        obs_cnt_filtered = False
-        adjectives = []
+        formatter_params = {
+            "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
+            "with_url": False,
+        }
         if isinstance(arg, QueryResponse):
-            taxon = arg.taxon
+            taxon = await ctx.inat_client.taxa.populate(arg.taxon)
             user = arg.user
             place = arg.place
             title_query_response = copy.copy(arg)
@@ -936,87 +1010,22 @@ class INatEmbeds(MixinMeta):
             elif place:
                 title_query_response.place = None
             obs_args = title_query_response.obs_args()
-            filter_args = copy.copy(obs_args)
-            del filter_args["taxon_id"]
-            obs_cnt = taxon.observations_count
-            obs_url = obs_url_from_v1(obs_args)
-            # i.e. any args other than the ones accounted for in rec.observations_count
-            if filter_args:
-                response = await self.api.get_observations(per_page=0, **obs_args)
-                if response:
-                    obs_cnt_filtered = True
-                    obs_cnt = response.get("total_results")
-            adjectives = arg.adjectives
+            # i.e. any args other than the ones accounted for in taxon.observations_count
+            if [arg for arg in obs_args if arg != "taxon_id"]:
+                formatter_params["observations"] = await self.api.get_observations(per_page=0, **obs_args)
+            formatter = QueryResponseFormatter(title_query_response, taxon=taxon, **formatter_params)
         elif isinstance(arg, Taxon):
-            taxon = arg
+            taxon = await ctx.inat_client.taxa.populate(arg)
             user = None
             place = None
             obs_args = {"taxon_id": taxon.id}
-            obs_cnt = taxon.observations_count
-            obs_url = obs_url_from_v1(obs_args)
+            formatter = TaxonFormatter(taxon, max_len=MAX_EMBED_DESCRIPTION_LEN, **formatter_params)
         else:
             logger.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
 
         embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
-        p = self.p  # pylint: disable=invalid-name
-
-        async def format_description(
-            rec, status, means_fmtd, obs_cnt, obs_url, obs_cnt_filtered
-        ):
-            obs_fmt = f"[{obs_cnt:,}]({obs_url})"
-            if status:
-                status_link = format_taxon_conservation_status(
-                    status, brief=True, inflect=True
-                )
-                descriptor = " ".join([status_link, rec.rank])
-            else:
-                descriptor = p.a(rec.rank)
-            _observations = []
-            if adjectives:
-                _observations.append(", ".join(adjectives))
-            _observations.append(p.plural("observation", obs_cnt))
-            description = f"is {descriptor} with {obs_fmt} {' '.join(_observations)}"
-            if obs_cnt_filtered:
-                obs_without_taxon = copy.copy(title_query_response)
-                obs_without_taxon.taxon = None
-                description += (
-                    f" {obs_without_taxon.obs_query_description(with_adjectives=False)}"
-                )
-            if means_fmtd:
-                description += f" {means_fmtd}"
-            return description
-
-        async def format_ancestors(description, ancestors):
-            if ancestors:
-                description += " in: " + format_taxon_names(ancestors, hierarchy=True)
-            else:
-                description += "."
-            return description
-
-        lang = await get_lang(ctx)
-        title = format_taxon_title(taxon, lang=lang)
-        full_taxon = await ctx.inat_client.taxa.populate(taxon)
-        means = await get_taxon_preferred_establishment_means(ctx, full_taxon)
-        means_fmtd = format_taxon_establishment_means(means) if means else None
-        status = full_taxon.conservation_status
-        # Workaround for neither conservation_status record has both status_name and url:
-        # - /v1/taxa/autocomplete result has 'threatened' as status_name for
-        #   status 't' polar bear, but no URL
-        # - /v1/taxa/# for polar bear has the URL, but no status_name 'threatened'
-        # - therefore, our grubby hack is to put them together here
-        try:
-            if not status.status_name and taxon.conservation_status.status_name:
-                status.status_name = taxon.conservation_status.status_name
-        except AttributeError:
-            pass
-
-        description = await format_description(
-            taxon, status, means_fmtd, obs_cnt, obs_url, obs_cnt_filtered
-        )
-
-        if include_ancestors:
-            description = await format_ancestors(description, full_taxon.ancestors)
+        description = formatter.format(with_ancestors=include_ancestors)
 
         if user:
             formatted_counts = await format_user_taxon_counts(
@@ -1031,7 +1040,7 @@ class INatEmbeds(MixinMeta):
             if formatted_counts:
                 description += f"\n{TAXON_PLACES_HEADER}\n{formatted_counts}"
 
-        embed.title = title
+        embed.title = formatter.format_title()
         embed.description = description
         embed.set_thumbnail(
             url=taxon.default_photo.square_url
@@ -1543,7 +1552,7 @@ class INatEmbeds(MixinMeta):
         description = inat_embed.description or ""
         new_description = re.sub(TAXONOMY_PAT, "", description)
         if new_description == description:
-            full_taxon = await get_taxon(inat_embed.taxon_id())
+            full_taxon = await get_taxon(ctx, inat_embed.taxon_id())
             if full_taxon:
                 formatted_names = format_taxon_names(
                     full_taxon.ancestors, hierarchy=True

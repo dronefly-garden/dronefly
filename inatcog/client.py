@@ -19,9 +19,11 @@ def asyncify(self, method):
 class iNatClient(CoreiNatClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.ctx = None
+        self.red_ctx = None
+
         self.projects.add_users = asyncify(self, self.projects.add_users)
         self.projects.delete_users = asyncify(self, self.projects.delete_users)
-
         self.taxa.populate = asyncify(self, self.taxa.populate)
 
     @asynccontextmanager
