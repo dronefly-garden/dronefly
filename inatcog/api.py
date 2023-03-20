@@ -86,7 +86,7 @@ class INatAPI:
         trace_config = TraceConfig()
         trace_config.on_request_start.append(on_request_start)
         self.cog = cog
-        self.inat = iNatClient(loop=cog.bot.loop, cache_control=False)
+        self.inat = iNatClient(loop=cog.bot.loop, creds={"refresh": True})
         self.session = RetryClient(
             raise_for_status=False,
             trace_configs=[trace_config],
