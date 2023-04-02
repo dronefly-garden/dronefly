@@ -397,8 +397,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         mat = re.search(PAT_TAXON_LINK, query)
         if mat:
-            query = await NaturalQueryConverter.convert(ctx, mat["taxon_id"])
-            await (self.bot.get_command("taxon")(ctx, query=query))
+            await (self.bot.get_command("taxon")(ctx, query=mat["taxon_id"]))
             return
 
         await apologize(ctx)
