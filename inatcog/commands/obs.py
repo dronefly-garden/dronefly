@@ -145,6 +145,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @obs.command(name="img", aliases=["image", "photo"])
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def obs_img(self, ctx, number: Optional[int], *, query: Optional[str] = ""):
         """Image for observation.
 
@@ -166,16 +167,19 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await ctx.send_help()
 
     @top.command(name="identifiers", aliases=["id", "ids"])
+    @use_client
     async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations IDed per IDer (alias `[p]topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @top.command(name="observers", aliases=["obs"])
+    @use_client
     async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations per observer (alias `[p]topobs`)."""
         await self._tabulate_query(ctx, query)
 
     @top.command(name="species", aliases=["spp", "sp"])
+    @use_client
     async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
@@ -218,6 +222,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
     @tabulate.command(name="maverick")
+    @use_client
     async def tabulate_maverick(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Maverick identifications.
 
@@ -326,6 +331,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             await ctx.send(embed=embeds[0])
 
     @tabulate.command(name="topids")
+    @use_client
     async def tabulate_top_identifiers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
@@ -333,11 +339,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await self._tabulate_query(ctx, query, view="ids")
 
     @commands.command(name="topids", hidden=True)
+    @use_client
     async def top_identifiers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations IDed per IDer (alias `[p]tab topids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @tabulate.command(name="topobs")
+    @use_client
     async def tabulate_top_observers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
@@ -345,22 +353,26 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await self._tabulate_query(ctx, query)
 
     @commands.command(name="topobs", hidden=True)
+    @use_client
     async def top_observers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top observations per observer (alias `[p]tab topobs`)."""
         await self._tabulate_query(ctx, query)
 
     @tabulate.command(name="topspp", alias=["topsp"])
+    @use_client
     async def tabulate_top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.command(name="topspp", alias=["topsp"], hidden=True)
+    @use_client
     async def top_species_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]tab topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.hybrid_command()
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def link(self, ctx, *, query):
         """Information and image from iNaturalist link.
 
