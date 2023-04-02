@@ -126,10 +126,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @obs.command(name="count")
     async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Count matching observations."""
-        if ctx.interaction:
-            await ctx.interaction.response.defer(thinking=True)
-        else:
-            await ctx.typing()
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
     @obs.command(name="map")
@@ -140,19 +136,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @obs.command(name="maverick")
     async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Count maverick observations."""
-        if ctx.interaction:
-            await ctx.interaction.response.defer(thinking=True)
-        else:
-            await ctx.typing()
         await (self.bot.get_command("tabulate maverick")(ctx, query=query))
 
     @obs.command(name="search")
     async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
         """Search for matching observations."""
-        if ctx.interaction:
-            await ctx.interaction.response.defer(thinking=True)
-        else:
-            await ctx.typing()
         await (self.bot.get_command("search obs")(ctx, query=query))
 
     @obs.command(name="img", aliases=["image", "photo"])
