@@ -21,13 +21,13 @@ class User(PyinatUser):
     """A user."""
 
     def display_name(self):
-        """Name to include in displays."""
+        """Name to include in displays with markdown special characters quoted."""
         if self.name:
             return f"{escape_markdown(self.name)} ({escape_markdown(self.login)})"
         return escape_markdown(self.login)
 
     def profile_url(self):
-        """User profile url."""
+        """User profile url with login instead of user_id."""
         return f"{WWW_BASE_URL}/people/{self.login}" if self.login else ""
 
     def profile_link(self):
