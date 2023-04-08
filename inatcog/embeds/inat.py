@@ -1140,7 +1140,7 @@ class INatEmbeds(MixinMeta):
             #   `,inat set event ever 0 true`
             # - note that
             if project_id:
-                user_project = UserProject.from_dict(projects[project_id]["results"][0])
+                user_project = UserProject.from_json(projects[project_id]["results"][0])
                 is_member = user.id in user_project.observed_by_ids()
             else:
                 is_member = True

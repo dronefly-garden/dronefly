@@ -1,29 +1,10 @@
 """Module to handle projects."""
-from dataclasses import dataclass, field
-from typing import List, Union
+from typing import Union
 
-from dataclasses_json import config, DataClassJsonMixin
 from pyinaturalist.models import Project
 
 
-@dataclass
-class CollectionProjectRule(DataClassJsonMixin):
-    """A collection project rule."""
-
-    operand_id: int
-    operator: str
-
-
-@dataclass
-class CollectionProjectField(DataClassJsonMixin):
-    """A collection project field."""
-
-    field: str
-    value: Union[bool, str, int, List[int]]
-
-
-@dataclass
-class UserProject(DataClassJsonMixin):
+class UserProject(Project):
     """A collection project for observations by specific users.
 
     This class handles projects that include observations by members, with membership
@@ -42,25 +23,13 @@ class UserProject(DataClassJsonMixin):
        - a user's observations are included when both the user joins *and* the
          admin "approves" the join by adding a rule for them
     """
-
-    project_id: int = field(metadata=config(field_name="id"))
-    title: str
-    user_ids: List[int]
-    search_parameters: List[CollectionProjectField]
-    project_observation_rules: List[CollectionProjectRule]
-    project_type: str
-
-    def __post_init__(self):
-        if self.project_type != "collection":
-            raise TypeError
-
     def members_only(self):
         return next(
             iter(
                 [
-                    param.value
+                    param.get("value")
                     for param in self.search_parameters
-                    if param.field == "members_only"
+                    if param.get("field") == "members_only"
                 ]
             ),
             False,
@@ -77,24 +46,24 @@ class UserProject(DataClassJsonMixin):
           (not_observed_by_user?)
         """
         exclude_user_ids = [
-            rule.operand_id
+            rule.get("operand_id")
             for rule in self.project_observation_rules
-            if rule.operator == "not_observed_by_user?"
+            if rule.get("operator") == "not_observed_by_user?"
         ]
         include_user_rules = [
             rule
             for rule in self.project_observation_rules
-            if rule.operator == "observed_by_user?"
-            and rule.operand_id not in exclude_user_ids
+            if rule.get("operator") == "observed_by_user?"
+            and rule.get("operand_id") not in exclude_user_ids
         ]
 
         if self.members_only():
             if include_user_rules:
                 # i.e. case 3, Closed (user joins & admin approves the join)
                 include_user_ids = [
-                    rule.operand_id
+                    rule.get("operand_id")
                     for rule in include_user_rules
-                    if rule.operand_id in self.user_ids
+                    if rule.get("operand_id") in self.user_ids
                 ]
             else:
                 # i.e. case 1, Open (user joins)
@@ -106,7 +75,7 @@ class UserProject(DataClassJsonMixin):
         else:
             if include_user_rules:
                 # i.e. case 2, Closed (admin joins the user)
-                include_user_ids = [rule.operand_id for rule in include_user_rules]
+                include_user_ids = [rule.get("operand_id") for rule in include_user_rules]
             else:
                 # i.e. fallback - project membership is undefined, so is empty
                 # - as in case 2 but admins haven't joined anyone yet

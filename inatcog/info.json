@@ -6,7 +6,6 @@
   "description" : "Commands using the iNat API v1 (https://api.inaturalist.org/v1).",
   "end_user_data_statement": "This cog stores user ids linked to corresponding external API user ids for the purpose of fetching their information from the API, and user preferences for the cog.",
   "requirements" : [
-    "dataclasses-json>=0.5.5,<0.6.0",
     "html2markdown>=0.1.7,<0.2.0",
     "inflect>=5.3.0,<6.0.0",
     "timeago>=1.0.15,<2.0.0",

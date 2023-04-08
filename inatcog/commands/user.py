@@ -546,7 +546,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for prj_id in event_project_ids
         ]
         projects = {
-            response["results"][0]["id"]: UserProject.from_dict(response["results"][0])
+            response["results"][0]["id"]: UserProject.from_json(response["results"][0])
             for response in responses
             if response
         }
