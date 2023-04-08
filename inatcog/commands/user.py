@@ -7,13 +7,14 @@ from typing import Union
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
+from dronefly.core.formatters.discord import format_user_link, format_user_name, format_user_url
 from dronefly.core.parsers.url import PAT_USER_LINK
+from pyinaturalist.models import User
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from redbot.core.utils.predicates import MessagePredicate
 
-from ..base_classes import User
 from ..checks import can_manage_users, known_inat_user
 from ..common import DEQUOTE, grouper
 from ..converters.base import (
@@ -153,7 +154,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await config.known_in.set(known_in)
 
         await ctx.send(
-            f"{discord_user.display_name} is added as {user.display_name()}."
+            f"{discord_user.display_name} is added as {format_user_name(user)}."
         )
 
     @staticmethod
@@ -612,7 +613,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 user_is = ":ghost: *(unknown user)* is "
             if isinstance(iuser, User):
-                profile_link = iuser.profile_link()
+                profile_link = format_user_link(iuser)
             elif iuser:
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
@@ -970,7 +971,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return
 
         inat_user = User.from_json(found)
-        await ctx.send(inat_user.profile_url())
+        await ctx.send(format_user_url(inat_user))
 
     @commands.command()
     @known_inat_user()

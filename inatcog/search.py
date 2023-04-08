@@ -1,9 +1,10 @@
 """Module to search iNat site."""
 
+from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Taxon
+from pyinaturalist.models import Taxon, User
 
-from .base_classes import Place, WWW_BASE_URL, User
+from .base_classes import Place, WWW_BASE_URL
 from .projects import Project
 from .utils import get_home
 
@@ -25,7 +26,7 @@ def get_project(result):
 def get_user(result):
     """Get user result."""
     user = User.from_json(result.get("record"))
-    return f":bust_in_silhouette: {user.profile_link()}"
+    return f":bust_in_silhouette: {format_user_name(user)}"
 
 
 def get_taxon(result):

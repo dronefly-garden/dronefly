@@ -5,9 +5,9 @@ import re
 from typing import List, NamedTuple, Optional, Union
 
 from dataclasses_json import config, DataClassJsonMixin
-from discord.utils import escape_markdown
+from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Taxon, User as PyinatUser
+from pyinaturalist.models import Taxon, User
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo
@@ -15,24 +15,6 @@ from .sounds import Sound
 
 COG_NAME = "iNat"
 WWW_BASE_URL = "https://www.inaturalist.org"
-
-
-class User(PyinatUser):
-    """A user."""
-
-    def display_name(self):
-        """Name to include in displays with markdown special characters quoted."""
-        if self.name:
-            return f"{escape_markdown(self.name)} ({escape_markdown(self.login)})"
-        return escape_markdown(self.login)
-
-    def profile_url(self):
-        """User profile url with login instead of user_id."""
-        return f"{WWW_BASE_URL}/people/{self.login}" if self.login else ""
-
-    def profile_link(self):
-        """User profile link in markdown format."""
-        return f"[{self.display_name()}]({self.profile_url()})"
 
 
 @dataclass
@@ -293,13 +275,13 @@ class QueryResponse:
         if self.place:
             message += " from " + self.place.display_name
         if self.user:
-            message += " by " + self.user.display_name()
+            message += " by " + format_user_name(self.user)
         if self.unobserved_by:
-            message += " unobserved by " + self.unobserved_by.display_name()
+            message += " unobserved by " + format_user_name(self.unobserved_by)
         if self.id_by:
-            message += " identified by " + self.id_by.display_name()
+            message += " identified by " + format_user_name(self.id_by)
         if self.except_by:
-            message += " except by " + self.except_by.display_name()
+            message += " except by " + format_user_name(self.except_by)
         if self.observed and self.observed.on or self.observed.d1 or self.observed.d2:
             message += " observed "
             if self.observed.on:

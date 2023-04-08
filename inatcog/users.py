@@ -2,8 +2,8 @@
 from typing import AsyncIterator, Tuple, Union
 
 import discord
+from pyinaturalist.models import User
 
-from .base_classes import User
 from .utils import get_valid_user_config
 
 

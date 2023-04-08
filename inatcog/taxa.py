@@ -5,10 +5,10 @@ from typing import NamedTuple, Optional, Union
 
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
-from pyinaturalist.models import Taxon
+from pyinaturalist.models import Taxon, User
 from redbot.core.commands import Context
 
-from .base_classes import User, Place
+from .base_classes import Place
 from .utils import obs_url_from_v1
 
 

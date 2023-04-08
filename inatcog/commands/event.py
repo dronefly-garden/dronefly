@@ -5,11 +5,10 @@ from typing import Union
 
 import discord
 from pyinaturalist.exceptions import AuthenticationError
-from pyinaturalist.models import Project
+from pyinaturalist.models import Project, User
 from redbot.core import checks, commands
 from requests.exceptions import HTTPError
 
-from ..base_classes import User
 from ..checks import can_manage_users
 from ..client import iNatClient
 from ..embeds.inat import INatEmbeds

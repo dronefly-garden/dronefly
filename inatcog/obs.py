@@ -4,9 +4,9 @@ from operator import itemgetter
 import re
 
 from dronefly.core.parsers.url import PAT_OBS_LINK
-from pyinaturalist.models import Taxon
+from pyinaturalist.models import Taxon, User
 
-from .base_classes import WWW_BASE_URL, Obs, User
+from .base_classes import WWW_BASE_URL, Obs
 from .photos import Photo
 from .sounds import Sound
 from .utils import get_home

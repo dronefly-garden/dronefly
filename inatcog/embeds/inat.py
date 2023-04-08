@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 import discord
 from discord import DMChannel, File
 from dronefly.core.constants import RANK_LEVELS
+from dronefly.core.formatters.discord import format_user_link
 from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
     format_taxon_establishment_means,
@@ -30,7 +31,7 @@ from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 import inflect
 from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
-from pyinaturalist.models import IconPhoto, Taxon, TaxonSummary
+from pyinaturalist.models import IconPhoto, Taxon, TaxonSummary, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -63,7 +64,6 @@ from ..taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
-from ..users import User
 from ..utils import get_lang, has_valid_user_config, obs_url_from_v1
 
 logger = logging.getLogger("red.dronefly." + __name__)
@@ -705,7 +705,7 @@ class INatEmbeds(MixinMeta):
                     login = user.login
                 summary += "\n"
             else:
-                summary += "Observed by " + user.profile_link()
+                summary += "Observed by " + format_user_link(user)
             obs_on = ""
             obs_at = ""
             if obs.obs_on:
@@ -1164,7 +1164,7 @@ class INatEmbeds(MixinMeta):
 
     async def make_user_embed(self, ctx, member, user):
         """Make an embed for user including user stats."""
-        description = f"{member.mention} is {user.profile_link()}"
+        description = f"{member.mention} is {format_user_link(user)}"
         if ctx.guild:
             event_projects = await self.config.guild(ctx.guild).event_projects() or {}
             main_projects = {
