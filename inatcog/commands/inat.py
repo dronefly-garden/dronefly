@@ -894,7 +894,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
             return
-        await config.home.set(place.place_id)
+        await config.home.set(place.id)
         await ctx.send(f"iNat server default home set:\n{place.url}")
 
     @inat_show.command(name="home")

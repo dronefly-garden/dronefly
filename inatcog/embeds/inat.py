@@ -31,12 +31,11 @@ from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 import inflect
 from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
-from pyinaturalist.models import IconPhoto, Taxon, TaxonSummary, User
+from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..base_classes import (
-    Place,
     QueryResponse,
     WWW_BASE_URL,
 )
@@ -1712,7 +1711,7 @@ class INatEmbeds(MixinMeta):
         description = re.sub(r"\n\[[0-9, \(\)]+?\]\(.*?\) \*total\*", "", description)
 
         matches = re.findall(r"\n\[[0-9, \(\)]+\]\(.*?\) (.*?)(?=\n|$)", description)
-        count_params = {**inat_embed.params, "place_id": place.place_id}
+        count_params = {**inat_embed.params, "place_id": place.id}
         if action == "remove":
             # Remove the header if last one and the place's count:
             if len(matches) == 1:

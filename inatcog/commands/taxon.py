@@ -167,7 +167,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         except LookupError as err:
             await ctx.send(err)
             return
-        place_id = place.place_id
+        place_id = place.id
 
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:

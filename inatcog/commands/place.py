@@ -30,12 +30,12 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         try:
             place = await self.place_table.get_place(ctx.guild, query, ctx.author)
             embed = make_embed(title=place.display_name, url=place.url)
-            embed.add_field(name="Place number", value=place.place_id)
+            embed.add_field(name="Place number", value=place.id)
             if ctx.guild:
                 guild_config = self.config.guild(ctx.guild)
                 places = await guild_config.places()
                 place_abbrevs = [
-                    abbrev for abbrev in places if places[abbrev] == place.place_id
+                    abbrev for abbrev in places if places[abbrev] == place.id
                 ]
                 if place_abbrevs:
                     abbrevs = ", ".join(place_abbrevs)

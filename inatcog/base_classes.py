@@ -7,7 +7,7 @@ from typing import List, NamedTuple, Optional, Union
 from dataclasses_json import config, DataClassJsonMixin
 from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Taxon, User
+from pyinaturalist.models import Place, Taxon, User
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo
@@ -15,19 +15,6 @@ from .sounds import Sound
 
 COG_NAME = "iNat"
 WWW_BASE_URL = "https://www.inaturalist.org"
-
-
-@dataclass
-class Place(DataClassJsonMixin):
-    """An iNat place."""
-
-    display_name: str
-    place_id: int = field(metadata=config(field_name="id"))
-    url: str = field(init=False)
-
-    def __post_init__(self):
-        """URL for place."""
-        self.url = f"{WWW_BASE_URL}/places/{self.place_id}"
 
 
 @dataclass
@@ -132,7 +119,7 @@ class QueryResponse:
         kwargs.set_from(self.taxon, "id", "taxon_id")
         kwargs.set_from(self.user, "id", "user_id")
         kwargs.set_from(self.project, "project_id")
-        kwargs.set_from(self.place, "place_id")
+        kwargs.set_from(self.place, "id", "place_id")
         kwargs.set_from(self.id_by, "id", "ident_user_id")
         kwargs.set_from(self.unobserved_by, "id", "unobserved_by_user_id")
         kwargs.set_from(self.except_by, "id", "not_user_id")

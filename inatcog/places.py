@@ -1,7 +1,8 @@
 """Module to handle users."""
 from typing import Union
 
-from .base_classes import Place
+from pyinaturalist.models import Place
+
 from .converters.base import QuotedContextMemberConverter
 from .utils import get_valid_user_config
 
@@ -57,6 +58,6 @@ class INatPlaceTable:
                 place = results[0]
 
         if place:
-            return Place.from_dict(place)
+            return Place.from_json(place)
 
         raise LookupError("iNat place not known.")

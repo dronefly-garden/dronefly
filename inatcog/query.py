@@ -117,7 +117,7 @@ class INatQuery:
             "locale": locale,
         }
         if args["place"]:
-            taxon_params["preferred_place_id"] = args["place"].place_id
+            taxon_params["preferred_place_id"] = args["place"].id
         args["taxon"] = (
             await self.cog.taxon_query.maybe_match_taxon_compound(ctx, query, **taxon_params)
             if has_value(query.main)

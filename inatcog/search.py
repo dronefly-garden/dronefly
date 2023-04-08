@@ -2,16 +2,16 @@
 
 from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Taxon, User
+from pyinaturalist.models import Place, Taxon, User
 
-from .base_classes import Place, WWW_BASE_URL
+from .base_classes import WWW_BASE_URL
 from .projects import Project
 from .utils import get_home
 
 
 def get_place(result):
     """Get place result."""
-    place = Place.from_dict(result.get("record"))
+    place = Place.from_json(result.get("record"))
     return f":round_pushpin: [{place.display_name}]({place.url})"
 
 

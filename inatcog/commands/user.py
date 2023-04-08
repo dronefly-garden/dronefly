@@ -348,7 +348,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 try:
                     home = await self.place_table.get_place(ctx.guild, value)
-                    await config.home.set(home.place_id)
+                    await config.home.set(home.id)
                     await ctx.send(
                         f"{bot} will use {home.display_name} as your home place."
                     )
