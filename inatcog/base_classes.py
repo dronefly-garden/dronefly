@@ -4,7 +4,6 @@ import datetime as dt
 import re
 from typing import List, NamedTuple, Optional, Union
 
-from dataclasses_json import config, DataClassJsonMixin
 from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
 from pyinaturalist.models import Place, Project, Taxon, User

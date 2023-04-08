@@ -4,10 +4,11 @@ import re
 
 from dronefly.core.parsers.constants import VALID_OBS_OPTS
 from dronefly.core.query.query import Query, TaxonQuery
+from pyinaturalist.models import ControlledTerm
 from redbot.core.commands import BadArgument, Context
 
 from .common import DEQUOTE
-from .controlled_terms import ControlledTerm, match_controlled_term
+from .controlled_terms import match_controlled_term
 from .converters.base import MemberConverter
 from .base_classes import DateSelector, QueryResponse, User
 
@@ -90,7 +91,7 @@ class INatQuery:
     async def _get_controlled_term(self, query_term: str, query_term_value: str):
         controlled_terms_dict = await self.cog.api.get_controlled_terms()
         controlled_terms = [
-            ControlledTerm.from_dict(term, infer_missing=True)
+            ControlledTerm.from_json(term)
             for term in controlled_terms_dict["results"]
         ]
         controlled_term = match_controlled_term(

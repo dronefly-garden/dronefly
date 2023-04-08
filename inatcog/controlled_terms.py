@@ -1,29 +1,10 @@
 """Module to handle controlled terms."""
 import re
-from typing import List, NamedTuple, Optional, Union
-from dataclasses import dataclass
-from dataclasses_json import DataClassJsonMixin
+from typing import List, NamedTuple, Union
+
+from pyinaturalist.models import ControlledTerm, ControlledTermValue
 
 # pylint: disable=invalid-name
-
-
-@dataclass
-class ControlledTermValue(DataClassJsonMixin):
-    """An iNat controlled term value."""
-
-    id: int
-    label: str
-    taxon_ids: Optional[List[int]]
-    excepted_taxon_ids: Optional[List[int]]
-
-
-@dataclass
-class ControlledTerm(DataClassJsonMixin):
-    """An iNat controlled term."""
-
-    id: int
-    label: str
-    values: List[ControlledTermValue]
 
 
 class ControlledTermSelector(NamedTuple):
