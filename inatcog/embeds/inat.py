@@ -31,7 +31,7 @@ from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
 import html2markdown
 import inflect
 from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
-from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User
+from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User, UserCount
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -49,7 +49,7 @@ from ..embeds.common import (
 )
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
-from ..projects import UserProject, ObserverStats
+from ..projects import UserProject
 from ..taxa import (
     format_place_taxon_counts,
     format_user_taxon_counts,
@@ -1087,14 +1087,14 @@ class INatEmbeds(MixinMeta):
                 kwargs["project_id"] = project_id
             response = await self.api.get_observers_stats(**kwargs)
             stats = [
-                ObserverStats.from_dict(observer) for observer in response["results"]
+                UserCount.from_json(observer) for observer in response["results"]
             ]
             if stats:
                 rank = next(
                     (
                         index + 1
                         for (index, d) in enumerate(stats)
-                        if d.user_id == user.id
+                        if d.id == user.id
                     ),
                     None,
                 )

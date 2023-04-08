@@ -117,15 +117,6 @@ class UserProject(DataClassJsonMixin):
         return include_user_ids
 
 
-@dataclass
-class ObserverStats(DataClassJsonMixin):
-    """The stats for an observer from a set of observers (as from a project)."""
-
-    user_id: int
-    observation_count: int
-    species_count: int
-
-
 class INatProjectTable:
     """Lookup helper for projects."""
 
