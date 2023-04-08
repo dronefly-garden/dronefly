@@ -254,7 +254,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             embed.title = (
                 f"Maverick identifications {query_response.obs_query_description()}"
             )
-            ids_opt = {"category": "maverick", "user_id": query_response.user.user_id}
+            ids_opt = {"category": "maverick", "user_id": query_response.user.id}
             if query_response.taxon:
                 ids_opt["taxon_id"] = query_response.taxon.id
             embed.url = f"{WWW_BASE_URL}/identifications?" + urllib.parse.urlencode(

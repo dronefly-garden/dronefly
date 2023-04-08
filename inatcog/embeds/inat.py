@@ -1057,7 +1057,7 @@ class INatEmbeds(MixinMeta):
 
         async def get_unranked_count(*args, **kwargs):
             _kwargs = {
-                "user_id": user.user_id,
+                "user_id": user.id,
                 "per_page": 0,
                 **kwargs,
             }
@@ -1095,7 +1095,7 @@ class INatEmbeds(MixinMeta):
                     (
                         index + 1
                         for (index, d) in enumerate(stats)
-                        if d.user_id == user.user_id
+                        if d.user_id == user.id
                     ),
                     None,
                 )
@@ -1142,7 +1142,7 @@ class INatEmbeds(MixinMeta):
             # - note that
             if project_id:
                 user_project = UserProject.from_dict(projects[project_id]["results"][0])
-                is_member = user.user_id in user_project.observed_by_ids()
+                is_member = user.id in user_project.observed_by_ids()
             else:
                 is_member = True
             if is_member:
@@ -1198,7 +1198,7 @@ class INatEmbeds(MixinMeta):
             obs_count, _obs_rank = obs_stats
             spp_count, _spp_rank = spp_stats
             taxa_count, _taxa_rank = taxa_stats
-            obs_args = {"user_id": user.user_id}
+            obs_args = {"user_id": user.id}
             if int(project_id):
                 obs_args["project_id"] = project_id
             obs_url = obs_url_from_v1(
@@ -1219,7 +1219,7 @@ class INatEmbeds(MixinMeta):
             )
         embed.description = description
         ids = user.identifications_count
-        url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.user_id})"
+        url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.id})"
         embed.add_field(name="Ids", value=url, inline=True)
         return embed
 
@@ -1236,7 +1236,7 @@ class INatEmbeds(MixinMeta):
         taxa_count, _taxa_rank = await self.get_user_project_stats(
             project_id, user, category="taxa"
         )
-        obs_args = {"project_id": project.project_id, "user_id": user.user_id}
+        obs_args = {"project_id": project.project_id, "user_id": user.id}
         obs_url = obs_url_from_v1(
             {**obs_args, "view": "observations", "verifiable": "any"}
         )
@@ -1612,7 +1612,7 @@ class INatEmbeds(MixinMeta):
                     description += "\n" + TAXON_IDBY_HEADER
                 else:
                     description += "\n" + TAXON_COUNTS_HEADER
-            user_id = inat_user.user_id
+            user_id = inat_user.id
             if unobserved:
                 count_params["unobserved_by_user_id"] = user_id
             elif ident:

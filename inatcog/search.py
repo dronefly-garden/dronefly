@@ -24,7 +24,7 @@ def get_project(result):
 
 def get_user(result):
     """Get user result."""
-    user = User.from_dict(result.get("record"))
+    user = User.from_json(result.get("record"))
     return f":bust_in_silhouette: {user.profile_link()}"
 
 

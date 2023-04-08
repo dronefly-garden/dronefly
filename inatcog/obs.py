@@ -66,7 +66,7 @@ def get_obs_fields(obs):
         idents_count = obs.get("identifications_count")
         community_taxon = None
 
-    user = User.from_dict(obs["user"])
+    user = User.from_json(obs["user"])
 
     photos = obs.get("photos") or []
     images = [

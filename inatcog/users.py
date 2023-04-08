@@ -28,7 +28,7 @@ class INatUserTable:
 
         response = await self.cog.api.get_users(inat_user_id, refresh_cache)
         if response and response["results"] and len(response["results"]) == 1:
-            user = User.from_dict(response["results"][0])
+            user = User.from_json(response["results"][0])
         if not user:
             # The account is (probably) deleted, as I know of no temporary
             # failure of the API that wouldn't raise a different error.
@@ -83,6 +83,6 @@ class INatUserTable:
             if user_json:
                 results = user_json["results"]
                 if results:
-                    inat_user = User.from_dict(results[0])
+                    inat_user = User.from_json(results[0])
             if inat_user:
                 yield (discord_member, inat_user)

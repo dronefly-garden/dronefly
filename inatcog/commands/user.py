@@ -126,10 +126,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
         except LookupError:
             pass
         if response and response["results"]:
-            user = User.from_dict(response["results"][0])
+            user = User.from_json(response["results"][0])
             mat_login = user_query.lower()
             mat_id = int(user_query) if user_query.isnumeric() else None
-            if not ((user.login == mat_login) or (user.user_id == mat_id)):
+            if not ((user.login == mat_login) or (user.id == mat_id)):
                 user = None
 
         if not user:
@@ -141,13 +141,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # the user (will be removed from all guilds) before they can be added
         # under the new iNat ID.
         if inat_user_id:
-            if inat_user_id != user.user_id:
+            if inat_user_id != user.id:
                 await ctx.send(
                     "New iNat user id for user! Registration under old id must be removed first."
                 )
                 return
         else:
-            await config.inat_user_id.set(user.user_id)
+            await config.inat_user_id.set(user.id)
 
         known_in.append(guild_id)
         await config.known_in.set(known_in)
@@ -700,7 +700,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             ctx.guild, all_users, anywhere
         ):
             project_abbrevs = abbrevs_for_user(
-                iuser.user_id, event_project_ids, projects
+                iuser.id, event_project_ids, projects
             )
             # Candidacy for event project membership is based on one of the
             # following:
@@ -725,7 +725,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if not candidate:
                 continue
 
-            known_inat_user_ids_in_event.append(iuser.user_id)
+            known_inat_user_ids_in_event.append(iuser.id)
 
             line = formatted_user(dmember, iuser, project_abbrevs)
             (
@@ -778,7 +778,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     user_json = await self.api.get_users(inat_user_id)
                     results = user_json.get("results")
                     if results:
-                        inat_user = User.from_dict(results[0])
+                        inat_user = User.from_json(results[0])
                 except LookupError:
                     pass
             project_abbrevs = abbrevs_for_user(
@@ -969,7 +969,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await apologize(ctx, "Not found")
             return
 
-        inat_user = User.from_dict(found)
+        inat_user = User.from_json(found)
         await ctx.send(inat_user.profile_url())
 
     @commands.command()

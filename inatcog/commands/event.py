@@ -73,14 +73,14 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             required_admins = [
                 admin.id
                 for admin in project.admins
-                if admin.id in [manager_inat_user.user_id, _DRONEFLY_INAT_ID]
+                if admin.id in [manager_inat_user.id, _DRONEFLY_INAT_ID]
                 and admin.role in ["admin", "manager"]
             ]
             if _DRONEFLY_INAT_ID not in required_admins:
                 raise AuthenticationError(
                     "I am not an admin or manager of this project."
                 )
-            if manager_inat_user.user_id not in required_admins:
+            if manager_inat_user.id not in required_admins:
                 raise AuthenticationError(
                     "You are not an admin or manager of this project."
                 )
@@ -98,7 +98,7 @@ class CommandsEvent(INatEmbeds, MixinMeta):
                         for rule in response.project_observation_rules
                         if rule["operand_type"] == "User"
                         and rule["operator"] == "observed_by_user?"
-                        if rule["operand_id"] == inat_user.user_id
+                        if rule["operand_id"] == inat_user.id
                     ]
                 ),
                 None,
@@ -148,11 +148,11 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
             if action == "join":
                 update_response = await client.projects.add_users(
-                    project.id, inat_user.user_id
+                    project.id, inat_user.id
                 )
             else:
                 update_response = await client.projects.delete_users(
-                    project.id, inat_user.user_id
+                    project.id, inat_user.id
                 )
             command_response = await get_command_response(
                 inat_user, project, update_response

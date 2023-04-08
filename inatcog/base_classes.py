@@ -7,7 +7,7 @@ from typing import List, NamedTuple, Optional, Union
 from dataclasses_json import config, DataClassJsonMixin
 from discord.utils import escape_markdown
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Taxon
+from pyinaturalist.models import Taxon, User as PyinatUser
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo
@@ -17,15 +17,8 @@ COG_NAME = "iNat"
 WWW_BASE_URL = "https://www.inaturalist.org"
 
 
-@dataclass
-class User(DataClassJsonMixin):
+class User(PyinatUser):
     """A user."""
-
-    user_id: int = field(metadata=config(field_name="id"))
-    name: Optional[str]
-    login: str
-    observations_count: int
-    identifications_count: int
 
     def display_name(self):
         """Name to include in displays."""
@@ -155,12 +148,12 @@ class QueryResponse:
 
         kwargs = _Params({"verifiable": "true"})
         kwargs.set_from(self.taxon, "id", "taxon_id")
-        kwargs.set_from(self.user, "user_id")
+        kwargs.set_from(self.user, "id", "user_id")
         kwargs.set_from(self.project, "project_id")
         kwargs.set_from(self.place, "place_id")
-        kwargs.set_from(self.id_by, "user_id", "ident_user_id")
-        kwargs.set_from(self.unobserved_by, "user_id", "unobserved_by_user_id")
-        kwargs.set_from(self.except_by, "user_id", "not_user_id")
+        kwargs.set_from(self.id_by, "id", "ident_user_id")
+        kwargs.set_from(self.unobserved_by, "id", "unobserved_by_user_id")
+        kwargs.set_from(self.except_by, "id", "not_user_id")
         if self.unobserved_by:
             kwargs["lrank"] = "species"
         if self.controlled_term:

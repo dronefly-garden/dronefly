@@ -62,7 +62,7 @@ class INatQuery:
         try:
             response = await self.cog.api.get_users(user, **kwargs)
             if response and response["results"] and len(response["results"]) == 1:
-                return User.from_dict(response["results"][0])
+                return User.from_json(response["results"][0])
         except (BadArgument, LookupError):
             pass
         return None
