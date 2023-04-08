@@ -23,7 +23,7 @@ inflect = "^5.3.0"
 timeago = "^1.0.15"
 aiolimiter = "^1.0.0"
 aiohttp-retry = "^2.4.5"
-pyinaturalist = { path = "../pyinaturalist", develop = true }
+pyinaturalist = { git = "https://github.com/pyinat/pyinaturalist", rev = "8329e2c1706192f3ea9294a4f046a5782b49d2b6" }
 dateparser = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
