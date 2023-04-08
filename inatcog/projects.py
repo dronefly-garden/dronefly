@@ -3,8 +3,7 @@ from dataclasses import dataclass, field
 from typing import List, Union
 
 from dataclasses_json import config, DataClassJsonMixin
-
-from .base_classes import Project
+from pyinaturalist.models import Project
 
 
 @dataclass
@@ -159,6 +158,6 @@ class INatProjectTable:
                 project = results[0]
 
         if project:
-            return Project.from_dict(project)
+            return Project.from_json(project)
 
         raise LookupError("iNat project not known.")

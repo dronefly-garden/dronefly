@@ -1227,7 +1227,7 @@ class INatEmbeds(MixinMeta):
         embed = make_embed(
             title=project.title, url=project.url, description=member.mention
         )
-        project_id = project.project_id
+        project_id = project.id
         obs_count, obs_rank = await self.get_user_project_stats(project_id, user)
         spp_count, spp_rank = await self.get_user_project_stats(
             project_id, user, category="spp"
@@ -1235,7 +1235,7 @@ class INatEmbeds(MixinMeta):
         taxa_count, _taxa_rank = await self.get_user_project_stats(
             project_id, user, category="taxa"
         )
-        obs_args = {"project_id": project.project_id, "user_id": user.id}
+        obs_args = {"project_id": project.id, "user_id": user.id}
         obs_url = obs_url_from_v1(
             {**obs_args, "view": "observations", "verifiable": "any"}
         )

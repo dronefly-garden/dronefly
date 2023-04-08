@@ -7,7 +7,7 @@ from typing import List, NamedTuple, Optional, Union
 from dataclasses_json import config, DataClassJsonMixin
 from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Place, Taxon, User
+from pyinaturalist.models import Place, Project, Taxon, User
 
 from .controlled_terms import ControlledTermSelector
 from .photos import Photo
@@ -15,22 +15,6 @@ from .sounds import Sound
 
 COG_NAME = "iNat"
 WWW_BASE_URL = "https://www.inaturalist.org"
-
-
-@dataclass
-class Project(DataClassJsonMixin):
-    """A project."""
-
-    project_id: int = field(metadata=config(field_name="id"))
-    title: str
-    url: str = field(init=False)
-    description: str
-    icon: str
-    banner_color: str
-
-    def __post_init__(self):
-        """URL for project."""
-        self.url = f"{WWW_BASE_URL}/projects/{self.project_id}"
 
 
 class _Params(dict):
@@ -118,7 +102,7 @@ class QueryResponse:
         kwargs = _Params({"verifiable": "true"})
         kwargs.set_from(self.taxon, "id", "taxon_id")
         kwargs.set_from(self.user, "id", "user_id")
-        kwargs.set_from(self.project, "project_id")
+        kwargs.set_from(self.project, "id", "project_id")
         kwargs.set_from(self.place, "id", "place_id")
         kwargs.set_from(self.id_by, "id", "ident_user_id")
         kwargs.set_from(self.unobserved_by, "id", "unobserved_by_user_id")

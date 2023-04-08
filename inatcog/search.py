@@ -2,10 +2,9 @@
 
 from dronefly.core.formatters.discord import format_user_name
 from dronefly.core.formatters.generic import format_taxon_name
-from pyinaturalist.models import Place, Taxon, User
+from pyinaturalist.models import Place, Project, Taxon, User
 
 from .base_classes import WWW_BASE_URL
-from .projects import Project
 from .utils import get_home
 
 
@@ -17,9 +16,9 @@ def get_place(result):
 
 def get_project(result):
     """Get project result."""
-    project = Project.from_dict(result.get("record"))
+    project = Project.from_json(result.get("record"))
     return (
-        f":briefcase: [{project.title}]({WWW_BASE_URL}/projects/{project.project_id})"
+        f":briefcase: [{project.title}]({WWW_BASE_URL}/projects/{project.id})"
     )
 
 

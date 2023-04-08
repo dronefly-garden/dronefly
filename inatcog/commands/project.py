@@ -43,14 +43,14 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 embed.color = int(project.banner_color.replace("#", "0x"), 16)
             if project.icon:
                 embed.set_thumbnail(url=project.icon)
-            embed.add_field(name="Project number", value=project.project_id)
+            embed.add_field(name="Project number", value=project.id)
             if ctx.guild:
                 guild_config = self.config.guild(ctx.guild)
                 projects = await guild_config.projects()
                 proj_abbrevs = [
                     abbrev
                     for abbrev in projects
-                    if projects[abbrev] == project.project_id
+                    if projects[abbrev] == project.id
                 ]
                 if proj_abbrevs:
                     abbrevs = ", ".join(proj_abbrevs)
