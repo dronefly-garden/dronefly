@@ -44,14 +44,6 @@ inatcog.common module
     :undoc-members:
     :show-inheritance:
 
-inatcog.controlled\_terms module
---------------------------------
-
-.. automodule:: inatcog.controlled_terms
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 inatcog.converters module
 -------------------------
 

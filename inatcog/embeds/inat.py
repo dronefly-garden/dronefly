@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlsplit
 import discord
 from discord import DMChannel, File
 from dronefly.core.constants import RANK_LEVELS
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.discord import format_user_link
 from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
@@ -27,7 +28,7 @@ from dronefly.core.parsers.url import (
     PAT_OBS_TAXON_LINK,
     PAT_TAXON_LINK,
 )
-from dronefly.core.query.query import EMPTY_QUERY, Query, TaxonQuery
+from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
 import html2markdown
 import inflect
 from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
@@ -35,10 +36,6 @@ from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User, Us
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
-from ..base_classes import (
-    QueryResponse,
-    WWW_BASE_URL,
-)
 from ..embeds.common import (
     add_reactions_with_cancel,
     format_items_for_embed,
