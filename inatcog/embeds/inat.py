@@ -997,9 +997,12 @@ class INatEmbeds(MixinMeta):
             "with_url": False,
         }
         if isinstance(arg, QueryResponse):
-            taxon = await ctx.inat_client.taxa.populate(arg.taxon)
-            user = arg.user
             place = arg.place
+            if place:
+                taxon = await ctx.inat_client.taxa.populate(arg.taxon, preferred_place_id=place.id)
+            else:
+                taxon = await ctx.inat_client.taxa.populate(arg.taxon)
+            user = arg.user
             title_query_response = copy.copy(arg)
             if user:
                 title_query_response.user = None
