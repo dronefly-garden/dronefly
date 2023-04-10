@@ -760,8 +760,6 @@ class INatEmbeds(MixinMeta):
                 else:
                     obs_idents_count = obs.identifications_count if obs.identifications_count > 1 else ""
                     idents_count = f"{EMOJI['ident']}{obs_idents_count}"
-            if not compact:
-                summary += f" [obs#: {obs.id}]"
             if (
                 not compact
                 and obs.community_taxon_id
