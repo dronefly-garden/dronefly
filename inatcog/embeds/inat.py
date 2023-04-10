@@ -714,7 +714,7 @@ class INatEmbeds(MixinMeta):
                     else:
                         obs_on = obs.observed_on.strftime("%b-%Y")
                 else:
-                    obs_on = obs.observed_on.strftime("%a %b %d %Y")
+                    obs_on = obs.observed_on.strftime("%a %b %d %Y %I:%M%P")
                     summary += " on " + obs_on
             if obs.place_guess:
                 if compact:
