@@ -4,11 +4,11 @@ import re
 from typing import NamedTuple
 
 from discord import User
+from pyinaturalist import Observation
 import timeago
 
-from .base_classes import WWW_BASE_URL
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
-from .obs import get_obs_fields
 from .taxa import get_taxon
 from .utils import get_home
 
@@ -17,7 +17,7 @@ class ObsLinkMsg(NamedTuple):
     """Discord & iNat fields from a recent observation link."""
 
     url: str
-    obs: dict
+    obs: Observation
     ago: str
     name: str
 
@@ -72,7 +72,7 @@ class INatLinkMsg:
                 obs_id, include_new_projects=1, preferred_place_id=home
             )
         )["results"]
-        obs = get_obs_fields(results[0]) if results else None
+        obs = Observation.from_json(results[0]) if results else None
 
         return ObsLinkMsg(url, obs, ago, name)
 

@@ -7,6 +7,7 @@ import textwrap
 from typing import List, Optional
 
 import discord
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
@@ -15,7 +16,6 @@ from dronefly.core.constants import TRACHEOPHYTA_ID
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from ..base_classes import WWW_BASE_URL
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import (
     add_reactions_with_cancel,

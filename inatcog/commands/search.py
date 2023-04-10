@@ -4,6 +4,7 @@ import re
 from typing import Optional, Union
 import urllib.parse
 
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
@@ -13,10 +14,10 @@ from dronefly.core.parsers.url import (
     PAT_USER_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query
+from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..base_classes import WWW_BASE_URL
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
@@ -24,7 +25,6 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource
-from ..obs import get_obs_fields
 from ..utils import get_home, obs_url_from_v1, use_client
 
 
@@ -84,10 +84,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 except LookupError as err:
                     await apologize(ctx, str(err))
                     return
-                obs = get_obs_fields(obs_results[0]) if obs_results else None
+                obs = Observation.from_json(obs_results[0]) if obs_results else None
                 if obs:
                     embed = await self.make_obs_embed(
-                        ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                        ctx, obs, f"{WWW_BASE_URL}/observations/{obs.id}"
                     )
                     await self.send_obs_embed(
                         ctx, embed, obs, timeout=10, with_keep=True

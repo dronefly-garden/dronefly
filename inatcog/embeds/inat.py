@@ -46,6 +46,7 @@ from ..embeds.common import (
 )
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
+from ..obs import obs_count_community_id, obs_get_sounds
 from ..projects import UserProject
 from ..taxa import (
     format_place_taxon_counts,
@@ -663,15 +664,15 @@ class INatEmbeds(MixinMeta):
             title = ""
             taxon_str = get_taxon_name(taxon)
             if with_link:
-                link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                link_url = f"{WWW_BASE_URL}/observations/{obs.id}"
                 taxon_str = f"[{taxon_str}]({link_url})"
             title += taxon_str
             if not compact:
                 title += f" by {user.login} " + EMOJI[obs.quality_grade]
-                if obs.faves_count:
-                    title += format_count("fave", obs.faves_count)
-                if obs.comments_count:
-                    title += format_count("comment", obs.comments_count)
+                if obs.faves:
+                    title += format_count("fave", len(obs.faves))
+                if obs.comments:
+                    title += format_count("comment", len(obs.comments))
             return title
 
         def format_summary(user, obs, taxon, taxon_summary):
@@ -704,38 +705,32 @@ class INatEmbeds(MixinMeta):
                 summary += "Observed by " + format_user_link(user)
             obs_on = ""
             obs_at = ""
-            if obs.obs_on:
+            if obs.observed_on:
                 if compact:
-                    if obs.obs_on.date() == dt.datetime.now().date():
-                        if obs.time_obs:
-                            obs_on = obs.time_obs.strftime("%I:%M%P")
-                        else:
-                            obs_on = "today"
-                    elif obs.obs_on.year == dt.datetime.now().year:
-                        obs_on = obs.obs_on.strftime("%d-%b")
+                    if obs.observed_on.date() == dt.datetime.now().date():
+                        obs_on = obs.observed_on.strftime("%I:%M%P")
+                    elif obs.observed_on.year == dt.datetime.now().year:
+                        obs_on = obs.observed_on.strftime("%d-%b")
                     else:
-                        obs_on = obs.obs_on.strftime("%b-%Y")
+                        obs_on = obs.observed_on.strftime("%b-%Y")
                 else:
-                    if obs.time_obs:
-                        obs_on = obs.time_obs.strftime("%c")
-                    else:
-                        obs_on = obs.obs_on.strftime("%a %b %d %Y")
+                    obs_on = obs.observed_on.strftime("%a %b %d %Y")
                     summary += " on " + obs_on
-            if obs.obs_at:
+            if obs.place_guess:
                 if compact:
-                    obs_at = obs.obs_at
+                    obs_at = obs.place_guess
                 else:
-                    summary += " at " + obs.obs_at
+                    summary += " at " + obs.place_guess
             if compact:
                 line = " ".join((item for item in (login, obs_on, obs_at) if item))
                 if len(line) > 32:
                     line = line[0:31] + "…"
                 summary += "`{0: <32}`".format(line)
                 summary += EMOJI[obs.quality_grade]
-                if obs.faves_count:
-                    summary += format_count("fave", obs.faves_count)
-                if obs.comments_count:
-                    summary += format_count("comment", obs.comments_count)
+                if obs.faves:
+                    summary += format_count("fave", len(obs.faves))
+                if obs.comments:
+                    summary += format_count("comment", len(obs.comments))
                 summary += format_media_counts(obs)
             if with_description and obs.description:
                 # Contribute up to 10 lines from the description, and no more
@@ -756,20 +751,21 @@ class INatEmbeds(MixinMeta):
 
         async def format_community_id(title, summary, obs, taxon_summary, lang=lang):
             idents_count = ""
-            if obs.idents_count:
-                if obs.community_taxon:
+            if obs.identifications_count:
+                if obs.community_taxon_id:
+                    (idents_count, idents_agree) = obs_count_community_id(obs)
                     idents_count = (
-                        f"{EMOJI['community']} ({obs.idents_agree}/{obs.idents_count})"
+                        f"{EMOJI['community']} ({idents_agree}/{idents_count})"
                     )
                 else:
-                    obs_idents_count = obs.idents_count if obs.idents_count > 1 else ""
+                    obs_idents_count = obs.identifications_count if obs.identifications_count > 1 else ""
                     idents_count = f"{EMOJI['ident']}{obs_idents_count}"
             if not compact:
-                summary += f" [obs#: {obs.obs_id}]"
+                summary += f" [obs#: {obs.id}]"
             if (
                 not compact
-                and obs.community_taxon
-                and obs.community_taxon.id != obs.taxon.id
+                and obs.community_taxon_id
+                and obs.community_taxon_id != obs.taxon.id
             ):
                 means_link = ""
                 status_link = ""
@@ -783,10 +779,7 @@ class INatEmbeds(MixinMeta):
                         )
                     if means:
                         means_link = f"\n{format_taxon_establishment_means(means)}"
-                if lang:
-                    community_taxon = await get_taxon(ctx, obs.community_taxon.id)
-                else:
-                    community_taxon = obs.community_taxon
+                community_taxon = await get_taxon(ctx, obs.community_taxon_id)
                 summary = (
                     f"{format_taxon_name(community_taxon, lang=lang)} "
                     f"{status_link}{idents_count}{means_link}\n\n" + summary
@@ -801,15 +794,15 @@ class INatEmbeds(MixinMeta):
 
         def format_media_counts(obs):
             media_counts = ""
-            if obs.images:
-                media_counts += format_count("image", len(obs.images))
+            if obs.photos:
+                media_counts += format_count("image", len(obs.photos))
             if obs.sounds:
                 media_counts += format_count("sound", len(obs.sounds))
             return media_counts
 
         async def get_taxon_summary(obs, **kwargs):
             taxon_summary_raw = await self.api.get_obs_taxon_summary(
-                obs.obs_id, **kwargs
+                obs.id, **kwargs
             )
             taxon_summary = TaxonSummary.from_json(taxon_summary_raw)
             means = None
@@ -818,6 +811,8 @@ class INatEmbeds(MixinMeta):
                 listed = taxon_summary.listed_taxon
                 if listed:
                     means = listed.establishment_means
+                    # TODO: remove this kludge once pyinat sets listed_taxon.place itself
+                    taxon_summary.listed_taxon.place = Place(**taxon_summary_raw["listed_taxon"].get("place"))
                 status = taxon_summary.conservation_status
             if means or status:
                 return taxon_summary
@@ -833,7 +828,7 @@ class INatEmbeds(MixinMeta):
         community_taxon_summary = None
         if not compact:
             taxon_summary = await get_taxon_summary(obs)
-            if obs.community_taxon and obs.community_taxon.id != obs.taxon.id:
+            if obs.community_taxon_id and obs.community_taxon_id != obs.taxon.id:
                 community_taxon_summary = await get_taxon_summary(obs, community=1)
 
         summary = format_summary(user, obs, taxon, taxon_summary)
@@ -843,7 +838,7 @@ class INatEmbeds(MixinMeta):
         if not compact:
             title += format_media_counts(obs)
             if with_link:
-                link_url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                link_url = f"{WWW_BASE_URL}/observations/{obs.id}"
                 title = f"{title} [🔗]({link_url})"
         return (title, summary)
 
@@ -856,8 +851,8 @@ class INatEmbeds(MixinMeta):
                 title = format_taxon_name(taxon)
             else:
                 title = "Unknown"
-            title += f" (Image {num} of {len(obs.images)})"
-            mat = re.search(r"/photos/(\d+)", obs.images[num - 1].url)
+            title += f" (Image {num} of {len(obs.photos)})"
+            mat = re.search(r"/photos/(\d+)", obs.photos[num - 1].original_url)
             if mat:
                 photo_id = mat[1]
                 url = f"{WWW_BASE_URL}/photos/{photo_id}"
@@ -877,14 +872,14 @@ class INatEmbeds(MixinMeta):
                 else:
                     image_number = preview
                     image_only = True
-                if obs.images and image_number >= 1 and image_number <= len(obs.images):
-                    image = obs.images[image_number - 1]
-                    embed.set_image(url=image.url)
+                if obs.photos and image_number >= 1 and image_number <= len(obs.photos):
+                    image = obs.photos[image_number - 1]
+                    embed.set_image(url=image.original_url)
                     embed.set_footer(text=image.attribution)
                 else:
                     image_only = False
-                    if obs.images:
-                        num = len(obs.images)
+                    if obs.photos:
+                        num = len(obs.photos)
                         error = (
                             f"*Image number out of range; must be between 1 and {num}.*"
                         )
@@ -1346,8 +1341,9 @@ class INatEmbeds(MixinMeta):
 
         msg = None
         if obs and obs.sounds:
+            sounds = obs_get_sounds(obs)
             async with self.sound_message_params(
-                ctx.channel, obs.sounds, embed=embed
+                ctx.channel, sounds, embed=embed
             ) as params:
                 if params:
                     msg = await hybrid_send(ctx, **params)

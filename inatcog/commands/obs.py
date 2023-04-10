@@ -6,19 +6,20 @@ from typing import Optional
 import urllib.parse
 
 from dronefly.core.constants import RANK_LEVELS
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
+from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..base_classes import WWW_BASE_URL
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
-from ..obs import get_obs_fields, get_formatted_user_counts, maybe_match_obs
+from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
 from ..utils import get_home, obs_url_from_v1, use_client
 
@@ -103,7 +104,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             yield
             return
 
-        url = f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+        url = f"{WWW_BASE_URL}/observations/{obs.id}"
         yield ObsResult(obs, url, True)
 
     @commands.hybrid_group(aliases=["observation"], fallback="show")
@@ -402,7 +403,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     obs_id, include_new_projects=1, preferred_place_id=home
                 )
             )["results"]
-            obs = get_obs_fields(results[0]) if results else None
+            obs = Observation.from_json(results[0]) if results else None
             embed = await self.make_obs_embed(ctx, obs, url)
             await self.send_obs_embed(ctx, embed, obs)
             return

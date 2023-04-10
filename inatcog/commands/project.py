@@ -3,11 +3,11 @@
 import re
 
 import html2markdown
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..base_classes import WWW_BASE_URL
 from ..checks import can_manage_projects
 from ..common import grouper
 from ..converters.base import MemberConverter

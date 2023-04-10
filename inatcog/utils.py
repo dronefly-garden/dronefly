@@ -7,10 +7,11 @@ from urllib.parse import urlencode
 
 import discord
 from dronefly.core.commands import Context as DroneflyContext
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.models.user import User as DroneflyUser
-from redbot.core import commands, config
+from redbot.core import commands
 
-from .base_classes import COG_NAME, WWW_BASE_URL
+from .constants import COG_NAME
 
 COG_TO_CORE_USER_KEY = {
     "inat_user_id": "inat_user_id",

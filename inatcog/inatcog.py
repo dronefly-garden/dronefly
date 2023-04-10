@@ -10,7 +10,7 @@ import inflect
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
-from .base_classes import COG_NAME
+from .constants import COG_NAME
 from .client import iNatClient
 from .commands.event import CommandsEvent
 from .commands.inat import CommandsInat

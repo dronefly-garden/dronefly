@@ -1,7 +1,7 @@
 """Module to query iNat observations."""
 from dronefly.core.query.query import Query
+from pyinaturalist.models import Observation, Observations
 
-from .obs import get_obs_fields
 from .utils import get_home
 
 
@@ -25,7 +25,7 @@ class INatObsQuery:
                 f"No observation found {query_response.obs_query_description()}"
             )
 
-        return get_obs_fields(response["results"][0])
+        return Observation.from_json(response["results"][0])
 
     async def query_observations(self, ctx, query: Query, page=1):
         """Query observations and return iterator for any found."""
@@ -43,7 +43,7 @@ class INatObsQuery:
             )
 
         return (
-            [get_obs_fields(result) for result in response["results"]],
+            Observations.from_json(response),
             response["total_results"],
             response["per_page"],
         )

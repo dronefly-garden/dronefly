@@ -2,10 +2,10 @@
 
 import re
 
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..base_classes import WWW_BASE_URL
 from ..checks import can_manage_places
 from ..common import grouper
 from ..embeds.common import apologize, make_embed

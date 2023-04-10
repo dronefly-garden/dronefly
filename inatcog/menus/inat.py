@@ -4,9 +4,8 @@ from math import ceil, floor
 import re
 
 import discord
+from dronefly.core.formatters.constants import WWW_BASE_URL
 from redbot.vendored.discord.ext import menus
-
-from ..base_classes import WWW_BASE_URL
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
@@ -41,10 +40,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 # - do pyinat at the lowest level to take advantage of
                 #   caching, paginator, etc.
                 # - eliminates reliance on computing our own API page
-                (
-                    _observations,
-                    *_ignore,
-                ) = await self._cog.obs_query.query_observations(
+                _observations = await self._cog.obs_query.query_observations(
                     self._ctx, self._query, page=api_page
                 )
             else:
@@ -98,9 +94,9 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
                 next(
                     iter(
                         [
-                            image.url
-                            for image in obs.images
-                            if not re.search(r"\.gif$", image.url, re.I)
+                            image.original_url
+                            for image in obs.photos
+                            if not re.search(r"\.gif$", image.original_url, re.I)
                         ]
                     ),
                     None,
@@ -118,7 +114,7 @@ class SearchObsSource(menus.AsyncIteratorPageSource):
             )
             # TODO: use core formatter for embed-format page of observations
             embed = await self._cog.make_obs_embed(
-                menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.obs_id}"
+                menu.ctx, obs, f"{WWW_BASE_URL}/observations/{obs.id}"
             )
             embeds = [embed]
         else:
@@ -212,7 +208,7 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
         super().__init__(self.generate_taxa(taxa), per_page=per_page)
 
     async def _format_taxon(self, taxon):
-        # TODO: use core formatter for markdown-formatted individual observation
+        # TODO: use core formatter for markdown-formatted individual taxon
         formatted_taxon = await self._cog.format_taxon(
             taxon,
             with_description=False,
@@ -233,9 +229,9 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                 next(
                     iter(
                         [
-                            image.url
-                            for image in taxon.images
-                            if not re.search(r"\.gif$", image.url, re.I)
+                            image.original_url
+                            for image in taxon.photos
+                            if not re.search(r"\.gif$", image.original_url, re.I)
                         ]
                     ),
                     None,
@@ -262,8 +258,8 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                 f"of {ceil(self._total_results / self.per_page)})"
             )
             fmt_entries = []
-            for i, obs in enumerate(entries, start=start):
-                fmt_entry = await self._format_taxon(obs)
+            for i, taxon in enumerate(entries, start=start):
+                fmt_entry = await self._format_taxon(taxon)
                 index = i
                 if i + 1 > self._total_results:
                     index = self._total_results - 1
@@ -279,7 +275,7 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                     if self._current_entry == index % self.per_page or (
                         self._multi_images and self._current_entry == 0
                     ):
-                        embed.set_image(url=get_image_url(obs))
+                        embed.set_image(url=get_image_url(taxon))
                         embeds.append(embed)
                 else:
                     if not embeds:

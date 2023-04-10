@@ -20,14 +20,6 @@ inatcog.api module
     :undoc-members:
     :show-inheritance:
 
-inatcog.base\_classes module
-----------------------------
-
-.. automodule:: inatcog.base_classes
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 inatcog.checks module
 ---------------------
 
@@ -40,6 +32,14 @@ inatcog.common module
 ---------------------
 
 .. automodule:: inatcog.common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+inatcog.constants module
+------------------------
+
+.. automodule:: inatcog.constants
     :members:
     :undoc-members:
     :show-inheritance:
@@ -120,14 +120,6 @@ inatcog.obs\_query module
 -------------------------
 
 .. automodule:: inatcog.obs_query
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-inatcog.photos module
----------------------
-
-.. automodule:: inatcog.photos
     :members:
     :undoc-members:
     :show-inheritance:
