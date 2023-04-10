@@ -6,7 +6,6 @@ from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.parsers.url import PAT_OBS_LINK
 from pyinaturalist.models import Observation
 
-from .sounds import Sound
 from .utils import get_home
 
 
@@ -41,17 +40,6 @@ def obs_count_community_id(obs):
                 idents_count += 1
 
     return (idents_count, idents_agree)
-
-def obs_get_sounds(obs):
-    sound_recs = obs.sounds
-    if sound_recs:
-        sounds = [
-            Sound(sound.get("file_url"), sound.get("attribution"))
-            for sound in sound_recs
-        ]
-    else:
-        sounds = []
-    return sounds
 
 async def maybe_match_obs(cog, ctx, content, id_permitted=False):
     """Maybe retrieve an observation from content."""

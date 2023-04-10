@@ -46,7 +46,7 @@ from ..embeds.common import (
 )
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
-from ..obs import obs_count_community_id, obs_get_sounds
+from ..obs import obs_count_community_id
 from ..projects import UserProject
 from ..taxa import (
     format_place_taxon_counts,
@@ -809,8 +809,6 @@ class INatEmbeds(MixinMeta):
                 listed = taxon_summary.listed_taxon
                 if listed:
                     means = listed.establishment_means
-                    # TODO: remove this kludge once pyinat sets listed_taxon.place itself
-                    taxon_summary.listed_taxon.place = Place(**taxon_summary_raw["listed_taxon"].get("place"))
                 status = taxon_summary.conservation_status
             if means or status:
                 return taxon_summary
@@ -1339,9 +1337,8 @@ class INatEmbeds(MixinMeta):
 
         msg = None
         if obs and obs.sounds:
-            sounds = obs_get_sounds(obs)
             async with self.sound_message_params(
-                ctx.channel, sounds, embed=embed
+                ctx.channel, obs.sounds, embed=embed
             ) as params:
                 if params:
                     msg = await hybrid_send(ctx, **params)
