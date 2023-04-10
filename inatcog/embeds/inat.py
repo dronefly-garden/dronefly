@@ -710,11 +710,11 @@ class INatEmbeds(MixinMeta):
                     if obs.observed_on.date() == dt.datetime.now().date():
                         obs_on = obs.observed_on.strftime("%-I:%M%P")
                     elif obs.observed_on.year == dt.datetime.now().year:
-                        obs_on = obs.observed_on.strftime("%d-%b")
+                        obs_on = obs.observed_on.strftime("%-d-%b")
                     else:
                         obs_on = obs.observed_on.strftime("%b-%Y")
                 else:
-                    obs_on = obs.observed_on.strftime("%a %b %d %Y %-I:%M %P")
+                    obs_on = obs.observed_on.strftime("%a %b %-d, %Y · %-I:%M %P")
                     summary += " on " + obs_on
             if obs.place_guess:
                 if compact:
