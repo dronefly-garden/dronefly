@@ -5,10 +5,9 @@ from typing import NamedTuple, Optional, Union
 
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
+from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Place, Taxon, User
 from redbot.core.commands import Context
-
-from .utils import obs_url_from_v1
 
 
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"

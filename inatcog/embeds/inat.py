@@ -19,8 +19,9 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_names,
     format_user_link,
-    TaxonFormatter as CoreTaxonFormatter,
 )
+from dronefly.core.utils import obs_url_from_v1
+from dronefly.discord.embeds import QueryResponseFormatter, TaxonFormatter
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -31,7 +32,7 @@ from dronefly.core.parsers.url import (
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
 import html2markdown
 import inflect
-from pyinaturalist.constants import JsonResponse, ROOT_TAXON_ID
+from pyinaturalist.constants import ROOT_TAXON_ID
 from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User, UserCount
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
@@ -61,7 +62,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
-from ..utils import get_lang, has_valid_user_config, obs_url_from_v1
+from ..utils import get_lang, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -106,74 +107,6 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 p = inflect.engine()
 
 
-class TaxonFormatter(CoreTaxonFormatter):
-    def format(
-        self,
-        with_ancestors: bool = True
-    ):
-        """Format the taxon as markdown.
-
-        with_ancestors: bool, optional
-            When False, omit ancestors
-        """
-        description = self.format_taxon_description()
-        if with_ancestors and self.taxon.ancestors:
-            description += (
-                " in: "
-                + format_taxon_names(
-                    self.taxon.ancestors,
-                    hierarchy=True,
-                    max_len=self.max_len,
-                )
-            )
-        else:
-            description += "."
-        return description
-
-
-class QueryResponseFormatter(TaxonFormatter):
-    def __init__(
-            self,
-            query_response: QueryResponse,
-            observations: JsonResponse=None,
-            **kwargs,
-        ):
-        super().__init__(**kwargs)
-        self.query_response = query_response
-        self.observations = observations
-        self.obs_count_formatter = self.ObsCountFormatter(query_response.taxon, query_response, observations)
-
-    class ObsCountFormatter(TaxonFormatter.ObsCountFormatter):
-        def __init__(self, taxon: Taxon, query_response: QueryResponse=None, observations: JsonResponse=None):
-            super().__init__(taxon)
-            self.query_response = query_response
-            self.observations = observations
-
-        def count(self):
-            if self.observations:
-                count = self.observations.get('total_results')
-            else:
-                count = self.taxon.observations_count
-            return count
-
-        def url(self):
-            return obs_url_from_v1(self.query_response.obs_args())
-
-        def description(self):
-            count = self.link()
-            count_str = "uncounted" if count is None else str(count)
-            adjectives = self.query_response.adjectives # rg, nid, etc.
-            query_without_taxon = copy.copy(self.query_response)
-            query_without_taxon.taxon = None
-            description = [
-                count_str,
-                *adjectives,
-                p.plural('observation', count),
-            ]
-            filter = query_without_taxon.obs_query_description(with_adjectives=False) # place, prj, etc.
-            if filter:
-                description.append(filter)
-            return " ".join(description)
 
 
 class INatEmbed(discord.Embed):

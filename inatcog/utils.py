@@ -3,11 +3,9 @@ import asyncio
 from contextlib import asynccontextmanager
 import functools
 from typing import Optional, Union
-from urllib.parse import urlencode
 
 import discord
 from dronefly.core.commands import Context as DroneflyContext
-from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands
 
@@ -50,20 +48,6 @@ def use_client(coro_or_command):
         wrapped.__module__ = coro_or_command.callback.__module__
         coro_or_command.callback = wrapped
         return coro_or_command
-
-
-def obs_url_from_v1(params: dict):
-    """Observations query URL corresponding to /v1/observations API params."""
-    url = WWW_BASE_URL + "/observations"
-    if params:
-        if "observed_on" in params:
-            _params = params.copy()
-            _params["on"] = params["observed_on"]
-            del _params["observed_on"]
-        else:
-            _params = params
-        url += "?" + urlencode(_params)
-    return url
 
 
 def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]) -> commands.Cog:

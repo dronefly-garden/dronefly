@@ -8,6 +8,7 @@ import urllib.parse
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
+from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -21,7 +22,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
-from ..utils import get_home, obs_url_from_v1, use_client
+from ..utils import get_home, use_client
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 

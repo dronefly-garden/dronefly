@@ -14,6 +14,7 @@ from dronefly.core.parsers.url import (
     PAT_USER_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query
+from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -25,7 +26,7 @@ from ..embeds.common import apologize, make_embed
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource
-from ..utils import get_home, obs_url_from_v1, use_client
+from ..utils import get_home, use_client
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):

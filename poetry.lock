@@ -271,14 +271,14 @@ files = [
 
 [[package]]
 name = "astroid"
-version = "2.15.2"
+version = "2.15.3"
 description = "An abstract syntax tree for Python with inference support."
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "astroid-2.15.2-py3-none-any.whl", hash = "sha256:dea89d9f99f491c66ac9c04ebddf91e4acf8bd711722175fe6245c0725cc19bb"},
-    {file = "astroid-2.15.2.tar.gz", hash = "sha256:6e61b85c891ec53b07471aec5878f4ac6446a41e590ede0f2ce095f39f7d49dd"},
+    {file = "astroid-2.15.3-py3-none-any.whl", hash = "sha256:f11e74658da0f2a14a8d19776a8647900870a63de71db83713a8e77a6af52662"},
+    {file = "astroid-2.15.3.tar.gz", hash = "sha256:44224ad27c54d770233751315fa7f74c46fa3ee0fab7beef1065f99f09897efe"},
 ]
 
 [package.dependencies]
@@ -831,6 +831,24 @@ rich = ">=10.9,<14"
 [package.source]
 type = "directory"
 url = "../dronefly-core"
+
+[[package]]
+name = "dronefly-discord"
+version = "0.1.0"
+description = "Dronefly Discord library"
+category = "main"
+optional = false
+python-versions = ">=3.8.1,<3.12"
+files = []
+develop = true
+
+[package.dependencies]
+dronefly-core = {path = "../dronefly-core", develop = true}
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist"}
+
+[package.source]
+type = "directory"
+url = "../dronefly-discord"
 
 [[package]]
 name = "ebird-api"
@@ -2040,7 +2058,7 @@ pytz = "2022.7"
 pyyaml = "6.0"
 rapidfuzz = "2.13.7"
 red-commons = "1.0.0"
-red-lavalink = "0.11.0rc1"
+red-lavalink = "0.11.0"
 rich = "12.6.0"
 schema = "0.7.5"
 six = "1.16.0"
@@ -2063,14 +2081,14 @@ url = "../Red-DiscordBot"
 
 [[package]]
 name = "red-lavalink"
-version = "0.11.0rc1"
+version = "0.11.0"
 description = "Lavalink client library for Red-DiscordBot"
 category = "main"
 optional = false
 python-versions = ">=3.8.1"
 files = [
-    {file = "Red-Lavalink-0.11.0rc1.tar.gz", hash = "sha256:b907288598bfca3c8ab8dac0d80f91ed15bf8b1b72a3a1d94efd0dc500eac6d5"},
-    {file = "Red_Lavalink-0.11.0rc1-py3-none-any.whl", hash = "sha256:3f868126a8308b02b26423e5f4b74c63e5f1265ce4d8f622311250ab268aaa7a"},
+    {file = "Red-Lavalink-0.11.0.tar.gz", hash = "sha256:6ee2671dfc43a96b7e6be4effaa4137024de51bc5681f64a67c125bc3b7d4f99"},
+    {file = "Red_Lavalink-0.11.0-py3-none-any.whl", hash = "sha256:f76329eee2ec5e4d77e0e97fe6ba76207efdcc8d963a9c39913cf91057d7920a"},
 ]
 
 [package.dependencies]
@@ -2301,14 +2319,14 @@ files = [
 
 [[package]]
 name = "soupsieve"
-version = "2.4"
+version = "2.4.1"
 description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "soupsieve-2.4-py3-none-any.whl", hash = "sha256:49e5368c2cda80ee7e84da9dbe3e110b70a4575f196efb74e51b94549d921955"},
-    {file = "soupsieve-2.4.tar.gz", hash = "sha256:e28dba9ca6c7c00173e34e4ba57448f0688bb681b7c5e8bf4971daafc093d69a"},
+    {file = "soupsieve-2.4.1-py3-none-any.whl", hash = "sha256:1c1bfee6819544a3447586c889157365a27e10d88cde3ad3da0cf0ddf646feb8"},
+    {file = "soupsieve-2.4.1.tar.gz", hash = "sha256:89d12b2d5dfcd2c9e8c22326da9d9aa9cb3dfab0a83a024f05704076ee8d35ea"},
 ]
 
 [[package]]
@@ -2840,4 +2858,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "85b5766b2d0b6abf4ac0f3147797ab95cdce63cb3e981d02a96e24925a40ea23"
+content-hash = "107960740871648909abd7820f12d7c8fedaff571611e4dff266e0dd6a3800c4"
