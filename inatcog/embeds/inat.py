@@ -13,12 +13,12 @@ import discord
 from discord import DMChannel, File
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.formatters.discord import format_user_link
 from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
     format_taxon_establishment_means,
     format_taxon_name,
     format_taxon_names,
+    format_user_link,
     TaxonFormatter as CoreTaxonFormatter,
 )
 from dronefly.core.parsers.url import (

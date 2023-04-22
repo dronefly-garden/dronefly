@@ -7,7 +7,7 @@ from typing import Union
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
-from dronefly.core.formatters.discord import format_user_link, format_user_name, format_user_url
+from dronefly.core.formatters.generic import format_user_link, format_user_name, format_user_url
 from dronefly.core.parsers.url import PAT_USER_LINK
 from pyinaturalist.models import User
 from redbot.core import checks, commands

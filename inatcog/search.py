@@ -1,8 +1,7 @@
 """Module to search iNat site."""
 
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.formatters.discord import format_user_name
-from dronefly.core.formatters.generic import format_taxon_name
+from dronefly.core.formatters.generic import format_taxon_name, format_user_name
 from pyinaturalist.models import Place, Project, Taxon, User
 
 from .utils import get_home
