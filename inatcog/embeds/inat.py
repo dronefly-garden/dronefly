@@ -21,7 +21,7 @@ from dronefly.core.formatters.generic import (
     format_user_link,
 )
 from dronefly.core.utils import obs_url_from_v1
-from dronefly.discord.embeds import QueryResponseFormatter, TaxonFormatter
+from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonFormatter
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -30,6 +30,7 @@ from dronefly.core.parsers.url import (
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
+from dronefly.discord.embeds import make_taxa_embed
 import html2markdown
 import inflect
 from pyinaturalist.constants import ROOT_TAXON_ID
@@ -912,12 +913,13 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_taxa_embed(
+    async def get_taxa_embed(
         self, ctx: Context, arg: Union[QueryResponse, Taxon], include_ancestors=True
     ):
         """Make embed describing taxa record."""
         formatter_params = {
             "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
+            "max_len": MAX_EMBED_DESCRIPTION_LEN,
             "with_url": False,
         }
         if isinstance(arg, QueryResponse):
@@ -926,6 +928,7 @@ class INatEmbeds(MixinMeta):
                 taxon = await ctx.inat_client.taxa.populate(arg.taxon, preferred_place_id=place.id)
             else:
                 taxon = await ctx.inat_client.taxa.populate(arg.taxon)
+            formatter_params["taxon"] = taxon
             user = arg.user
             title_query_response = copy.copy(arg)
             if user:
@@ -936,19 +939,19 @@ class INatEmbeds(MixinMeta):
             # i.e. any args other than the ones accounted for in taxon.observations_count
             if [arg for arg in obs_args if arg != "taxon_id"]:
                 formatter_params["observations"] = await self.api.get_observations(per_page=0, **obs_args)
-            formatter = QueryResponseFormatter(title_query_response, taxon=taxon, **formatter_params)
+            formatter = QualifiedTaxonFormatter(title_query_response, **formatter_params)
         elif isinstance(arg, Taxon):
             taxon = await ctx.inat_client.taxa.populate(arg)
+            formatter_params["taxon"] = taxon
             user = None
             place = None
             obs_args = {"taxon_id": taxon.id}
-            formatter = TaxonFormatter(taxon, max_len=MAX_EMBED_DESCRIPTION_LEN, **formatter_params)
+            formatter = TaxonFormatter(**formatter_params)
         else:
             logger.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
 
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
-        description = formatter.format(with_ancestors=include_ancestors)
+        description = formatter.format(with_ancestors=include_ancestors, with_title=False)
 
         if user:
             formatted_counts = await format_user_taxon_counts(
@@ -963,13 +966,7 @@ class INatEmbeds(MixinMeta):
             if formatted_counts:
                 description += f"\n{TAXON_PLACES_HEADER}\n{formatted_counts}"
 
-        embed.title = formatter.format_title()
-        embed.description = description
-        embed.set_thumbnail(
-            url=taxon.default_photo.square_url
-            if taxon.default_photo
-            else taxon.icon.url
-        )
+        embed = make_taxa_embed(taxon, formatter, description)
 
         return embed
 
@@ -1245,7 +1242,7 @@ class INatEmbeds(MixinMeta):
     ):
         """Make embed for taxon & send."""
         msg = await ctx.send(
-            embed=await self.make_taxa_embed(
+            embed=await self.get_taxa_embed(
                 ctx, query_response, include_ancestors=include_ancestors
             )
         )

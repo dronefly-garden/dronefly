@@ -144,7 +144,7 @@ class Listeners(INatEmbeds, MixinMeta):
                         await self.add_obs_reaction_emojis(ctx, msg, query_response)
                     else:
                         msg = await channel.send(
-                            embed=await self.make_taxa_embed(ctx, query_response)
+                            embed=await self.get_taxa_embed(ctx, query_response)
                         )
                         await self.add_taxon_reaction_emojis(ctx, msg, query_response)
                     self.bot.dispatch("commandstats_action", ctx)
