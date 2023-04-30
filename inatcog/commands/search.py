@@ -15,6 +15,7 @@ from dronefly.core.parsers.url import (
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query
 from dronefly.core.utils import obs_url_from_v1
+from dronefly.discord.embeds import make_embed
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -22,7 +23,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import TaxonReplyConverter
-from ..embeds.common import apologize, make_embed
+from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..menus.inat import SearchMenuPages, SearchObsSource

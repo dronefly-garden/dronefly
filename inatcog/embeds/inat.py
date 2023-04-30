@@ -30,7 +30,7 @@ from dronefly.core.parsers.url import (
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
-from dronefly.discord.embeds import make_taxa_embed
+from dronefly.discord.embeds import make_taxa_embed, MAX_EMBED_DESCRIPTION_LEN, MAX_EMBED_FILE_LEN
 import html2markdown
 import inflect
 from pyinaturalist.constants import ROOT_TAXON_ID
@@ -42,8 +42,6 @@ from ..embeds.common import (
     add_reactions_with_cancel,
     format_items_for_embed,
     make_embed,
-    MAX_EMBED_DESCRIPTION_LEN,
-    MAX_EMBED_FILE_LEN,
     NoRoomInDisplay,
 )
 from ..interfaces import MixinMeta

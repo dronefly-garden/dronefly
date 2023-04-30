@@ -9,6 +9,7 @@ import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
 from dronefly.core.formatters.generic import format_user_link, format_user_name, format_user_url
 from dronefly.core.parsers.url import PAT_USER_LINK
+from dronefly.discord.embeds import make_embed
 from pyinaturalist.models import User
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -22,7 +23,7 @@ from ..converters.base import (
     QuotedContextMemberConverter,
     NaturalQueryConverter,
 )
-from ..embeds.common import apologize, make_embed
+from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject

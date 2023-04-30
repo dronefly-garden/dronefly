@@ -9,20 +9,9 @@ from redbot.core.commands import Context
 from redbot.core.utils.predicates import ReactionPredicate
 from redbot.core.utils.menus import start_adding_reactions
 
-from inatcog.common import make_decorator
+from dronefly.discord.embeds import make_embed, MAX_EMBED_NAME_LEN
 
-EMBED_COLOR = 0x90EE90
-# From https://discordapp.com/developers/docs/resources/channel#embed-limits
-MAX_EMBED_TITLE_LEN = MAX_EMBED_NAME_LEN = 256
-MAX_EMBED_DESCRIPTION_LEN = 2048
-MAX_EMBED_FIELDS = 25
-MAX_EMBED_VALUE_LEN = 1024
-MAX_EMBED_FOOTER_LEN = 2048
-MAX_EMBED_AUTHOR_LEN = 256
-MAX_EMBED_LEN = 6000
-# It's not exactly 2**23 due to overhead, but how much less, we can't determine.
-# This is a safe value that works for others.
-MAX_EMBED_FILE_LEN = 8000000
+from inatcog.common import make_decorator
 
 
 class NoRoomInDisplay(Exception):
@@ -50,11 +39,6 @@ def format_items_for_embed(function, max_len=MAX_EMBED_NAME_LEN):
         return function(*args, **kwargs)
 
     return wrap_format_items_for_embed
-
-
-def make_embed(**kwargs):
-    """Make a standard embed for this cog."""
-    return discord.Embed(color=EMBED_COLOR, **kwargs)
 
 
 def sorry(apology="I don't understand", title="Sorry"):

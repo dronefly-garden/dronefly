@@ -13,6 +13,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.constants import TRACHEOPHYTA_ID
+from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
@@ -20,8 +21,6 @@ from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import (
     add_reactions_with_cancel,
     apologize,
-    make_embed,
-    MAX_EMBED_DESCRIPTION_LEN,
 )
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta

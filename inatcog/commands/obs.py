@@ -9,6 +9,7 @@ from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.utils import obs_url_from_v1
+from dronefly.discord.embeds import make_embed
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -17,7 +18,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
-from ..embeds.common import apologize, make_embed
+from ..embeds.common import apologize
 from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs

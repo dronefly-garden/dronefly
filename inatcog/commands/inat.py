@@ -9,8 +9,9 @@ from redbot.core import checks, commands
 from redbot.core.utils.menus import DEFAULT_CONTROLS, menu, start_adding_reactions
 from redbot.core.utils.chat_formatting import pagify
 
+from dronefly.discord.embeds import make_embed
+
 from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
-from inatcog.embeds.common import make_embed
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
 
