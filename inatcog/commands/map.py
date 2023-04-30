@@ -11,6 +11,7 @@ from inatcog.converters.base import NaturalQueryConverter
 from inatcog.embeds.common import apologize
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
+from inatcog.utils import use_client
 
 
 class CommandsMap(INatEmbeds, MixinMeta):
@@ -18,6 +19,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
 
     @commands.group(invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
+    @use_client
     async def map(self, ctx, *, taxa_list):
         """Show range map for a list of one or more taxa.
 
@@ -43,6 +45,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
         await ctx.send(embed=await self.make_map_embed(ctx, taxa))
 
     @map.command(name="obs")
+    @use_client
     async def map_obs(self, ctx, *, query: NaturalQueryConverter):
         """Show map of observations."""
 
