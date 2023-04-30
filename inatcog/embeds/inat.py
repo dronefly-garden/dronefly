@@ -30,7 +30,13 @@ from dronefly.core.parsers.url import (
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
-from dronefly.discord.embeds import make_taxa_embed, MAX_EMBED_DESCRIPTION_LEN, MAX_EMBED_FILE_LEN
+from dronefly.discord.embeds import (
+    format_taxon_names_for_embed,
+    make_image_embed,
+    make_taxa_embed,
+    MAX_EMBED_DESCRIPTION_LEN,
+    MAX_EMBED_FILE_LEN,
+)
 import html2markdown
 import inflect
 from pyinaturalist.constants import ROOT_TAXON_ID
@@ -338,35 +344,6 @@ class INatEmbed(discord.Embed):
         """Return ident_user_id(s) from embed, if present."""
         ident_user_id = self.params.get("ident_user_id")
         return int(ident_user_id) if ident_user_id else None
-
-
-@format_items_for_embed
-def format_taxon_names_for_embed(*args, **kwargs):
-    """Format taxon names for output in embed."""
-    return format_taxon_names(*args, **kwargs)
-
-
-def format_taxon_title(taxon, lang=None):
-    """Format taxon title."""
-    title = format_taxon_name(taxon, lang=lang)
-    matched = taxon.matched_term
-    preferred_common_name = taxon.preferred_common_name
-    if lang and taxon.names:
-        name = next(
-            iter([name for name in taxon.names if name.get("locale") == lang]), None
-        )
-        if name:
-            preferred_common_name = name.get("name")
-    if matched not in (None, taxon.name, preferred_common_name):
-        invalid_names = (
-            [name["name"] for name in taxon.names if not name["is_valid"]]
-            if taxon.names
-            else []
-        )
-        if matched in invalid_names:
-            matched = f"~~{matched}~~"
-        title += f" ({matched})"
-    return title
 
 
 # TODO: refactor these two helpers as a single context manager so we can
@@ -873,42 +850,11 @@ class INatEmbeds(MixinMeta):
 
         return make_embed(title="Closest related taxon", description=description)
 
-    async def make_image_embed(self, ctx, taxon, index=1):
+    async def get_image_embed(self, ctx, taxon, index=1):
         """Make embed showing default image for taxon."""
-        embed = make_embed(url=f"{WWW_BASE_URL}/taxa/{taxon.id}")
-
         lang = await get_lang(ctx)
-        title = format_taxon_title(taxon, lang=lang)
-        taxon_photo = None
-
-        embed.title = title
-        if taxon.default_photo and not isinstance(taxon.default_photo, IconPhoto):
-            if index == 1:
-                taxon_photo = taxon.default_photo
-            else:
-                # - A taxon record may have a default_photo but no photos if the
-                #   photo is externally hosted (e.g. Flickr) and the record
-                #   was created from /v1/taxa/autocomplete (i.e. only has a
-                #   subset of the fields that /v1/taxa/# returns).
-                # - Or the user may have requested other than the default photo.
-                # - In either case, we retrieve the full record via taxon_id so
-                #   the photo will be set from the full-quality original in
-                #   taxon_photos.
-                if getattr(taxon, 'taxon_photos', None) is None or len(taxon.taxon_photos) == 0:
-                    _taxon = await ctx.inat_client.taxa.populate(taxon)
-                else:
-                    _taxon = taxon
-                if _taxon and index <= len(_taxon.taxon_photos):
-                    taxon_photo = _taxon.taxon_photos[index - 1]
-        if taxon_photo:
-            embed.set_image(url=taxon_photo.original_url)
-            embed.set_footer(text=taxon_photo.attribution)
-        else:
-            if index == 1:
-                embed.description = "This taxon has no default photo."
-            else:
-                embed.description = f"This taxon does not have an image number {index}."
-
+        _taxon = await ctx.inat_client.taxa.populate(taxon)
+        embed = make_image_embed(_taxon, index=index, lang=lang)
         return embed
 
     async def get_taxa_embed(
@@ -1223,7 +1169,7 @@ class INatEmbeds(MixinMeta):
     ):
         """Make embed for taxon image & send."""
         msg = await ctx.send(
-            embed=await self.make_image_embed(ctx, query_response, index)
+            embed=await self.get_image_embed(ctx, query_response, index)
         )
         # TODO: drop taxonomy=False when #139 is fixed
         # - This workaround omits Taxonomy reaction to make it less likely a
