@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
 env:
-  LATEST_PY_VERSION: '3.9'
+  LATEST_PY_VERSION: '3.11'
 
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: [3.9, 3.10, 3.11]
       fail-fast: false
 
     steps:
@@ -38,7 +38,7 @@ jobs:
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       # Workaround for conflicting Red-DiscordBot dependency on too-old attrs. Force it.
-      run: poetry install -v ; poetry run pip install attrs==22.2.0
+      run: poetry install -v
 
     - name: Test with pytest
       run: |
