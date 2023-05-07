@@ -951,7 +951,6 @@ class INatEmbeds(MixinMeta):
             if project_id:
                 kwargs["project_id"] = project_id
             response = await self.api.get_observers_stats(**kwargs)
-            logger.debug(repr(response))
             stats = response.get("results")
             if stats:
                 rank = next(
