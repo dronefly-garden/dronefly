@@ -40,7 +40,7 @@ from dronefly.discord.embeds import (
 import html2markdown
 import inflect
 from pyinaturalist.constants import ROOT_TAXON_ID
-from pyinaturalist.models import IconPhoto, Place, Taxon, TaxonSummary, User, UserCount
+from pyinaturalist.models import Place, Taxon, TaxonSummary, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -951,24 +951,23 @@ class INatEmbeds(MixinMeta):
             if project_id:
                 kwargs["project_id"] = project_id
             response = await self.api.get_observers_stats(**kwargs)
-            stats = [
-                UserCount.from_json(observer) for observer in response["results"]
-            ]
+            logger.debug(repr(response))
+            stats = response.get("results")
             if stats:
                 rank = next(
                     (
                         index + 1
                         for (index, d) in enumerate(stats)
-                        if d.id == user.id
+                        if d["user_id"] == user.id
                     ),
                     None,
                 )
                 if rank:
                     ranked = stats[rank - 1]
                     count = (
-                        ranked.species_count
+                        ranked["species_count"]
                         if category == "spp"
-                        else ranked.observation_count
+                        else ranked["observation_count"]
                     )
         if not (with_rank and rank):
             if category == "spp":
