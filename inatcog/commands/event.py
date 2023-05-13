@@ -139,32 +139,33 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
             return command_response
 
-        try:
-            manager_inat_user = await get_manager_inat_user(client)
-            project = await get_event_project(client, abbrev)
-            await check_manager(project, manager_inat_user)
-            inat_user = await get_inat_user(user)
+        async with ctx.typing():
+            try:
+                manager_inat_user = await get_manager_inat_user(client)
+                project = await get_event_project(client, abbrev)
+                await check_manager(project, manager_inat_user)
+                inat_user = await get_inat_user(user)
 
-            if action == "join":
-                update_response = await client.projects.add_users(
-                    project.id, inat_user.id
+                if action == "join":
+                    update_response = await client.projects.add_users(
+                        project.id, inat_user.id
+                    )
+                else:
+                    update_response = await client.projects.delete_users(
+                        project.id, inat_user.id
+                    )
+                command_response = await get_command_response(
+                    inat_user, project, update_response
                 )
-            else:
-                update_response = await client.projects.delete_users(
-                    project.id, inat_user.id
-                )
-            command_response = await get_command_response(
-                inat_user, project, update_response
-            )
 
-            await ctx.send(command_response)
-        except (
-            commands.CommandError,
-            LookupError,
-            AuthenticationError,
-            HTTPError,
-        ) as err:
-            await ctx.send(str(err))
+                await ctx.send(command_response)
+            except (
+                commands.CommandError,
+                LookupError,
+                AuthenticationError,
+                HTTPError,
+            ) as err:
+                await ctx.send(str(err))
 
     @use_client
     @event.command(name="join")

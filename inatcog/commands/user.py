@@ -873,42 +873,43 @@ class CommandsUser(INatEmbeds, MixinMeta):
             )
             return
 
-        # If filter_role is given, resulting list of names will be partitioned
-        # into matching and non matching names, where "non-matching" is any
-        # discrepancy between the role(s) assigned and the project they're in,
-        # or when a non-server-member is in the specified event project.
-        try:
-            (matching_names, non_matching_names) = await self._user_list_match_members(
-                ctx, abbrev, event_projects, filter_role, filter_emoji, filter_message
-            )
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
-        # Placing non matching names first allows an event manager to easily
-        # spot and correct mismatches.
-        pages = [
-            "\n".join(filter(None, names))
-            for names in grouper([*non_matching_names, *matching_names], 10)
-        ]
-
-        if pages:
-            pages_len = len(pages)
-            if abbrev in ["active", "inactive"]:
-                list_name = f"{abbrev.capitalize()} known server members"
-            elif abbrev:
-                list_name = f"Membership report for event: {abbrev}"
-            else:
-                list_name = "Known server members"
-            embeds = [
-                make_embed(
-                    title=f"{list_name} (page {index} of {pages_len})",
-                    description=page,
+        async with ctx.typing():
+            # If filter_role is given, resulting list of names will be partitioned
+            # into matching and non matching names, where "non-matching" is any
+            # discrepancy between the role(s) assigned and the project they're in,
+            # or when a non-server-member is in the specified event project.
+            try:
+                (matching_names, non_matching_names) = await self._user_list_match_members(
+                    ctx, abbrev, event_projects, filter_role, filter_emoji, filter_message
                 )
-                for index, page in enumerate(pages, start=1)
+            except LookupError as err:
+                await apologize(ctx, str(err))
+                return
+            # Placing non matching names first allows an event manager to easily
+            # spot and correct mismatches.
+            pages = [
+                "\n".join(filter(None, names))
+                for names in grouper([*non_matching_names, *matching_names], 10)
             ]
-            await menu(ctx, embeds, DEFAULT_CONTROLS)
-        else:
-            await ctx.send("No known members matched.")
+
+            if pages:
+                pages_len = len(pages)
+                if abbrev in ["active", "inactive"]:
+                    list_name = f"{abbrev.capitalize()} known server members"
+                elif abbrev:
+                    list_name = f"Membership report for event: {abbrev}"
+                else:
+                    list_name = "Known server members"
+                embeds = [
+                    make_embed(
+                        title=f"{list_name} (page {index} of {pages_len})",
+                        description=page,
+                    )
+                    for index, page in enumerate(pages, start=1)
+                ]
+                await menu(ctx, embeds, DEFAULT_CONTROLS)
+            else:
+                await ctx.send("No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()
