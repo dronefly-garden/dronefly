@@ -366,78 +366,77 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ]
             return embeds
 
-        try:
-            if keyword and keyword.lower() == "obs":
-                if not ctx.interaction:
-                    await ctx.typing()
-                try:
-                    _query = query or (await TaxonReplyConverter.convert(ctx, ""))
-                except commands.BadArgument:
-                    _query = EMPTY_QUERY
-            else:
-                _query = query
-            query_type, query_title, url, kwargs = await get_query_args(_query, keyword)
+        async with ctx.typing():
+            try:
+                if keyword and keyword.lower() == "obs":
+                    try:
+                        _query = query or (await TaxonReplyConverter.convert(ctx, ""))
+                    except commands.BadArgument:
+                        _query = EMPTY_QUERY
+                else:
+                    _query = query
+                query_type, query_title, url, kwargs = await get_query_args(_query, keyword)
+                if query_type == "obs":
+                    (
+                        results,
+                        total_results,
+                        per_api_page,
+                    ) = await self.obs_query.query_observations(ctx, _query)
+                else:
+                    (
+                        total_results,
+                        results,
+                        thumbnails,
+                        per_api_page,
+                        per_embed_page,
+                    ) = await query_formatted_results(_query, kwargs)
+            except LookupError as err:
+                await apologize(ctx, err.args[0])
+                return
+            if not results:
+                if isinstance(_query, str) and "in" in _query.split():
+                    await apologize(
+                        ctx,
+                        "The `in` keyword is not supported by this command.\n"
+                        f"Try `{ctx.clean_prefix}taxon` instead or omit the `in` clause.\n"
+                        f"Type `{ctx.clean_prefix}help search` for help.",
+                    )
+                else:
+                    await apologize(
+                        ctx,
+                        "Nothing matches that query. "
+                        "Check for mistakes in spelling or syntax.\n"
+                        f"Type `{ctx.clean_prefix}help search` for help.",
+                    )
+                return
+
             if query_type == "obs":
-                (
-                    results,
-                    total_results,
-                    per_api_page,
-                ) = await self.obs_query.query_observations(ctx, _query)
-            else:
-                (
-                    total_results,
-                    results,
-                    thumbnails,
-                    per_api_page,
-                    per_embed_page,
-                ) = await query_formatted_results(_query, kwargs)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-            return
-        if not results:
-            if isinstance(_query, str) and "in" in _query.split():
-                await apologize(
-                    ctx,
-                    "The `in` keyword is not supported by this command.\n"
-                    f"Try `{ctx.clean_prefix}taxon` instead or omit the `in` clause.\n"
-                    f"Type `{ctx.clean_prefix}help search` for help.",
+                per_page = 4
+                pages = SearchMenuPages(
+                    source=SearchObsSource(
+                        self,
+                        ctx,
+                        _query,
+                        results,
+                        total_results,
+                        per_page,
+                        per_api_page,
+                        url,
+                        query_title,
+                    ),
+                    clear_reactions_after=True,
                 )
+                await pages.start(ctx)
             else:
-                await apologize(
-                    ctx,
-                    "Nothing matches that query. "
-                    "Check for mistakes in spelling or syntax.\n"
-                    f"Type `{ctx.clean_prefix}help search` for help.",
+                (buttons, controls) = get_button_controls(results, query_type)
+                embeds = format_embeds(
+                    results, total_results, per_api_page, per_embed_page, buttons
                 )
-            return
+                # Track index in outer scope
+                # - TODO: use a menu class (from vendored menu) and make this an attribute.
+                selected_index = [0]
 
-        if query_type == "obs":
-            per_page = 4
-            pages = SearchMenuPages(
-                source=SearchObsSource(
-                    self,
-                    ctx,
-                    _query,
-                    results,
-                    total_results,
-                    per_page,
-                    per_api_page,
-                    url,
-                    query_title,
-                ),
-                clear_reactions_after=True,
-            )
-            await pages.start(ctx)
-        else:
-            (buttons, controls) = get_button_controls(results, query_type)
-            embeds = format_embeds(
-                results, total_results, per_api_page, per_embed_page, buttons
-            )
-            # Track index in outer scope
-            # - TODO: use a menu class (from vendored menu) and make this an attribute.
-            selected_index = [0]
-
-            await menu(ctx, embeds, controls, timeout=60)
+                await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)

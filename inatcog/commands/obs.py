@@ -211,18 +211,14 @@ class CommandsObs(INatEmbeds, MixinMeta):
              -> per user (self listed; others react to add) but only fish from canada are tabulated
         ```
         """  # noqa: E501
-        _query = query or await TaxonReplyConverter.convert(ctx, "")
-        try:
-            if ctx.interaction:
-                await ctx.interaction.response.defer(thinking=True)
-            else:
-                await ctx.typing()
-            query_response = await self.query.get(ctx, _query)
-            msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
-            return await self.add_obs_reaction_emojis(ctx, msg, query_response)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
+        async with ctx.typing():
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            try:
+                query_response = await self.query.get(ctx, _query)
+                msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
+                return await self.add_obs_reaction_emojis(ctx, msg, query_response)
+            except (BadArgument, LookupError) as err:
+                await apologize(ctx, str(err))
 
     @tabulate.command(name="maverick")
     @use_client
@@ -232,41 +228,37 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • By default, if your iNat login is known, your own maverick identifications are displayed.
         • The `by` qualifier can be used to display mavericks for another known user.
         """
-        try:
-            _query = query or await TaxonReplyConverter.convert(ctx, "")
-            if not _query.user:
-                _query.user = "me"
-            if ctx.interaction:
-                await ctx.interaction.response.defer(thinking=True)
-            else:
-                await ctx.typing()
-            query_response = await self.query.get(ctx, _query)
-            if not query_response.user:
-                raise BadArgument("iNat user not found")
-            if _query and (
-                _query.place
-                or _query.controlled_term
-                or _query.unobserved_by
-                or _query.id_by
-                or _query.per
-                or _query.project
-            ):
-                await apologize(ctx, "I can't tabulate that yet.")
-                return
-            embed = make_embed()
-            embed.title = (
-                f"Maverick identifications {query_response.obs_query_description()}"
-            )
-            ids_opt = {"category": "maverick", "user_id": query_response.user.id}
-            if query_response.taxon:
-                ids_opt["taxon_id"] = query_response.taxon.id
-            embed.url = f"{WWW_BASE_URL}/identifications?" + urllib.parse.urlencode(
-                ids_opt
-            )
-            await ctx.send(embed=embed)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
+        async with ctx.typing():
+            try:
+                _query = query or await TaxonReplyConverter.convert(ctx, "")
+                if not _query.user:
+                    _query.user = "me"
+                query_response = await self.query.get(ctx, _query)
+                if not query_response.user:
+                    raise BadArgument("iNat user not found")
+                if _query and (
+                    _query.place
+                    or _query.controlled_term
+                    or _query.unobserved_by
+                    or _query.id_by
+                    or _query.per
+                    or _query.project
+                ):
+                    await apologize(ctx, "I can't tabulate that yet.")
+                    return
+                embed = make_embed()
+                embed.title = (
+                    f"Maverick identifications {query_response.obs_query_description()}"
+                )
+                ids_opt = {"category": "maverick", "user_id": query_response.user.id}
+                if query_response.taxon:
+                    ids_opt["taxon_id"] = query_response.taxon.id
+                embed.url = f"{WWW_BASE_URL}/identifications?" + urllib.parse.urlencode(
+                    ids_opt
+                )
+                await ctx.send(embed=embed)
+            except (BadArgument, LookupError) as err:
+                await apologize(ctx, str(err))
 
     async def _tabulate_query(self, ctx, query, view="obs"):
         def format_pages(user_links, users_count, entity_counted, view):
@@ -283,55 +275,52 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 pages.append(page)
             return pages
 
-        _query = query or await TaxonReplyConverter.convert(ctx, "")
-        try:
-            if ctx.interaction:
-                await ctx.interaction.response.defer(thinking=True)
-            else:
-                await ctx.typing()
-            query_response = await self.query.get(ctx, _query)
-            obs_opt_view = "identifiers" if view == "ids" else "observers"
-            obs_opt = query_response.obs_args()
-            users = await self.api.get_observations(obs_opt_view, **obs_opt)
-            # We count identifications when we tabulate identifiers, but link
-            # to the observations tab on the web to show the observations
-            # they identified, as there's no tidy way to link directly
-            # to the identifications instead.
+        async with ctx.typing():
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            try:
+                query_response = await self.query.get(ctx, _query)
+                obs_opt_view = "identifiers" if view == "ids" else "observers"
+                obs_opt = query_response.obs_args()
+                users = await self.api.get_observations(obs_opt_view, **obs_opt)
+                # We count identifications when we tabulate identifiers, but link
+                # to the observations tab on the web to show the observations
+                # they identified, as there's no tidy way to link directly
+                # to the identifications instead.
+                if view == "ids":
+                    obs_opt_view = "observations"
+                users_count = users.get("total_results")
+                if not users_count:
+                    raise LookupError(
+                        f"No observations found {query_response.obs_query_description()}"
+                    )
+            except (BadArgument, LookupError) as err:
+                await apologize(ctx, str(err))
+                return
+
+            obs_opt["view"] = obs_opt_view
+            url = obs_url_from_v1(obs_opt)
+            taxon = query_response.taxon
+            species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
+            user_links = get_formatted_user_counts(users, url, species_only, view)
+            query_description = query_response.obs_query_description()
             if view == "ids":
-                obs_opt_view = "observations"
-            users_count = users.get("total_results")
-            if not users_count:
-                raise LookupError(
-                    f"No observations found {query_response.obs_query_description()}"
+                entity_counted = "identifiers"
+            else:
+                entity_counted = obs_opt_view
+            full_title = f"{entity_counted.capitalize()} {query_description}"
+            pages = format_pages(user_links, users_count, entity_counted, view)
+
+            summary_counts = await self.summarize_obs_spp_counts(taxon, obs_opt)
+            embeds = [
+                make_embed(
+                    title=full_title, url=url, description=f"{summary_counts}\n{page}"
                 )
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-
-        obs_opt["view"] = obs_opt_view
-        url = obs_url_from_v1(obs_opt)
-        taxon = query_response.taxon
-        species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
-        user_links = get_formatted_user_counts(users, url, species_only, view)
-        query_description = query_response.obs_query_description()
-        if view == "ids":
-            entity_counted = "identifiers"
-        else:
-            entity_counted = obs_opt_view
-        full_title = f"{entity_counted.capitalize()} {query_description}"
-        pages = format_pages(user_links, users_count, entity_counted, view)
-
-        summary_counts = await self.summarize_obs_spp_counts(taxon, obs_opt)
-        embeds = [
-            make_embed(
-                title=full_title, url=url, description=f"{summary_counts}\n{page}"
-            )
-            for page in pages
-        ]
-        if len(pages) > 1:
-            await menu(ctx, embeds, DEFAULT_CONTROLS)
-        else:
-            await ctx.send(embed=embeds[0])
+                for page in pages
+            ]
+            if len(pages) > 1:
+                await menu(ctx, embeds, DEFAULT_CONTROLS)
+            else:
+                await ctx.send(embed=embeds[0])
 
     @tabulate.command(name="topids")
     @use_client
