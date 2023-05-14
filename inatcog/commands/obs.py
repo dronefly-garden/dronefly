@@ -275,6 +275,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 pages.append(page)
             return pages
 
+        embeds = []
         async with ctx.typing():
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
@@ -317,10 +318,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 )
                 for page in pages
             ]
-            if len(pages) > 1:
-                await menu(ctx, embeds, DEFAULT_CONTROLS)
-            else:
-                await ctx.send(embed=embeds[0])
+
+        if len(embeds) > 1:
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send(embed=embeds[0])
 
     @tabulate.command(name="topids")
     @use_client

@@ -410,33 +410,33 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                     )
                 return
 
-            if query_type == "obs":
-                per_page = 4
-                pages = SearchMenuPages(
-                    source=SearchObsSource(
-                        self,
-                        ctx,
-                        _query,
-                        results,
-                        total_results,
-                        per_page,
-                        per_api_page,
-                        url,
-                        query_title,
-                    ),
-                    clear_reactions_after=True,
-                )
-                await pages.start(ctx)
-            else:
-                (buttons, controls) = get_button_controls(results, query_type)
-                embeds = format_embeds(
-                    results, total_results, per_api_page, per_embed_page, buttons
-                )
-                # Track index in outer scope
-                # - TODO: use a menu class (from vendored menu) and make this an attribute.
-                selected_index = [0]
+        if query_type == "obs":
+            per_page = 4
+            pages = SearchMenuPages(
+                source=SearchObsSource(
+                    self,
+                    ctx,
+                    _query,
+                    results,
+                    total_results,
+                    per_page,
+                    per_api_page,
+                    url,
+                    query_title,
+                ),
+                clear_reactions_after=True,
+            )
+            await pages.start(ctx)
+        else:
+            (buttons, controls) = get_button_controls(results, query_type)
+            embeds = format_embeds(
+                results, total_results, per_api_page, per_embed_page, buttons
+            )
+            # Track index in outer scope
+            # - TODO: use a menu class (from vendored menu) and make this an attribute.
+            selected_index = [0]
 
-                await menu(ctx, embeds, controls, timeout=60)
+            await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)

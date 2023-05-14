@@ -104,6 +104,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         if not ctx.guild:
             return
 
+        pages = []
         async with ctx.typing():
             config = self.config.guild(ctx.guild)
             projects = await config.projects()
@@ -164,19 +165,19 @@ class CommandsProject(INatEmbeds, MixinMeta):
             pages = [
                 "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
             ]
-            if pages:
-                pages_len = len(pages)  # Causes enumeration (works against lazy load).
-                embeds = [
-                    make_embed(
-                        title=f"Project abbreviations (page {index} of {pages_len})",
-                        description=page,
-                    )
-                    for index, page in enumerate(pages, start=1)
-                ]
-                # menu() does not support lazy load of embeds iterator.
-                await menu(ctx, embeds, DEFAULT_CONTROLS)
-            else:
-                await apologize(ctx, "Nothing found")
+        if pages:
+            pages_len = len(pages)  # Causes enumeration (works against lazy load).
+            embeds = [
+                make_embed(
+                    title=f"Project abbreviations (page {index} of {pages_len})",
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            # menu() does not support lazy load of embeds iterator.
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await apologize(ctx, "Nothing found")
 
     @can_manage_projects()
     @project.command(name="remove")

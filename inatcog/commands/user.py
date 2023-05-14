@@ -873,6 +873,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             )
             return
 
+        pages = []
         async with ctx.typing():
             # If filter_role is given, resulting list of names will be partitioned
             # into matching and non matching names, where "non-matching" is any
@@ -892,24 +893,24 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 for names in grouper([*non_matching_names, *matching_names], 10)
             ]
 
-            if pages:
-                pages_len = len(pages)
-                if abbrev in ["active", "inactive"]:
-                    list_name = f"{abbrev.capitalize()} known server members"
-                elif abbrev:
-                    list_name = f"Membership report for event: {abbrev}"
-                else:
-                    list_name = "Known server members"
-                embeds = [
-                    make_embed(
-                        title=f"{list_name} (page {index} of {pages_len})",
-                        description=page,
-                    )
-                    for index, page in enumerate(pages, start=1)
-                ]
-                await menu(ctx, embeds, DEFAULT_CONTROLS)
+        if pages:
+            pages_len = len(pages)
+            if abbrev in ["active", "inactive"]:
+                list_name = f"{abbrev.capitalize()} known server members"
+            elif abbrev:
+                list_name = f"Membership report for event: {abbrev}"
             else:
-                await ctx.send("No known members matched.")
+                list_name = "Known server members"
+            embeds = [
+                make_embed(
+                    title=f"{list_name} (page {index} of {pages_len})",
+                    description=page,
+                )
+                for index, page in enumerate(pages, start=1)
+            ]
+            await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            await ctx.send("No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()
