@@ -139,33 +139,34 @@ class CommandsEvent(INatEmbeds, MixinMeta):
 
             return command_response
 
-        async with ctx.typing():
-            try:
-                manager_inat_user = await get_manager_inat_user(client)
-                project = await get_event_project(client, abbrev)
-                await check_manager(project, manager_inat_user)
-                inat_user = await get_inat_user(user)
+        msg = None
+        try:
+            manager_inat_user = await get_manager_inat_user(client)
+            project = await get_event_project(client, abbrev)
+            await check_manager(project, manager_inat_user)
+            inat_user = await get_inat_user(user)
 
-                if action == "join":
-                    update_response = await client.projects.add_users(
-                        project.id, inat_user.id
-                    )
-                else:
-                    update_response = await client.projects.delete_users(
-                        project.id, inat_user.id
-                    )
-                command_response = await get_command_response(
-                    inat_user, project, update_response
+            if action == "join":
+                update_response = await client.projects.add_users(
+                    project.id, inat_user.id
                 )
+            else:
+                update_response = await client.projects.delete_users(
+                    project.id, inat_user.id
+                )
+            command_response = await get_command_response(
+                inat_user, project, update_response
+            )
 
-                await ctx.send(command_response)
-            except (
-                commands.CommandError,
-                LookupError,
-                AuthenticationError,
-                HTTPError,
-            ) as err:
-                await ctx.send(str(err))
+            msg = command_response
+        except (
+            commands.CommandError,
+            LookupError,
+            AuthenticationError,
+            HTTPError,
+        ) as err:
+            msg = str(err)
+        return msg
 
     @use_client
     @event.command(name="join")
@@ -176,9 +177,11 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         user: Union[discord.Member, discord.User],
     ):
         """Join member to server event."""
-        await self._event_action(
-            ctx, client=ctx.inat_client, action="join", abbrev=abbrev, user=user
-        )
+        async with ctx.typing():
+            msg = await self._event_action(
+                ctx, client=ctx.inat_client, action="join", abbrev=abbrev, user=user
+            )
+        await ctx.send(msg)
 
     @event.command(name="list")
     @checks.bot_has_permissions(embed_links=True)
@@ -195,6 +198,8 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         user: Union[discord.Member, discord.User],
     ):
         """Remove member from server event."""
-        await self._event_action(
-            ctx, client=ctx.inat_client, action="leave", abbrev=abbrev, user=user
-        )
+        async with ctx.typing():
+            msg = await self._event_action(
+                ctx, client=ctx.inat_client, action="leave", abbrev=abbrev, user=user
+            )
+        await ctx.send(msg)
