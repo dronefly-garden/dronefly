@@ -366,6 +366,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ]
             return embeds
 
+        error_msg = None
+        pages = []
+        embeds = []
+        controls = []
         async with ctx.typing():
             try:
                 if keyword and keyword.lower() == "obs":
@@ -390,52 +394,52 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         per_api_page,
                         per_embed_page,
                     ) = await query_formatted_results(_query, kwargs)
-            except LookupError as err:
-                await apologize(ctx, err.args[0])
-                return
-            if not results:
-                if isinstance(_query, str) and "in" in _query.split():
-                    await apologize(
-                        ctx,
-                        "The `in` keyword is not supported by this command.\n"
-                        f"Try `{ctx.clean_prefix}taxon` instead or omit the `in` clause.\n"
-                        f"Type `{ctx.clean_prefix}help search` for help.",
+                if not results:
+                    if isinstance(_query, str) and "in" in _query.split():
+                        raise LookupError(
+                            "The `in` keyword is not supported by this command.\n"
+                            f"Try `{ctx.clean_prefix}taxon` instead or omit the `in` clause.\n"
+                            f"Type `{ctx.clean_prefix}help search` for help.",
+                        )
+                    else:
+                        raise LookupError(
+                            "Nothing matches that query. "
+                            "Check for mistakes in spelling or syntax.\n"
+                            f"Type `{ctx.clean_prefix}help search` for help.",
+                        )
+                if query_type == "obs":
+                    per_page = 4
+                    pages = SearchMenuPages(
+                        source=SearchObsSource(
+                            self,
+                            ctx,
+                            _query,
+                            results,
+                            total_results,
+                            per_page,
+                            per_api_page,
+                            url,
+                            query_title,
+                        ),
+                        clear_reactions_after=True,
                     )
                 else:
-                    await apologize(
-                        ctx,
-                        "Nothing matches that query. "
-                        "Check for mistakes in spelling or syntax.\n"
-                        f"Type `{ctx.clean_prefix}help search` for help.",
+                    (buttons, controls) = get_button_controls(results, query_type)
+                    embeds = format_embeds(
+                        results, total_results, per_api_page, per_embed_page, buttons
                     )
-                return
 
-        if query_type == "obs":
-            per_page = 4
-            pages = SearchMenuPages(
-                source=SearchObsSource(
-                    self,
-                    ctx,
-                    _query,
-                    results,
-                    total_results,
-                    per_page,
-                    per_api_page,
-                    url,
-                    query_title,
-                ),
-                clear_reactions_after=True,
-            )
+            except LookupError as err:
+                error_msg = str(err)
+
+        if error_msg:
+            await apologize(ctx, error_msg)
+        elif pages:
             await pages.start(ctx)
         else:
-            (buttons, controls) = get_button_controls(results, query_type)
-            embeds = format_embeds(
-                results, total_results, per_api_page, per_embed_page, buttons
-            )
             # Track index in outer scope
             # - TODO: use a menu class (from vendored menu) and make this an attribute.
             selected_index = [0]
-
             await menu(ctx, embeds, controls, timeout=60)
 
     @commands.group(aliases=["s"], invoke_without_command=True)

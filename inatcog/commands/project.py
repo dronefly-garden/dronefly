@@ -104,6 +104,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         if not ctx.guild:
             return
 
+        error_msg = None
         pages = []
         async with ctx.typing():
             config = self.config.guild(ctx.guild)
@@ -130,42 +131,44 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 ]
                 for proj_id_group in proj_id_groups:
                     await self.api.get_projects(proj_id_group)
-            except LookupError as err:
-                await apologize(ctx, str(err))
-                return
-
-            # Iterate over projects and do a quick cache lookup per project:
-            for abbrev in sorted(projects):
-                proj_id = int(projects[abbrev])
-                proj_str_text = ""
-                if proj_id in self.api.projects_cache:
-                    try:
-                        project = await self.project_table.get_project(ctx.guild, proj_id)
-                        proj_str = f"{abbrev}: [{project.title}]({project.url})"
-                        proj_str_text = f"{abbrev} {project.title}"
-                    except LookupError:
-                        # In the unlikely case of the deletion of a project that is cached:
-                        proj_str = f"{abbrev}: {proj_id} not found."
+                # Iterate over projects and do a quick cache lookup per project:
+                for abbrev in sorted(projects):
+                    proj_id = int(projects[abbrev])
+                    proj_str_text = ""
+                    if proj_id in self.api.projects_cache:
+                        try:
+                            project = await self.project_table.get_project(ctx.guild, proj_id)
+                            proj_str = f"{abbrev}: [{project.title}]({project.url})"
+                            proj_str_text = f"{abbrev} {project.title}"
+                        except LookupError:
+                            # In the unlikely case of the deletion of a project that is cached:
+                            proj_str = f"{abbrev}: {proj_id} not found."
+                            proj_str_text = abbrev
+                    else:
+                        # Uncached projects are listed by id (prefetch above should prevent this!)
+                        proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
                         proj_str_text = abbrev
-                else:
-                    # Uncached projects are listed by id (prefetch above should prevent this!)
-                    proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
-                    proj_str_text = abbrev
-                if match:
-                    words = match.split(" ")
-                    if all(
-                        re.search(pat, proj_str_text)
-                        for pat in [
-                            re.compile(r"\b%s" % re.escape(word), re.I) for word in words
-                        ]
-                    ):
+                    if match:
+                        words = match.split(" ")
+                        if all(
+                            re.search(pat, proj_str_text)
+                            for pat in [
+                                re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                            ]
+                        ):
+                            result_pages.append(proj_str)
+                    else:
                         result_pages.append(proj_str)
-                else:
-                    result_pages.append(proj_str)
-            pages = [
-                "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
-            ]
-        if pages:
+                pages = [
+                    "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+                ]
+                if not pages:
+                    raise LookupError("Nothing found")
+            except LookupError as err:
+                error_msg = str(err)
+        if error_msg:
+            await ctx.apologize(error_msg)
+        else:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             embeds = [
                 make_embed(
@@ -176,8 +179,6 @@ class CommandsProject(INatEmbeds, MixinMeta):
             ]
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
-        else:
-            await apologize(ctx, "Nothing found")
 
     @can_manage_projects()
     @project.command(name="remove")
@@ -207,23 +208,18 @@ class CommandsProject(INatEmbeds, MixinMeta):
         https://www.inaturalist.org/pages/how_inaturalist_counts_taxa
         """  # noqa: E501
 
+        if project == "":
+            await ctx.send_help()
+        error_msg = None
         async with ctx.typing():
-            if project == "":
-                await ctx.send_help()
-            async with ctx.typing():
-                try:
-                    proj = await self.project_table.get_project(ctx.guild, project)
-                except LookupError as err:
-                    await ctx.send(err)
-                    return
-
-                try:
-                    ctx_member = await MemberConverter.convert(ctx, user)
-                    member = ctx_member.member
-                    user = await self.user_table.get_user(member)
-                except (BadArgument, LookupError) as err:
-                    await ctx.send(err)
-                    return
-
+            try:
+                proj = await self.project_table.get_project(ctx.guild, project)
+                ctx_member = await MemberConverter.convert(ctx, user)
+                member = ctx_member.member
+                user = await self.user_table.get_user(member)
                 embed = await self.make_stats_embed(member, user, proj)
                 await ctx.send(embed=embed)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)

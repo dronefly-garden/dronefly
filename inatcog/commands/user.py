@@ -59,16 +59,18 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if not (ctx.guild or (ctx.author == who.member)):
             return
 
+        error_msg = None
         member = who.member
-        try:
-            user = await self.user_table.get_user(member, refresh_cache=True)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-            return
-
         async with ctx.typing():
-            embed = await self.make_user_embed(ctx, member, user)
-            await ctx.send(embed=embed)
+            try:
+                user = await self.user_table.get_user(member, refresh_cache=True)
+                embed = await self.make_user_embed(ctx, member, user)
+                await ctx.send(embed=embed)
+            except LookupError as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
+
 
     @user.command(name="add")
     @can_manage_users()
@@ -873,6 +875,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             )
             return
 
+        error_msg = None
         pages = []
         async with ctx.typing():
             # If filter_role is given, resulting list of names will be partitioned
@@ -883,17 +886,18 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 (matching_names, non_matching_names) = await self._user_list_match_members(
                     ctx, abbrev, event_projects, filter_role, filter_emoji, filter_message
                 )
+                # Placing non matching names first allows an event manager to easily
+                # spot and correct mismatches.
+                pages = [
+                    "\n".join(filter(None, names))
+                    for names in grouper([*non_matching_names, *matching_names], 10)
+                ]
             except LookupError as err:
-                await apologize(ctx, str(err))
-                return
-            # Placing non matching names first allows an event manager to easily
-            # spot and correct mismatches.
-            pages = [
-                "\n".join(filter(None, names))
-                for names in grouper([*non_matching_names, *matching_names], 10)
-            ]
+                error_msg = str(err)
 
-        if pages:
+        if error_msg:
+            await apologize(ctx, error_msg)
+        elif pages:
             pages_len = len(pages)
             if abbrev in ["active", "inactive"]:
                 list_name = f"{abbrev.capitalize()} known server members"
@@ -910,7 +914,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             ]
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            await ctx.send("No known members matched.")
+            await apologize(ctx, "No known members matched.")
 
     @user.command(name="inatyear")
     @known_inat_user()
