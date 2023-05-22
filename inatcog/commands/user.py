@@ -829,11 +829,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for user_id in menu_reactions_by_user
             if user_id not in checked_user_ids
         ]
-        role_user_ids = [
-            member.id 
-            for member in filter_role.members
-        ]
-        candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
+        if filter_role:
+            role_user_ids = [
+                member.id 
+                for member in filter_role.members
+            ]
+            candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
+        else:
+            candidate_user_ids = reaction_user_ids
         for discord_user_id in candidate_user_ids:
             discord_user = self.bot.get_user(discord_user_id)
             discord_member = ctx.guild.get_member(discord_user_id)
