@@ -833,6 +833,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             role_user_ids = [
                 member.id 
                 for member in filter_role.members
+                if member.id not in checked_user_ids
             ]
             candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
         else:
