@@ -687,7 +687,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # Checked in three passes below:
         # 1. Discord members with known iNat IDs in this server
         # 2. Members of the event project
-        # 3. Discord users who have reacted to the event menu
+        # 3. Discord users who have reacted to the event menu or hold the role it assigns
 
         # First pass:
         # -----------
@@ -818,8 +818,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         # Third pass:
         # -----------
-        # Discord users who reacted to the menu but whose candidacy was not
-        # determined in either of the 1st two passes, i.e.
+        # Discord users who reacted to the menu or hold the menu's role but
+        # whose candidacy was not determined in either of the 1st two passes,
+        # i.e.
         # - They are not known to the bot in this server (first pass)
         #     AND
         # - They are not in the event project (second pass)
@@ -828,7 +829,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for user_id in menu_reactions_by_user
             if user_id not in checked_user_ids
         ]
-        for discord_user_id in reaction_user_ids:
+        role_user_ids = [
+            member.id 
+            for member in filter_role.members
+        ]
+        candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
+        for discord_user_id in candidate_user_ids:
             discord_user = self.bot.get_user(discord_user_id)
             discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
