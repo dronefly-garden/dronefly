@@ -894,20 +894,20 @@ rich = ">=10.9,<14"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.1.dev0"
+version = "0.1.1.dev1"
 description = "Dronefly Discord library"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_discord-0.1.1.dev0-py3-none-any.whl", hash = "sha256:5e2b2ec41016313025b3d14d477fcc09068d81ee58bf0b652a383cf60214aa15"},
-    {file = "dronefly_discord-0.1.1.dev0.tar.gz", hash = "sha256:0faae72319452d006bcec9156e41fecf767185da1f34152478ae4ef29021b726"},
+    {file = "dronefly_discord-0.1.1.dev1-py3-none-any.whl", hash = "sha256:16b0f96fb5fe4624f450b56548feb9289e20c526c010699b3a09a267613e016d"},
+    {file = "dronefly_discord-0.1.1.dev1.tar.gz", hash = "sha256:1914a5a49597a04e88e6ae2eedd5a262323de56fb370263923716d88411129a4"},
 ]
 
 [package.dependencies]
-dronefly-core = ">=0.3.5,<0.4.0"
+dronefly-core = ">=0.3.6.dev0,<0.4.0"
 inflect = ">=5.3.0,<6.0.0"
-pyinaturalist = ">=0.18,<0.20"
+pyinaturalist = ">=0.19.0.dev2,<0.20"
 
 [[package]]
 name = "ebird-api"
@@ -2966,4 +2966,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "7622a44e1bb0ffa2cede05fc0b9d8b76801f497cd5a8be9e8c92ec9626d84e1b"
+content-hash = "6fe3e1a07ee9566400852987facc9af3cbc51ba4ecb0218a568817e08fa3a611"
