@@ -19,6 +19,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_names,
     format_user_link,
+    ObservationFormatter,
 )
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonFormatter
@@ -556,196 +557,34 @@ class INatEmbeds(MixinMeta):
     ):
         """Format an observation title & description."""
 
-        def format_count(label, count):
-            delim = " " if compact else ", "
-            return f"{delim}{EMOJI[label]}" + (str(count) if count > 1 else "")
-
-        def get_taxon_name(taxon):
-            if taxon:
-                taxon_str = format_taxon_name(
-                    taxon, with_rank=not compact, with_common=False
-                )
-            else:
-                taxon_str = "Unknown"
-            return taxon_str
-
-        def format_title(taxon, obs):
-            title = ""
-            taxon_str = get_taxon_name(taxon)
-            if with_link:
-                link_url = f"{WWW_BASE_URL}/observations/{obs.id}"
-                taxon_str = f"[{taxon_str}]({link_url})"
-            title += taxon_str
-            if not compact:
-                title += f" by {user.login} " + EMOJI[obs.quality_grade]
-                if obs.faves:
-                    title += format_count("fave", len(obs.faves))
-                if obs.comments:
-                    title += format_count("comment", len(obs.comments))
-            return title
-
-        def format_summary(user, obs, taxon, taxon_summary):
-            summary = ""
-            if not compact:
-                taxon_str = get_taxon_name(taxon)
-                if taxon:
-                    common = (
-                        f" ({taxon.preferred_common_name})"
-                        if taxon.preferred_common_name
-                        else ""
-                    )
-                    link_url = f"{WWW_BASE_URL}/taxa/{taxon.id}"
-                    taxon_str = f"[{taxon_str}]({link_url}){common}"
-                summary += f"Taxon: {taxon_str}\n"
-            if taxon_summary:
-                means = taxon_summary.listed_taxon
-                status = taxon_summary.conservation_status
-                if status:
-                    formatted_status = format_taxon_conservation_status(status)
-                    summary += f"Conservation Status: {formatted_status}\n"
-                if means:
-                    summary += f"{format_taxon_establishment_means(means)}\n"
-            login = ""
-            if compact:
-                if with_user:
-                    login = user.login
-                summary += "\n"
-            else:
-                summary += "Observed by " + format_user_link(user)
-            obs_on = ""
-            obs_at = ""
-            if obs.observed_on:
-                if compact:
-                    if obs.observed_on.date() == dt.datetime.now().date():
-                        obs_on = obs.observed_on.strftime("%-I:%M%P")
-                    elif obs.observed_on.year == dt.datetime.now().year:
-                        obs_on = obs.observed_on.strftime("%-d-%b")
-                    else:
-                        obs_on = obs.observed_on.strftime("%b-%Y")
-                else:
-                    obs_on = obs.observed_on.strftime("%a %b %-d, %Y · %-I:%M %P")
-                    summary += " on " + obs_on
-            if obs.place_guess:
-                if compact:
-                    obs_at = obs.place_guess
-                else:
-                    summary += " at " + obs.place_guess
-            if compact:
-                line = " ".join((item for item in (login, obs_on, obs_at) if item))
-                if len(line) > 32:
-                    line = line[0:31] + "…"
-                summary += "`{0: <32}`".format(line)
-                summary += EMOJI[obs.quality_grade]
-                if obs.faves:
-                    summary += format_count("fave", len(obs.faves))
-                if obs.comments:
-                    summary += format_count("comment", len(obs.comments))
-                summary += format_media_counts(obs)
-            if with_description and obs.description:
-                # Contribute up to 10 lines from the description, and no more
-                # than 500 characters:
-                #
-                # TODO: if https://bugs.launchpad.net/beautifulsoup/+bug/1873787 is
-                # ever fixed, suppress the warning instead of adding this blank
-                # as a workaround.
-                text_description = html2markdown.convert(" " + obs.description)
-                lines = text_description.split("\n", 11)
-                description = "\n> %s" % "\n> ".join(lines[:10])
-                if len(lines) > 10:
-                    description += "\n> …"
-                if len(description) > 500:
-                    description = description[:498] + "…"
-                summary += description + "\n"
-            return summary
-
-        async def format_community_id(title, summary, obs, taxon_summary, lang=lang):
-            idents_count = ""
-            if obs.identifications_count:
-                if obs.community_taxon_id:
-                    (idents_count, idents_agree) = obs_count_community_id(obs)
-                    idents_count = (
-                        f"{EMOJI['community']} ({idents_agree}/{idents_count})"
-                    )
-                else:
-                    obs_idents_count = obs.identifications_count if obs.identifications_count > 1 else ""
-                    idents_count = f"{EMOJI['ident']}{obs_idents_count}"
-            if (
-                not compact
-                and obs.community_taxon_id
-                and obs.community_taxon_id != obs.taxon.id
-            ):
-                means_link = ""
-                status_link = ""
-                if taxon_summary:
-                    means = taxon_summary.listed_taxon
-                    status = taxon_summary.conservation_status
-                    if status:
-                        status_link = (
-                            "\nConservation Status: "
-                            f"{format_taxon_conservation_status(status)}"
-                        )
-                    if means:
-                        means_link = f"\n{format_taxon_establishment_means(means)}"
-                community_taxon = await get_taxon(ctx, obs.community_taxon_id)
-                summary = (
-                    f"{format_taxon_name(community_taxon, lang=lang)} "
-                    f"{status_link}{idents_count}{means_link}\n\n" + summary
-                )
-            else:
-                if idents_count:
-                    if compact:
-                        summary += " " + idents_count
-                    else:
-                        title += " " + idents_count
-            return (title, summary)
-
-        def format_media_counts(obs):
-            media_counts = ""
-            if obs.photos:
-                media_counts += format_count("image", len(obs.photos))
-            if obs.sounds:
-                media_counts += format_count("sound", len(obs.sounds))
-            return media_counts
-
-        async def get_taxon_summary(obs, **kwargs):
-            taxon_summary_raw = await self.api.get_obs_taxon_summary(
-                obs.id, **kwargs
-            )
-            taxon_summary = TaxonSummary.from_json(taxon_summary_raw)
-            means = None
-            status = None
-            if taxon_summary:
-                listed = taxon_summary.listed_taxon
-                if listed:
-                    means = listed.establishment_means
-                status = taxon_summary.conservation_status
-            if means or status:
-                return taxon_summary
-            return None
-
         if lang and obs.taxon:
             taxon = await get_taxon(ctx, obs.taxon.id)
         else:
             taxon = obs.taxon
-        user = obs.user
-        title = format_title(taxon, obs)
         taxon_summary = None
+        community_taxon = None
         community_taxon_summary = None
         if not compact:
-            taxon_summary = await get_taxon_summary(obs)
+            taxon_summary = await ctx.inat_client.observations.taxon_summary(obs.id)
             if obs.community_taxon_id and obs.community_taxon_id != obs.taxon.id:
-                community_taxon_summary = await get_taxon_summary(obs, community=1)
-
-        summary = format_summary(user, obs, taxon, taxon_summary)
-        title, summary = await format_community_id(
-            title, summary, obs, community_taxon_summary, lang=lang
+                community_taxon = ctx.inat_client.taxa.from_ids(
+                    obs.community_taxon_id, limit=1
+                ).one()
+                community_taxon_summary = await ctx.inat_client.observations.taxon_summary(
+                    obs.id, community=1
+                )
+        formatter = ObservationFormatter(
+            obs,
+            with_description=with_description,
+            with_link=with_link,
+            compact=compact,
+            with_user=with_user,
+            taxon=taxon,
+            taxon_summary=taxon_summary,
+            community_taxon=community_taxon,
+            community_taxon_summary=community_taxon_summary,
         )
-        if not compact:
-            title += format_media_counts(obs)
-            if with_link:
-                link_url = f"{WWW_BASE_URL}/observations/{obs.id}"
-                title = f"{title} [🔗]({link_url})"
-        return (title, summary)
+        return formatter.format(join_title=compact)
 
     async def make_obs_embed(self, ctx, obs, url, preview: Union[bool, int] = True):
         """Return embed for an observation link."""
@@ -797,7 +636,7 @@ class INatEmbeds(MixinMeta):
                 embed.url = url
             else:
                 lang = await get_lang(ctx)
-                embed.title, summary = await self.format_obs(ctx, obs, lang=lang)
+                embed.title, summary = await self.format_obs(ctx, obs, lang=lang, with_link=True)
                 if error:
                     summary += "\n" + error
                 embed.description = summary
