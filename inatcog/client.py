@@ -25,6 +25,7 @@ class iNatClient(CoreiNatClient):
         self.projects.add_users = asyncify(self, self.projects.add_users)
         self.projects.delete_users = asyncify(self, self.projects.delete_users)
         self.taxa.populate = asyncify(self, self.taxa.populate)
+        self.observations.taxon_summary = asyncify(self, self.observations.taxon_summary)
 
     @asynccontextmanager
     async def set_ctx_from_user(
