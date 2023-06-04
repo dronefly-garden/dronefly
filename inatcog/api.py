@@ -151,13 +151,6 @@ class INatAPI:
 
         return None
 
-    async def get_obs_taxon_summary(self, obs_id=int, **kwargs):
-        """Get an observation's taxon summary."""
-
-        endpoint = f"/v1/observations/{obs_id}/taxon_summary"
-        full_url = f"{API_BASE_URL}{endpoint}"
-        return await self._get_rate_limited(full_url, **kwargs)
-
     async def get_places(
         self, query: Union[int, str, list], refresh_cache=False, **kwargs
     ):
