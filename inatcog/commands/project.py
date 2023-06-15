@@ -167,7 +167,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             except LookupError as err:
                 error_msg = str(err)
         if error_msg:
-            await apologize(error_msg)
+            await apologize(ctx, error_msg)
         else:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             embeds = [
