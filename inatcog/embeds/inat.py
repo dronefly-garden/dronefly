@@ -7,11 +7,11 @@ from io import BytesIO
 import logging
 import re
 from typing import Optional, Union
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 import discord
 from discord import DMChannel, File
-from dronefly.core.constants import RANK_LEVELS
+from dronefly.core.constants import RANK_EQUIVALENTS, RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
     format_taxon_conservation_status,
@@ -497,6 +497,56 @@ class INatEmbeds(MixinMeta):
                 )
             return summary_counts
         return ""
+
+    async def summarize_life_list(self, ctx, query: Query, query_response: QueryResponse):
+        obs_args = query_response.obs_args()
+        rank = query.per or 'leaf'
+        if rank not in [*RANK_KEYWORDS, 'leaf']:
+            raise BadArgument("Specify `per <rank>`, e.g. `per family`, or `per leaf` for *leaf taxa*.")
+        life_list = await ctx.inat_client.observations.life_list(**obs_args)
+        if life_list:
+            taxa = life_list.data
+            ranks = None
+            if rank == 'leaf':
+                ranks = 'leaf taxa'
+                taxa = [
+                    life_list_taxon
+                    for life_list_taxon in life_list.data
+                    if life_list_taxon.direct_obs_count == life_list_taxon.descendant_obs_count
+                ]
+            else:
+                _rank = RANK_EQUIVALENTS[rank] if rank in RANK_EQUIVALENTS else rank
+                ranks = self.p.plural(_rank)
+                taxa = [
+                    life_list_taxon
+                    for life_list_taxon in life_list.data
+                    if life_list_taxon.rank == _rank
+                ]
+            return f"Summary: {len(taxa)} {ranks}"
+        return ""
+
+    async def make_life_list_embed(self, ctx, query: Query, query_response: QueryResponse):
+        """Return embed for life list."""
+        description = ""
+        description = await self.summarize_life_list(ctx, query, query_response)
+        user = query_response.user
+
+        if user:
+            taxon = query_response.taxon
+            place = query_response.place
+            url = f"{WWW_BASE_URL}/lifelists/{user.login}"
+            if taxon or place:
+                args = {}
+                if place:
+                    args["place_id"] = place.id
+                if taxon:
+                    args["taxon_id"] = taxon.id
+                url = f"{url}?{urlencode(args)}"
+        else:
+            url = obs_url_from_v1({**query_response.obs_args(), "view": "species"})
+        full_title = f"Life list {query_response.obs_query_description()}"
+        embed = make_embed(url=url, title=full_title, description=description)
+        return embed
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""

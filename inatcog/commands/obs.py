@@ -18,7 +18,7 @@ from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
-from ..embeds.common import apologize
+from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
@@ -131,6 +131,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Count matching observations."""
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
+    @obs.command(name="life")
+    async def obs_life(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Count matching observations."""
+        await (self.bot.get_command("life")(ctx, query=query))
+
     @obs.command(name="map")
     async def obs_map(self, ctx, *, query: NaturalQueryConverter):
         """Show map of observations."""
@@ -186,6 +191,43 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Top species per observer (alias `[p]topspp`)."""
         await self._tabulate_query(ctx, query, view="spp")
+
+    @commands.group(invoke_without_command=True)
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def life(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Life list with summary by rank.
+        
+        • Shows a summary of life list taxa observed.
+        • By default, leaves are counted. Specify `per <rank>` with a valid rank to count taxa of that rank instead.
+        • The title links to a user's life list page on the web, or if not for one person, the species tab of an observations search.
+        • See `[p]help query` and `[p]help taxon_query` for help with *query* terms, or `[p]help glossary` for an explanation of *leaf taxa*.
+
+        e.g.
+        ```
+        ,life my
+              -> Your life list summary per leaf.
+        ,life my beetles per family
+              -> Your Coleoptera life list summary per family.
+        ,life beetles by syntheticbee
+              -> A particular user's Coleoptera life list.
+        ,life in prj found feathers per spp
+              -> Found Feathers project life list summary per spp.
+        ```
+        """  # noqa: E501
+        error_msg = None
+        msg = None
+        async with ctx.typing():
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            try:
+                query_response = await self.query.get(ctx, _query)
+                msg = await ctx.send(embed=await self.make_life_list_embed(ctx, _query, query_response))
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
+        else:
+            await add_reactions_with_cancel(ctx, msg, [])
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)
