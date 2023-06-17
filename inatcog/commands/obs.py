@@ -115,9 +115,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def obs(self, ctx, *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
 
-        - See `[p]help query` and `[p]help taxon_query` for help with *query* terms.
+        - See `[p]query` and `[p]taxon_query` for help with *query* terms.
         - Use `[p]search obs` to find more than one observation.
-        - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]help autoobs` for details.
+        - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]autoobs` for details.
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
@@ -159,7 +159,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         - Shows the image indicated by `number`, or if number is omitted, the first image.
         - Command may be a *Reply* to an observation display instead of a query.
-        - See `[p]help query` and `[p]help taxon_query` for help with *query* terms.
+        - See `[p]query` and `[p]taxon_query` for help with *query* terms.
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
@@ -202,7 +202,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • By default, leaves are counted. Specify `per <rank>` with a valid rank to count taxa of that rank instead.
         • For a *breakdown* per rank, specify `per main` for main ranks or `per any` for any rank.
         • The title links to a user's life list page on the web, or if not for one person, the species tab of an observations search.
-        • See `[p]help query` and `[p]help taxon_query` for help with *query* terms, or `[p]help glossary` for an explanation of *leaf taxa*.
+        • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
         ```
@@ -439,7 +439,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         [p]link <https://inaturalist.org/observations/12345>
         ```
 
-        See also `[p]help obs` and `[p]help autoobs`.
+        See also `[p]help obs` and `[p]autoobs`.
         - Both of those methods for showing link info do not include the image, relying instead on the Discord to preview the link.
         - If channel permissions don't allow users to preview links, but do allow the bot to, or if you prefer the information on top, you may find this command preferable.
         """  # noqa: E501

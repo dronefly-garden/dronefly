@@ -66,9 +66,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - *Reply* to another display to display its taxon.
         - The *query* is optional when that display contains a taxon.
         **Related help topics:**
-        - `[p]help taxon_query` for *taxon query* terms
-        - `[p]help query` for help with other *query* terms
-        - `[p]help reactions` describes the *reaction buttons*
+        - `[p]taxon_query` for *taxon query* terms
+        - `[p]query` for help with other *query* terms
+        - `[p]reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
@@ -253,7 +253,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def tname(self, ctx, *, query: Optional[str]):
         """Taxon name only.
 
-        See `[p]help taxon_query` for help with the query.
+        See `[p]taxon_query` for help with the query.
         ```
         """
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
@@ -266,7 +266,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def species(self, ctx, *, query: Optional[str]):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
-        See `[p]help taxon_query` for query help."""
+        See `[p]taxon_query` for query help."""
         async with self._get_taxon_response(ctx, query, ranks=["species"]) as (
             query_response,
             _query,
@@ -285,7 +285,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         [p]related 24255,24267
         [p]related boreal chorus frog,western chorus frog
         ```
-        See `[p]help taxon_query` for help specifying taxa.
+        See `[p]taxon_query` for help specifying taxa.
         """
 
         if not taxa_list:
@@ -313,7 +313,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     ):
         """Default image for a taxon.
 
-        See `[p]help taxon_query` for *query* help."""
+        See `[p]taxon_query` for *query* help."""
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon_image(ctx, query_response.taxon, number)

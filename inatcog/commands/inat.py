@@ -637,7 +637,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         [p]inat set autoobs server off
         ```
 
-        See `[p]help autoobs` for usage of the feature.
+        See `[p]autoobs` for usage of the feature.
         """
         if ctx.author.bot or ctx.guild is None:
             return
@@ -664,7 +664,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         ```
         When `inherit` is specified, channel mode inherits from the server setting.
 
-        See `[p]help dot_taxon` for usage of the feature.
+        See `[p]dot_taxon` for usage of the feature.
         """  # noqa: E501
         if ctx.author.bot or ctx.guild is None:
             return
@@ -690,7 +690,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         [p]inat set dot_taxon server off
         ```
 
-        See `[p]help dot_taxon` for usage of the feature.
+        See `[p]dot_taxon` for usage of the feature.
         """
         if ctx.author.bot or ctx.guild is None:
             return
@@ -827,7 +827,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def show_autoobs(self, ctx):
         """Show channel & server auto-observation mode.
 
-        See `[p]help autoobs` to learn about the feature."""
+        See `[p]autoobs` to learn about the feature."""
         if ctx.author.bot or ctx.guild is None:
             return
 
@@ -849,7 +849,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def show_dot_taxon(self, ctx):
         """Show channel & server .taxon. lookup.
 
-        See `[p]help dot_taxon` to learn about the feature."""
+        See `[p]dot_taxon` to learn about the feature."""
         if ctx.author.bot or ctx.guild is None:
             return
 

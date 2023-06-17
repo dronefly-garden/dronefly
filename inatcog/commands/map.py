@@ -29,7 +29,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
         [p]map 24255,24267
         [p]map boreal chorus frog,western chorus frog
         ```
-        See `[p]help taxon` for help specifying taxa.
+        See `[p]taxon_query` for help specifying taxa.
         """
 
         if not taxa_list:
