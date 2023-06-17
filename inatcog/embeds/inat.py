@@ -111,8 +111,9 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 # - See https://github.com/PyCQA/pylint/issues/981
 
 p = inflect.engine()
-p.classical(all=True)
-
+p.defnoun("phylum", "phyla")
+p.defnoun("subphylum", "subphyla")
+p.defnoun("subgenus", "subgenera")
 
 
 class INatEmbed(discord.Embed):
@@ -528,7 +529,7 @@ class INatEmbeds(MixinMeta):
                     rank = taxon.rank
                     tot[rank] = tot.get(taxon.rank, 0) + 1
                 max_digits = len(str(max(tot.values())))
-                rank_totals = {rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural(rank, tot[rank])}" for rank in tot}
+                rank_totals = {rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural_noun(rank, tot[rank])}" for rank in tot}
             elif per_rank == 'leaf':
                 ranks = 'leaf taxa'
                 taxa = [
@@ -538,7 +539,7 @@ class INatEmbeds(MixinMeta):
                 ]
             else:
                 rank = RANK_EQUIVALENTS[per_rank] if per_rank in RANK_EQUIVALENTS else per_rank
-                ranks = p.plural(rank)
+                ranks = p.plural_noun(rank)
                 taxa = [
                     life_list_taxon
                     for life_list_taxon in life_list.data
