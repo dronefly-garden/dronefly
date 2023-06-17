@@ -196,23 +196,28 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def life(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Life list with summary by rank.
+        """Life list with total by rank.
         
-        • Shows a summary of life list taxa observed.
+        • Shows a total of life list taxa observed.
         • By default, leaves are counted. Specify `per <rank>` with a valid rank to count taxa of that rank instead.
+        • For a *breakdown* per rank, specify `per main` for main ranks or `per any` for any rank.
         • The title links to a user's life list page on the web, or if not for one person, the species tab of an observations search.
         • See `[p]help query` and `[p]help taxon_query` for help with *query* terms, or `[p]help glossary` for an explanation of *leaf taxa*.
 
         e.g.
         ```
         ,life my
-              -> Your life list summary per leaf.
+              -> Your life list total leaf taxa.
+        ,life my per main
+              -> Your life list main rank breakdown.
         ,life my beetles per family
-              -> Your Coleoptera life list summary per family.
+              -> Your Coleoptera life list total families.
+        ,life my bees per any
+              -> Your Anthophila life list any rank breakdown.
         ,life beetles by syntheticbee
-              -> A particular user's Coleoptera life list.
+              -> A particular user's Coleoptera life list leaves.
         ,life in prj found feathers per spp
-              -> Found Feathers project life list summary per spp.
+              -> Found Feathers project life list species.
         ```
         """  # noqa: E501
         error_msg = None

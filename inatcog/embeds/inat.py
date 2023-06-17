@@ -503,7 +503,7 @@ class INatEmbeds(MixinMeta):
         obs_args = query_response.obs_args()
         per_rank = query.per or 'leaf'
         if per_rank not in [*RANK_KEYWORDS, 'leaf', 'main', 'any']:
-            raise BadArgument("Specify `per <rank-or-keyword>`. See `[p]help life` for details.")
+            raise BadArgument(f"Specify `per <rank-or-keyword>`. See `{ctx.clean_prefix}help life` for details.")
         life_list = await ctx.inat_client.observations.life_list(**obs_args)
         if life_list:
             ranks = None
@@ -518,7 +518,7 @@ class INatEmbeds(MixinMeta):
                         ranks_to_count.append(taxon.rank)
                     else:
                         ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
-                ranks = f"{per_rank} taxa"
+                ranks = f"{per_rank} rank"
                 taxa = [
                     life_list_taxon
                     for life_list_taxon in life_list.data
