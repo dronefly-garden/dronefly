@@ -366,6 +366,15 @@ def _add_user_emojis(query_response: QueryResponse):
         return True
     return not query_response.except_by
 
+LIFELISTS_ARGS = (
+    'taxon_id',
+    'place_id',
+)
+def _lifelists_obs_args(obs_args):
+    """Subset of obs arguments accepted by /lifelists on the web."""
+    # TODO: substitute common ancestor taxon_id=# if multiple taxa are specified via taxon_ids=
+    return {key: val for key in LIFELISTS_ARGS if (val := obs_args.get(key)) and "," not in str(val)}
+
 
 EMOJI = {
     "research": ":white_check_mark:",
@@ -561,19 +570,11 @@ class INatEmbeds(MixinMeta):
         description = await self.summarize_life_list(ctx, query, query_response)
         user = query_response.user
 
+        obs_args = query_response.obs_args()
         if user:
-            taxon = query_response.taxon
-            place = query_response.place
-            url = f"{WWW_BASE_URL}/lifelists/{user.login}"
-            if taxon or place:
-                args = {}
-                if place:
-                    args["place_id"] = place.id
-                if taxon:
-                    args["taxon_id"] = taxon.id
-                url = f"{url}?{urlencode(args)}"
+            url = f"{WWW_BASE_URL}/lifelists/{user.login}?{urlencode(_lifelists_obs_args(obs_args))}"
         else:
-            url = obs_url_from_v1({**query_response.obs_args(), "view": "species"})
+            url = obs_url_from_v1({**obs_args, "view": "species"})
         full_title = f"Life list {query_response.obs_query_description()}"
         embed = make_embed(url=url, title=full_title, description=description)
         return embed
