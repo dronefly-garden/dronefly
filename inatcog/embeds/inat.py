@@ -511,7 +511,12 @@ class INatEmbeds(MixinMeta):
                 ranks_to_count = COMMON_RANKS[-8:] if per_rank == 'main' else list(RANK_LEVELS.keys())
                 taxon = query_response.taxon
                 if taxon:
-                    ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
+                    if per_rank == 'main' and taxon.rank not in ranks_to_count:
+                        rank_level = RANK_LEVELS[taxon.rank]
+                        ranks_to_count = [rank for rank in ranks_to_count if RANK_LEVELS[rank] < rank_level]
+                        ranks_to_count.append(taxon.rank)
+                    else:
+                        ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
                 ranks = f"{per_rank} taxa"
                 taxa = [
                     life_list_taxon
