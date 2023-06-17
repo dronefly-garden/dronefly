@@ -40,7 +40,7 @@ from dronefly.discord.embeds import (
 )
 import html2markdown
 import inflect
-from pyinaturalist.constants import ROOT_TAXON_ID
+from pyinaturalist.constants import COMMON_RANKS, ROOT_TAXON_ID
 from pyinaturalist.models import Place, Taxon, TaxonSummary, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
@@ -111,7 +111,7 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 # - See https://github.com/PyCQA/pylint/issues/981
 
 p = inflect.engine()
-
+p.classical(all=True)
 
 
 
@@ -500,14 +500,31 @@ class INatEmbeds(MixinMeta):
 
     async def summarize_life_list(self, ctx, query: Query, query_response: QueryResponse):
         obs_args = query_response.obs_args()
-        rank = query.per or 'leaf'
-        if rank not in [*RANK_KEYWORDS, 'leaf']:
-            raise BadArgument("Specify `per <rank>`, e.g. `per family`, or `per leaf` for *leaf taxa*.")
+        per_rank = query.per or 'leaf'
+        if per_rank not in [*RANK_KEYWORDS, 'leaf', 'main', 'any']:
+            raise BadArgument("Specify `per <rank-or-keyword>`. See `[p]help life` for details.")
         life_list = await ctx.inat_client.observations.life_list(**obs_args)
         if life_list:
-            taxa = life_list.data
             ranks = None
-            if rank == 'leaf':
+            rank_totals = {}
+            if per_rank in ['main', 'any']:
+                ranks_to_count = COMMON_RANKS[-8:] if per_rank == 'main' else list(RANK_LEVELS.keys())
+                taxon = query_response.taxon
+                if taxon:
+                    ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
+                ranks = f"{per_rank} taxa"
+                taxa = [
+                    life_list_taxon
+                    for life_list_taxon in life_list.data
+                    if life_list_taxon.rank in ranks_to_count
+                ]
+                tot = {}
+                for taxon in taxa:
+                    rank = taxon.rank
+                    tot[rank] = tot.get(taxon.rank, 0) + 1
+                max_digits = len(str(max(tot.values())))
+                rank_totals = {rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural(rank, tot[rank])}" for rank in tot}
+            elif per_rank == 'leaf':
                 ranks = 'leaf taxa'
                 taxa = [
                     life_list_taxon
@@ -515,14 +532,21 @@ class INatEmbeds(MixinMeta):
                     if life_list_taxon.direct_obs_count == life_list_taxon.descendant_obs_count
                 ]
             else:
-                _rank = RANK_EQUIVALENTS[rank] if rank in RANK_EQUIVALENTS else rank
-                ranks = self.p.plural(_rank)
+                rank = RANK_EQUIVALENTS[per_rank] if per_rank in RANK_EQUIVALENTS else per_rank
+                ranks = p.plural(rank)
                 taxa = [
                     life_list_taxon
                     for life_list_taxon in life_list.data
-                    if life_list_taxon.rank == _rank
+                    if life_list_taxon.rank == rank
                 ]
-            return f"Summary: {len(taxa)} {ranks}"
+            total = f"Total: {len(taxa)} {ranks}"
+            if rank_totals:
+                rank_keys = reversed([rank for rank in RANK_LEVELS.keys() if rank != 'stateofmatter'])
+                rank_totals_by_rank = [rank_totals[rank] for rank in rank_keys if rank_totals.get(rank)]
+                response = "\n\n".join(["\n".join(rank_totals_by_rank), total])
+            else:
+                response = total
+            return response
         return ""
 
     async def make_life_list_embed(self, ctx, query: Query, query_response: QueryResponse):
