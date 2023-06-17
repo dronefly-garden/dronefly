@@ -518,7 +518,7 @@ class INatEmbeds(MixinMeta):
                         ranks_to_count.append(taxon.rank)
                     else:
                         ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
-                ranks = f"{per_rank} rank"
+                ranks = "main ranks" if per_rank == "main" else "ranks"
                 taxa = [
                     life_list_taxon
                     for life_list_taxon in life_list.data
