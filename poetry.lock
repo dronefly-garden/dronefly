@@ -874,14 +874,14 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.6.dev1"
+version = "0.3.6.dev2"
 description = "Core dronefly components"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_core-0.3.6.dev1-py3-none-any.whl", hash = "sha256:bb0391cafb28a40f2eb7e1b85f5a2764962889fecd2b977144684fa0c5bf6e33"},
-    {file = "dronefly_core-0.3.6.dev1.tar.gz", hash = "sha256:59a73f825b31eae34931a9e1d0324d7f812f538afc0f07cf1c37d077351c739a"},
+    {file = "dronefly_core-0.3.6.dev2-py3-none-any.whl", hash = "sha256:6d17232ee0a7c5c1206e7c2b2e56cdaea1a89110fc4db0f1ce8f7f6b16f43a2a"},
+    {file = "dronefly_core-0.3.6.dev2.tar.gz", hash = "sha256:f5432fc311e9e1076245fbcd1bf92957f9241ce23e553d615bb9cf3e9a963c32"},
 ]
 
 [package.dependencies]
@@ -894,18 +894,19 @@ rich = ">=10.9,<14"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.1.dev1"
+version = "0.1.1.dev2"
 description = "Dronefly Discord library"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_discord-0.1.1.dev1-py3-none-any.whl", hash = "sha256:16b0f96fb5fe4624f450b56548feb9289e20c526c010699b3a09a267613e016d"},
-    {file = "dronefly_discord-0.1.1.dev1.tar.gz", hash = "sha256:1914a5a49597a04e88e6ae2eedd5a262323de56fb370263923716d88411129a4"},
+    {file = "dronefly_discord-0.1.1.dev2-py3-none-any.whl", hash = "sha256:83c85ebc8366df39f41b7b79ee79e00e4187b38a60da1e2eecad50f089778421"},
+    {file = "dronefly_discord-0.1.1.dev2.tar.gz", hash = "sha256:63943372aa361936ded113acfed194ea9d052b27e6cf58993b1f54bf7d6426aa"},
 ]
 
 [package.dependencies]
-dronefly-core = ">=0.3.6.dev0,<0.4.0"
+discord-py = ">=2.2.3,<3.0.0"
+dronefly-core = ">=0.3.6.dev2,<0.4.0"
 inflect = ">=5.3.0,<6.0.0"
 pyinaturalist = ">=0.19.0.dev2,<0.20"
 
@@ -2966,4 +2967,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "3ac04e296bf185de33cdf9b6d8c4831347d5efd82a38de9d0e49a61efb979989"
+content-hash = "6bd8b12b130f69d85545bc6a7d5ced45c19e2e08e0e0ace80f72fe7c21f9acab"
