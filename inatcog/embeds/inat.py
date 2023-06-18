@@ -6,19 +6,20 @@ from io import BytesIO
 import logging
 import re
 from typing import Optional, Union
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
-from dronefly.core.constants import RANK_EQUIVALENTS, RANK_KEYWORDS, RANK_LEVELS
+from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
+    format_life_list_summary,
     format_taxon_name,
     format_taxon_names,
     format_user_link,
     ObservationFormatter,
 )
-from dronefly.core.utils import obs_url_from_v1
+from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
 from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonFormatter
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
@@ -35,9 +36,8 @@ from dronefly.discord.embeds import (
     MAX_EMBED_DESCRIPTION_LEN,
     MAX_EMBED_FILE_LEN,
 )
-import inflect
-from pyinaturalist.constants import COMMON_RANKS, ROOT_TAXON_ID
-from pyinaturalist.models import LifeList, Place, Taxon, User
+from pyinaturalist.constants import ROOT_TAXON_ID
+from pyinaturalist.models import Place, Taxon, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
@@ -103,11 +103,6 @@ OBS_PLACE_REACTION_EMOJIS = NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
-
-p = inflect.engine()
-p.defnoun("phylum", "phyla")
-p.defnoun("subphylum", "subphyla")
-p.defnoun("subgenus", "subgenera")
 
 
 class INatEmbed(discord.Embed):
@@ -361,22 +356,6 @@ def _add_user_emojis(query_response: QueryResponse):
     return not query_response.except_by
 
 
-LIFELISTS_ARGS = (
-    "taxon_id",
-    "place_id",
-)
-
-
-def _lifelists_obs_args(obs_args):
-    """Subset of obs arguments accepted by /lifelists on the web."""
-    # TODO: substitute common ancestor taxon_id=# if multiple taxa are specified via taxon_ids=
-    return {
-        key: val
-        for key in LIFELISTS_ARGS
-        if (val := obs_args.get(key)) and "," not in str(val)
-    }
-
-
 EMOJI = {
     "research": ":white_check_mark:",
     "needs_id": ":large_orange_diamond:",
@@ -509,74 +488,6 @@ class INatEmbeds(MixinMeta):
             return summary_counts
         return ""
 
-    async def format_life_list_summary(
-        self, life_list: LifeList, per_rank: str, taxon: Taxon
-    ):
-        ranks = None
-        rank_totals = {}
-        if per_rank in ["main", "any"]:
-            ranks_to_count = (
-                COMMON_RANKS[-8:] if per_rank == "main" else list(RANK_LEVELS.keys())
-            )
-            if taxon:
-                if per_rank == "main" and taxon.rank not in ranks_to_count:
-                    rank_level = RANK_LEVELS[taxon.rank]
-                    ranks_to_count = [
-                        rank
-                        for rank in ranks_to_count
-                        if RANK_LEVELS[rank] < rank_level
-                    ]
-                    ranks_to_count.append(taxon.rank)
-                else:
-                    ranks_to_count = ranks_to_count[
-                        : ranks_to_count.index(taxon.rank) + 1
-                    ]
-            ranks = "main ranks" if per_rank == "main" else "ranks"
-            taxa = [
-                life_list_taxon
-                for life_list_taxon in life_list.data
-                if life_list_taxon.rank in ranks_to_count
-            ]
-            tot = {}
-            for taxon in taxa:
-                rank = taxon.rank
-                tot[rank] = tot.get(taxon.rank, 0) + 1
-            max_digits = len(str(max(tot.values())))
-            rank_totals = {
-                rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural_noun(rank, tot[rank])}"
-                for rank in tot
-            }
-        elif per_rank == "leaf":
-            ranks = "leaf taxa"
-            taxa = [
-                life_list_taxon
-                for life_list_taxon in life_list.data
-                if life_list_taxon.direct_obs_count
-                == life_list_taxon.descendant_obs_count
-            ]
-        else:
-            rank = (
-                RANK_EQUIVALENTS[per_rank] if per_rank in RANK_EQUIVALENTS else per_rank
-            )
-            ranks = p.plural_noun(rank)
-            taxa = [
-                life_list_taxon
-                for life_list_taxon in life_list.data
-                if life_list_taxon.rank == rank
-            ]
-        total = f"Total: {len(taxa)} {ranks}"
-        if rank_totals:
-            rank_keys = reversed(
-                [rank for rank in RANK_LEVELS.keys() if rank != "stateofmatter"]
-            )
-            rank_totals_by_rank = [
-                rank_totals[rank] for rank in rank_keys if rank_totals.get(rank)
-            ]
-            response = "\n\n".join(["\n".join(rank_totals_by_rank), total])
-        else:
-            response = total
-        return response
-
     async def make_life_list_embed(
         self, ctx: Context, query: Query, query_response: QueryResponse
     ):
@@ -590,21 +501,17 @@ class INatEmbeds(MixinMeta):
         life_list = await ctx.inat_client.observations.life_list(**obs_args)
         if not life_list:
             raise LookupError(f"No life list {query_response.obs_query_description()}")
-        description = await self.format_life_list_summary(
-            life_list, per_rank, query_response.taxon
-        )
-        user = query_response.user
 
-        if user:
-            url = (
-                f"{WWW_BASE_URL}/lifelists/{user.login}"
-                f"?{urlencode(_lifelists_obs_args(obs_args))}"
-            )
+        if query_response.user:
+            url = lifelists_url_from_query_response(query_response)
         else:
             url = obs_url_from_v1({**obs_args, "view": "species"})
         full_title = f"Life list {query_response.obs_query_description()}"
-        embed = make_embed(url=url, title=full_title, description=description)
-        return embed
+        description = format_life_list_summary(
+            life_list, per_rank, query_response.taxon
+        )
+
+        return make_embed(url=url, title=full_title, description=description)
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
