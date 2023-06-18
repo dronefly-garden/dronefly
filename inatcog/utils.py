@@ -64,7 +64,9 @@ async def get_dronefly_ctx(
     user: Optional[Union[discord.Member, discord.User]] = None,
     anywhere=True,
 ):
-    dronefly_user = await get_dronefly_user(red_ctx, user or red_ctx.author, anywhere=anywhere)
+    dronefly_user = await get_dronefly_user(
+        red_ctx, user or red_ctx.author, anywhere=anywhere
+    )
     return DroneflyContext(author=dronefly_user)
 
 
@@ -140,7 +142,7 @@ async def get_dronefly_user_config(
     anywhere: bool = True,
 ) -> dict:
     """Return the config parameters for a Dronefly user.
-    
+
     Supplies defaults from the guild and global configs if:
     - the Dronefly user is not known either globally or in the guild scope
       (i.e. anywhere=False vs. True)

@@ -2,7 +2,6 @@
 import asyncio
 import contextlib
 import copy
-import datetime as dt
 from io import BytesIO
 import logging
 import re
@@ -14,8 +13,6 @@ from discord import DMChannel, File
 from dronefly.core.constants import RANK_EQUIVALENTS, RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
-    format_taxon_conservation_status,
-    format_taxon_establishment_means,
     format_taxon_name,
     format_taxon_names,
     format_user_link,
@@ -38,22 +35,19 @@ from dronefly.discord.embeds import (
     MAX_EMBED_DESCRIPTION_LEN,
     MAX_EMBED_FILE_LEN,
 )
-import html2markdown
 import inflect
 from pyinaturalist.constants import COMMON_RANKS, ROOT_TAXON_ID
-from pyinaturalist.models import Place, Taxon, TaxonSummary, User
+from pyinaturalist.models import Place, Taxon, User
 from redbot.core.commands import BadArgument, Context
 from redbot.core.utils.predicates import MessagePredicate
 
 from ..embeds.common import (
     add_reactions_with_cancel,
-    format_items_for_embed,
     make_embed,
     NoRoomInDisplay,
 )
 from ..interfaces import MixinMeta
 from ..maps import INatMapURL
-from ..obs import obs_count_community_id
 from ..projects import UserProject
 from ..taxa import (
     format_place_taxon_counts,
@@ -366,14 +360,21 @@ def _add_user_emojis(query_response: QueryResponse):
         return True
     return not query_response.except_by
 
+
 LIFELISTS_ARGS = (
-    'taxon_id',
-    'place_id',
+    "taxon_id",
+    "place_id",
 )
+
+
 def _lifelists_obs_args(obs_args):
     """Subset of obs arguments accepted by /lifelists on the web."""
     # TODO: substitute common ancestor taxon_id=# if multiple taxa are specified via taxon_ids=
-    return {key: val for key in LIFELISTS_ARGS if (val := obs_args.get(key)) and "," not in str(val)}
+    return {
+        key: val
+        for key in LIFELISTS_ARGS
+        if (val := obs_args.get(key)) and "," not in str(val)
+    }
 
 
 EMOJI = {
@@ -508,25 +509,39 @@ class INatEmbeds(MixinMeta):
             return summary_counts
         return ""
 
-    async def summarize_life_list(self, ctx, query: Query, query_response: QueryResponse):
+    async def summarize_life_list(
+        self, ctx, query: Query, query_response: QueryResponse
+    ):
         obs_args = query_response.obs_args()
-        per_rank = query.per or 'leaf'
-        if per_rank not in [*RANK_KEYWORDS, 'leaf', 'main', 'any']:
-            raise BadArgument(f"Specify `per <rank-or-keyword>`. See `{ctx.clean_prefix}help life` for details.")
+        per_rank = query.per or "leaf"
+        if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
+            raise BadArgument(
+                f"Specify `per <rank-or-keyword>`. See `{ctx.clean_prefix}help life` for details."
+            )
         life_list = await ctx.inat_client.observations.life_list(**obs_args)
         if life_list:
             ranks = None
             rank_totals = {}
-            if per_rank in ['main', 'any']:
-                ranks_to_count = COMMON_RANKS[-8:] if per_rank == 'main' else list(RANK_LEVELS.keys())
+            if per_rank in ["main", "any"]:
+                ranks_to_count = (
+                    COMMON_RANKS[-8:]
+                    if per_rank == "main"
+                    else list(RANK_LEVELS.keys())
+                )
                 taxon = query_response.taxon
                 if taxon:
-                    if per_rank == 'main' and taxon.rank not in ranks_to_count:
+                    if per_rank == "main" and taxon.rank not in ranks_to_count:
                         rank_level = RANK_LEVELS[taxon.rank]
-                        ranks_to_count = [rank for rank in ranks_to_count if RANK_LEVELS[rank] < rank_level]
+                        ranks_to_count = [
+                            rank
+                            for rank in ranks_to_count
+                            if RANK_LEVELS[rank] < rank_level
+                        ]
                         ranks_to_count.append(taxon.rank)
                     else:
-                        ranks_to_count = ranks_to_count[:ranks_to_count.index(taxon.rank) + 1]
+                        ranks_to_count = ranks_to_count[
+                            : ranks_to_count.index(taxon.rank) + 1
+                        ]
                 ranks = "main ranks" if per_rank == "main" else "ranks"
                 taxa = [
                     life_list_taxon
@@ -538,16 +553,24 @@ class INatEmbeds(MixinMeta):
                     rank = taxon.rank
                     tot[rank] = tot.get(taxon.rank, 0) + 1
                 max_digits = len(str(max(tot.values())))
-                rank_totals = {rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural_noun(rank, tot[rank])}" for rank in tot}
-            elif per_rank == 'leaf':
-                ranks = 'leaf taxa'
+                rank_totals = {
+                    rank: f"`{str(tot[rank]).rjust(max_digits)}` {p.plural_noun(rank, tot[rank])}"
+                    for rank in tot
+                }
+            elif per_rank == "leaf":
+                ranks = "leaf taxa"
                 taxa = [
                     life_list_taxon
                     for life_list_taxon in life_list.data
-                    if life_list_taxon.direct_obs_count == life_list_taxon.descendant_obs_count
+                    if life_list_taxon.direct_obs_count
+                    == life_list_taxon.descendant_obs_count
                 ]
             else:
-                rank = RANK_EQUIVALENTS[per_rank] if per_rank in RANK_EQUIVALENTS else per_rank
+                rank = (
+                    RANK_EQUIVALENTS[per_rank]
+                    if per_rank in RANK_EQUIVALENTS
+                    else per_rank
+                )
                 ranks = p.plural_noun(rank)
                 taxa = [
                     life_list_taxon
@@ -556,15 +579,21 @@ class INatEmbeds(MixinMeta):
                 ]
             total = f"Total: {len(taxa)} {ranks}"
             if rank_totals:
-                rank_keys = reversed([rank for rank in RANK_LEVELS.keys() if rank != 'stateofmatter'])
-                rank_totals_by_rank = [rank_totals[rank] for rank in rank_keys if rank_totals.get(rank)]
+                rank_keys = reversed(
+                    [rank for rank in RANK_LEVELS.keys() if rank != "stateofmatter"]
+                )
+                rank_totals_by_rank = [
+                    rank_totals[rank] for rank in rank_keys if rank_totals.get(rank)
+                ]
                 response = "\n\n".join(["\n".join(rank_totals_by_rank), total])
             else:
                 response = total
             return response
         return ""
 
-    async def make_life_list_embed(self, ctx, query: Query, query_response: QueryResponse):
+    async def make_life_list_embed(
+        self, ctx, query: Query, query_response: QueryResponse
+    ):
         """Return embed for life list."""
         description = ""
         description = await self.summarize_life_list(ctx, query, query_response)
@@ -572,7 +601,10 @@ class INatEmbeds(MixinMeta):
 
         obs_args = query_response.obs_args()
         if user:
-            url = f"{WWW_BASE_URL}/lifelists/{user.login}?{urlencode(_lifelists_obs_args(obs_args))}"
+            url = (
+                f"{WWW_BASE_URL}/lifelists/{user.login}"
+                f"?{urlencode(_lifelists_obs_args(obs_args))}"
+            )
         else:
             url = obs_url_from_v1({**obs_args, "view": "species"})
         full_title = f"Life list {query_response.obs_query_description()}"
@@ -651,8 +683,10 @@ class INatEmbeds(MixinMeta):
                 community_taxon = ctx.inat_client.taxa.from_ids(
                     obs.community_taxon_id, limit=1
                 ).one()
-                community_taxon_summary = await ctx.inat_client.observations.taxon_summary(
-                    obs.id, community=1
+                community_taxon_summary = (
+                    await ctx.inat_client.observations.taxon_summary(
+                        obs.id, community=1
+                    )
                 )
         formatter = ObservationFormatter(
             obs,
@@ -717,7 +751,9 @@ class INatEmbeds(MixinMeta):
                 embed.url = url
             else:
                 lang = await get_lang(ctx)
-                embed.title, summary = await self.format_obs(ctx, obs, lang=lang, with_link=True)
+                embed.title, summary = await self.format_obs(
+                    ctx, obs, lang=lang, with_link=True
+                )
                 if error:
                     summary += "\n" + error
                 embed.description = summary
@@ -789,7 +825,9 @@ class INatEmbeds(MixinMeta):
         if isinstance(arg, QueryResponse):
             place = arg.place
             if place:
-                taxon = await ctx.inat_client.taxa.populate(arg.taxon, preferred_place_id=place.id)
+                taxon = await ctx.inat_client.taxa.populate(
+                    arg.taxon, preferred_place_id=place.id
+                )
             else:
                 taxon = await ctx.inat_client.taxa.populate(arg.taxon)
             formatter_params["taxon"] = taxon
@@ -802,8 +840,12 @@ class INatEmbeds(MixinMeta):
             obs_args = title_query_response.obs_args()
             # i.e. any args other than the ones accounted for in taxon.observations_count
             if [arg for arg in obs_args if arg != "taxon_id"]:
-                formatter_params["observations"] = await self.api.get_observations(per_page=0, **obs_args)
-            formatter = QualifiedTaxonFormatter(title_query_response, **formatter_params)
+                formatter_params["observations"] = await self.api.get_observations(
+                    per_page=0, **obs_args
+                )
+            formatter = QualifiedTaxonFormatter(
+                title_query_response, **formatter_params
+            )
         elif isinstance(arg, Taxon):
             taxon = await ctx.inat_client.taxa.populate(arg)
             formatter_params["taxon"] = taxon
@@ -815,7 +857,9 @@ class INatEmbeds(MixinMeta):
             logger.error("Invalid input: %s", repr(arg))
             raise BadArgument("Invalid input.")
 
-        description = formatter.format(with_ancestors=include_ancestors, with_title=False)
+        description = formatter.format(
+            with_ancestors=include_ancestors, with_title=False
+        )
 
         if user:
             formatted_counts = await format_user_taxon_counts(

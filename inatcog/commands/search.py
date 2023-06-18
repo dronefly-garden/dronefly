@@ -379,7 +379,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         _query = EMPTY_QUERY
                 else:
                     _query = query
-                query_type, query_title, url, kwargs = await get_query_args(_query, keyword)
+                query_type, query_title, url, kwargs = await get_query_args(
+                    _query, keyword
+                )
                 if query_type == "obs":
                     (
                         results,

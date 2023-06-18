@@ -7,7 +7,11 @@ from typing import Union
 
 import discord
 from discord.ext.commands import MemberConverter as DiscordMemberConverter, CommandError
-from dronefly.core.formatters.generic import format_user_link, format_user_name, format_user_url
+from dronefly.core.formatters.generic import (
+    format_user_link,
+    format_user_name,
+    format_user_url,
+)
 from dronefly.core.parsers.url import PAT_USER_LINK
 from dronefly.discord.embeds import make_embed
 from pyinaturalist.models import User
@@ -70,7 +74,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 error_msg = str(err)
         if error_msg:
             await apologize(ctx, error_msg)
-
 
     @user.command(name="add")
     @can_manage_users()
@@ -703,9 +706,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         async for (dmember, iuser) in self.user_table.get_member_pairs(
             ctx.guild, all_users, anywhere
         ):
-            project_abbrevs = abbrevs_for_user(
-                iuser.id, event_project_ids, projects
-            )
+            project_abbrevs = abbrevs_for_user(iuser.id, event_project_ids, projects)
             # Candidacy for event project membership is based on one of the
             # following:
             # 1. no project abbreviation (i.e. `,user list` shows all users)
@@ -831,7 +832,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ]
         if filter_role:
             role_user_ids = [
-                member.id 
+                member.id
                 for member in filter_role.members
                 if member.id not in checked_user_ids
             ]
@@ -893,8 +894,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # discrepancy between the role(s) assigned and the project they're in,
             # or when a non-server-member is in the specified event project.
             try:
-                (matching_names, non_matching_names) = await self._user_list_match_members(
-                    ctx, abbrev, event_projects, filter_role, filter_emoji, filter_message
+                (
+                    matching_names,
+                    non_matching_names,
+                ) = await self._user_list_match_members(
+                    ctx,
+                    abbrev,
+                    event_projects,
+                    filter_role,
+                    filter_emoji,
+                    filter_message,
                 )
                 # Placing non matching names first allows an event manager to easily
                 # spot and correct mismatches.

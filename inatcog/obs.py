@@ -41,6 +41,7 @@ def obs_count_community_id(obs):
 
     return (idents_count, idents_agree)
 
+
 async def maybe_match_obs(cog, ctx, content, id_permitted=False):
     """Maybe retrieve an observation from content."""
     mat = re.search(PAT_OBS_LINK, content)

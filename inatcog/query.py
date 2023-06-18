@@ -90,15 +90,16 @@ class INatQuery:
     async def _get_controlled_term(self, query_term: str, query_term_value: str):
         controlled_terms_dict = await self.cog.api.get_controlled_terms()
         controlled_terms = [
-            ControlledTerm.from_json(term)
-            for term in controlled_terms_dict["results"]
+            ControlledTerm.from_json(term) for term in controlled_terms_dict["results"]
         ]
         controlled_term = match_controlled_term(
             controlled_terms, query_term, query_term_value
         )
         return controlled_term
 
-    async def get(self, ctx: Context, query: Query, scientific_name=False, locale=None, **kwargs):
+    async def get(
+        self, ctx: Context, query: Query, scientific_name=False, locale=None, **kwargs
+    ):
         """Get all requested iNat entities."""
         args = {}
 
@@ -119,7 +120,9 @@ class INatQuery:
         if args["place"]:
             taxon_params["preferred_place_id"] = args["place"].id
         args["taxon"] = (
-            await self.cog.taxon_query.maybe_match_taxon_compound(ctx, query, **taxon_params)
+            await self.cog.taxon_query.maybe_match_taxon_compound(
+                ctx, query, **taxon_params
+            )
             if has_value(query.main)
             else None
         )

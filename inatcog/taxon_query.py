@@ -30,6 +30,7 @@ class INatTaxonQuery:
         Taxon
             A Taxon object for the matching ancestor, if any, else None.
         """
+
         def taxon_ancestor_ranks(taxon: Taxon):
             return (
                 ["stateofmatter"] + [ancestor.rank for ancestor in taxon.ancestors]

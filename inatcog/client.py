@@ -5,14 +5,15 @@ from typing import Optional, Union
 import discord
 from dronefly.core.clients.inat import iNatClient as CoreiNatClient
 from dronefly.core.commands import Context as DroneflyContext
-from pyinaturalist import controllers as pyic
 from redbot.core import commands
 
 from .utils import get_dronefly_ctx
 
+
 def asyncify(self, method):
     async def async_wrapper(*args, **kwargs):
         return await self.loop.run_in_executor(None, partial(method, *args, **kwargs))
+
     return async_wrapper
 
 
@@ -25,7 +26,9 @@ class iNatClient(CoreiNatClient):
         self.projects.add_users = asyncify(self, self.projects.add_users)
         self.projects.delete_users = asyncify(self, self.projects.delete_users)
         self.taxa.populate = asyncify(self, self.taxa.populate)
-        self.observations.taxon_summary = asyncify(self, self.observations.taxon_summary)
+        self.observations.taxon_summary = asyncify(
+            self, self.observations.taxon_summary
+        )
         self.observations.life_list = asyncify(self, self.observations.life_list)
 
     @asynccontextmanager

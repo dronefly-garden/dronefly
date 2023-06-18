@@ -197,7 +197,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @use_client
     async def life(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Life list with total by rank.
-        
+
         • Shows a total of life list taxa observed.
         • By default, leaves are counted. Specify `per <rank>` with a valid rank to count taxa of that rank instead.
         • For a *breakdown* per rank, specify `per main` for main ranks or `per any` for any rank.
@@ -226,7 +226,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
                 query_response = await self.query.get(ctx, _query)
-                msg = await ctx.send(embed=await self.make_life_list_embed(ctx, _query, query_response))
+                msg = await ctx.send(
+                    embed=await self.make_life_list_embed(ctx, _query, query_response)
+                )
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
@@ -264,7 +266,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
                 query_response = await self.query.get(ctx, _query)
-                msg = await ctx.send(embed=await self.make_obs_counts_embed(query_response))
+                msg = await ctx.send(
+                    embed=await self.make_obs_counts_embed(query_response)
+                )
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
@@ -287,7 +291,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     _query = await TaxonReplyConverter.convert(ctx, query)
                     if not _query.user:
                         _query.user = "me"
-                except:
+                except BadArgument:
                     _query = await TaxonReplyConverter.convert(ctx, "by me")
                 query_response = await self.query.get(ctx, _query)
                 if not query_response.user:
@@ -355,7 +359,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 obs_opt["view"] = obs_opt_view
                 url = obs_url_from_v1(obs_opt)
                 taxon = query_response.taxon
-                species_only = taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
+                species_only = (
+                    taxon and RANK_LEVELS[taxon.rank] <= RANK_LEVELS["species"]
+                )
                 user_links = get_formatted_user_counts(users, url, species_only, view)
                 query_description = query_response.obs_query_description()
                 if view == "ids":
@@ -368,7 +374,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 summary_counts = await self.summarize_obs_spp_counts(taxon, obs_opt)
                 embeds = [
                     make_embed(
-                        title=full_title, url=url, description=f"{summary_counts}\n{page}"
+                        title=full_title,
+                        url=url,
+                        description=f"{summary_counts}\n{page}",
                     )
                     for page in pages
                 ]

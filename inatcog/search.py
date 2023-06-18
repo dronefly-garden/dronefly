@@ -16,9 +16,7 @@ def get_place(result):
 def get_project(result):
     """Get project result."""
     project = Project.from_json(result.get("record"))
-    return (
-        f":briefcase: [{project.title}]({WWW_BASE_URL}/projects/{project.id})"
-    )
+    return f":briefcase: [{project.title}]({WWW_BASE_URL}/projects/{project.id})"
 
 
 def get_user(result):

@@ -4,7 +4,7 @@ import re
 
 import html2markdown
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN 
+from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -49,9 +49,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 guild_config = self.config.guild(ctx.guild)
                 projects = await guild_config.projects()
                 proj_abbrevs = [
-                    abbrev
-                    for abbrev in projects
-                    if projects[abbrev] == project.id
+                    abbrev for abbrev in projects if projects[abbrev] == project.id
                 ]
                 if proj_abbrevs:
                     abbrevs = ", ".join(proj_abbrevs)
@@ -137,7 +135,9 @@ class CommandsProject(INatEmbeds, MixinMeta):
                     proj_str_text = ""
                     if proj_id in self.api.projects_cache:
                         try:
-                            project = await self.project_table.get_project(ctx.guild, proj_id)
+                            project = await self.project_table.get_project(
+                                ctx.guild, proj_id
+                            )
                             proj_str = f"{abbrev}: [{project.title}]({project.url})"
                             proj_str_text = f"{abbrev} {project.title}"
                         except LookupError:
@@ -146,21 +146,25 @@ class CommandsProject(INatEmbeds, MixinMeta):
                             proj_str_text = abbrev
                     else:
                         # Uncached projects are listed by id (prefetch above should prevent this!)
-                        proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                        proj_str = (
+                            f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                        )
                         proj_str_text = abbrev
                     if match:
                         words = match.split(" ")
                         if all(
                             re.search(pat, proj_str_text)
                             for pat in [
-                                re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                                re.compile(r"\b%s" % re.escape(word), re.I)
+                                for word in words
                             ]
                         ):
                             result_pages.append(proj_str)
                     else:
                         result_pages.append(proj_str)
                 pages = [
-                    "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+                    "\n".join(filter(None, results))
+                    for results in grouper(result_pages, 10)
                 ]
                 if not pages:
                     raise LookupError("Nothing found")

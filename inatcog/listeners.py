@@ -32,14 +32,15 @@ UNKNOWN_REACTION_MSG = "Not a known reaction."
 
 
 @define
-class PartialMessage():
+class PartialMessage:
     """Partial Message to satisfy bot & guild checks."""
+
     author: discord.User
     guild: discord.Guild
 
 
 @define
-class PartialContext():
+class PartialContext:
     "Partial Context synthesized from objects passed into listeners."
     bot: Red
     guild: discord.Guild

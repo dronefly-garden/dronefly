@@ -23,6 +23,7 @@ class UserProject(Project):
        - a user's observations are included when both the user joins *and* the
          admin "approves" the join by adding a rule for them
     """
+
     def members_only(self):
         return next(
             iter(
@@ -75,7 +76,9 @@ class UserProject(Project):
         else:
             if include_user_rules:
                 # i.e. case 2, Closed (admin joins the user)
-                include_user_ids = [rule.get("operand_id") for rule in include_user_rules]
+                include_user_ids = [
+                    rule.get("operand_id") for rule in include_user_rules
+                ]
             else:
                 # i.e. fallback - project membership is undefined, so is empty
                 # - as in case 2 but admins haven't joined anyone yet
