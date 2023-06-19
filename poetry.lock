@@ -874,14 +874,14 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.6.dev3"
+version = "0.3.6.dev4"
 description = "Core dronefly components"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_core-0.3.6.dev3-py3-none-any.whl", hash = "sha256:883d51d8a72956e0081d56600eec20f7cfd7eeedc2b3154dae531ad6165e5a52"},
-    {file = "dronefly_core-0.3.6.dev3.tar.gz", hash = "sha256:d60ed155ff36ee27ddb895801b44ddeb97e0f76f392f3de7a7fd7162c1c66d02"},
+    {file = "dronefly_core-0.3.6.dev4-py3-none-any.whl", hash = "sha256:6d5a86b667c4d77f8e104d4ca24da5d46a540258d223233671f56323c6515d1c"},
+    {file = "dronefly_core-0.3.6.dev4.tar.gz", hash = "sha256:bafe9728623523b840f2e80edd6caad2f8d9438e1c8f3d55789f9a0a70359e53"},
 ]
 
 [package.dependencies]
@@ -2967,4 +2967,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "07cc52bb38c761cbddd9d094cdf8643a9931a4cc42be0ed634b83c72893bdf27"
+content-hash = "1937810a3be0405179c60511fcf34cc3bab21454e653a1f55930ad575c9c57d6"
