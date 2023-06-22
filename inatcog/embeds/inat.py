@@ -13,14 +13,15 @@ from discord import DMChannel, File
 from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
-    format_life_list_summary,
     format_taxon_name,
     format_taxon_names,
     format_user_link,
+    LifeListFormatter,
     ObservationFormatter,
+    QualifiedTaxonFormatter,
+    TaxonFormatter,
 )
 from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
-from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonFormatter
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -502,16 +503,14 @@ class INatEmbeds(MixinMeta):
         if not life_list:
             raise LookupError(f"No life list {query_response.obs_query_description()}")
 
-        if query_response.user:
-            url = lifelists_url_from_query_response(query_response)
-        else:
-            url = obs_url_from_v1({**obs_args, "view": "species"})
-        full_title = f"Life list {query_response.obs_query_description()}"
-        description = format_life_list_summary(
-            life_list, per_rank, query_response.taxon
+        formatter = LifeListFormatter(
+            life_list, per_rank, query_response, with_taxa=True, max_taxa=20
         )
-
-        return make_embed(url=url, title=full_title, description=description)
+        embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
+        if query_response.user:
+            embed.url = lifelists_url_from_query_response(query_response)
+        embed.description = formatter.format_description()
+        return embed
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
