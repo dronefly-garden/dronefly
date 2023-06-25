@@ -10,6 +10,13 @@ Comment:
  and https://github.com/dronefly-garden/dronefly/blob/master/CONTRIBUTORS.md
  for a complete list of contributors.
 
+Files: inatcog/menus/*
+Copyright: 2017-2023 TrustyJAID
+License: MIT
+Comment:
+ New Discord view-based menus are based on code copied from
+ https://github.com/TrustyJAID/Trusty-cogs/tree/master/roletools/menus.py
+
 Files: docs/*
 Copyright: 2020 Ben Armstrong and Michael Pirrello
 License: CC-BY-SA-4.0

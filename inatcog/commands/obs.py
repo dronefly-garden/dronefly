@@ -5,8 +5,9 @@ from contextlib import asynccontextmanager
 from typing import Optional
 import urllib.parse
 
-from dronefly.core.constants import RANK_LEVELS
+from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
+from dronefly.core.formatters.generic import LifeListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
@@ -20,6 +21,7 @@ from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
+from ..menus.inat import BaseMenu, LifeListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -226,15 +228,47 @@ class CommandsObs(INatEmbeds, MixinMeta):
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
                 query_response = await self.query.get(ctx, _query)
-                msg = await ctx.send(
-                    embed=await self.make_life_list_embed(ctx, _query, query_response)
+                per_rank = _query.per or "leaf"
+                if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
+                    raise BadArgument(
+                        f"Specify `per <rank-or-keyword>`. "
+                        f"See `{ctx.clean_prefix}help life` for details."
+                    )
+                life_list = await ctx.inat_client.observations.life_list(
+                    **query_response.obs_args()
                 )
+                if not life_list:
+                    raise LookupError(
+                        f"No life list {query_response.obs_query_description()}"
+                    )
+                per_page = 10
+                life_list_formatter = LifeListFormatter(
+                    life_list,
+                    per_rank,
+                    query_response,
+                    with_taxa=True,
+                    per_page=per_page,
+                )
+                if life_list_formatter.last_page() > 0:
+                    await BaseMenu(
+                        source=LifeListSource(life_list_formatter),
+                        delete_message_after=False,
+                        clear_reactions_after=True,
+                        timeout=60,
+                        cog=self,
+                        page_start=0,
+                    ).start(ctx=ctx)
+                else:
+                    msg = await ctx.send(
+                        embed=self.make_life_list_embed(life_list_formatter)
+                    )
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
             await apologize(ctx, error_msg)
         else:
-            await add_reactions_with_cancel(ctx, msg, [])
+            if msg:
+                await add_reactions_with_cancel(ctx, msg, [])
 
     @commands.group(invoke_without_command=True, aliases=["tab"])
     @checks.bot_has_permissions(embed_links=True)

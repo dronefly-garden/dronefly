@@ -8,6 +8,10 @@
     - First version of the `inat map` command.
     - Initial tests with `unittest` & `unittest-mock`.
 
+- **[TrustyJAID](https://github.com/TrustyJAID)**
+    - For inspiration and MIT licensed code from Trusty-cogs copied to
+      get a start on new Discord view-based menus.
+
 # Non-coding contributors
 
 From the iNaturalist Discord community. The project relies considerably upon
@@ -29,6 +33,7 @@ and moral support.
     - Dronefly profile picture artwork, used both on the iNaturalist
       [Dronefly profile](https://www.inaturalist.org/people/dronefly) and on
       Dronefly bot on Discord.
+
 - **[upupa-epops](https://www.inaturalist.org/people/upupa-epops)**
     - Relied on for input & testing when developing new features, as well as starting
       to file some issues.

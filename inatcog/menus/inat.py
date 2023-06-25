@@ -2,15 +2,224 @@
 import contextlib
 from math import ceil, floor
 import re
+from typing import Any, Optional
 
 import discord
+from discord.ext import commands
 from dronefly.core.formatters.constants import WWW_BASE_URL
+from dronefly.core.formatters.generic import LifeListFormatter
+from dronefly.core.utils import lifelists_url_from_query_response
 from redbot.vendored.discord.ext import menus
+
+from ..embeds.common import make_embed
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
 ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
+
+
+class StopButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{HEAVY MULTIPLICATION X}\N{VARIATION SELECTOR-16}"
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.stop()
+        if interaction.message.flags.ephemeral:
+            await interaction.response.edit_message(view=None)
+            return
+        await interaction.message.delete()
+
+
+class ForwardButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{BLACK RIGHT-POINTING TRIANGLE}\N{VARIATION SELECTOR-16}"
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view.show_checked_page(self.view.current_page + 1, interaction)
+
+
+class BackButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{BLACK LEFT-POINTING TRIANGLE}\N{VARIATION SELECTOR-16}"
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view.show_checked_page(self.view.current_page - 1, interaction)
+
+
+class LastItemButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\N{VARIATION SELECTOR-16}"  # noqa: E501
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view.show_page(self.view._source.get_max_pages() - 1, interaction)
+
+
+class FirstItemButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}\N{VARIATION SELECTOR-16}"  # noqa: E501
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view.show_page(0, interaction)
+
+
+class BaseMenu(discord.ui.View):
+    def __init__(
+        self,
+        source: menus.PageSource,
+        cog: commands.Cog,
+        timeout: int = 60,
+        message: discord.Message = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(
+            timeout=timeout,
+        )
+        self.cog = cog
+        self.bot = None
+        self.message = message
+        self._source = source
+        self.ctx = None
+        self.author: Optional[discord.Member] = None
+        self.current_page = kwargs.get("page_start", 0)
+        self.forward_button = ForwardButton(discord.ButtonStyle.grey, 0)
+        self.back_button = BackButton(discord.ButtonStyle.grey, 0)
+        self.first_item = FirstItemButton(discord.ButtonStyle.grey, 0)
+        self.last_item = LastItemButton(discord.ButtonStyle.grey, 0)
+        self.stop_button = StopButton(discord.ButtonStyle.red, 0)
+        self.add_item(self.stop_button)
+        self.add_item(self.first_item)
+        self.add_item(self.back_button)
+        self.add_item(self.forward_button)
+        self.add_item(self.last_item)
+
+    @property
+    def source(self):
+        return self._source
+
+    async def on_timeout(self):
+        await self.message.edit(view=None)
+
+    async def start(self, ctx: commands.Context):
+        self.ctx = ctx
+        self.bot = self.cog.bot
+        self.author = ctx.author
+        # await self.source._prepare_once()
+        self.message = await self.send_initial_message(ctx)
+
+    async def _get_kwargs_from_page(self, page):
+        value = await discord.utils.maybe_coroutine(
+            self._source.format_page, self, page
+        )
+        if isinstance(value, dict):
+            return value
+        elif isinstance(value, str):
+            return {"content": value, "embed": None}
+        elif isinstance(value, discord.Embed):
+            return {"embed": value, "content": None}
+
+    async def send_initial_message(self, ctx: commands.Context):
+        """|coro|
+        The default implementation of :meth:`Menu.send_initial_message`
+        for the interactive pagination session.
+        This implementation shows the first page of the source.
+        """
+        self.ctx = ctx
+        page = await self._source.get_page(self.current_page)
+        kwargs = await self._get_kwargs_from_page(page)
+        self.message = await ctx.send(**kwargs, view=self)
+        return self.message
+
+    async def show_page(self, page_number: int, interaction: discord.Interaction):
+        page = await self._source.get_page(page_number)
+        self.current_page = page_number
+        kwargs = await self._get_kwargs_from_page(page)
+        await interaction.response.edit_message(**kwargs, view=self)
+
+    async def show_checked_page(
+        self, page_number: int, interaction: discord.Interaction
+    ) -> None:
+        max_pages = self._source.get_max_pages()
+        try:
+            if max_pages is None:
+                # If it doesn't give maximum pages, it cannot be checked
+                await self.show_page(page_number, interaction)
+            elif page_number >= max_pages:
+                await self.show_page(0, interaction)
+            elif page_number < 0:
+                await self.show_page(max_pages - 1, interaction)
+            elif max_pages > page_number >= 0:
+                await self.show_page(page_number, interaction)
+        except IndexError:
+            # An error happened that can be handled, so ignore it.
+            pass
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        """Just extends the default reaction_check to use owner_ids"""
+        if interaction.user.id not in (
+            *interaction.client.owner_ids,
+            getattr(self.author, "id", None),
+        ):
+            await interaction.response.send_message(
+                content="You are not authorized to interact with this.", ephemeral=True
+            )
+            return False
+        return True
+
+
+class LifeListSource(menus.ListPageSource):
+    def __init__(self, life_list_formatter: LifeListFormatter):
+        self._life_list_formatter = life_list_formatter
+        query_response = self._life_list_formatter.query_response
+        self._url = (
+            lifelists_url_from_query_response(query_response)
+            if query_response.user
+            else None
+        )
+        pages = self._life_list_formatter.format_all()
+        super().__init__(pages, per_page=1)
+
+    def is_paginating(self):
+        return True
+
+    def format_page(self, menu: BaseMenu, page):
+        query_response = self._life_list_formatter.query_response
+        embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
+        if self._url:
+            embed.url = self._url
+        embed.description = page
+        embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
+        return embed
 
 
 # TODO: derive a base class from this that:

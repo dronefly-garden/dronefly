@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import DMChannel, File
-from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
+from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
     format_taxon_name,
@@ -489,27 +489,16 @@ class INatEmbeds(MixinMeta):
             return summary_counts
         return ""
 
-    async def make_life_list_embed(
-        self, ctx: Context, query: Query, query_response: QueryResponse
-    ):
+    def make_life_list_embed(self, formatter: LifeListFormatter):
         """Return embed for life list."""
-        obs_args = query_response.obs_args()
-        per_rank = query.per or "leaf"
-        if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
-            raise BadArgument(
-                f"Specify `per <rank-or-keyword>`. See `{ctx.clean_prefix}help life` for details."
-            )
-        life_list = await ctx.inat_client.observations.life_list(**obs_args)
-        if not life_list:
-            raise LookupError(f"No life list {query_response.obs_query_description()}")
-
-        formatter = LifeListFormatter(
-            life_list, per_rank, query_response, with_taxa=True, max_taxa=20
-        )
+        query_response = formatter.query_response
         embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
         if query_response.user:
             embed.url = lifelists_url_from_query_response(query_response)
-        embed.description = formatter.format_description()
+        embed.description = formatter.format_page(0)
+        last_page = formatter.last_page() + 1
+        if last_page > 1:
+            embed.set_footer(text=f"Page 1/{last_page}")
         return embed
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
