@@ -1,6 +1,7 @@
 """Reply converters."""
 
 from redbot.core.commands import BadArgument, Context
+from dronefly.core.query.query import EMPTY_QUERY
 from inatcog.embeds.inat import INatEmbed
 from .base import NaturalQueryConverter
 
@@ -16,7 +17,7 @@ class TaxonReplyConverter:
     """Use replied to bot message as a part of the query."""
 
     @classmethod
-    async def convert(cls, ctx: Context, argument: str = ""):
+    async def convert(cls, ctx: Context, argument: str = "", allow_empty: bool = False):
         """Default to taxon from replied to bot message."""
 
         async def get_query_from_ref_msg(ref, query_str: str):
@@ -74,6 +75,9 @@ class TaxonReplyConverter:
         else:
             query_str = argument
         if not query_str:
-            raise EmptyArgument("This command requires an argument.")
+            if allow_empty:
+                return EMPTY_QUERY
+            else:
+                raise EmptyArgument("This command requires an argument.")
 
         return await NaturalQueryConverter.convert(ctx, query_str)

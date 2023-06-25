@@ -2,13 +2,14 @@
 import re
 from collections import namedtuple
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Union
 import urllib.parse
 
 from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import LifeListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
+from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
 from pyinaturalist.models import Observation
@@ -197,7 +198,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @commands.group(invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def life(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
         """Life list with total by rank.
 
         • Shows a total of life list taxa observed.
@@ -225,8 +226,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         error_msg = None
         msg = None
         async with ctx.typing():
-            _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
+                if isinstance(query, Query):
+                    _query = query
+                else:
+                    _query = await TaxonReplyConverter.convert(
+                        ctx, query, allow_empty=True
+                    )
                 query_response = await self.query.get(ctx, _query)
                 per_rank = _query.per or "leaf"
                 if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
