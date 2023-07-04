@@ -234,7 +234,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         ctx, query, allow_empty=True
                     )
                 query_response = await self.query.get(ctx, _query)
-                per_rank = _query.per or "leaf"
+                per_rank = _query.per or "main"
                 if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
                     raise BadArgument(
                         f"Specify `per <rank-or-keyword>`. "
