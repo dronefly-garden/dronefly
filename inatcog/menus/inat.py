@@ -206,7 +206,7 @@ class LifeListSource(menus.ListPageSource):
             if query_response.user
             else None
         )
-        pages = self._life_list_formatter.format_all()
+        pages = list(page for page in self._life_list_formatter.generate_pages())
         super().__init__(pages, per_page=1)
 
     def is_paginating(self):
