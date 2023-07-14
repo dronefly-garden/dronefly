@@ -255,19 +255,14 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     with_taxa=True,
                     per_page=per_page,
                 )
-                if life_list_formatter.last_page() > 0:
-                    await BaseMenu(
-                        source=LifeListSource(life_list_formatter),
-                        delete_message_after=False,
-                        clear_reactions_after=True,
-                        timeout=60,
-                        cog=self,
-                        page_start=0,
-                    ).start(ctx=ctx)
-                else:
-                    msg = await ctx.send(
-                        embed=self.make_life_list_embed(life_list_formatter)
-                    )
+                await BaseMenu(
+                    source=LifeListSource(life_list_formatter),
+                    delete_message_after=False,
+                    clear_reactions_after=True,
+                    timeout=60,
+                    cog=self,
+                    page_start=0,
+                ).start(ctx=ctx)
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
