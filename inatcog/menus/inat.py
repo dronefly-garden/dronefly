@@ -10,6 +10,7 @@ from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import LifeListFormatter
 from dronefly.core.utils import lifelists_url_from_query_response
 from redbot.vendored.discord.ext import menus
+from pyinaturalist import Taxon
 
 from ..embeds.common import make_embed
 
@@ -93,6 +94,129 @@ class FirstItemButton(discord.ui.Button):
         await self.view.show_page(0, interaction)
 
 
+class PerRankButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{UP DOWN ARROW}"
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        formatter = view.source._life_list_formatter
+        if formatter.per_rank == "leaf":
+            per_rank = "main"
+        elif formatter.per_rank == "main":
+            per_rank = "any"
+        elif formatter.per_rank == "any":
+            current_taxon = view.select_taxon.taxon()
+            if current_taxon:
+                per_rank = current_taxon.rank
+            else:
+                per_rank = "main"
+        else:
+            per_rank = "main"
+        await self.view.update_source(interaction, per_rank)
+
+
+class LeafButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{LEAF FLUTTERING IN WIND}"
+
+    async def callback(self, interaction: discord.Interaction):
+        # TODO: trigger toggle `per leaf` / original `per`
+        pass
+
+
+class FoldButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{UP-POINTING SMALL RED TRIANGLE}"
+
+    async def callback(self, interaction: discord.Interaction):
+        # TODO: trigger fold
+        pass
+
+
+class UnfoldButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{DOWN-POINTING SMALL RED TRIANGLE}"
+
+    async def callback(self, interaction: discord.Interaction):
+        # TODO: trigger unfold
+        pass
+
+
+class FocusButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{BLACK CIRCLE FOR RECORD}"
+
+    async def callback(self, interaction: discord.Interaction):
+        # TODO: trigger focus
+        pass
+
+
+class SelectTaxonOption(discord.SelectOption):
+    def __init__(
+        self,
+        value: int,
+        taxon: Taxon,
+        default: int,
+    ):
+        super().__init__(label=taxon.full_name, value=str(value), default=default)
+
+
+class SelectLifeListTaxon(discord.ui.Select):
+    def __init__(
+        self,
+        view: discord.ui.View,
+        placeholder: Optional[str] = "Select a taxon",
+        selected: Optional[int] = 0,
+    ):
+        super().__init__(min_values=1, max_values=1, placeholder=placeholder)
+        page = view.current_page
+        formatter = view.source._life_list_formatter
+        self.taxa = formatter.get_page_of_taxa(page)
+        self.selected = selected
+        for (value, taxon) in enumerate(self.taxa):
+            self.append_option(
+                SelectTaxonOption(value, taxon, default=(value == selected))
+            )
+
+    async def callback(self, interaction: discord.Interaction):
+        self.selected = self.values[0]
+        await interaction.response.defer()
+
+    def taxon(self):
+        return self.taxa[int(self.selected)]
+
+
 class BaseMenu(discord.ui.View):
     def __init__(
         self,
@@ -117,6 +241,14 @@ class BaseMenu(discord.ui.View):
         self.first_item = FirstItemButton(discord.ButtonStyle.grey, 0)
         self.last_item = LastItemButton(discord.ButtonStyle.grey, 0)
         self.stop_button = StopButton(discord.ButtonStyle.red, 0)
+        if isinstance(self._source, LifeListSource):
+            # Late bind these as which buttons are shown depends on page content:
+            self.leaf_button = None
+            self.per_rank_button = None
+            self.fold_button = None
+            self.unfold_button = None
+            self.focus_button = None
+            self.select_taxon = None
         self.add_item(self.stop_button)
         self.add_item(self.first_item)
         self.add_item(self.back_button)
@@ -157,13 +289,32 @@ class BaseMenu(discord.ui.View):
         self.ctx = ctx
         page = await self._source.get_page(self.current_page)
         kwargs = await self._get_kwargs_from_page(page)
+        if isinstance(self._source, LifeListSource):
+            self.leaf_button = LeafButton(discord.ButtonStyle.grey, 1)
+            self.per_rank_button = PerRankButton(discord.ButtonStyle.grey, 1)
+            self.fold_button = FoldButton(discord.ButtonStyle.grey, 1)
+            self.unfold_button = UnfoldButton(discord.ButtonStyle.grey, 1)
+            self.focus_button = FocusButton(discord.ButtonStyle.grey, 1)
+            # self.add_item(self.leaf_button)
+            self.add_item(self.per_rank_button)
+            # self.add_item(self.fold_button)
+            # self.add_item(self.unfold_button)
+            # self.add_item(self.focus_button)
+            self.select_taxon = SelectLifeListTaxon(view=self, selected=0)
+            self.add_item(self.select_taxon)
         self.message = await ctx.send(**kwargs, view=self)
         return self.message
 
-    async def show_page(self, page_number: int, interaction: discord.Interaction):
+    async def show_page(
+        self, page_number: int, interaction: discord.Interaction, selected: int = 0
+    ):
         page = await self._source.get_page(page_number)
         self.current_page = page_number
         kwargs = await self._get_kwargs_from_page(page)
+        if isinstance(self._source, LifeListSource):
+            self.remove_item(self.select_taxon)
+            self.select_taxon = SelectLifeListTaxon(view=self, selected=selected)
+            self.add_item(self.select_taxon)
         await interaction.response.edit_message(**kwargs, view=self)
 
     async def show_checked_page(
@@ -195,6 +346,50 @@ class BaseMenu(discord.ui.View):
             )
             return False
         return True
+
+    async def update_source(
+        self, interaction: discord.Interaction, per_rank: Optional[str]
+    ):
+        if isinstance(self.source, LifeListSource):
+            formatter = self.source._life_list_formatter
+            # Replace the source with a new source, preserving the currently
+            # selected taxon
+            if per_rank:
+                per_page = formatter.per_page
+                old_life_list = formatter.life_list
+                old_query_response = formatter.query_response
+                # Find the current taxon
+                current_taxon = self.select_taxon.taxon()
+                # Replace the formatter; TODO: support updating existing formatter
+                formatter = LifeListFormatter(
+                    old_life_list,
+                    per_rank,
+                    old_query_response,
+                    with_taxa=True,
+                    per_page=per_page,
+                )
+                self._life_list_formatter = formatter
+                # Replace the source
+                source = LifeListSource(formatter)
+                self._source = source
+                if current_taxon:
+                    # Find the taxon index within the new filtered list:
+                    taxon_index = next(
+                        (
+                            i
+                            for i, taxon in enumerate(formatter.taxa)
+                            if taxon.id == current_taxon.id
+                        ),
+                        0,
+                    )
+                    # Show the page with the current taxon on it
+                    page = floor(taxon_index / per_page)
+                    selected = taxon_index % per_page
+                else:
+                    # Should never get here as we require the select to always have a value
+                    page = 0
+                    selected = 0
+                await self.show_page(page, interaction, selected)
 
 
 class LifeListSource(menus.ListPageSource):
