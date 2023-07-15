@@ -119,7 +119,7 @@ class PerRankButton(discord.ui.Button):
                 per_rank = "main"
         else:
             per_rank = "main"
-        await self.view.update_source(interaction, per_rank)
+        await self.view.update_source(interaction, per_rank=per_rank)
 
 
 class LeafButton(discord.ui.Button):
@@ -136,7 +136,25 @@ class LeafButton(discord.ui.Button):
         view = self.view
         formatter = view.source._life_list_formatter
         per_rank = "any" if formatter.per_rank == "leaf" else "leaf"
-        await self.view.update_source(interaction, per_rank)
+        await self.view.update_source(interaction, per_rank=per_rank)
+
+
+class DirectButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{REGIONAl INDICATOR SYMBOL LETTER D}"
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        formatter = view.source._life_list_formatter
+        await self.view.update_source(
+            interaction, with_direct=not formatter.with_direct
+        )
 
 
 class FoldButton(discord.ui.Button):
@@ -246,6 +264,7 @@ class BaseMenu(discord.ui.View):
         if isinstance(self._source, LifeListSource):
             # Late bind these as which buttons are shown depends on page content:
             self.leaf_button = None
+            self.direct_button = None
             self.per_rank_button = None
             self.fold_button = None
             self.unfold_button = None
@@ -292,11 +311,13 @@ class BaseMenu(discord.ui.View):
         page = await self._source.get_page(self.current_page)
         kwargs = await self._get_kwargs_from_page(page)
         if isinstance(self._source, LifeListSource):
+            self.direct_button = DirectButton(discord.ButtonStyle.grey, 1)
             self.leaf_button = LeafButton(discord.ButtonStyle.grey, 1)
             self.per_rank_button = PerRankButton(discord.ButtonStyle.grey, 1)
-            self.fold_button = FoldButton(discord.ButtonStyle.grey, 1)
-            self.unfold_button = UnfoldButton(discord.ButtonStyle.grey, 1)
-            self.focus_button = FocusButton(discord.ButtonStyle.grey, 1)
+            # self.fold_button = FoldButton(discord.ButtonStyle.grey, 1)
+            # self.unfold_button = UnfoldButton(discord.ButtonStyle.grey, 1)
+            # self.focus_button = FocusButton(discord.ButtonStyle.grey, 1)
+            self.add_item(self.direct_button)
             self.add_item(self.leaf_button)
             self.add_item(self.per_rank_button)
             # self.add_item(self.fold_button)
@@ -349,65 +370,67 @@ class BaseMenu(discord.ui.View):
             return False
         return True
 
-    async def update_source(
-        self, interaction: discord.Interaction, per_rank: Optional[str]
-    ):
+    async def update_source(self, interaction: discord.Interaction, **formatter_kwargs):
         if isinstance(self.source, LifeListSource):
             formatter = self.source._life_list_formatter
             # Replace the source with a new source, preserving the currently
             # selected taxon
-            if per_rank:
-                per_page = formatter.per_page
-                old_life_list = formatter.life_list
-                old_query_response = formatter.query_response
-                # Find the current taxon
-                current_taxon = self.select_taxon.taxon()
-                # Replace the formatter; TODO: support updating existing formatter
-                formatter = LifeListFormatter(
-                    old_life_list,
-                    per_rank,
-                    old_query_response,
-                    with_taxa=True,
-                    per_page=per_page,
+            per_rank = formatter_kwargs.get("per_rank") or formatter.per_rank
+            with_direct = formatter_kwargs.get("with_direct")
+            if with_direct is None:
+                with_direct = formatter.with_direct
+            per_page = formatter.per_page
+            old_life_list = formatter.life_list
+            old_query_response = formatter.query_response
+            # Find the current taxon
+            current_taxon = self.select_taxon.taxon()
+            # Replace the formatter; TODO: support updating existing formatter
+            formatter = LifeListFormatter(
+                old_life_list,
+                per_rank,
+                old_query_response,
+                with_taxa=True,
+                per_page=per_page,
+                with_direct=with_direct,
+            )
+            self._life_list_formatter = formatter
+            # Replace the source
+            source = LifeListSource(formatter)
+            self._source = source
+            if current_taxon:
+                # Find the taxon or the first taxon that is a descendant of it (e.g.
+                # "leaf" case may have dropped the taxon if was above all of the taxa
+                # in the new display)
+                taxon_index = next(
+                    (
+                        i
+                        for i, taxon in enumerate(formatter.taxa)
+                        if current_taxon.id == taxon.id
+                        or current_taxon.id in (t.id for t in taxon.ancestors)
+                    ),
+                    None,
                 )
-                self._life_list_formatter = formatter
-                # Replace the source
-                source = LifeListSource(formatter)
-                self._source = source
-                if current_taxon:
-                    # Find the taxon or the first taxon that is a descendant of it (e.g.
-                    # "leaf" case may have dropped the taxon if was above all of the taxa
-                    # in the new display)
-                    taxon_index = next(
-                        (
+
+                # Or the lowest ancestor of the taxon e.g. the "main" case may have
+                # dropped the taxon if it was below all of the taxa in the new display
+                if taxon_index is None:
+                    ancestor_indices = reversed(
+                        list(
                             i
                             for i, taxon in enumerate(formatter.taxa)
-                            if current_taxon.id == taxon.id
-                            or current_taxon.id in (t.id for t in taxon.ancestors)
-                        ),
-                        None,
-                    )
-
-                    # Or the lowest ancestor of the taxon e.g. the "main" case may have
-                    # dropped the taxon if it was below all of the taxa in the new display
-                    if taxon_index is None:
-                        ancestor_indices = reversed(
-                            list(
-                                i
-                                for i, taxon in enumerate(formatter.taxa)
-                                if taxon.id in (t.id for t in current_taxon.ancestors)
-                            )
+                            if taxon.id in (t.id for t in current_taxon.ancestors)
                         )
-                        taxon_index = next(ancestor_indices, 0)
+                    )
+                    taxon_index = next(ancestor_indices, 0)
 
-                    # Show the page with the matched taxon on it
-                    page = floor(taxon_index / per_page)
-                    selected = taxon_index % per_page
-                else:
-                    # Should never get here as we require the select to always have a value
-                    page = 0
-                    selected = 0
-                await self.show_page(page, interaction, selected)
+                # Show the page with the matched taxon on it
+                page = floor(taxon_index / per_page)
+                selected = taxon_index % per_page
+            else:
+                # Should never get here as we require the select to always have a value
+                page = 0
+                selected = 0
+            await self.show_page(page, interaction, selected)
 
 
 class LifeListSource(menus.ListPageSource):
