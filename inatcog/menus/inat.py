@@ -133,8 +133,10 @@ class LeafButton(discord.ui.Button):
         self.emoji = "\N{LEAF FLUTTERING IN WIND}"
 
     async def callback(self, interaction: discord.Interaction):
-        # TODO: trigger toggle `per leaf` / original `per`
-        pass
+        view = self.view
+        formatter = view.source._life_list_formatter
+        per_rank = "any" if formatter.per_rank == "leaf" else "leaf"
+        await self.view.update_source(interaction, per_rank)
 
 
 class FoldButton(discord.ui.Button):
@@ -295,7 +297,7 @@ class BaseMenu(discord.ui.View):
             self.fold_button = FoldButton(discord.ButtonStyle.grey, 1)
             self.unfold_button = UnfoldButton(discord.ButtonStyle.grey, 1)
             self.focus_button = FocusButton(discord.ButtonStyle.grey, 1)
-            # self.add_item(self.leaf_button)
+            self.add_item(self.leaf_button)
             self.add_item(self.per_rank_button)
             # self.add_item(self.fold_button)
             # self.add_item(self.unfold_button)
@@ -373,16 +375,32 @@ class BaseMenu(discord.ui.View):
                 source = LifeListSource(formatter)
                 self._source = source
                 if current_taxon:
-                    # Find the taxon index within the new filtered list:
+                    # Find the taxon or the first taxon that is a descendant of it (e.g.
+                    # "leaf" case may have dropped the taxon if was above all of the taxa
+                    # in the new display)
                     taxon_index = next(
                         (
                             i
                             for i, taxon in enumerate(formatter.taxa)
-                            if taxon.id == current_taxon.id
+                            if current_taxon.id == taxon.id
+                            or current_taxon.id in (t.id for t in taxon.ancestors)
                         ),
-                        0,
+                        None,
                     )
-                    # Show the page with the current taxon on it
+
+                    # Or the lowest ancestor of the taxon e.g. the "main" case may have
+                    # dropped the taxon if it was below all of the taxa in the new display
+                    if taxon_index is None:
+                        ancestor_indices = reversed(
+                            list(
+                                i
+                                for i, taxon in enumerate(formatter.taxa)
+                                if taxon.id in (t.id for t in current_taxon.ancestors)
+                            )
+                        )
+                        taxon_index = next(ancestor_indices, 0)
+
+                    # Show the page with the matched taxon on it
                     page = floor(taxon_index / per_page)
                     selected = taxon_index % per_page
                 else:
