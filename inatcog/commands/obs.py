@@ -199,28 +199,28 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
-        """Life list with total by rank.
+        """Life list with observation totals.
 
-        • Shows a total of life list taxa observed.
-        • By default, leaves are counted. Specify `per <rank>` with a valid rank to count taxa of that rank instead.
-        • For a *breakdown* per rank, specify `per main` for main ranks or `per any` for any rank.
-        • The title links to a user's life list page on the web, or if not for one person, the species tab of an observations search.
+        • A tree `per main` is shown by default. Use `per any` to increase rank detail, and `per <rank>` to narrow it.
+        • The title links to the user's life list, or if the list isn't for one users list, the observation species tab.
+        • :leaves: toggles between `per leaf` and `per any`.
+        • :arrow_up_down: cycles `per main` (default), `per any`, and `per <rank>` detail for the selected taxon.
+        • :regional_indicator_d: toggles direct taxon count.
+        • When `per` changes, the taxon selected from the menu will be kept selected if possible, or else a child or ancestor of it.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
         ```
         ,life my
-              -> Your life list total leaf taxa.
-        ,life my per main
-              -> Your life list main rank breakdown.
-        ,life my beetles per family
-              -> Your Coleoptera life list total families.
+              -> Your whole life list
+        ,life my beetles
+              -> Your Coleoptera
         ,life my bees per any
-              -> Your Anthophila life list any rank breakdown.
+              -> Your Anthophila at any rank detail
+        ,life bees from nova scotia
+              -> Anthophila from this place
         ,life beetles by syntheticbee
-              -> A particular user's Coleoptera life list leaves.
-        ,life in prj found feathers per spp
-              -> Found Feathers project life list species.
+              -> This user's Coleoptera
         ```
         """  # noqa: E501
         error_msg = None
