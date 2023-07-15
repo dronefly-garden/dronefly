@@ -147,7 +147,7 @@ class DirectButton(discord.ui.Button):
     ):
         super().__init__(style=style, row=row)
         self.style = style
-        self.emoji = "\N{REGIONAl INDICATOR SYMBOL LETTER D}"
+        self.emoji = "\N{REGIONAL INDICATOR SYMBOL LETTER D}"
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
@@ -157,7 +157,7 @@ class DirectButton(discord.ui.Button):
         )
 
 
-class FoldButton(discord.ui.Button):
+class CommonButton(discord.ui.Button):
     def __init__(
         self,
         style: discord.ButtonStyle,
@@ -165,41 +165,14 @@ class FoldButton(discord.ui.Button):
     ):
         super().__init__(style=style, row=row)
         self.style = style
-        self.emoji = "\N{UP-POINTING SMALL RED TRIANGLE}"
+        self.emoji = "\N{REGIONAL INDICATOR SYMBOL LETTER C}"
 
     async def callback(self, interaction: discord.Interaction):
-        # TODO: trigger fold
-        pass
-
-
-class UnfoldButton(discord.ui.Button):
-    def __init__(
-        self,
-        style: discord.ButtonStyle,
-        row: Optional[int],
-    ):
-        super().__init__(style=style, row=row)
-        self.style = style
-        self.emoji = "\N{DOWN-POINTING SMALL RED TRIANGLE}"
-
-    async def callback(self, interaction: discord.Interaction):
-        # TODO: trigger unfold
-        pass
-
-
-class FocusButton(discord.ui.Button):
-    def __init__(
-        self,
-        style: discord.ButtonStyle,
-        row: Optional[int],
-    ):
-        super().__init__(style=style, row=row)
-        self.style = style
-        self.emoji = "\N{BLACK CIRCLE FOR RECORD}"
-
-    async def callback(self, interaction: discord.Interaction):
-        # TODO: trigger focus
-        pass
+        view = self.view
+        formatter = view.source._life_list_formatter
+        await self.view.update_source(
+            interaction, with_common=not formatter.with_common
+        )
 
 
 class SelectTaxonOption(discord.SelectOption):
@@ -311,18 +284,15 @@ class BaseMenu(discord.ui.View):
         page = await self._source.get_page(self.current_page)
         kwargs = await self._get_kwargs_from_page(page)
         if isinstance(self._source, LifeListSource):
-            self.direct_button = DirectButton(discord.ButtonStyle.grey, 1)
+            # Source modifier buttons:
             self.leaf_button = LeafButton(discord.ButtonStyle.grey, 1)
             self.per_rank_button = PerRankButton(discord.ButtonStyle.grey, 1)
-            # self.fold_button = FoldButton(discord.ButtonStyle.grey, 1)
-            # self.unfold_button = UnfoldButton(discord.ButtonStyle.grey, 1)
-            # self.focus_button = FocusButton(discord.ButtonStyle.grey, 1)
-            self.add_item(self.direct_button)
+            self.direct_button = DirectButton(discord.ButtonStyle.grey, 1)
+            # self.common_button = CommonButton(discord.ButtonStyle.grey, 1)
             self.add_item(self.leaf_button)
             self.add_item(self.per_rank_button)
-            # self.add_item(self.fold_button)
-            # self.add_item(self.unfold_button)
-            # self.add_item(self.focus_button)
+            self.add_item(self.direct_button)
+            # self.add_item(self.common_button)
             self.select_taxon = SelectLifeListTaxon(view=self, selected=0)
             self.add_item(self.select_taxon)
         self.message = await ctx.send(**kwargs, view=self)
@@ -379,6 +349,9 @@ class BaseMenu(discord.ui.View):
             with_direct = formatter_kwargs.get("with_direct")
             if with_direct is None:
                 with_direct = formatter.with_direct
+            with_common = formatter_kwargs.get("with_common")
+            if with_common is None:
+                with_common = formatter.with_common
             per_page = formatter.per_page
             old_life_list = formatter.life_list
             old_query_response = formatter.query_response
@@ -392,6 +365,7 @@ class BaseMenu(discord.ui.View):
                 with_taxa=True,
                 per_page=per_page,
                 with_direct=with_direct,
+                with_common=with_common,
             )
             self._life_list_formatter = formatter
             # Replace the source
