@@ -211,15 +211,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         e.g.
         ```
-        ,life my
+        [p]life my
               -> Your whole life list
-        ,life my beetles
+        [p]life my beetles
               -> Your Coleoptera
-        ,life my bees per any
+        [p]life my bees per any
               -> Your Anthophila at any rank detail
-        ,life bees from nova scotia
+        [p]life bees from nova scotia
               -> Anthophila from this place
-        ,life beetles by syntheticbee
+        [p]life beetles by syntheticbee
               -> This user's Coleoptera
         ```
         """  # noqa: E501
@@ -283,15 +283,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • All remaining filters beyond those, including any that can't be used as *per row* values, e.g. `in prj`, `rg`, etc. are applied to the table topic.
         e.g.
         ```
-        ,tab fish from home
+        [p]tab fish from home
              -> per place (home listed; others react to add)
-        ,tab fish by me
+        [p]tab fish by me
              -> per user (self listed; others react to add)
-        ,tab fish not by me
+        [p]tab fish not by me
              -> per unobserved by (self listed; others react to add)
-        ,tab fish id by me
+        [p]tab fish id by me
              -> per identified by (self listed; others react to add)
-        ,tab fish from canada by me
+        [p]tab fish from canada by me
              -> per user (self listed; others react to add) but only fish from canada are tabulated
         ```
         """  # noqa: E501
