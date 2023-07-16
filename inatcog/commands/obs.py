@@ -209,6 +209,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • :leaves: toggles between `per leaf` and `per any`.
         • :arrow_up_down: cycles `per main` (default), `per any`, and `per <rank>` detail for the selected taxon.
         • :regional_indicator_d: toggles direct taxon count.
+        • :regional_indicator_c: toggles common names (user life list only).
         • When `per` changes, the taxon selected from the menu will be kept selected if possible, or else a child or ancestor of it.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
@@ -217,13 +218,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         [p]life my
               -> Your whole life list
         [p]life my beetles
-              -> Your Coleoptera
+              -> Your beetles
         [p]life my bees per any
-              -> Your Anthophila at any rank detail
+              -> Your bees at any rank detail
         [p]life bees from nova scotia
-              -> Anthophila from this place
+              -> Bees from this place
         [p]life beetles by syntheticbee
-              -> This user's Coleoptera
+              -> This user's beetles
         ```
         """  # noqa: E501
         error_msg = None
