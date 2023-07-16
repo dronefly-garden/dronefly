@@ -237,11 +237,9 @@ class BaseMenu(discord.ui.View):
         if isinstance(self._source, LifeListSource):
             # Late bind these as which buttons are shown depends on page content:
             self.leaf_button = None
-            self.direct_button = None
             self.per_rank_button = None
-            self.fold_button = None
-            self.unfold_button = None
-            self.focus_button = None
+            self.direct_button = None
+            self.common_button = None
             self.select_taxon = None
         self.add_item(self.stop_button)
         self.add_item(self.first_item)
@@ -281,18 +279,20 @@ class BaseMenu(discord.ui.View):
         This implementation shows the first page of the source.
         """
         self.ctx = ctx
-        page = await self._source.get_page(self.current_page)
+        source = self.source
+        page = await source.get_page(self.current_page)
         kwargs = await self._get_kwargs_from_page(page)
-        if isinstance(self._source, LifeListSource):
+        if isinstance(source, LifeListSource):
             # Source modifier buttons:
             self.leaf_button = LeafButton(discord.ButtonStyle.grey, 1)
             self.per_rank_button = PerRankButton(discord.ButtonStyle.grey, 1)
             self.direct_button = DirectButton(discord.ButtonStyle.grey, 1)
-            # self.common_button = CommonButton(discord.ButtonStyle.grey, 1)
             self.add_item(self.leaf_button)
             self.add_item(self.per_rank_button)
             self.add_item(self.direct_button)
-            # self.add_item(self.common_button)
+            if source._life_list_formatter.query_response.user:
+                self.common_button = CommonButton(discord.ButtonStyle.grey, 1)
+                self.add_item(self.common_button)
             self.select_taxon = SelectLifeListTaxon(view=self, selected=0)
             self.add_item(self.select_taxon)
         self.message = await ctx.send(**kwargs, view=self)
@@ -366,6 +366,7 @@ class BaseMenu(discord.ui.View):
                 per_page=per_page,
                 with_direct=with_direct,
                 with_common=with_common,
+                lifelist_metadata=formatter.lifelist_metadata,
             )
             self._life_list_formatter = formatter
             # Replace the source
