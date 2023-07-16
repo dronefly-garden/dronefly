@@ -165,7 +165,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             else:
                 full_record = await get_taxon(ctx, last.obs.taxon.id)
                 ancestor = await self.taxon_query.get_taxon_ancestor(
-                    full_record, rank_keyword
+                    ctx, full_record, rank_keyword
                 )
                 if ancestor:
                     await self.send_embed_for_taxon(ctx, ancestor)
