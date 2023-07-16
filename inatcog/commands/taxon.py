@@ -290,11 +290,18 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await ctx.send_help()
             return
 
+        query_response = None
         try:
-            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except LookupError as err:
+            _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
+            query_response = await self.query.get(ctx, _query)
+        except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
+        if query_response and query_response.taxon:
+            _taxa_list = f"{query_response.taxon.id},{taxa_list}"
+        else:
+            _taxa_list = taxa_list
+        taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
 
         (taxon, related_embed) = await self.make_related_embed(ctx, taxa)
         await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
