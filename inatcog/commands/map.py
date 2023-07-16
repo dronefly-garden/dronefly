@@ -37,12 +37,12 @@ class CommandsMap(INatEmbeds, MixinMeta):
             return
 
         try:
-            taxa = await self.taxon_query.query_taxa(ctx, taxa_list)
+            (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, taxa_list)
         except LookupError as err:
             await apologize(ctx, err.args[0])
             return
 
-        await ctx.send(embed=await self.make_map_embed(ctx, taxa))
+        await ctx.send(embed=await self.make_map_embed(ctx, taxa, missing_taxa))
 
     @map.command(name="obs")
     @use_client

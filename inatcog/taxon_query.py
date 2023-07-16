@@ -193,6 +193,7 @@ class INatTaxonQuery:
 
         # De-duplicate the query via dict:
         taxa = {}
+        missing_taxa = []
         for query_str in queries:
             try:
                 query = await NaturalQueryConverter.convert(ctx, query_str)
@@ -201,13 +202,14 @@ class INatTaxonQuery:
                     taxon = query_response.taxon
                     taxa[str(taxon.id)] = taxon
             except (BadArgument, LookupError):
+                missing_taxa.append(query_str)
                 pass
 
         result = taxa.values()
         if not result:
             raise LookupError("No taxon found")
 
-        return result
+        return (result, missing_taxa)
 
     async def query_paginated_taxa(self, ctx, query):
         """Query for one or more taxa and return paginator for matching taxa, if any.

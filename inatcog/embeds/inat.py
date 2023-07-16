@@ -409,7 +409,7 @@ class INatEmbeds(MixinMeta):
         )
         return embed
 
-    async def make_map_embed(self, ctx, taxa, lang=None):
+    async def make_map_embed(self, ctx, taxa, missing_taxa=None, lang=None):
         """Return embed for an observation link."""
         lang = await get_lang(ctx)
         title = format_taxon_names_for_embed(
@@ -417,7 +417,12 @@ class INatEmbeds(MixinMeta):
         )
         inat_map_url = INatMapURL(self.api)
         url = await inat_map_url.get_map_url_for_taxa(taxa)
-        return make_embed(title=title, url=url)
+        embed = make_embed(title=title, url=url)
+        if missing_taxa:
+            embed.set_footer(
+                text=f"Some taxa could not be found and were ignored: {','.join(missing_taxa)}"
+            )
+        return embed
 
     @contextlib.asynccontextmanager
     async def sound_message_params(
@@ -661,7 +666,7 @@ class INatEmbeds(MixinMeta):
 
         return embed
 
-    async def make_related_embed(self, ctx, taxa):
+    async def make_related_embed(self, ctx, taxa, missing_taxa=None):
         """Return embed for related taxa."""
         lang = await get_lang(ctx)
         names = format_taxon_names_for_embed(
@@ -693,11 +698,12 @@ class INatEmbeds(MixinMeta):
             f"{names}\n**are related by {taxon.rank}**: "
             f"{format_taxon_name(taxon, lang=lang)}"
         )
-
-        return (
-            taxon,
-            make_embed(title="Closest related taxon", description=description),
-        )
+        embed = make_embed(title="Closest related taxon", description=description)
+        if missing_taxa:
+            embed.set_footer(
+                text=f"Some taxa could not be found and were ignored: {','.join(missing_taxa)}"
+            )
+        return (taxon, embed)
 
     async def get_image_embed(self, ctx, taxon, index=1):
         """Make embed showing default image for taxon."""

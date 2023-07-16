@@ -301,9 +301,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             _taxa_list = f"{query_response.taxon.id},{taxa_list}"
         else:
             _taxa_list = taxa_list
-        taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
-
-        (taxon, related_embed) = await self.make_related_embed(ctx, taxa)
+        (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
+        (taxon, related_embed) = await self.make_related_embed(ctx, taxa, missing_taxa)
         await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
 
     @commands.command(hidden=True)

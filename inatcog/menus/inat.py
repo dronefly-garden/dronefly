@@ -596,9 +596,10 @@ class SearchTaxonSource(menus.AsyncIteratorPageSource):
                 # - do pyinat at the lowest level to take advantage of
                 #   caching, paginator, etc.
                 # - eliminates reliance on computing our own API page
-                (_taxa, *_ignore) = await self._cog.taxon_query.query_taxa(
+                (_taxa, _missing_taxa) = await self._cog.taxon_query.query_taxa(
                     self._ctx, self._query, page=api_page
                 )
+                _taxa = _taxa[0] if _taxa else None
             else:
                 _taxa = None
 
