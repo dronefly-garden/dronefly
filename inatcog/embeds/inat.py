@@ -694,7 +694,10 @@ class INatEmbeds(MixinMeta):
             f"{format_taxon_name(taxon, lang=lang)}"
         )
 
-        return make_embed(title="Closest related taxon", description=description)
+        return (
+            taxon,
+            make_embed(title="Closest related taxon", description=description),
+        )
 
     async def get_image_embed(self, ctx, taxon, index=1):
         """Make embed showing default image for taxon."""
@@ -1034,14 +1037,21 @@ class INatEmbeds(MixinMeta):
         )
 
     async def send_embed_for_taxon(
-        self, ctx, query_response, include_ancestors=True, with_keep=False
+        self,
+        ctx,
+        query_response,
+        include_ancestors=True,
+        with_keep=False,
+        related_embed=None,
     ):
         """Make embed for taxon & send."""
-        msg = await ctx.send(
-            embed=await self.get_taxa_embed(
-                ctx, query_response, include_ancestors=include_ancestors
-            )
+        taxon_embed = await self.get_taxa_embed(
+            ctx, query_response, include_ancestors=include_ancestors
         )
+        embeds = [taxon_embed]
+        if related_embed:
+            embeds.append(related_embed)
+        msg = await ctx.send(embeds=embeds)
         return await self.add_taxon_reaction_emojis(
             ctx, msg, query_response, with_keep=with_keep
         )

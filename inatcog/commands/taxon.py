@@ -296,7 +296,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await apologize(ctx, str(err))
             return
 
-        await ctx.send(embed=await self.make_related_embed(ctx, taxa))
+        (taxon, related_embed) = await self.make_related_embed(ctx, taxa)
+        await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
 
     @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
