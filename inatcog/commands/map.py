@@ -1,13 +1,16 @@
 """Module for map command group."""
 
+from typing import Optional
 import urllib.parse
 
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.discord.embeds import make_embed
 from redbot.core import checks, commands
+from redbot.core.commands import BadArgument
 
 from inatcog.converters.base import NaturalQueryConverter
+from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.embeds.common import apologize
 from inatcog.embeds.inat import INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -20,7 +23,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
     @commands.group(invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def map(self, ctx, *, taxa_list):
+    async def map(self, ctx, *, taxa_list: Optional[str] = ""):
         """Show range map for a list of one or more taxa.
 
         **Examples:**
@@ -32,17 +35,29 @@ class CommandsMap(INatEmbeds, MixinMeta):
         See `[p]taxon_query` for help specifying taxa.
         """
 
-        if not taxa_list:
+        query_response = None
+        _taxa_list = ""
+        try:
+            _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
+            query_response = await self.query.get(ctx, _query)
+        except (BadArgument, LookupError) as err:
+            await apologize(ctx, str(err))
+            return
+        if query_response and query_response.taxon:
+            _taxa_list = str(query_response.taxon.id)
+            if taxa_list:
+                _taxa_list = [_taxa_list, taxa_list]
+                _taxa_list = ",".join(_taxa_list)
+        else:
+            _taxa_list = taxa_list
+
+        if not _taxa_list:
             await ctx.send_help()
             return
 
-        try:
-            (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, taxa_list)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-            return
-
-        await ctx.send(embed=await self.make_map_embed(ctx, taxa, missing_taxa))
+        (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
+        embed = await self.make_map_embed(ctx, taxa, missing_taxa)
+        await ctx.send(embed=embed)
 
     @map.command(name="obs")
     @use_client

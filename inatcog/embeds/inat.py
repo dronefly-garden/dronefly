@@ -696,7 +696,9 @@ class INatEmbeds(MixinMeta):
 
         description = (
             f"{names}\n**are related by {taxon.rank}**: "
-            f"{format_taxon_name(taxon, lang=lang)}"
+            f"{format_taxon_name(taxon, lang=lang)}\n\n"
+            f"[Species observations]({WWW_BASE_URL}/observations"
+            f"?taxon_ids={','.join([str(t.id) for t in taxa])}&view=species)"
         )
         embed = make_embed(title="Closest related taxon", description=description)
         if missing_taxa:
