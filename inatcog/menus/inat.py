@@ -119,7 +119,7 @@ class PerRankButton(discord.ui.Button):
                 per_rank = "main"
         else:
             per_rank = "main"
-        await self.view.update_source(interaction, per_rank=per_rank)
+        await view.update_source(interaction, per_rank=per_rank)
 
 
 class LeafButton(discord.ui.Button):
@@ -136,7 +136,21 @@ class LeafButton(discord.ui.Button):
         view = self.view
         formatter = view.source._life_list_formatter
         per_rank = "any" if formatter.per_rank == "leaf" else "leaf"
-        await self.view.update_source(interaction, per_rank=per_rank)
+        await view.update_source(interaction, per_rank=per_rank)
+
+
+class RootButton(discord.ui.Button):
+    def __init__(
+        self,
+        style: discord.ButtonStyle,
+        row: Optional[int],
+    ):
+        super().__init__(style=style, row=row)
+        self.style = style
+        self.emoji = "\N{TOP WITH UPWARDS ARROW ABOVE}"
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.view.update_source(interaction, toggle_taxon_root=True)
 
 
 class DirectButton(discord.ui.Button):
@@ -152,9 +166,7 @@ class DirectButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view = self.view
         formatter = view.source._life_list_formatter
-        await self.view.update_source(
-            interaction, with_direct=not formatter.with_direct
-        )
+        await view.update_source(interaction, with_direct=not formatter.with_direct)
 
 
 class CommonButton(discord.ui.Button):
@@ -170,9 +182,7 @@ class CommonButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view = self.view
         formatter = view.source._life_list_formatter
-        await self.view.update_source(
-            interaction, with_common=not formatter.with_common
-        )
+        await view.update_source(interaction, with_common=not formatter.with_common)
 
 
 class SelectTaxonOption(discord.SelectOption):
@@ -241,6 +251,8 @@ class BaseMenu(discord.ui.View):
             self.direct_button = None
             self.common_button = None
             self.select_taxon = None
+            self.root_button = None
+            self.root_taxon_id_stack = []
         self.add_item(self.stop_button)
         self.add_item(self.first_item)
         self.add_item(self.back_button)
@@ -286,9 +298,11 @@ class BaseMenu(discord.ui.View):
             # Source modifier buttons:
             self.leaf_button = LeafButton(discord.ButtonStyle.grey, 1)
             self.per_rank_button = PerRankButton(discord.ButtonStyle.grey, 1)
+            self.root_button = RootButton(discord.ButtonStyle.grey, 1)
             self.direct_button = DirectButton(discord.ButtonStyle.grey, 1)
             self.add_item(self.leaf_button)
             self.add_item(self.per_rank_button)
+            self.add_item(self.root_button)
             self.add_item(self.direct_button)
             if source._life_list_formatter.query_response.user:
                 self.common_button = CommonButton(discord.ButtonStyle.grey, 1)
@@ -352,11 +366,25 @@ class BaseMenu(discord.ui.View):
             with_common = formatter_kwargs.get("with_common")
             if with_common is None:
                 with_common = formatter.with_common
+            toggle_taxon_root = formatter_kwargs.get("toggle_taxon_root")
             per_page = formatter.per_page
             old_life_list = formatter.life_list
             old_query_response = formatter.query_response
-            # Find the current taxon
             current_taxon = self.select_taxon.taxon()
+            root_taxon_id = (
+                self.root_taxon_id_stack[-1] if self.root_taxon_id_stack else None
+            )
+            if toggle_taxon_root:
+                if current_taxon.id in self.root_taxon_id_stack:
+                    self.root_taxon_id_stack.pop()
+                    root_taxon_id = (
+                        self.root_taxon_id_stack[-1]
+                        if self.root_taxon_id_stack
+                        else None
+                    )
+                else:
+                    root_taxon_id = current_taxon.id
+                    self.root_taxon_id_stack.append(root_taxon_id)
             # Replace the formatter; TODO: support updating existing formatter
             formatter = LifeListFormatter(
                 old_life_list,
@@ -367,11 +395,13 @@ class BaseMenu(discord.ui.View):
                 with_direct=with_direct,
                 with_common=with_common,
                 lifelist_metadata=formatter.lifelist_metadata,
+                root_taxon_id=root_taxon_id,
             )
             self._life_list_formatter = formatter
             # Replace the source
             source = LifeListSource(formatter)
             self._source = source
+            # Find the current taxon
             if current_taxon:
                 # Find the taxon or the first taxon that is a descendant of it (e.g.
                 # "leaf" case may have dropped the taxon if was above all of the taxa

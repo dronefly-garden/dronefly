@@ -204,13 +204,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
         """Life list with observation totals.
 
-        • A tree `per main` is shown by default. Use `per any` to increase rank detail, and `per <rank>` to narrow it.
-        • The title links to the user's life list, or if the list isn't for one users list, the observation species tab.
-        • :leaves: toggles between `per leaf` and `per any`.
-        • :arrow_up_down: cycles `per main` (default), `per any`, and `per <rank>` detail for the selected taxon.
-        • :regional_indicator_d: toggles direct taxon count.
-        • :regional_indicator_c: toggles common names (user life list only).
-        • When `per` changes, the taxon selected from the menu will be kept selected if possible, or else a child or ancestor of it.
+        • The title links to a user's life list or to species view.
+        • Buttons to change `per` details and taxon root:
+          • :leaves: toggles alphabetial list of leaf taxa.
+          • :arrow_up_down: changes rank detail level: main (default), any, or selected taxon.
+          • :top: toggles selected taxon as the tree root.
+        • Buttons to change taxon row details:
+          • :regional_indicator_d: toggles direct taxon count.
+          • :regional_indicator_c: toggles common names (user life list only).
+        • Specify `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
