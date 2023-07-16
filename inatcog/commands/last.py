@@ -139,6 +139,33 @@ class CommandsLast(INatEmbeds, MixinMeta):
         else:
             await apologize(ctx, "Nothing found")
 
+    @last_obs.command(name="related")
+    @use_client
+    async def last_obs_related(self, ctx, *, taxa_list: str):
+        """Nearest related taxon to last observation.
+
+        For example, if the last observation was:
+
+        `[p]obs yellow sweet clover from nova scotia`
+
+        Then finding the nearest related ancestor for red clover is:
+
+        `[p]last obs related red clover`
+
+        And this produces the same output as typing out both names:
+
+        `[p]related yellow sweet clover, red clover`
+        """  # noqa: E501
+        last = await self.get_last_obs_from_history(ctx)
+        if not (last and last.obs):
+            await apologize(ctx, "Nothing found")
+            return
+
+        compare_taxon_id = last.obs.taxon.id
+
+        taxa_list = f"{compare_taxon_id},{taxa_list}"
+        await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
+
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     @use_client
     async def last_obs_rank(self, ctx):
@@ -223,6 +250,33 @@ class CommandsLast(INatEmbeds, MixinMeta):
             return
 
         await self.send_embed_for_taxon_image(ctx, last.taxon, number)
+
+    @last_taxon.command(name="related")
+    @use_client
+    async def last_taxon_related(self, ctx, *, taxa_list: str):
+        """Nearest related taxon to last taxon.
+
+        For example, if the last taxon was:
+
+        `[p]taxon yellow sweet clover`
+
+        Then finding the nearest related ancestor for red clover is:
+
+        `[p]last taxon related red clover`
+
+        And this produces the same output as typing out both names:
+
+        `[p]related yellow sweet clover, red clover`
+        """  # noqa: E501
+        last = await self.get_last_taxon_from_history(ctx)
+        if not (last and last.taxon):
+            await apologize(ctx, "Nothing found")
+            return
+
+        compare_taxon_id = last.taxon.id
+
+        taxa_list = f"{compare_taxon_id},{taxa_list}"
+        await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
     @use_client
