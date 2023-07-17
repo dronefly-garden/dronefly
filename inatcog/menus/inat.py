@@ -11,8 +11,10 @@ from dronefly.core.formatters.generic import LifeListFormatter
 from dronefly.core.utils import lifelists_url_from_query_response
 from redbot.vendored.discord.ext import menus
 from pyinaturalist import Taxon
+from pyinaturalist.constants import ROOT_TAXON_ID
 
 from ..embeds.common import make_embed
+from ..taxa import get_taxon
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
@@ -322,7 +324,10 @@ class BaseMenu(discord.ui.View):
             self.remove_item(self.select_taxon)
             self.select_taxon = SelectLifeListTaxon(view=self, selected=selected)
             self.add_item(self.select_taxon)
-        await interaction.response.edit_message(**kwargs, view=self)
+        if interaction.response.is_done():
+            await interaction.edit_original_response(**kwargs, view=self)
+        else:
+            await interaction.response.edit_message(**kwargs, view=self)
 
     async def show_checked_page(
         self, page_number: int, interaction: discord.Interaction
@@ -356,6 +361,7 @@ class BaseMenu(discord.ui.View):
 
     async def update_source(self, interaction: discord.Interaction, **formatter_kwargs):
         if isinstance(self.source, LifeListSource):
+            await interaction.response.defer()
             formatter = self.source._life_list_formatter
             # Replace the source with a new source, preserving the currently
             # selected taxon
@@ -368,8 +374,8 @@ class BaseMenu(discord.ui.View):
                 with_common = formatter.with_common
             toggle_taxon_root = formatter_kwargs.get("toggle_taxon_root")
             per_page = formatter.per_page
-            old_life_list = formatter.life_list
-            old_query_response = formatter.query_response
+            life_list = formatter.life_list
+            query_response = formatter.query_response
             current_taxon = self.select_taxon.taxon()
             root_taxon_id = (
                 self.root_taxon_id_stack[-1] if self.root_taxon_id_stack else None
@@ -383,13 +389,40 @@ class BaseMenu(discord.ui.View):
                         else None
                     )
                 else:
-                    root_taxon_id = current_taxon.id
-                    self.root_taxon_id_stack.append(root_taxon_id)
+                    query_taxon = query_response.taxon
+                    # If at the top of the stack, and a taxon was specified in
+                    # the query, generate a new life list for its immediate
+                    # ancestor.
+                    if (
+                        query_taxon
+                        and query_taxon.id != ROOT_TAXON_ID
+                        and not self.root_taxon_id_stack
+                        and self.current_page == 0
+                        and self.select_taxon.selected == 0
+                    ):
+                        if query_taxon.parent_id == ROOT_TAXON_ID:
+                            # Simplify the request by removing the taxon filter
+                            # if we hit the top (Life)
+                            query_response.taxon = None
+                        else:
+                            query_response.taxon = await get_taxon(
+                                self.ctx, query_taxon.parent_id
+                            )
+                        # And in either case, get a new life_list for the updated query response:
+                        life_list = await self.ctx.inat_client.observations.life_list(
+                            **query_response.obs_args()
+                        )
+                        # The first taxon on page 0 is selected:
+                        root_taxon_id = None
+                        current_taxon = None
+                    else:
+                        root_taxon_id = current_taxon.id
+                        self.root_taxon_id_stack.append(root_taxon_id)
             # Replace the formatter; TODO: support updating existing formatter
             formatter = LifeListFormatter(
-                old_life_list,
+                life_list,
                 per_rank,
-                old_query_response,
+                query_response,
                 with_taxa=True,
                 per_page=per_page,
                 with_direct=with_direct,
@@ -398,8 +431,7 @@ class BaseMenu(discord.ui.View):
             )
             self._life_list_formatter = formatter
             # Replace the source
-            source = LifeListSource(formatter)
-            self._source = source
+            self._source = LifeListSource(formatter)
             # Find the current taxon
             if current_taxon:
                 # Find the taxon or the first taxon that is a descendant of it (e.g.
