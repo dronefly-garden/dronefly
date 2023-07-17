@@ -18,7 +18,6 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
-from ..api import API_BASE_URL
 from ..common import grouper
 from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
@@ -253,23 +252,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     raise LookupError(
                         f"No life list {query_response.obs_query_description()}"
                     )
-                lifelist_metadata = {}
-                if query_response.user:
-                    # This undoc'd endpoint requires observed_by_user_id, so unfortunately
-                    # common names can't be shown if the query isn't for a single user.
-                    # - Responds with Unprocessable Entity (422) if absent
-                    params = query_response.obs_args()
-                    if "user_id" in params:
-                        params["observed_by_user_id"] = params["user_id"]
-                        del params["user_id"]
-                    response = await self.api._get_rate_limited(
-                        f"{API_BASE_URL}/v1/taxa/lifelist_metadata",
-                        **params,
-                    )
-                    if response and "results" in response:
-                        lifelist_metadata = dict(
-                            {t["id"]: t for t in response["results"]}
-                        )
                 per_page = 10
                 life_list_formatter = LifeListFormatter(
                     life_list,
@@ -277,7 +259,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     query_response,
                     with_taxa=True,
                     per_page=per_page,
-                    lifelist_metadata=lifelist_metadata,
                 )
                 await BaseMenu(
                     source=LifeListSource(life_list_formatter),

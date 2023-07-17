@@ -394,7 +394,6 @@ class BaseMenu(discord.ui.View):
                 per_page=per_page,
                 with_direct=with_direct,
                 with_common=with_common,
-                lifelist_metadata=formatter.lifelist_metadata,
                 root_taxon_id=root_taxon_id,
             )
             self._life_list_formatter = formatter
