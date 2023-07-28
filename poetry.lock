@@ -260,14 +260,14 @@ files = [
 
 [[package]]
 name = "astroid"
-version = "2.15.5"
+version = "2.15.6"
 description = "An abstract syntax tree for Python with inference support."
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "astroid-2.15.5-py3-none-any.whl", hash = "sha256:078e5212f9885fa85fbb0cf0101978a336190aadea6e13305409d099f71b2324"},
-    {file = "astroid-2.15.5.tar.gz", hash = "sha256:1039262575027b441137ab4a62a793a9b43defb42c32d5670f38686207cd780f"},
+    {file = "astroid-2.15.6-py3-none-any.whl", hash = "sha256:389656ca57b6108f939cf5d2f9a2a825a3be50ba9d589670f393236e0a03b91c"},
+    {file = "astroid-2.15.6.tar.gz", hash = "sha256:903f024859b7c7687d7a7f3a3f73b17301f8e42dfd9cc9df9d4418172d3e2dbd"},
 ]
 
 [package.dependencies]
@@ -528,14 +528,14 @@ ujson = ["ujson (>=5.4.0,<6.0.0)"]
 
 [[package]]
 name = "certifi"
-version = "2023.5.7"
+version = "2023.7.22"
 description = "Python package for providing Mozilla's CA Bundle."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2023.5.7-py3-none-any.whl", hash = "sha256:c6c2e98f5c7869efca1f8916fed228dd91539f9f1b444c314c06eef02980c716"},
-    {file = "certifi-2023.5.7.tar.gz", hash = "sha256:0f0d56dc5a6ad56fd4ba36484d6cc34451e1c6548c61daad8c320169f91eddc7"},
+    {file = "certifi-2023.7.22-py3-none-any.whl", hash = "sha256:92d6037539857d8206b8f6ae472e8b77db8058fec5937a1ef3f54304089edbb9"},
+    {file = "certifi-2023.7.22.tar.gz", hash = "sha256:539cc1d13202e33ca466e88b2807e29f4c13049d6d87031a3c110744495cb082"},
 ]
 
 [[package]]
@@ -810,14 +810,14 @@ langdetect = ["langdetect"]
 
 [[package]]
 name = "dill"
-version = "0.3.6"
-description = "serialize all of python"
+version = "0.3.7"
+description = "serialize all of Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "dill-0.3.6-py3-none-any.whl", hash = "sha256:a07ffd2351b8c678dfc4a856a3005f8067aea51d6ba6c700796a4d9e280f39f0"},
-    {file = "dill-0.3.6.tar.gz", hash = "sha256:e5db55f3687856d8fbdab002ed78544e1c4559a130302693d839dfe8f93f2373"},
+    {file = "dill-0.3.7-py3-none-any.whl", hash = "sha256:76b122c08ef4ce2eedcd4d1abd8e641114bfc6c2867f49f3c41facf65bf19f5e"},
+    {file = "dill-0.3.7.tar.gz", hash = "sha256:cc1c8b182eb3013e24bd475ff2e9295af86c1a38eb1aff128dac8962a9ce3c03"},
 ]
 
 [package.extras]
@@ -870,41 +870,40 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.6.dev6"
+version = "0.3.6.dev7"
 description = "Core dronefly components"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_core-0.3.6.dev6-py3-none-any.whl", hash = "sha256:3fc5214703daa1ec0d453349f08fa836c7a1bb96c4ecfa316361e3f3e5661211"},
-    {file = "dronefly_core-0.3.6.dev6.tar.gz", hash = "sha256:1f600a403a84774e483ac570d63830bd7b04c05c6c07d84d511e1bcfe4aa12eb"},
+    {file = "dronefly_core-0.3.6.dev7-py3-none-any.whl", hash = "sha256:eaeb358cb066782b7289418c282e21fd419be105c149ef5f063309b8b6993876"},
+    {file = "dronefly_core-0.3.6.dev7.tar.gz", hash = "sha256:15f940aa2be783f9311f8c47951156e862e5df6fc58c14b12c6ce396817b1420"},
 ]
 
 [package.dependencies]
-attrs = ">=21.2"
 dateparser = ">=1.1.1,<2.0.0"
 html2markdown = ">=0.1.7,<0.2.0"
 inflect = ">=5.3.0,<6.0.0"
-pyinaturalist = ">=0.19.0.dev2,<0.20"
-rich = ">=10.9,<14"
+pyinaturalist = ">=0.19.0.dev3,<0.20"
+rich = "13.4.2"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.1.dev5"
+version = "0.1.1.dev6"
 description = "Dronefly Discord library"
 category = "main"
 optional = false
 python-versions = ">=3.8.1,<3.12"
 files = [
-    {file = "dronefly_discord-0.1.1.dev5-py3-none-any.whl", hash = "sha256:2dff45f10c457997b03b518e997b366839718049cb80d968772cec29662db09e"},
-    {file = "dronefly_discord-0.1.1.dev5.tar.gz", hash = "sha256:914f45ea3c29a576ee2adecd208865933663b434324b07da687878e33257a971"},
+    {file = "dronefly_discord-0.1.1.dev6-py3-none-any.whl", hash = "sha256:ded39a75f570d9ed43d378896cb799e5507dcd33b01545766cc7216a4b1bb3b8"},
+    {file = "dronefly_discord-0.1.1.dev6.tar.gz", hash = "sha256:f5bfb3db3faefda2fb0c4b3c57c2763fefedce484b508ee23d269bfc68e5b4ce"},
 ]
 
 [package.dependencies]
 discord-py = "2.3.1"
-dronefly-core = ">=0.3.6.dev5,<0.4"
+dronefly-core = ">=0.3.6.dev7,<0.4"
 inflect = ">=5.3.0,<6.0.0"
-pyinaturalist = ">=0.19.0.dev2,<0.20"
+pyinaturalist = ">=0.19.0.dev3,<0.20"
 
 [[package]]
 name = "ebird-api"
@@ -920,14 +919,14 @@ files = [
 
 [[package]]
 name = "exceptiongroup"
-version = "1.1.1"
+version = "1.1.2"
 description = "Backport of PEP 654 (exception groups)"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "exceptiongroup-1.1.1-py3-none-any.whl", hash = "sha256:232c37c63e4f682982c8b6459f33a8981039e5fb8756b2074364e5055c498c9e"},
-    {file = "exceptiongroup-1.1.1.tar.gz", hash = "sha256:d484c3090ba2889ae2928419117447a14daf3c1231d5e30d0aae34f354f01785"},
+    {file = "exceptiongroup-1.1.2-py3-none-any.whl", hash = "sha256:e346e69d186172ca7cf029c8c1d16235aa0e04035e5750b4b95039e65204328f"},
+    {file = "exceptiongroup-1.1.2.tar.gz", hash = "sha256:12c3e887d6485d16943a309616de20ae5582633e0a2eda17f4e10fd61c1e8af5"},
 ]
 
 [package.extras]
@@ -1064,22 +1063,22 @@ testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs
 
 [[package]]
 name = "importlib-resources"
-version = "5.12.0"
+version = "6.0.0"
 description = "Read resources from Python packages"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "importlib_resources-5.12.0-py3-none-any.whl", hash = "sha256:7b1deeebbf351c7578e09bf2f63fa2ce8b5ffec296e0d349139d43cca061a81a"},
-    {file = "importlib_resources-5.12.0.tar.gz", hash = "sha256:4be82589bf5c1d7999aedf2a45159d10cb3ca4f19b2271f8792bc8e6da7b22f6"},
+    {file = "importlib_resources-6.0.0-py3-none-any.whl", hash = "sha256:d952faee11004c045f785bb5636e8f885bed30dc3c940d5d42798a2a4541c185"},
+    {file = "importlib_resources-6.0.0.tar.gz", hash = "sha256:4cf94875a8368bd89531a756df9a9ebe1f150e0f885030b461237bc7f2d905f2"},
 ]
 
 [package.dependencies]
 zipp = {version = ">=3.1.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+testing = ["pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [[package]]
 name = "inflect"
@@ -1129,22 +1128,22 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 
 [[package]]
 name = "jaraco-classes"
-version = "3.2.3"
+version = "3.3.0"
 description = "Utility functions for Python class constructs"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "jaraco.classes-3.2.3-py3-none-any.whl", hash = "sha256:2353de3288bc6b82120752201c6b1c1a14b058267fa424ed5ce5984e3b922158"},
-    {file = "jaraco.classes-3.2.3.tar.gz", hash = "sha256:89559fa5c1d3c34eff6f631ad80bb21f378dbcbb35dd161fd2c6b93f5be2f98a"},
+    {file = "jaraco.classes-3.3.0-py3-none-any.whl", hash = "sha256:10afa92b6743f25c0cf5f37c6bb6e18e2c5bb84a16527ccfc0040ea377e7aaeb"},
+    {file = "jaraco.classes-3.3.0.tar.gz", hash = "sha256:c063dd08e89217cee02c8d5e5ec560f2c8ce6cdc2fcdc2e68f7b2e5547ed3621"},
 ]
 
 [package.dependencies]
 more-itertools = "*"
 
 [package.extras]
-docs = ["jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)"]
-testing = ["flake8 (<5)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)"]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+testing = ["pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [[package]]
 name = "jeepney"
@@ -1380,14 +1379,14 @@ files = [
 
 [[package]]
 name = "more-itertools"
-version = "9.1.0"
+version = "10.0.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "more-itertools-9.1.0.tar.gz", hash = "sha256:cabaa341ad0389ea83c17a94566a53ae4c9d07349861ecb14dc6d0345cf9ac5d"},
-    {file = "more_itertools-9.1.0-py3-none-any.whl", hash = "sha256:d2bc7f02446e86a68911e58ded76d6561eea00cddfb2a91e7019bbb586c799f3"},
+    {file = "more-itertools-10.0.0.tar.gz", hash = "sha256:cd65437d7c4b615ab81c0640c0480bc29a550ea032891977681efd28344d51e1"},
+    {file = "more_itertools-10.0.0-py3-none-any.whl", hash = "sha256:928d514ffd22b5b0a8fce326d57f423a55d2ff783b093bab217eda71e732330f"},
 ]
 
 [[package]]
@@ -1722,45 +1721,46 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyinaturalist"
-version = "0.19.0.dev2"
+version = "0.19.0.dev3"
 description = "iNaturalist API client for python"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "pyinaturalist-0.19.0.dev2-py3-none-any.whl", hash = "sha256:1f1f15b3829a063bafb2d39b06aeeddcda2f0448036430913bc628da2de8a8ce"},
-    {file = "pyinaturalist-0.19.0.dev2.tar.gz", hash = "sha256:16eab055a413993a4136307fc4059d8bf67c6ac0dc35c48d0c10b4888fbd4ade"},
+    {file = "pyinaturalist-0.19.0.dev3-py3-none-any.whl", hash = "sha256:f6113bd0481000f725291b71b330c9bbe27013f22d120235bb1c15834746907f"},
+    {file = "pyinaturalist-0.19.0.dev3.tar.gz", hash = "sha256:67ed998ab6f65152c8aacf845bb1061ef4715c529f02ea8f7e7abc2e78cf81e8"},
 ]
 
 [package.dependencies]
 attrs = ">=21.2"
 keyring = ">=22.3"
+markdown-it-py = {version = ">=2.2", markers = "python_version >= \"3.8\""}
 platformdirs = ">=2.6"
 python-dateutil = ">=2.0"
 python-forge = ">=18.6"
-requests = ">=2.22"
-requests-cache = ">=1.0"
+requests = ">=2.25"
+requests-cache = ">=1.1"
 requests-ratelimiter = ">=0.3.2"
 rich = ">=10.9"
 
 [package.extras]
 all = ["ujson (>5.0)"]
-docs = ["furo (>=2023.3,<2024.0)", "ipython (>=7.25.0,<8.0.0)", "linkify-it-py (>=1.0.1,<2.0.0)", "myst-parser (>=1.0,<2.0)", "nbsphinx (>=0.9,<0.10)", "sphinx (>=5.2,<6.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-automodapi (>=0.14,<0.15)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.2.0)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
+docs = ["furo (>=2023.3,<2024.0)", "ipython (>=7.34,<8.0)", "linkify-it-py (>=2.0,<3.0)", "myst-parser (>=1.0)", "nbsphinx (>=0.9,<0.10)", "sphinx (>=6.2,<7.0)", "sphinx-autodoc-typehints (==1.20)", "sphinx-automodapi (>=0.15,<0.16)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.4)", "sphinxcontrib-apidoc (>=0.3,<0.4)"]
 
 [[package]]
 name = "pylint"
-version = "2.17.4"
+version = "2.17.5"
 description = "python code static checker"
 category = "dev"
 optional = false
 python-versions = ">=3.7.2"
 files = [
-    {file = "pylint-2.17.4-py3-none-any.whl", hash = "sha256:7a1145fb08c251bdb5cca11739722ce64a63db479283d10ce718b2460e54123c"},
-    {file = "pylint-2.17.4.tar.gz", hash = "sha256:5dcf1d9e19f41f38e4e85d10f511e5b9c35e1aa74251bf95cdd8cb23584e2db1"},
+    {file = "pylint-2.17.5-py3-none-any.whl", hash = "sha256:73995fb8216d3bed149c8d51bba25b2c52a8251a2c8ac846ec668ce38fab5413"},
+    {file = "pylint-2.17.5.tar.gz", hash = "sha256:f7b601cbc06fef7e62a754e2b41294c2aa31f1cb659624b9a85bcba29eaf8252"},
 ]
 
 [package.dependencies]
-astroid = ">=2.15.4,<=2.17.0-dev0"
+astroid = ">=2.15.6,<=2.17.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
@@ -1898,14 +1898,14 @@ files = [
 
 [[package]]
 name = "pywin32-ctypes"
-version = "0.2.1"
+version = "0.2.2"
 description = "A (partial) reimplementation of pywin32 using ctypes/cffi"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pywin32-ctypes-0.2.1.tar.gz", hash = "sha256:934a2def1e5cbc472b2b6bf80680c0f03cd87df65dfd58bfd1846969de095b03"},
-    {file = "pywin32_ctypes-0.2.1-py3-none-any.whl", hash = "sha256:b9a53ef754c894a525469933ab2a447c74ec1ea6b9d2ef446f40ec50d3dcec9f"},
+    {file = "pywin32-ctypes-0.2.2.tar.gz", hash = "sha256:3426e063bdd5fd4df74a14fa3cf80a0b42845a87e1d1e81f6549f9daec593a60"},
+    {file = "pywin32_ctypes-0.2.2-py3-none-any.whl", hash = "sha256:bf490a1a709baf35d688fe0ecf980ed4de11d2b3e37b51e5442587a75d9957e7"},
 ]
 
 [[package]]
@@ -2286,14 +2286,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "requests-cache"
-version = "1.0.1"
+version = "1.1.0"
 description = "A persistent cache for python requests"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "requests_cache-1.0.1-py3-none-any.whl", hash = "sha256:55c5765c26fd98a38c633d6e3931a507b7708cdd07c0afb48773d0718ac15969"},
-    {file = "requests_cache-1.0.1.tar.gz", hash = "sha256:d42e6c2f11de54e6a134c9a00c5ca2a3c8edde3c3f2bdfd942586fafa8990e14"},
+    {file = "requests_cache-1.1.0-py3-none-any.whl", hash = "sha256:178282bce704b912c59e7f88f367c42bddd6cde6bf511b2a3e3cfb7e5332a92a"},
+    {file = "requests_cache-1.1.0.tar.gz", hash = "sha256:41b79166aa8e300cc4de982f7ab7c52af914a785160be1eda25c6e9265969a67"},
 ]
 
 [package.dependencies]
@@ -2307,7 +2307,7 @@ urllib3 = ">=1.25.5"
 [package.extras]
 all = ["boto3 (>=1.15)", "botocore (>=1.18)", "itsdangerous (>=2.0)", "pymongo (>=3)", "pyyaml (>=5.4)", "redis (>=3)", "ujson (>=5.4)"]
 bson = ["bson (>=0.5)"]
-docs = ["furo (>=2022.12.7,<2023.0.0)", "linkify-it-py (>=2.0,<3.0)", "myst-parser (>=1.0,<2.0)", "sphinx (>=5.0.2,<6.0.0)", "sphinx-autodoc-typehints (>=1.19)", "sphinx-automodapi (>=0.14)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.2)", "sphinx-notfound-page (>=0.8)", "sphinxcontrib-apidoc (>=0.3)", "sphinxext-opengraph (>=0.6)"]
+docs = ["furo (>=2023.3,<2024.0)", "linkify-it-py (>=2.0,<3.0)", "myst-parser (>=1.0,<2.0)", "sphinx (>=5.0.2,<6.0.0)", "sphinx-autodoc-typehints (>=1.19)", "sphinx-automodapi (>=0.14)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.2)", "sphinx-notfound-page (>=0.8)", "sphinxcontrib-apidoc (>=0.3)", "sphinxext-opengraph (>=0.6)"]
 dynamodb = ["boto3 (>=1.15)", "botocore (>=1.18)"]
 json = ["ujson (>=5.4)"]
 mongodb = ["pymongo (>=3)"]
@@ -2317,22 +2317,22 @@ yaml = ["pyyaml (>=5.4)"]
 
 [[package]]
 name = "requests-ratelimiter"
-version = "0.4.0"
+version = "0.4.1"
 description = "Rate-limiting for the requests library"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "requests-ratelimiter-0.4.0.tar.gz", hash = "sha256:4fcd71bd75488409329bb4e7baad8df98efec2c3a5d34ad4388d84cd35eeda8d"},
-    {file = "requests_ratelimiter-0.4.0-py3-none-any.whl", hash = "sha256:4c41dc0bb5a58ef668283a0512d55d075bc4b82487d1765382512bdbec37c6a5"},
+    {file = "requests_ratelimiter-0.4.1-py3-none-any.whl", hash = "sha256:b8b63841c2fff73ea4fab8e9823d5a5ecfd7795f5475e45f39ae72605317d059"},
+    {file = "requests_ratelimiter-0.4.1.tar.gz", hash = "sha256:254a2565947517016a1dadba51d778d26639a7bbc4114445c667b6d46e899836"},
 ]
 
 [package.dependencies]
-pyrate-limiter = ">=2.8"
+pyrate-limiter = ">=2.8,<3.0"
 requests = ">=2.20"
 
 [package.extras]
-docs = ["furo (==2022.9.15)", "myst-parser (>=0.17)", "sphinx (>=4.3.0,<5.0.0)", "sphinx-autodoc-typehints (>=1.17,<2.0)", "sphinx-copybutton (>=0.5)"]
+docs = ["furo (>=2022.12,<2023.0)", "myst-parser (>=0.17)", "sphinx (>=5.2,<6.0)", "sphinx-autodoc-typehints (>=1.22,<2.0)", "sphinx-copybutton (>=0.5)"]
 
 [[package]]
 name = "rich"
@@ -2627,14 +2627,14 @@ files = [
 
 [[package]]
 name = "tomlkit"
-version = "0.11.8"
+version = "0.12.1"
 description = "Style preserving TOML library"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tomlkit-0.11.8-py3-none-any.whl", hash = "sha256:8c726c4c202bdb148667835f68d68780b9a003a9ec34167b6c673b38eff2a171"},
-    {file = "tomlkit-0.11.8.tar.gz", hash = "sha256:9330fc7faa1db67b541b28e62018c17d20be733177d290a13b24c62d1614e0c3"},
+    {file = "tomlkit-0.12.1-py3-none-any.whl", hash = "sha256:712cbd236609acc6a3e2e97253dfc52d4c2082982a88f61b640ecf0817eab899"},
+    {file = "tomlkit-0.12.1.tar.gz", hash = "sha256:38e1ff8edb991273ec9f6181244a6a391ac30e9f5098e7535640ea6be97a7c86"},
 ]
 
 [[package]]
@@ -2697,14 +2697,14 @@ six = "*"
 
 [[package]]
 name = "urllib3"
-version = "2.0.3"
+version = "2.0.4"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "urllib3-2.0.3-py3-none-any.whl", hash = "sha256:48e7fafa40319d358848e1bc6809b208340fafe2096f1725d05d67443d0483d1"},
-    {file = "urllib3-2.0.3.tar.gz", hash = "sha256:bee28b5e56addb8226c96f7f13ac28cb4c301dd5ea8a6ca179c0b9835e032825"},
+    {file = "urllib3-2.0.4-py3-none-any.whl", hash = "sha256:de7df1803967d2c2a98e4b11bb7d6bd9210474c46e8a0401514e3a42a75ebde4"},
+    {file = "urllib3-2.0.4.tar.gz", hash = "sha256:8d22f86aae8ef5e410d4f539fde9ce6b2113a001bb4d189e0aed70642d602b11"},
 ]
 
 [package.extras]
@@ -2950,4 +2950,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "7f7bd221988255c874daf15fff57b67c1e010988ac68d01e65762570d2090fc1"
+content-hash = "80ed6dae2338290738bc8ee00395e4bf3f85f38a2bc0036fad089a2cd72b92dc"
