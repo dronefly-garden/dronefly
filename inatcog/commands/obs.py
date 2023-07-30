@@ -203,7 +203,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
         """Life list with observation totals.
 
-        • The title links to a user's life list or to species view.
+        • If the life list is for one user, the title links to it.
         • Buttons to change `per` details and taxon root:
           • :leaves: toggles alphabetial list of leaf taxa.
           • :arrow_up_down: changes rank detail level: main (default), any, or selected taxon.
