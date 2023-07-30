@@ -289,6 +289,35 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Convenient alias for 'describe query' message command."""
         await ctx.send_help(self.bot.get_command("describe query"))
 
+    @describe.command(name="reply", aliases=["replies"])
+    async def describe_reply(self, ctx):
+        """\u200b*Reply* and *Link* command chaining.
+
+        You can chain together commands as either a Discord Reply
+        or Link to a bot response. Arguments from both commands
+        will be combined.
+
+        __Reply chaining:__
+        - `[p]t cellophane bees`
+        - On the Colletes taxon response from the bot, select "Reply"
+          from the message menu and type the next command ...
+        - `[p]life from canada`
+        - The result is a life list of Colletes from Canada.
+
+        __Link chaining:__
+        - `[p]t cellophane bees`
+        - On the Colletes taxon response from the bot,
+          select "Copy Message Link" from the message menu.
+        - In another channel or DM to the bot, where it says `<link>`
+          below, paste the link you copied (without the angle-brackets)
+        - `[p]life <link> from canada`
+        - The result is the same as the Reply example above,
+          except in the new channel or DM.
+
+        See also: `[p]query`.
+        """  # noqa: E501
+        await ctx.send_help()
+
     @describe.command(name="advanced")
     async def describe_advanced(self, ctx):
         """\u200b*Advanced* query options via `opt`.
@@ -393,6 +422,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def topic_reaction(self, ctx):
         """Convenient alias for 'describe reactions' message command."""
         await ctx.send_help(self.bot.get_command("describe reactions"))
+
+    @commands.command(name="reply", aliases=["replies"], hidden=True)
+    async def topic_reply(self, ctx):
+        """Convenient alias for 'describe reply' message command."""
+        await ctx.send_help(self.bot.get_command("describe reply"))
 
     @commands.group()
     async def inat(self, ctx):
