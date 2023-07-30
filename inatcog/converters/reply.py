@@ -1,7 +1,7 @@
 """Reply converters."""
-import logging
 import re
 
+import discord
 from discord import Message, MessageReference
 from redbot.core.commands import BadArgument, Context
 from dronefly.core.query.query import EMPTY_QUERY
@@ -12,8 +12,6 @@ DISCORD_MSG_PAT = re.compile(
     r"^(https://discord\.com/channels/((?P<me>@me)|(?P<guildid>\d{18}))"
     r"/(?P<channelid>\d{18})/(?P<messageid>\d{19}))"
 )
-
-logger = logging.getLogger("red.dronefly." + __name__)
 
 
 # pylint: disable=no-member, assigning-non-slot
@@ -30,51 +28,50 @@ class TaxonReplyConverter:
         """Default to taxon from replied to bot message."""
 
         async def get_query_from_link(link: re.Match, query_str: str):
-            logger.debug("link = %r\nquery_str = %r", link, query_str)
             channel_id = int(link["channelid"])
+            message_id = int(link["messageid"])
+            msg = next((m for m in ctx.bot.cached_messages if m.id == message_id), "")
             if link["guildid"]:
                 guild_id = int(link["guildid"])
                 guild = ctx.bot.get_guild(guild_id)
-                logger.debug("guild = %r", guild)
-                if not guild.get_member(guild.me.id):
-                    raise BadArgument(
-                        "I need to be a member of the linked server to read that message"
-                    )
-                if not guild.get_member(ctx.author.id):
-                    raise BadArgument(
-                        "You need to be a member of the linked server to read that message"
-                    )
+                if not guild.get_member(guild.me.id) or not guild.get_member(
+                    ctx.author.id
+                ):
+                    raise BadArgument("I couldn't access that channel")
                 channel = guild.get_channel(channel_id)
+                if not msg:
+                    if ctx.guild:
+                        if not channel.permissions_for(
+                            ctx.guild.me
+                        ).read_message_history:
+                            raise BadArgument(
+                                "I need Read Message History permission to read that message"
+                            )
+                        if not channel.permissions_for(ctx.author).read_message_history:
+                            raise BadArgument(
+                                "You need Read Message History permission to read that message"
+                            )
             else:
-                logger.debug("channel_id = %r", channel_id)
-                channel = ctx.bot.get_channel(channel_id)
+                channel = next(
+                    (c for c in ctx.bot.private_channels if c.id == channel_id), None
+                )
                 if not channel:
-                    raise BadArgument(
-                        "I need to be in that private DM to read that message"
-                    )
-                if ctx.author != channel.recipient:
-                    raise BadArgument(
-                        "You need to be in that private DM to read that message"
-                    )
-            message_id = int(link["messageid"])
-            logger.debug("channel = %r", channel)
-            msg = next((m for m in ctx.bot.cached_messages if m.id == message_id), "")
+                    try:
+                        channel = await ctx.bot.fetch_channel(channel_id)
+                    except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                        channel = None
+                if (
+                    not channel
+                    or channel.recipient != ctx.author
+                    or channel.me != ctx.bot.user
+                ):
+                    raise BadArgument("I couldn't access that private channel")
             if not msg:
-                if ctx.guild:
-                    if not channel.permissions_for(ctx.guild.me).read_message_history:
-                        raise BadArgument(
-                            "I need Read Message History permission to read that message"
-                        )
-                    if not channel.permissions_for(ctx.author).read_message_history:
-                        raise BadArgument(
-                            "You need Read Message History permission to read that message"
-                        )
-                msg = await channel.fetch_message(message_id)
-                logger.debug("msg = %r", msg)
-            else:
-                logger.debug("msg (cached) = %r", msg)
+                try:
+                    msg = await channel.fetch_message(message_id)
+                except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                    raise BadArgument("I couldn't retrieve that message")
             _query_str = query_str.replace(link[0], "")
-            logger.debug("_query_str = %r", _query_str)
             return await get_query_from_msg(msg, _query_str)
 
         async def get_query_from_msg(msg: Message, query_str: str):
@@ -129,10 +126,8 @@ class TaxonReplyConverter:
 
         ref = ctx.message.reference
         if ref:
-            logger.debug("ref = %r", ref)
             query_str = await get_query_from_ref_msg(ref, argument)
         else:
-            logger.debug("argument = %r", argument)
             link = DISCORD_MSG_PAT.search(argument)
             if link:
                 query_str = await get_query_from_link(link, argument)
