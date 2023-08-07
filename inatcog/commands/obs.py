@@ -13,6 +13,7 @@ from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
+from dronefly.discord.menus import LifeListMenu
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -23,7 +24,7 @@ from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
-from ..menus.inat import BaseMenu, LifeListSource
+from ..menus.inat import LifeListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -260,7 +261,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     with_taxa=True,
                     per_page=per_page,
                 )
-                await BaseMenu(
+                await LifeListMenu(
                     source=LifeListSource(life_list_formatter),
                     delete_message_after=False,
                     clear_reactions_after=True,
