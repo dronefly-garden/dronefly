@@ -95,7 +95,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
                             obs, url = await maybe_match_obs(
                                 self, ctx, inat_embed.obs_url, id_permitted=False
                             )
-                            if url:
+                            # If there is no query and we found a url, just yield
+                            # the obs result for the matched obs without a
+                            # preview (i.e. it has been seen already so don't
+                            # show it again - typically useful for showing updated
+                            # details like community ID).
+                            if url and not query:
                                 yield ObsResult(obs, url, False)
                                 return
             # Otherwise try to get other usable info from reply
