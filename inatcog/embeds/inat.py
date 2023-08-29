@@ -23,7 +23,6 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
 from dronefly.core.parsers.url import (
-    MARKDOWN_LINK,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
@@ -141,10 +140,11 @@ class INatEmbed(discord.Embed):
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
-        # url may be in first link of body (i.e. observations count)
-        mat = re.search(MARKDOWN_LINK, self.description) if self.description else None
-        if mat:
-            mat = re.search(PAT_OBS_QUERY, mat["url"])
+        if self.description:
+            mat_single_obs = re.search(PAT_OBS_LINK, self.description)
+            if mat_single_obs:
+                return mat_single_obs["url"]
+            mat = re.search(PAT_OBS_QUERY, self.description)
             if mat:
                 return mat["url"]
         return None
@@ -155,12 +155,10 @@ class INatEmbed(discord.Embed):
             mat = re.match(PAT_TAXON_LINK, self.url)
             if mat:
                 return (mat["url"], mat["taxon_id"])
-        # url may be in first link of body (i.e. Taxon in an observations embed)
-        mat = re.search(MARKDOWN_LINK, self.description) if self.description else None
-        if mat:
-            mat = re.search(PAT_TAXON_LINK, mat["url"])
-            if mat:
-                return (mat["url"], mat["taxon_id"])
+        if self.description:
+            mat_taxon = re.search(PAT_TAXON_LINK, self.description)
+            if mat_taxon:
+                return (mat_taxon["url"], mat_taxon["taxon_id"])
         return (None, None)
 
     def get_taxonomy(self):
@@ -644,6 +642,11 @@ class INatEmbeds(MixinMeta):
                 (title, url) = format_image_title_url(obs.taxon, obs, image_number)
                 embed.title = title
                 embed.url = url
+                embed.description = (
+                    f"[Observation]({obs.uri}) "
+                    f"of [{obs.taxon.name}]({obs.taxon.url}) "
+                    f"by [{obs.user.login}]({obs.user.url})"
+                )
             else:
                 lang = await get_lang(ctx)
                 embed.title, summary = await self.format_obs(
