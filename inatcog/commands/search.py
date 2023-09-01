@@ -448,6 +448,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     @use_client
     async def search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Search iNat observations, taxa, places, projects.
+
+        • Observations are searched by default.
+        • Use the arrow reaction buttons to navigate through pages.
+        • Press a lettered reaction button to display the result in more
+          detail.
+        • See subcommand help topics for more information on each kind
+          of result, e.g. `[p]help search taxa` describes taxa results,
+          whether from `[p]search` or `[p]search taxa`.
+        """
         await (self.bot.get_command("search obs")(ctx, query=query))
 
     @search.command(name="site")
@@ -458,18 +468,12 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         • The results are similar to entering a query in the `Search`
           textbox on the website, matching taxa, places, projects, or users.
-        • Use one of the subcommands listed below to only match one kind of
-          result, up to 100 results instead of 30.
-        • Use the arrow reaction buttons to see more pages.
-        • Press a lettered reaction button to display the result in more
-          detail.
+        • Use one of the subcommands to match one kind of result, up to 100
+          results instead of 30.
         • Matching a taxon within another taxon via `in` is only supported
-          in `[p]search obs` and not in `[p]search` or its other subcommands.
+          in `[p]search obs` and not in `[p]search site` or other subcommands.
           Use `[p]t` with `in` to match a single taxon within another taxon
           instead.
-        • See subcommand help topics for more information on each kind
-          of result, e.g. `[p]help search taxa` describes taxa results,
-          whether from `[p]search` or `[p]search taxa`.
         """
         await self._search(ctx, query, None)
 
