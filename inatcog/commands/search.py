@@ -447,7 +447,13 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     @use_client
-    async def search(self, ctx, *, query):
+    async def search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        await (self.bot.get_command("search obs")(ctx, query=query))
+
+    @search.command(name="site")
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def search_site(self, ctx, *, query):
         """Search iNat.
 
         • The results are similar to entering a query in the `Search`
@@ -465,26 +471,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p]search` or `[p]search taxa`.
         """
-        try:
-            await self._search(ctx, query, None)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
-
-    @search.command(name="my")
-    @checks.bot_has_permissions(embed_links=True)
-    @use_client
-    async def search_my(self, ctx, *, query: Optional[str] = ""):
-        """Search your observations (alias `[p]s obs [query] by me`)."""
-        _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
-        await self._search(ctx, _query, "obs")
-
-    @search.command(name="home")
-    @checks.bot_has_permissions(embed_links=True)
-    @use_client
-    async def search_home(self, ctx, *, query: Optional[str] = ""):
-        """Search obs from home (alias `[p]s obs [query] from home`)."""
-        _query = await TaxonReplyConverter.convert(ctx, f"{query} from home")
-        await self._search(ctx, _query, "obs")
+        await self._search(ctx, query, None)
 
     @search.command(name="places", aliases=["place"])
     @use_client
