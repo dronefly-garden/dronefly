@@ -23,6 +23,7 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
 from dronefly.core.parsers.url import (
+    MARKDOWN_LINK,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
     PAT_OBS_TAXON_LINK,
@@ -144,9 +145,17 @@ class INatEmbed(discord.Embed):
             mat_single_obs = re.search(PAT_OBS_LINK, self.description)
             if mat_single_obs:
                 return mat_single_obs["url"]
-            mat = re.search(PAT_OBS_QUERY, self.description)
-            if mat:
-                return mat["url"]
+            # Could be observations search, e.g. first link in description
+            # of a taxon display. PAT_OBS_QUERY is greedy so cannot be used
+            # against description! Match the first link first, and then the
+            # obs query within it.
+            mat_first_link = (
+                re.search(MARKDOWN_LINK, self.description) if self.description else None
+            )
+            if mat_first_link:
+                mat = re.search(PAT_OBS_QUERY, mat_first_link["url"])
+                if mat:
+                    return mat["url"]
         return None
 
     def get_taxon_url(self):
