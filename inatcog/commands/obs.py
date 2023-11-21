@@ -53,9 +53,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 if mat and mat["url"]:
                     id_or_link = query
             if id_or_link:
-                obs, url = await maybe_match_obs(
-                    self, ctx, id_or_link, id_permitted=True
-                )
+                async with ctx.typing():
+                    obs, url = await maybe_match_obs(
+                        self, ctx, id_or_link, id_permitted=True
+                    )
                 # Note: if the user specified an invalid or deleted id, a url is still
                 # produced (i.e. should 404).
                 if url:
@@ -82,7 +83,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         raise LookupError(
                             "I need Read Message History permission to read that message."
                         )
-                    msg = await ctx.channel.fetch_message(ref.message_id)
+                    async with ctx.typing():
+                        msg = await ctx.channel.fetch_message(ref.message_id)
                 if msg and msg.embeds:
                     inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
                     # pylint: disable=no-member, assigning-non-slot
@@ -92,9 +94,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         mat = re.search(PAT_OBS_LINK, inat_embed.obs_url)
                         # Try to get single observation for the display:
                         if mat and mat["url"]:
-                            obs, url = await maybe_match_obs(
-                                self, ctx, inat_embed.obs_url, id_permitted=False
-                            )
+                            async with ctx.typing():
+                                obs, url = await maybe_match_obs(
+                                    self, ctx, inat_embed.obs_url, id_permitted=False
+                                )
                             # If there is no query and we found a url, just yield
                             # the obs result for the matched obs without a
                             # preview (i.e. it has been seen already so don't
@@ -106,7 +109,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
             # Otherwise try to get other usable info from reply
             # to make a new observation query.
             _query = await TaxonReplyConverter.convert(ctx, query)
-            obs = await self.obs_query.query_single_obs(ctx, _query)
+            async with ctx.typing():
+                obs = await self.obs_query.query_single_obs(ctx, _query)
         except EmptyArgument:
             await ctx.send_help()
             yield
