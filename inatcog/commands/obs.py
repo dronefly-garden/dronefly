@@ -106,10 +106,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                             if url and not query:
                                 yield ObsResult(obs, url, False)
                                 return
-            # Otherwise try to get other usable info from reply
-            # to make a new observation query.
-            _query = await TaxonReplyConverter.convert(ctx, query)
             async with ctx.typing():
+                # Otherwise try to get other usable info from reply
+                # to make a new observation query.
+                _query = await TaxonReplyConverter.convert(ctx, query)
                 obs = await self.obs_query.query_single_obs(ctx, _query)
         except EmptyArgument:
             await ctx.send_help()
@@ -135,9 +135,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(
-                    ctx, res.obs, res.url, preview=res.preview
-                )
+                async with ctx.typing():
+                    embed = await self.make_obs_embed(
+                        ctx, res.obs, res.url, preview=res.preview
+                    )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name="count")
@@ -177,9 +178,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(
-                    ctx, res.obs, res.url, preview=number or 1
-                )
+                async with ctx.typing():
+                    embed = await self.make_obs_embed(
+                        ctx, res.obs, res.url, preview=number or 1
+                    )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.hybrid_group(fallback="help")
