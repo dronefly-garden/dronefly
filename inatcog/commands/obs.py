@@ -328,7 +328,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @tabulate.command(name="maverick")
     @use_client
-    async def tabulate_maverick(self, ctx, *, query: Optional[str]):
+    async def tabulate_maverick(self, ctx, *, query: Optional[str] = ""):
         """Maverick identifications.
 
         • By default, if your iNat login is known, your own maverick identifications are displayed.
