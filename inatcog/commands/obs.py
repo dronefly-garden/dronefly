@@ -19,7 +19,6 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..common import grouper
-from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
@@ -142,27 +141,27 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name="count")
-    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Count matching observations."""
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
-    @obs.command(name="life")
-    async def obs_life(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
-        """Count matching observations."""
+    @obs.command(name="lifelist")
+    async def obs_lifelist(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Life list of matching taxa."""
         await (self.bot.get_command("life")(ctx, query=query))
 
     @obs.command(name="map")
-    async def obs_map(self, ctx, *, query: NaturalQueryConverter):
+    async def obs_map(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Show map of observations."""
         await (self.bot.get_command("map obs")(ctx, query=query))
 
     @obs.command(name="maverick")
-    async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_maverick(self, ctx, *, query: Optional[str] = ""):
         """Count maverick observations."""
         await (self.bot.get_command("tabulate maverick")(ctx, query=query))
 
     @obs.command(name="search")
-    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Search for matching observations."""
         await (self.bot.get_command("search obs")(ctx, query=query))
 
