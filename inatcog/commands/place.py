@@ -1,5 +1,6 @@
 """Module for place command group."""
 
+import logging
 import re
 
 from redbot.core import checks, commands
@@ -15,6 +16,8 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
 from ..utils import has_valid_user_config
+
+logger = logging.getLogger("red.dronefly." + __name__)
 
 
 class CommandsPlace(INatEmbeds, MixinMeta):
@@ -101,23 +104,29 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         #
         #      Unprocessable Entity (422)
         #
-        try:
-            place_id_groups = [
-                list(filter(None, results))
-                for results in grouper(
-                    [
-                        places[abbrev]
-                        for abbrev in places
-                        if int(places[abbrev]) not in self.api.places_cache
-                    ],
-                    500,
-                )
-            ]
-            for place_id_group in place_id_groups:
+        place_id_groups = [
+            list(filter(None, results))
+            for results in grouper(
+                [
+                    places[abbrev]
+                    for abbrev in places
+                    if int(places[abbrev]) not in self.api.places_cache
+                ],
+                500,
+            )
+        ]
+        for place_id_group in place_id_groups:
+            try:
                 await self.api.get_places(place_id_group)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
+            except LookupError as err:
+                # Log and move on: some places may be deleted and can be
+                # skipped in the precache phase
+                # - FIXME: oddly, even when two places are deleted, this only shows one place
+                logger.info(
+                    "One or more places were not found: %s (guild: %d)",
+                    err,
+                    ctx.guild.id,
+                )
 
         # Iterate over places and do a quick cache lookup per place:
         for abbrev in sorted(places):
@@ -133,7 +142,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     place_str = f"{abbrev}: {place_id} not found."
                     place_str_text = abbrev
             else:
-                # Uncached places are listed by id (prefetch above should prevent this!)
+                # Uncached places are listed by id
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
                 place_str_text = abbrev
             if match:
