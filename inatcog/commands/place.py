@@ -119,12 +119,13 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             try:
                 await self.api.get_places(place_id_group)
             except LookupError as err:
-                # Log and move on: some places may be deleted and can be
-                # skipped in the precache phase
-                # - FIXME: oddly, even when two places are deleted, this only shows one place
-                logger.info(
-                    "One or more places were not found: %s (guild: %d)",
+                # Deleted places should not raise here, but should simply be dropped
+                # from the results, so this is something else (e.g. API failed to
+                # respond)
+                logger.warn(
+                    "%s (places: %s, guild: %d)",
                     err,
+                    ",".join(place_id_group),
                     ctx.guild.id,
                 )
 
@@ -137,12 +138,30 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     place = await self.place_table.get_place(ctx.guild, place_id)
                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"
                     place_str_text = f"{abbrev} {place.display_name}"
-                except LookupError:
-                    # In the unlikely case of the deletion of a place that is cached:
-                    place_str = f"{abbrev}: {place_id} not found."
-                    place_str_text = abbrev
-            else:
-                # Uncached places are listed by id
+                except LookupError as err:
+                    # Shouldn't ever happen. The cache should've been filled with
+                    # any existing place entries from place_id_groups above. If
+                    # the place is in the cache, then it should be retrievable by
+                    # get_place(). If the place doesn't exist, it should not raise
+                    # a LookupError, but should just fall through below and be
+                    # listed by its id.
+                    logger.error(
+                        "Place in cache could not be retrieved: %s (place: %d, guild: %d)",
+                        err,
+                        place_id,
+                        ctx.guild.id,
+                    )
+                    pass
+            # Most likely this is a deleted place. Show the abbrev, id, and link. The
+            # user can check by clicking the link if it 404's and take action as
+            # needed.
+            if not place_str_text:
+                logger.info(
+                    "Place deleted? %s: %d (guild: %d)",
+                    abbrev,
+                    place_id,
+                    ctx.guild.id,
+                )
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
                 place_str_text = abbrev
             if match:
