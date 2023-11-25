@@ -104,72 +104,72 @@ class CommandsProject(INatEmbeds, MixinMeta):
 
         error_msg = None
         pages = []
-        async with ctx.typing():
-            config = self.config.guild(ctx.guild)
-            projects = await config.projects()
-            result_pages = []
+        config = self.config.guild(ctx.guild)
+        projects = await config.projects()
+        result_pages = []
 
-            # Prefetch all uncached projects, 10 at a time
-            # - 10 is a maximum determined by testing. beyond that, iNat API
-            #   will respond with:
-            #
-            #      Unprocessable Entity (422)
-            #
-            try:
-                proj_id_groups = [
-                    list(filter(None, results))
-                    for results in grouper(
-                        [
-                            projects[abbrev]
-                            for abbrev in projects
-                            if int(projects[abbrev]) not in self.api.projects_cache
-                        ],
-                        10,
-                    )
-                ]
-                for proj_id_group in proj_id_groups:
+        # Prefetch all uncached projects, 10 at a time
+        # - 10 is a maximum determined by testing. beyond that, iNat API
+        #   will respond with:
+        #
+        #      Unprocessable Entity (422)
+        #
+        try:
+            proj_id_groups = [
+                list(filter(None, results))
+                for results in grouper(
+                    [
+                        projects[abbrev]
+                        for abbrev in projects
+                        if int(projects[abbrev]) not in self.api.projects_cache
+                    ],
+                    10,
+                )
+            ]
+            for proj_id_group in proj_id_groups:
+                async with ctx.typing():
                     await self.api.get_projects(proj_id_group)
-                # Iterate over projects and do a quick cache lookup per project:
-                for abbrev in sorted(projects):
-                    proj_id = int(projects[abbrev])
-                    proj_str_text = ""
-                    if proj_id in self.api.projects_cache:
-                        try:
-                            project = await self.project_table.get_project(
-                                ctx.guild, proj_id
-                            )
-                            proj_str = f"{abbrev}: [{project.title}]({project.url})"
-                            proj_str_text = f"{abbrev} {project.title}"
-                        except LookupError:
-                            # In the unlikely case of the deletion of a project that is cached:
-                            proj_str = f"{abbrev}: {proj_id} not found."
-                            proj_str_text = abbrev
-                    else:
-                        # Uncached projects are listed by id (prefetch above should prevent this!)
-                        proj_str = (
-                            f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+            # Iterate over projects and do a quick cache lookup per project:
+            for abbrev in sorted(projects):
+                proj_id = int(projects[abbrev])
+                proj_str_text = ""
+                if proj_id in self.api.projects_cache:
+                    try:
+                        project = await self.project_table.get_project(
+                            ctx.guild, proj_id
                         )
+                        proj_str = f"{abbrev}: [{project.title}]({project.url})"
+                        proj_str_text = f"{abbrev} {project.title}"
+                    except LookupError:
+                        # In the unlikely case of the deletion of a project that is cached:
+                        proj_str = f"{abbrev}: {proj_id} not found."
                         proj_str_text = abbrev
-                    if match:
-                        words = match.split(" ")
-                        if all(
-                            re.search(pat, proj_str_text)
-                            for pat in [
-                                re.compile(r"\b%s" % re.escape(word), re.I)
-                                for word in words
-                            ]
-                        ):
-                            result_pages.append(proj_str)
-                    else:
+                else:
+                    # Uncached projects are listed by id (prefetch above should prevent this!)
+                    proj_str = (
+                        f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                    )
+                    proj_str_text = abbrev
+                if match:
+                    words = match.split(" ")
+                    if all(
+                        re.search(pat, proj_str_text)
+                        for pat in [
+                            re.compile(r"\b%s" % re.escape(word), re.I)
+                            for word in words
+                        ]
+                    ):
                         result_pages.append(proj_str)
-                pages = [
-                    "\n".join(filter(None, results))
-                    for results in grouper(result_pages, 10)
-                ]
-                if not pages:
-                    raise LookupError("Nothing found")
-            except LookupError as err:
-                error_msg = str(err)
+                else:
+                    result_pages.append(proj_str)
+            pages = [
+                "\n".join(filter(None, results))
+                for results in grouper(result_pages, 10)
+            ]
+            if not pages:
+                raise LookupError("Nothing found")
+        except LookupError as err:
+            error_msg = str(err)
         if error_msg:
             await apologize(ctx, error_msg)
         else:

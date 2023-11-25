@@ -117,7 +117,8 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         ]
         for place_id_group in place_id_groups:
             try:
-                await self.api.get_places(place_id_group)
+                async with ctx.typing():
+                    await self.api.get_places(place_id_group)
             except LookupError as err:
                 # Deleted places should not raise here, but should simply be dropped
                 # from the results, so this is something else (e.g. API failed to
