@@ -152,7 +152,6 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                         place_id,
                         ctx.guild.id,
                     )
-                    pass
             # Most likely this is a deleted place. Show the abbrev, id, and link. The
             # user can check by clicking the link if it 404's and take action as
             # needed.

@@ -1,5 +1,6 @@
 """Module for project command group."""
 
+import logging
 import re
 
 import html2markdown
@@ -17,6 +18,8 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
 from ..utils import has_valid_user_config
+
+logger = logging.getLogger("red.dronefly." + __name__)
 
 
 class CommandsProject(INatEmbeds, MixinMeta):
@@ -102,8 +105,6 @@ class CommandsProject(INatEmbeds, MixinMeta):
         if not ctx.guild:
             return
 
-        error_msg = None
-        pages = []
         config = self.config.guild(ctx.guild)
         projects = await config.projects()
         result_pages = []
@@ -114,65 +115,84 @@ class CommandsProject(INatEmbeds, MixinMeta):
         #
         #      Unprocessable Entity (422)
         #
-        try:
-            proj_id_groups = [
-                list(filter(None, results))
-                for results in grouper(
-                    [
-                        projects[abbrev]
-                        for abbrev in projects
-                        if int(projects[abbrev]) not in self.api.projects_cache
-                    ],
-                    10,
-                )
-            ]
-            for proj_id_group in proj_id_groups:
+        proj_id_groups = [
+            list(filter(None, results))
+            for results in grouper(
+                [
+                    projects[abbrev]
+                    for abbrev in projects
+                    if int(projects[abbrev]) not in self.api.projects_cache
+                ],
+                10,
+            )
+        ]
+        for proj_id_group in proj_id_groups:
+            try:
                 async with ctx.typing():
                     await self.api.get_projects(proj_id_group)
-            # Iterate over projects and do a quick cache lookup per project:
-            for abbrev in sorted(projects):
-                proj_id = int(projects[abbrev])
-                proj_str_text = ""
-                if proj_id in self.api.projects_cache:
-                    try:
-                        project = await self.project_table.get_project(
-                            ctx.guild, proj_id
-                        )
-                        proj_str = f"{abbrev}: [{project.title}]({project.url})"
-                        proj_str_text = f"{abbrev} {project.title}"
-                    except LookupError:
-                        # In the unlikely case of the deletion of a project that is cached:
-                        proj_str = f"{abbrev}: {proj_id} not found."
-                        proj_str_text = abbrev
-                else:
-                    # Uncached projects are listed by id (prefetch above should prevent this!)
-                    proj_str = (
-                        f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+            except LookupError as err:
+                # Deleted places should not raise here, but should simply be dropped
+                # from the results, so this is something else (e.g. API failed to
+                # respond)
+                logger.warn(
+                    "%s (places: %s, guild: %d)",
+                    err,
+                    ",".join(proj_id_group),
+                    ctx.guild.id,
+                )
+
+        # Iterate over projects and do a quick cache lookup per project:
+        for abbrev in sorted(projects):
+            proj_id = int(projects[abbrev])
+            proj_str_text = ""
+            if proj_id in self.api.projects_cache:
+                try:
+                    project = await self.project_table.get_project(ctx.guild, proj_id)
+                    proj_str = f"{abbrev}: [{project.title}]({project.url})"
+                    proj_str_text = f"{abbrev} {project.title}"
+                except LookupError as err:
+                    # Shouldn't ever happen. The cache should've been filled with
+                    # any existing project entries from proj_id_groups above. If
+                    # the project is in the cache, then it should be retrievable by
+                    # get_project(). If the project doesn't exist, it should not raise
+                    # a LookupError, but should just fall through below and be
+                    # listed by its id.
+                    logger.error(
+                        "Project in cache could not be retrieved: %s (project: %d, guild: %d)",
+                        err,
+                        proj_id,
+                        ctx.guild.id,
                     )
+                    # In the unlikely case of the deletion of a project that is cached:
+                    proj_str = f"{abbrev}: {proj_id} not found."
                     proj_str_text = abbrev
-                if match:
-                    words = match.split(" ")
-                    if all(
-                        re.search(pat, proj_str_text)
-                        for pat in [
-                            re.compile(r"\b%s" % re.escape(word), re.I)
-                            for word in words
-                        ]
-                    ):
-                        result_pages.append(proj_str)
-                else:
+            # Most likely this is a deleted project. Show the abbrev, id, and link. The
+            # user can check by clicking the link if it 404's and take action as
+            # needed.
+            if not proj_str_text:
+                logger.info(
+                    "Project deleted? %s: %d (guild: %d)",
+                    abbrev,
+                    proj_id,
+                    ctx.guild.id,
+                )
+                proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
+                proj_str_text = abbrev
+            if match:
+                words = match.split(" ")
+                if all(
+                    re.search(pat, proj_str_text)
+                    for pat in [
+                        re.compile(r"\b%s" % re.escape(word), re.I) for word in words
+                    ]
+                ):
                     result_pages.append(proj_str)
-            pages = [
-                "\n".join(filter(None, results))
-                for results in grouper(result_pages, 10)
-            ]
-            if not pages:
-                raise LookupError("Nothing found")
-        except LookupError as err:
-            error_msg = str(err)
-        if error_msg:
-            await apologize(ctx, error_msg)
-        else:
+            else:
+                result_pages.append(proj_str)
+        pages = [
+            "\n".join(filter(None, results)) for results in grouper(result_pages, 10)
+        ]
+        if pages:
             pages_len = len(pages)  # Causes enumeration (works against lazy load).
             embeds = [
                 make_embed(
@@ -183,6 +203,8 @@ class CommandsProject(INatEmbeds, MixinMeta):
             ]
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
+        else:
+            raise LookupError("Nothing found")
 
     @can_manage_projects()
     @project.command(name="remove")
