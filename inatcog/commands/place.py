@@ -1,5 +1,6 @@
 """Module for place command group."""
 
+import logging
 import re
 
 from redbot.core import checks, commands
@@ -15,6 +16,8 @@ from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
 from ..utils import has_valid_user_config
+
+logger = logging.getLogger("red.dronefly." + __name__)
 
 
 class CommandsPlace(INatEmbeds, MixinMeta):
@@ -101,23 +104,31 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         #
         #      Unprocessable Entity (422)
         #
-        try:
-            place_id_groups = [
-                list(filter(None, results))
-                for results in grouper(
-                    [
-                        places[abbrev]
-                        for abbrev in places
-                        if int(places[abbrev]) not in self.api.places_cache
-                    ],
-                    500,
+        place_id_groups = [
+            list(filter(None, results))
+            for results in grouper(
+                [
+                    places[abbrev]
+                    for abbrev in places
+                    if int(places[abbrev]) not in self.api.places_cache
+                ],
+                500,
+            )
+        ]
+        for place_id_group in place_id_groups:
+            try:
+                async with ctx.typing():
+                    await self.api.get_places(place_id_group)
+            except LookupError as err:
+                # Deleted places should not raise here, but should simply be dropped
+                # from the results, so this is something else (e.g. API failed to
+                # respond)
+                logger.warn(
+                    "%s (places: %s, guild: %d)",
+                    err,
+                    ",".join(place_id_group),
+                    ctx.guild.id,
                 )
-            ]
-            for place_id_group in place_id_groups:
-                await self.api.get_places(place_id_group)
-        except LookupError as err:
-            await apologize(ctx, str(err))
-            return
 
         # Iterate over places and do a quick cache lookup per place:
         for abbrev in sorted(places):
@@ -128,12 +139,29 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     place = await self.place_table.get_place(ctx.guild, place_id)
                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"
                     place_str_text = f"{abbrev} {place.display_name}"
-                except LookupError:
-                    # In the unlikely case of the deletion of a place that is cached:
-                    place_str = f"{abbrev}: {place_id} not found."
-                    place_str_text = abbrev
-            else:
-                # Uncached places are listed by id (prefetch above should prevent this!)
+                except LookupError as err:
+                    # Shouldn't ever happen. The cache should've been filled with
+                    # any existing place entries from place_id_groups above. If
+                    # the place is in the cache, then it should be retrievable by
+                    # get_place(). If the place doesn't exist, it should not raise
+                    # a LookupError, but should just fall through below and be
+                    # listed by its id.
+                    logger.error(
+                        "Place in cache could not be retrieved: %s (place: %d, guild: %d)",
+                        err,
+                        place_id,
+                        ctx.guild.id,
+                    )
+            # Most likely this is a deleted place. Show the abbrev, id, and link. The
+            # user can check by clicking the link if it 404's and take action as
+            # needed.
+            if not place_str_text:
+                logger.info(
+                    "Place deleted? %s: %d (guild: %d)",
+                    abbrev,
+                    place_id,
+                    ctx.guild.id,
+                )
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
                 place_str_text = abbrev
             if match:

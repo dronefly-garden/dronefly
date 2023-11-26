@@ -447,44 +447,35 @@ class CommandsSearch(INatEmbeds, MixinMeta):
     @commands.group(aliases=["s"], invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     @use_client
-    async def search(self, ctx, *, query):
-        """Search iNat.
+    async def search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+        """Search iNat observations, taxa, places, projects.
 
-        • The results are similar to entering a query in the `Search`
-          textbox on the website, matching taxa, places, projects, or users.
-        • Use one of the subcommands listed below to only match one kind of
-          result, up to 100 results instead of 30.
-        • Use the arrow reaction buttons to see more pages.
+        • Observations are searched by default.
+        • Use the arrow reaction buttons to navigate through pages.
         • Press a lettered reaction button to display the result in more
           detail.
-        • Matching a taxon within another taxon via `in` is only supported
-          in `[p]search obs` and not in `[p]search` or its other subcommands.
-          Use `[p]t` with `in` to match a single taxon within another taxon
-          instead.
         • See subcommand help topics for more information on each kind
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p]search` or `[p]search taxa`.
         """
-        try:
-            await self._search(ctx, query, None)
-        except LookupError as err:
-            await apologize(ctx, err.args[0])
+        await (self.bot.get_command("search obs")(ctx, query=query))
 
-    @search.command(name="my")
+    @search.command(name="site")
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def search_my(self, ctx, *, query: Optional[str] = ""):
-        """Search your observations (alias `[p]s obs [query] by me`)."""
-        _query = await TaxonReplyConverter.convert(ctx, f"{query} by me")
-        await self._search(ctx, _query, "obs")
+    async def search_site(self, ctx, *, query):
+        """Search iNat.
 
-    @search.command(name="home")
-    @checks.bot_has_permissions(embed_links=True)
-    @use_client
-    async def search_home(self, ctx, *, query: Optional[str] = ""):
-        """Search obs from home (alias `[p]s obs [query] from home`)."""
-        _query = await TaxonReplyConverter.convert(ctx, f"{query} from home")
-        await self._search(ctx, _query, "obs")
+        • The results are similar to entering a query in the `Search`
+          textbox on the website, matching taxa, places, projects, or users.
+        • Use one of the subcommands to match one kind of result, up to 100
+          results instead of 30.
+        • Matching a taxon within another taxon via `in` is only supported
+          in `[p]search obs` and not in `[p]search site` or other subcommands.
+          Use `[p]t` with `in` to match a single taxon within another taxon
+          instead.
+        """
+        await self._search(ctx, query, None)
 
     @search.command(name="places", aliases=["place"])
     @use_client

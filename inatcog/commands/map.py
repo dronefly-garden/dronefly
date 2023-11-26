@@ -9,7 +9,6 @@ from dronefly.discord.embeds import make_embed
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from inatcog.converters.base import NaturalQueryConverter
 from inatcog.converters.reply import TaxonReplyConverter
 from inatcog.embeds.common import apologize
 from inatcog.embeds.inat import INatEmbeds
@@ -61,11 +60,12 @@ class CommandsMap(INatEmbeds, MixinMeta):
 
     @map.command(name="obs")
     @use_client
-    async def map_obs(self, ctx, *, query: NaturalQueryConverter):
+    async def map_obs(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Show map of observations."""
 
         try:
-            query_response = await self.query.get(ctx, query)
+            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            query_response = await self.query.get(ctx, _query)
             kwargs = query_response.obs_args()
             # TODO: determine why we don't just use QueryResponse.obs_query_description
             # and either use it directly or otherwise share code instead of duplicating
@@ -88,7 +88,7 @@ class CommandsMap(INatEmbeds, MixinMeta):
                 query_title += f" in {query_response.project.title}"
             if query_response.place:
                 query_title += f" from {query_response.place.display_name}"
-        except LookupError as err:
+        except (BadArgument, LookupError) as err:
             await apologize(ctx, err.args[0])
             return
 

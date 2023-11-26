@@ -613,9 +613,9 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if dmember:
                 is_member = isinstance(dmember, discord.Member)
                 if is_member or isinstance(dmember, discord.User):
-                    user_is = f"{dmember.mention} is "
+                    user_is = f"`{dmember.id}` {dmember.mention} is "
                 else:
-                    user_is = f"<@{dmember}> is "
+                    user_is = f"`{dmember}` is "
             else:
                 user_is = ":ghost: *(unknown user)* is "
             if isinstance(iuser, User):

@@ -37,6 +37,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.doctest",
     "sphinx.ext.imgconverter",
+    "sphinx_rtd_theme",
     # "sphinxcontrib_trio",
 ]
 

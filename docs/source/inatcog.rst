@@ -28,6 +28,14 @@ inatcog.checks module
     :undoc-members:
     :show-inheritance:
 
+inatcog.client module
+---------------------
+
+.. automodule:: inatcog.client
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 inatcog.common module
 ---------------------
 
@@ -60,10 +68,10 @@ inatcog.embeds module
     :undoc-members:
     :show-inheritance:
 
-inatcog.inat\_embeds module
----------------------------
+inatcog.help module
+---------------------
 
-.. automodule:: inatcog.inat_embeds
+.. automodule:: inatcog.help
     :members:
     :undoc-members:
     :show-inheritance:
@@ -108,10 +116,10 @@ inatcog.maps module
     :undoc-members:
     :show-inheritance:
 
-inatcog.obs module
-------------------
+inatcog.menus module
+--------------------
 
-.. automodule:: inatcog.obs
+.. automodule:: inatcog.menus
     :members:
     :undoc-members:
     :show-inheritance:
@@ -120,6 +128,14 @@ inatcog.obs\_query module
 -------------------------
 
 .. automodule:: inatcog.obs_query
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+inatcog.obs module
+------------------
+
+.. automodule:: inatcog.obs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -140,18 +156,18 @@ inatcog.projects module
     :undoc-members:
     :show-inheritance:
 
-inatcog.search module
----------------------
+inatcog.query module
+--------------------
 
-.. automodule:: inatcog.search
+.. automodule:: inatcog.query
     :members:
     :undoc-members:
     :show-inheritance:
 
-inatcog.sounds module
+inatcog.search module
 ---------------------
 
-.. automodule:: inatcog.sounds
+.. automodule:: inatcog.search
     :members:
     :undoc-members:
     :show-inheritance:
@@ -176,6 +192,14 @@ inatcog.users module
 --------------------
 
 .. automodule:: inatcog.users
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+inatcog.utils module
+--------------------
+
+.. automodule:: inatcog.utils
     :members:
     :undoc-members:
     :show-inheritance:

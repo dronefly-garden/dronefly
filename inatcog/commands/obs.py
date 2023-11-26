@@ -20,7 +20,6 @@ from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..common import grouper
-from ..converters.base import NaturalQueryConverter
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
@@ -54,9 +53,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 if mat and mat["url"]:
                     id_or_link = query
             if id_or_link:
-                obs, url = await maybe_match_obs(
-                    self, ctx, id_or_link, id_permitted=True
-                )
+                async with ctx.typing():
+                    obs, url = await maybe_match_obs(
+                        self, ctx, id_or_link, id_permitted=True
+                    )
                 # Note: if the user specified an invalid or deleted id, a url is still
                 # produced (i.e. should 404).
                 if url:
@@ -83,7 +83,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         raise LookupError(
                             "I need Read Message History permission to read that message."
                         )
-                    msg = await ctx.channel.fetch_message(ref.message_id)
+                    async with ctx.typing():
+                        msg = await ctx.channel.fetch_message(ref.message_id)
                 if msg and msg.embeds:
                     inat_embed = INatEmbed.from_discord_embed(msg.embeds[0])
                     # pylint: disable=no-member, assigning-non-slot
@@ -93,16 +94,23 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         mat = re.search(PAT_OBS_LINK, inat_embed.obs_url)
                         # Try to get single observation for the display:
                         if mat and mat["url"]:
-                            obs, url = await maybe_match_obs(
-                                self, ctx, inat_embed.obs_url, id_permitted=False
-                            )
-                            if url:
+                            async with ctx.typing():
+                                obs, url = await maybe_match_obs(
+                                    self, ctx, inat_embed.obs_url, id_permitted=False
+                                )
+                            # If there is no query and we found a url, just yield
+                            # the obs result for the matched obs without a
+                            # preview (i.e. it has been seen already so don't
+                            # show it again - typically useful for showing updated
+                            # details like community ID).
+                            if url and not query:
                                 yield ObsResult(obs, url, False)
                                 return
-            # Otherwise try to get other usable info from reply
-            # to make a new observation query.
-            _query = await TaxonReplyConverter.convert(ctx, query)
-            obs = await self.obs_query.query_single_obs(ctx, _query)
+            async with ctx.typing():
+                # Otherwise try to get other usable info from reply
+                # to make a new observation query.
+                _query = await TaxonReplyConverter.convert(ctx, query)
+                obs = await self.obs_query.query_single_obs(ctx, _query)
         except EmptyArgument:
             await ctx.send_help()
             yield
@@ -127,33 +135,34 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(
-                    ctx, res.obs, res.url, preview=res.preview
-                )
+                async with ctx.typing():
+                    embed = await self.make_obs_embed(
+                        ctx, res.obs, res.url, preview=res.preview
+                    )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @obs.command(name="count")
-    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Count matching observations."""
         await (self.bot.get_command("tabulate")(ctx, query=query))
 
-    @obs.command(name="life")
-    async def obs_life(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
-        """Count matching observations."""
+    @obs.command(name="lifelist")
+    async def obs_lifelist(self, ctx, *, query: Optional[TaxonReplyConverter]):
+        """Life list of matching taxa."""
         await (self.bot.get_command("life")(ctx, query=query))
 
     @obs.command(name="map")
-    async def obs_map(self, ctx, *, query: NaturalQueryConverter):
+    async def obs_map(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Show map of observations."""
         await (self.bot.get_command("map obs")(ctx, query=query))
 
     @obs.command(name="maverick")
-    async def obs_maverick(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_maverick(self, ctx, *, query: Optional[str] = ""):
         """Count maverick observations."""
         await (self.bot.get_command("tabulate maverick")(ctx, query=query))
 
     @obs.command(name="search")
-    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):
+    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Search for matching observations."""
         await (self.bot.get_command("search obs")(ctx, query=query))
 
@@ -169,9 +178,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         async with self._single_obs(ctx, query) as res:
             if res:
-                embed = await self.make_obs_embed(
-                    ctx, res.obs, res.url, preview=number or 1
-                )
+                async with ctx.typing():
+                    embed = await self.make_obs_embed(
+                        ctx, res.obs, res.url, preview=number or 1
+                    )
                 await self.send_obs_embed(ctx, embed, res.obs)
 
     @commands.hybrid_group(fallback="help")
@@ -319,7 +329,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
     @tabulate.command(name="maverick")
     @use_client
-    async def tabulate_maverick(self, ctx, *, query: Optional[str]):
+    async def tabulate_maverick(self, ctx, *, query: Optional[str] = ""):
         """Maverick identifications.
 
         • By default, if your iNat login is known, your own maverick identifications are displayed.

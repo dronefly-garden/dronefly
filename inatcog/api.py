@@ -191,7 +191,7 @@ class INatAPI:
             return {
                 place_id: self.places_cache[place_id]
                 for place_id in query
-                if self.places_cache[place_id]
+                if place_id in self.places_cache
             }
         if first_place_id in self.places_cache:
             return self.places_cache[first_place_id]
