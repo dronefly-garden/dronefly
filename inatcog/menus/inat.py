@@ -208,18 +208,18 @@ class SelectLifeListTaxon(discord.ui.Select):
         page = view.current_page
         formatter = view.source._life_list_formatter
         self.taxa = formatter.get_page_of_taxa(page)
-        self.selected = selected
+        view.ctx.selected = selected
         for (value, taxon) in enumerate(self.taxa):
             self.append_option(
                 SelectTaxonOption(value, taxon, default=(value == selected))
             )
 
     async def callback(self, interaction: discord.Interaction):
-        self.selected = self.values[0]
-        await interaction.response.defer()
+        self.view.ctx.selected = self.values[0]
+        await self.view.update_source(interaction)
 
     def taxon(self):
-        return self.taxa[int(self.selected)]
+        return self.taxa[int(self.view.ctx.selected)]
 
 
 class BaseMenu(discord.ui.View):
@@ -269,6 +269,7 @@ class BaseMenu(discord.ui.View):
         await self.message.edit(view=None)
 
     async def start(self, ctx: commands.Context):
+        ctx.selected = 0
         self.ctx = ctx
         self.bot = self.cog.bot
         self.author = ctx.author
@@ -276,8 +277,11 @@ class BaseMenu(discord.ui.View):
         self.message = await self.send_initial_message(ctx)
 
     async def _get_kwargs_from_page(self, page):
+        selected = None
+        if isinstance(self.source, LifeListSource):
+            selected = self.ctx.selected
         value = await discord.utils.maybe_coroutine(
-            self._source.format_page, self, page
+            self._source.format_page, self, page, selected
         )
         if isinstance(value, dict):
             return value
@@ -319,6 +323,7 @@ class BaseMenu(discord.ui.View):
     ):
         page = await self._source.get_page(page_number)
         self.current_page = page_number
+        self.ctx.selected = selected
         kwargs = await self._get_kwargs_from_page(page)
         if isinstance(self._source, LifeListSource):
             self.remove_item(self.select_taxon)
@@ -484,12 +489,15 @@ class LifeListSource(menus.ListPageSource):
     def is_paginating(self):
         return True
 
-    def format_page(self, menu: BaseMenu, page):
-        query_response = self._life_list_formatter.query_response
+    def format_page(self, menu: BaseMenu, page, selected: Optional[int] = None):
+        formatter = self._life_list_formatter
+        ctx = menu.ctx
+        ctx.selected = selected
+        query_response = formatter.query_response
         embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
         if self._url:
             embed.url = self._url
-        embed.description = page
+        embed.description = formatter.format_page(menu.current_page, ctx.selected)
         embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
         return embed
 
