@@ -366,7 +366,7 @@ class BaseMenu(discord.ui.View):
 
     async def update_source(self, interaction: discord.Interaction, **formatter_kwargs):
         if isinstance(self.source, LifeListSource):
-            await interaction.response.defer()
+            await interaction.response.defer(thinking=True)
             formatter = self.source._life_list_formatter
             # Replace the source with a new source, preserving the currently
             # selected taxon
