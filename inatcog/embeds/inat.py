@@ -26,7 +26,7 @@ from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
-    PAT_OBS_TAXON_LINK,
+    PAT_SELECTED_OBS_LINK,
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
@@ -138,6 +138,11 @@ class INatEmbed(discord.Embed):
 
     def get_observations_url(self):
         """Return observations url, if present."""
+        if self.description:
+            mat_selected_obs_link = re.search(PAT_SELECTED_OBS_LINK, self.description)
+            if mat_selected_obs_link:
+                mat = re.search(PAT_OBS_QUERY, mat_selected_obs_link["url"])
+                return mat["url"]
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
@@ -1102,21 +1107,6 @@ class INatEmbeds(MixinMeta):
             msg = await hybrid_send(ctx, embed=embed)
 
         return await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
-
-    def get_inat_url_ids(self, url):
-        """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
-        taxon_id = None
-        place_id = None
-        inat_user_id = None
-        mat = re.match(PAT_TAXON_LINK, url)
-        if not mat:
-            mat = re.match(PAT_OBS_TAXON_LINK, url)
-            if mat:
-                place_id = mat["place_id"]
-                inat_user_id = mat["user_id"]
-        if mat:
-            taxon_id = mat["taxon_id"]
-        return (taxon_id, place_id, inat_user_id)
 
     async def maybe_update_user(
         self,
