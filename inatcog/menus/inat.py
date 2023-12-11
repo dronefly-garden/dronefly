@@ -403,7 +403,7 @@ class BaseMenu(discord.ui.View):
                         and query_taxon.id != ROOT_TAXON_ID
                         and not self.root_taxon_id_stack
                         and self.current_page == 0
-                        and self.select_taxon.selected == 0
+                        and self.ctx.selected == 0
                     ):
                         if query_taxon.parent_id == ROOT_TAXON_ID:
                             # Simplify the request by removing the taxon filter
