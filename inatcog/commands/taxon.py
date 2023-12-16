@@ -326,6 +326,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
     async def image_alias(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str]
+        self, ctx, number: Optional[int] = 1, *, query: Optional[str] = ""
     ):
         await (self.bot.get_command("taxon image")(ctx, number, query=query))
