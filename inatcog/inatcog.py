@@ -178,9 +178,9 @@ class INatCog(
             await self.config.schema_version.set(3)
 
         if from_version < 4 <= to_version:
-            # - The short-lived "creds" attribute has been removed, as authenticated project
-            #   updates are yet supported in iNaturalist API. Thus, the feature that was
-            #   planned to use it can't be written yet.
+            # - The short-lived "creds" attribute has been removed. When we later introduced
+            #   authenticated projects support, we relied on pyinaturalist obtaining the
+            #   credentials via environment variables instead.
             # - A new boolean "main" has been added. All existing events are set to main=True,
             #   but event projects added hereafter via `[p]inat set event` default to main=False.
             # - A new string "teams" has been added to support team events.
