@@ -204,7 +204,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            raise LookupError("Nothing found")
+            await apologize(ctx, "Nothing found")
 
     @can_manage_projects()
     @project.command(name="remove")
