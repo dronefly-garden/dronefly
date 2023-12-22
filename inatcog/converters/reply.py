@@ -9,7 +9,7 @@ from inatcog.embeds.inat import INatEmbed
 from .base import NaturalQueryConverter
 
 DISCORD_MSG_PAT = re.compile(
-    r"^(https://discord\.com/channels/((?P<me>@me)|(?P<guildid>\d{18}))"
+    r"(https://discord\.com/channels/((?P<me>@me)|(?P<guildid>\d{18}))"
     r"/(?P<channelid>\d{18})/(?P<messageid>\d{19}))"
 )
 
