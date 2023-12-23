@@ -230,9 +230,12 @@ class INatEmbed(discord.Embed):
         """Produce a query from embed, merging new query if given."""
 
         main = None
-        if query.main and query.main.terms and query.main.terms[0] == "any":
+        ancestor = None
+        logger.debug("query.main = %r", query.main)
+        if query.main and query.main.terms:
             main = query.main
-        if not main and self.taxon_id():
+            ancestor = query.ancestor
+        elif self.taxon_id():
             main = TaxonQuery(taxon_id=self.taxon_id())
         user = query.user or self.user_id()
         id_by = query.id_by or self.ident_user_id()
@@ -267,6 +270,7 @@ class INatEmbed(discord.Embed):
             obs_d2 = self.obs_d2()
         query = Query(
             main=main,
+            ancestor=ancestor,
             user=user,
             id_by=id_by,
             unobserved_by=unobserved_by,
