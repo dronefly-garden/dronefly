@@ -17,7 +17,6 @@ from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
-from .utils import has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -188,6 +187,12 @@ class Listeners(INatEmbeds, MixinMeta):
         if not reaction or not reaction.me:
             return
 
+        # TODO: save this in a list of message -> embed representations
+        # - check if we have one already; if we do, use it instead as our source of
+        #   truth
+        # - this needs two corresponding pieces of code to make it work across cog reloads:
+        #   - save all of those interactions in Config when cog is unloaded
+        #   - load them from Config when cog is loaded
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
         msg = copy(message)
         msg.embeds[0] = inat_embed
@@ -254,11 +259,10 @@ class Listeners(INatEmbeds, MixinMeta):
             )
             raise
 
-    async def maybe_get_reaction(
+    def maybe_get_reaction(
         self, payload: discord.raw_models.RawReactionActionEvent
     ) -> Tuple[discord.Member, discord.Message]:
         """Return reaction member & message if valid."""
-        await self._ready_event.wait()
         if str(payload.emoji) not in KNOWN_REACTION_EMOJIS:
             raise ValueError(UNKNOWN_REACTION_MSG)
         guild_id = payload.guild_id or 0
@@ -282,44 +286,14 @@ class Listeners(INatEmbeds, MixinMeta):
                 payload.emoji,
             )
             raise ValueError("Member is being spammy")
-        channel = self.bot.get_channel(payload.channel_id)
-        try:
-            message = next(
-                msg for msg in self.bot.cached_messages if msg.id == payload.message_id
-            )
-        except StopIteration as err:  # too old; have to fetch it
-            if guild_id and not channel.permissions_for(guild.me).read_message_history:
-                raise ValueError(
-                    "Message can't be read without read_message_history permission."
-                ) from err
-            try:
-                # Reacting to old messages is an API call, so is a privilege only
-                # extended to users added in this server.
-                if await has_valid_user_config(self, member, anywhere=False):
-                    # TODO: antispam to prevent exceeded fetch messages > 24 hrs
-                    # rate limit. We need different buckets for different classes
-                    # of use:
-                    # - reasonable limit globally over 24 hrs
-                    # - reasonable limit per member over 24 hrs
-                    logger.debug(
-                        "Handling reaction %s by %d to uncached message: %s-%s",
-                        payload.channel_id,
-                        payload.message_id,
-                        payload.emoji,
-                        member.id,
-                    )
-                    message = await channel.fetch_message(payload.message_id)
-                else:
-                    raise ValueError(
-                        "Discarded reaction to uncached message by member not known in this server."
-                    ) from err
-            except discord.errors.NotFound:
-                raise ValueError(
-                    "Message was deleted before reaction handled."
-                ) from err
-        if message.author != self.bot.user:
-            raise ValueError("Reaction is not to our own message.")
-        self.member_as[(guild_id, member.id)].stamp()
+        message = next(
+            (msg for msg in self.bot.cached_messages if msg.id == payload.message_id),
+            None,
+        )
+        if message:
+            if message.author != self.bot.user:
+                raise ValueError("Reaction is not to our own message.")
+            self.member_as[(guild_id, member.id)].stamp()
         return (member, message)
 
     @commands.Cog.listener()
@@ -327,8 +301,9 @@ class Listeners(INatEmbeds, MixinMeta):
         self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
         """Central handler for reactions added to bot messages."""
+        await self._ready_event.wait()
         try:
-            (member, message) = await self.maybe_get_reaction(payload)
+            (member, message) = self.maybe_get_reaction(payload)
         except ValueError as err:
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
@@ -340,8 +315,9 @@ class Listeners(INatEmbeds, MixinMeta):
         self, payload: discord.raw_models.RawReactionActionEvent
     ) -> None:
         """Central handler for reactions removed from bot messages."""
+        await self._ready_event.wait()
         try:
-            (member, message) = await self.maybe_get_reaction(payload)
+            (member, message) = self.maybe_get_reaction(payload)
         except ValueError as err:
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
