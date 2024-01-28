@@ -192,11 +192,19 @@ class Listeners(INatEmbeds, MixinMeta):
         # - this needs two corresponding pieces of code to make it work across cog reloads:
         #   - save all of those interactions in Config when cog is unloaded
         #   - load them from Config when cog is loaded
-        full_message_id = f"{message.guild}-{message.channel}-{message.id}"
+        full_message_id = (
+            f"{message.guild.id}-{message.channel.id}-{message.id}"
+            if message.guild
+            else f"{message.channel.id}-{message.id}"
+        )
         inat_embed = self.interactions.get(full_message_id)
         if not inat_embed:
             inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
-            self.interactions[message.id] = inat_embed
+            # Maintain a shadow copy of the INatEmbed which is an augmented discord.Embed
+            # that knows all of the iNat-specific parts. We never go out to the Discord
+            # network from here on until the interaction ends, updating and writing out
+            # this copy of the embed from here on.
+            self.interactions[full_message_id] = inat_embed
         msg = copy(message)
         msg.embeds[0] = inat_embed
 
