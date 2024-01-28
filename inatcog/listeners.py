@@ -308,7 +308,8 @@ class Listeners(INatEmbeds, MixinMeta):
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
             return
-        await self.handle_member_reaction(payload.emoji, member, message, "add")
+        if message:
+            await self.handle_member_reaction(payload.emoji, member, message, "add")
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(
@@ -322,4 +323,5 @@ class Listeners(INatEmbeds, MixinMeta):
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
             return
-        await self.handle_member_reaction(payload.emoji, member, message, "remove")
+        if message:
+            await self.handle_member_reaction(payload.emoji, member, message, "remove")

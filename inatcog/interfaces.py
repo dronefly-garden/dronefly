@@ -30,6 +30,7 @@ class MixinMeta(ABC):
         self.config: Config
         self.api: INatAPI
         self.inat_client: iNatClient
+        self.interactions: dict
         self.bot: Red
         self.p: engine  # pylint: disable=invalid-name
         self.user_table: INatUserTable
