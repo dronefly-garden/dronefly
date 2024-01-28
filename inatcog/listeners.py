@@ -187,13 +187,16 @@ class Listeners(INatEmbeds, MixinMeta):
         if not reaction or not reaction.me:
             return
 
-        # TODO: save this in a list of message -> embed representations
-        # - check if we have one already; if we do, use it instead as our source of
-        #   truth
+        # TODO: class for interactions? currently just a dict keyed by full
+        # message id and content is the parsed inat_embed
         # - this needs two corresponding pieces of code to make it work across cog reloads:
         #   - save all of those interactions in Config when cog is unloaded
         #   - load them from Config when cog is loaded
-        inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
+        full_message_id = f"{message.guild}-{message.channel}-{message.id}"
+        inat_embed = self.interactions.get(full_message_id)
+        if not inat_embed:
+            inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
+            self.interactions[message.id] = inat_embed
         msg = copy(message)
         msg.embeds[0] = inat_embed
 
