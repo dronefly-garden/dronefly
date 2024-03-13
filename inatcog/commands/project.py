@@ -119,7 +119,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             list(filter(None, results))
             for results in grouper(
                 [
-                    projects[abbrev]
+                    int(projects[abbrev])
                     for abbrev in projects
                     if int(projects[abbrev]) not in self.api.projects_cache
                 ],

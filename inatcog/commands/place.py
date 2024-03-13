@@ -108,7 +108,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             list(filter(None, results))
             for results in grouper(
                 [
-                    places[abbrev]
+                    int(places[abbrev])
                     for abbrev in places
                     if int(places[abbrev]) not in self.api.places_cache
                 ],
