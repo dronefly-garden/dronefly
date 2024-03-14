@@ -91,8 +91,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """North American flora info from bonap.net."""
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
-                base_url = "http://bonap.net/MapGallery/County/"
-                maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
+                base_url = "https://bonap.net/MapGallery/County/"
+                maps_url = "https://bonap.net/NAPA/TaxonMaps/Genus/County/"
                 taxon = query_response.taxon
                 name = re.sub(r" ", "%20", taxon.name)
                 lang = await get_lang(ctx)
