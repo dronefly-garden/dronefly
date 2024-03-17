@@ -2433,6 +2433,16 @@ lint = ["docutils-stubs", "flake8 (>=3.5.0)", "flake8-bugbear", "flake8-comprehe
 test = ["cython", "html5lib", "pytest (>=4.6)", "typed_ast"]
 
 [[package]]
+name = "sphinx-pdj-theme"
+version = "0.4.0"
+description = "A cool theme for sphinx documentation"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sphinx-pdj-theme-0.4.0.tar.gz", hash = "sha256:4b86bfd8b8e20344db56aba13473f634286149fa0203d18e0437157f48c7e0fa"},
+]
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "1.3.0"
 description = "Read the Docs theme for Sphinx"
@@ -2899,4 +2909,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "6fa174e64af6527020eff0f321f0154255e3ebed3618772264ac7e41ed2b1115"
+content-hash = "6979315b14cc670abcde1e2ad0c1f0ef1f2aa271c91631053471e81a883ff08d"
