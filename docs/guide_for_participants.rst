@@ -218,7 +218,7 @@ to post questions: https://forum.inaturalist.org/
 (Please use #bot-commands for status checks.)
 
 Participating - #id-help and #work-party (under iNat Stuff and Teams)
------------------------------------------------------------------
+---------------------------------------------------------------------
 
 Use the #id-help channel for:
 
