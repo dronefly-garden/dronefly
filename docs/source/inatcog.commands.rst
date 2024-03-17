@@ -1,8 +1,9 @@
 inatcog.commands package
 ========================
 
-Submodules
-----------
+---------------------------
+inatcog.commands Submodules
+---------------------------
 
 inatcog.commands.inat module
 ----------------------------
@@ -77,8 +78,9 @@ inatcog.commands.user module
     :show-inheritance:
 
 
-Module contents
----------------
+--------------------------------
+inatcog.commands Module contents
+--------------------------------
 
 .. automodule:: inatcog.commands
     :members:

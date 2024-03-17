@@ -1,8 +1,9 @@
 inatcog.tests package
 =====================
 
-Submodules
-----------
+------------------------
+inatcog.tests Submodules
+------------------------
 
 inatcog.tests.test\_api module
 ------------------------------
@@ -37,8 +38,9 @@ inatcog.tests.test\_users module
     :show-inheritance:
 
 
-Module contents
----------------
+-----------------------------
+inatcog.tests Module contents
+-----------------------------
 
 .. automodule:: inatcog.tests
     :members:

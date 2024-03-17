@@ -1,16 +1,18 @@
 inatcog package
 ===============
 
-Subpackages
------------
+-------------------
+inatcog Subpackages
+-------------------
 
 .. toctree::
 
     inatcog.commands
     inatcog.tests
 
-Submodules
-----------
+------------------
+inatcog Submodules
+------------------
 
 inatcog.api module
 ------------------
@@ -205,8 +207,9 @@ inatcog.utils module
     :show-inheritance:
 
 
-Module contents
----------------
+-----------------------
+inatcog Module contents
+-----------------------
 
 .. automodule:: inatcog
     :members:
