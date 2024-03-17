@@ -67,6 +67,7 @@ html_theme_options = {
     "html_minify": True,
     "css_minify": True,
     "nav_title": "Dronefly Project",
+    "localtoc_label_text": "Contents",
     "globaltoc_depth": 2,
 }
 html_sidebars = {
