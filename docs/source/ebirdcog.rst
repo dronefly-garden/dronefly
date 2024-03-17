@@ -1,9 +1,8 @@
 ebirdcog package
 ================
 
--------------------
-ebirdcog Submodules
--------------------
+Submodules
+----------
 
 ebirdcog.api module
 -------------------
@@ -22,9 +21,8 @@ ebirdcog.ebirdcog module
     :show-inheritance:
 
 
-------------------------
-ebirdcog Module contents
-------------------------
+Module contents
+---------------
 
 .. automodule:: ebirdcog
     :members:
