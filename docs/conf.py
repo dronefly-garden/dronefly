@@ -54,7 +54,20 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
+html_logo = "Pictures/eristalis_1.png"
 html_theme = "sphinx_material"
+html_theme_options = {
+    "base_url": "http://bashtage.github.io/sphinx-material/",
+    "repo_url": "https://github.com/dronefly-garden/dronefly/",
+    "repo_name": "Dronefly cogs for Naturalists",
+    "html_minify": True,
+    "css_minify": True,
+    "nav_title": "Dronefly Project",
+    "globaltoc_depth": 2,
+}
+html_sidebars = {
+    "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
