@@ -10,14 +10,14 @@ This guide has a number of sections aimed at introducing our new
 and existing users to Discord itself, the iNaturalist Discord Server,
 and its bots and channels.
 
-If you already know the :ref:`Discord Basics` and how to use Discord, you may
-wish to skip ahead to :ref:`Set Up Your Roles` and then the sections introducing you
-to :ref:`Participating` in the various channels on the server.
+If you already know the :ref:`guide_for_participants:Discord Basics` and how to use Discord, you may
+wish to skip ahead to :ref:`guide_for_participants:Set Up Your Roles` and then the sections introducing you
+to :ref:`guide_for_participants:Participating` in the various channels on the server.
 
-Once you're comfortable with all that, :ref:`Using the Discord Bots` addresses using 
+Once you're comfortable with all that, :ref:`guide_for_participants:Using the Discord Bots` addresses using 
 Dronefly and Dumbo, and is the largest and most technical section of the Guide.
 
-Finally, :ref:`Appendices` covers miscellaneous topics.
+Finally, :ref:`guide_for_participants:Appendices` covers miscellaneous topics.
 
 ==============
 Discord Basics
@@ -87,7 +87,7 @@ allows you to take a variety of actions, including:
 Invite People - Inviting friends and other naturalist professionals to join us (if you
 use this, create from #introductions)
 
-Notification Settings - Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
+Notification Settings - Adjusting your notification settings (see :ref:`guide_for_participants:Appendix A - Notification Settings`)
 
 Privacy Settings - Allowing or prohibiting direct messages from other users
 
@@ -428,7 +428,7 @@ Search subcommands
 ``users`` - Search iNat users.
 
 Arrow reactions allow paging through pages of results. See
-:ref:`Appendix C - Search Result Icons` for icons.
+:ref:`guide_for_participants:Appendix C - Search Result Icons` for icons.
 
 |image69|
 
