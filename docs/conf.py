@@ -40,6 +40,8 @@ extensions = [
     # "sphinxcontrib_trio",
 ]
 
+autosectionlabel_prefix_document = True
+
 intersphinx_mapping = {"redbot": ("https://docs.discord.red/en/stable", None)}
 
 # Add any paths that contain templates here, relative to this directory.
