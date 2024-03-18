@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "Dronefly"
 copyright = "2020-2023, Ben Armstrong and Michael Pirrello"
 author = "Ben Armstrong, Michael Pirrello"
-programming_language = "python"
+programming_language = "py"
 
 
 # -- General configuration ---------------------------------------------------
