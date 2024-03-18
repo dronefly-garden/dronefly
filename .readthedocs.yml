@@ -9,7 +9,7 @@ build:
       - pip install poetry
     post_install:
       - poetry config virtualenvs.create false
-      - poetry install --with docs
+      - poetry install --with docs --no-root
 
 python:
   install:
