@@ -279,16 +279,26 @@ prefix specific to the bot:
 `Dronefly <https://github.com/dronefly-garden/dronefly/>`__ (``,``) - Accesses
 iNaturalist and other naturalist-related web platforms.
 
-Dumbo (``-``) - For general purpose admin & info functions, not strictly
-nature-related (e.g. Twitter and Wikipedia).
+Dumbo (``-``) - For general purpose info & entertainment functions, not strictly
+nature-related (e.g. Trivia, Weather, Wikipedia).
 
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
 YouTube in voice channels.
 
-(CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
-you’re not interested in bot development, you won’t need it. If you
-indicate that you’re interested in helping with bot testing, you may
-occasionally receive an invite to participate in testing features.)
+Polistes (``;``) - Server management bot. Mostly handles behind-the-scenes
+server operations. A few member-facing features are also provided through
+this bot, such as the role assignment menus and buttons.
+
+Two other bots are present for development and testing purposes. For the
+most part, you can ignore these unless you're involved as a Dronefly bot
+developer or tester.
+
+SeedWasp (``w,``) is the beta version of Dronefly. Some functions that
+will be available in the next version of Dronefly, such as slash-commands,
+are provided by this bot.
+
+CuckooBee (``c.``) is the development version of Dronefly. Occasionally,
+a tester may be asked to try new things on this bot instead of on Dronefly.
 
 |image14|
 
