@@ -271,7 +271,7 @@ Using the Discord Bots
 Access to the Discord bots is one of the great benefits of being on the
 server. Bots are primarily for obtaining information.
 
-There are several bots, most of which are instances of `Red Discord
+There are several bots, all of which are instances of `Red Discord
 Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
