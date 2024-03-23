@@ -855,13 +855,13 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.3.7"
+version = "0.3.8"
 description = "Core dronefly components"
 optional = false
-python-versions = ">=3.8.1,<3.13"
+python-versions = "<3.13,>=3.8.1"
 files = [
-    {file = "dronefly_core-0.3.7-py3-none-any.whl", hash = "sha256:b39cd09c5c44c1a1b22d2dc5b3088da2984d5419b0b562b68a98d13ada99ff19"},
-    {file = "dronefly_core-0.3.7.tar.gz", hash = "sha256:a7d8888483a197cf13e145bfad0bf73d6039913b13109a9be9867453c4746f98"},
+    {file = "dronefly_core-0.3.8-py3-none-any.whl", hash = "sha256:1c5786dfab063da35d65050c78396ed362cbd7405010cac31bf098ffcd38fb7c"},
+    {file = "dronefly_core-0.3.8.tar.gz", hash = "sha256:d2f99d1195c22368b73fa43228558ba7aa1632177614681cde6ad678b21bf0c1"},
 ]
 
 [package.dependencies]
@@ -873,18 +873,18 @@ rich = ">=13.4"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.3"
+version = "0.1.4"
 description = "Dronefly Discord library"
 optional = false
-python-versions = ">=3.8.1,<3.12"
+python-versions = "<3.12,>=3.8.1"
 files = [
-    {file = "dronefly_discord-0.1.3-py3-none-any.whl", hash = "sha256:6cda19090d4cd0a6c2c3b2b4019f66b45b4b76780dd50b1327be4bfdee9c6ded"},
-    {file = "dronefly_discord-0.1.3.tar.gz", hash = "sha256:9fda0c979787c1f1e2c2833d267e473a38077f161189355b36fc0210bf9fa7ef"},
+    {file = "dronefly_discord-0.1.4-py3-none-any.whl", hash = "sha256:6534fc88d0e66be0f4df2c083cb5bdc4406f7108d40ea6c9fad6cd40e89b876b"},
+    {file = "dronefly_discord-0.1.4.tar.gz", hash = "sha256:c944492a01ef6a0bb58314bf461cf1b2b32e9b1828e990ac0162cc763d87fadc"},
 ]
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = ">=0.3.6,<0.4"
+dronefly-core = ">=0.3.8,<0.4"
 inflect = ">=5.3.0,<6.0.0"
 pyinaturalist = ">=0.19.0,<0.20"
 
@@ -2974,4 +2974,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "e93d13bc4421012144f8c76220c6a02b1d1fe37c8b8df86bacd38b52eb2d6806"
+content-hash = "610c7843a4f2609001e3ac3ecc4036867d30c5d00430e7782b87221eecc07ef9"
