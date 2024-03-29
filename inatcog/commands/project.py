@@ -119,7 +119,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             list(filter(None, results))
             for results in grouper(
                 [
-                    projects[abbrev]
+                    int(projects[abbrev])
                     for abbrev in projects
                     if int(projects[abbrev]) not in self.api.projects_cache
                 ],
@@ -204,7 +204,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             # menu() does not support lazy load of embeds iterator.
             await menu(ctx, embeds, DEFAULT_CONTROLS)
         else:
-            raise LookupError("Nothing found")
+            await apologize(ctx, "Nothing found")
 
     @can_manage_projects()
     @project.command(name="remove")

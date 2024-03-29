@@ -1,11 +1,8 @@
-.. Dronefly
+.. Dronefly Bot
 
 ========
-Dronefly
-========
-
 Overview
---------
+========
 
 .. image:: https://img.shields.io/badge/Red--DiscordBot-cogs-red.svg
    :target: https://github.com/Cog-Creators/Red-DiscordBot/tree/V3/develop
@@ -30,8 +27,9 @@ https://discord.gg/pUbZFDbDdD if:
 - you already use Dronefly and need support
 - you want to be involved with Dronefly development
 
+=======================
 Dronefly cog repository
------------------------
+=======================
 
 Dronefly bot is based on `Red Discord
 Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__ but it is also the
@@ -46,13 +44,15 @@ download anything from this site to do that.
 If you do want to run your own bot with the cogs from Dronefly repository on
 it, see the Installation instructions below.
 
+==================================
 User Guide - iNaturalist (inatcog)
-----------------------------------
+==================================
 
 TODO: migrate Guide for Participant material here.
 
+==================
 Server Owner Guide
-------------------
+==================
 
 TODO: migrate `Server owner guide
 <https://github.com/dronefly-garden/dronefly/wiki/Server-owner-guide>`__ here.

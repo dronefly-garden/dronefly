@@ -2,6 +2,7 @@
 import contextlib
 from math import ceil, floor
 import re
+from typing import Optional
 
 import discord
 from redbot.vendored.discord.ext import menus
@@ -17,12 +18,15 @@ INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 
 
 class LifeListSource(CoreLifeListSource):
-    def format_page(self, menu: LifeListMenu, page):
+    def format_page(self, menu: LifeListMenu, page, selected: Optional[int] = None):
+        formatter = self._life_list_formatter
+        ctx = menu.ctx
+        ctx.selected = selected
         query_response = self.formatter.query_response
         embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
         if self._url:
             embed.url = self._url
-        embed.description = page
+        embed.description = formatter.format_page(menu.current_page, ctx.selected)
         embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
         return embed
 

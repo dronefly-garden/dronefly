@@ -26,7 +26,7 @@ from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
-    PAT_OBS_TAXON_LINK,
+    PAT_SELECTED_OBS_LINK,
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
@@ -138,6 +138,11 @@ class INatEmbed(discord.Embed):
 
     def get_observations_url(self):
         """Return observations url, if present."""
+        if self.description:
+            mat_selected_obs_link = re.search(PAT_SELECTED_OBS_LINK, self.description)
+            if mat_selected_obs_link:
+                mat = re.search(PAT_OBS_QUERY, mat_selected_obs_link["url"])
+                return mat["url"]
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
@@ -213,15 +218,24 @@ class INatEmbed(discord.Embed):
         content["params"] = self.params
         content["taxonomy"] = self.taxonomy
         content["query"] = str(self.query())
+        content["added_on"] = self.added_on()
+        content["added_d1"] = self.added_d1()
+        content["added_d2"] = self.added_d2()
+        content["obs_on"] = self.obs_on()
+        content["obs_d1"] = self.obs_d1()
+        content["obs_d2"] = self.obs_d2()
         return content
 
     def query(self, query: Query = EMPTY_QUERY):  # Query
         """Produce a query from embed, merging new query if given."""
 
         main = None
-        if query.main and query.main.terms and query.main.terms[0] == "any":
+        ancestor = None
+        logger.debug("query.main = %r", query.main)
+        if query.main and query.main.terms:
             main = query.main
-        if not main and self.taxon_id():
+            ancestor = query.ancestor
+        elif self.taxon_id():
             main = TaxonQuery(taxon_id=self.taxon_id())
         user = query.user or self.user_id()
         id_by = query.id_by or self.ident_user_id()
@@ -230,8 +244,33 @@ class INatEmbed(discord.Embed):
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
+        # If the query contains any date selectors, they supersede any that the
+        # embed may have had (i.e. mixing and matching different date selectors
+        # from the the base query and new query are likely not what the user meant)
+        if (
+            query.added_on
+            or query.added_d1
+            or query.added_d2
+            or query.obs_on
+            or query.obs_d1
+            or query.obs_d2
+        ):
+            added_on = query.added_on
+            added_d1 = query.added_d1
+            added_d2 = query.added_d2
+            obs_on = query.obs_on
+            obs_d1 = query.obs_d1
+            obs_d2 = query.obs_d2
+        else:
+            added_on = self.added_on()
+            added_d1 = self.added_d1()
+            added_d2 = self.added_d2()
+            obs_on = self.obs_on()
+            obs_d1 = self.obs_d1()
+            obs_d2 = self.obs_d2()
         query = Query(
             main=main,
+            ancestor=ancestor,
             user=user,
             id_by=id_by,
             unobserved_by=unobserved_by,
@@ -239,6 +278,12 @@ class INatEmbed(discord.Embed):
             place=place,
             project=project,
             controlled_term=controlled_term,
+            added_on=added_on,
+            added_d1=added_d1,
+            added_d2=added_d2,
+            obs_on=obs_on,
+            obs_d1=obs_d1,
+            obs_d2=obs_d2,
         )
         return query
 
@@ -328,6 +373,36 @@ class INatEmbed(discord.Embed):
         """Return user_id(s) from embed, if present."""
         user_id = self.params.get("user_id")
         return int(user_id) if user_id else None
+
+    def obs_on(self):
+        """Return obs_on from embed, if present."""
+        on = self.params.get("observed_on")
+        return [on] if on else None
+
+    def obs_d1(self):
+        """Return obs_d1 from embed, if present."""
+        d1 = self.params.get("d1")
+        return [d1] if d1 else None
+
+    def obs_d2(self):
+        """Return obs_d2 from embed, if present."""
+        d2 = self.params.get("d2")
+        return [d2] if d2 else None
+
+    def added_on(self):
+        """Return added_on from embed, if present."""
+        added_on = self.params.get("created_on")
+        return [added_on] if added_on else None
+
+    def added_d1(self):
+        """Return added_d1 from embed, if present."""
+        added_d1 = self.params.get("created_d1")
+        return [added_d1] if added_d1 else None
+
+    def added_d2(self):
+        """Return added_d2 from embed, if present."""
+        added_d2 = self.params.get("created_d2")
+        return [added_d2] if added_d2 else None
 
     def unobserved_by_user_id(self):
         """Return unobserved_by_user_id(s) from embed, if present."""
@@ -1102,21 +1177,6 @@ class INatEmbeds(MixinMeta):
             msg = await hybrid_send(ctx, embed=embed)
 
         return await add_reactions_with_cancel(ctx, msg, [], **reaction_params)
-
-    def get_inat_url_ids(self, url):
-        """Match taxon_id & optional place_id/user_id from an iNat taxon or obs URL."""
-        taxon_id = None
-        place_id = None
-        inat_user_id = None
-        mat = re.match(PAT_TAXON_LINK, url)
-        if not mat:
-            mat = re.match(PAT_OBS_TAXON_LINK, url)
-            if mat:
-                place_id = mat["place_id"]
-                inat_user_id = mat["user_id"]
-        if mat:
-            taxon_id = mat["taxon_id"]
-        return (taxon_id, place_id, inat_user_id)
 
     async def maybe_update_user(
         self,

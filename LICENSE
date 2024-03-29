@@ -3,7 +3,7 @@ Upstream-Name: dronefly
 Source: https://github.com/dronefly-garden/dronefly
 
 Files: *
-Copyright: 2019-2020 Ben Armstrong and contributors
+Copyright: 2019-2024 Ben Armstrong and contributors
 License: AGPL-3+
 Comment:
  See CONTRIBUTORS.md at the top-level directory of this distribution
@@ -18,7 +18,7 @@ Comment:
  https://github.com/TrustyJAID/Trusty-cogs/tree/master/roletools/menus.py
 
 Files: docs/*
-Copyright: 2020 Ben Armstrong and Michael Pirrello
+Copyright: 2020-2024 Ben Armstrong and Michael Pirrello
 License: CC-BY-SA-4.0
 
 License: AGPL-3+

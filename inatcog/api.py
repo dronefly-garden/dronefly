@@ -189,9 +189,9 @@ class INatAPI:
 
         if isinstance(query, list):
             return {
-                place_id: self.places_cache[place_id]
+                place_id: self.places_cache[int(place_id)]
                 for place_id in query
-                if place_id in self.places_cache
+                if int(place_id) in self.places_cache
             }
         if first_place_id in self.places_cache:
             return self.places_cache[first_place_id]
@@ -235,9 +235,9 @@ class INatAPI:
 
         if isinstance(query, list):
             return {
-                project_id: self.projects_cache[project_id]
+                project_id: self.projects_cache[int(project_id)]
                 for project_id in query
-                if self.projects_cache[project_id]
+                if self.projects_cache.get(int(project_id))
             }
         if first_project_id in self.projects_cache:
             return self.projects_cache[first_project_id]

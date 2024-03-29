@@ -12,12 +12,17 @@ class UserProject(Project):
     of both:
 
     1. Open membership, users join on the web:
+
        - members_only: True
        - do not set any "observed_by_user?" rules
+
     2. Closed membership, admins edit the project to join users:
+
        - members_only: False
        - set at least one "observed_by_user?" rule
+
     3. Closed membership, users join on web and admins edit project to "approve" join:
+
        - members_only: True
        - set at least one "observed_by_user?" rule
        - a user's observations are included when both the user joins *and* the

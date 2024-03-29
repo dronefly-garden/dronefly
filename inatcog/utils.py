@@ -144,6 +144,7 @@ async def get_dronefly_user_config(
     """Return the config parameters for a Dronefly user.
 
     Supplies defaults from the guild and global configs if:
+
     - the Dronefly user is not known either globally or in the guild scope
       (i.e. anywhere=False vs. True)
     """

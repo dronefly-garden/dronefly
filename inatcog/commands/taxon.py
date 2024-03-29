@@ -91,8 +91,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """North American flora info from bonap.net."""
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
-                base_url = "http://bonap.net/MapGallery/County/"
-                maps_url = "http://bonap.net/NAPA/TaxonMaps/Genus/County/"
+                base_url = "https://bonap.net/MapGallery/County/"
+                maps_url = "https://bonap.net/NAPA/TaxonMaps/Genus/County/"
                 taxon = query_response.taxon
                 name = re.sub(r" ", "%20", taxon.name)
                 lang = await get_lang(ctx)
@@ -301,8 +301,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             _taxa_list = f"{query_response.taxon.id},{taxa_list}"
         else:
             _taxa_list = taxa_list
-        (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
-        (taxon, related_embed) = await self.make_related_embed(ctx, taxa, missing_taxa)
+        try:
+            (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
+            (taxon, related_embed) = await self.make_related_embed(
+                ctx, taxa, missing_taxa
+            )
+        except LookupError as err:
+            await apologize(ctx, err)
+            return
         await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
 
     @commands.command(hidden=True)
@@ -326,6 +332,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
     async def image_alias(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str]
+        self, ctx, number: Optional[int] = 1, *, query: Optional[str] = ""
     ):
         await (self.bot.get_command("taxon image")(ctx, number, query=query))
