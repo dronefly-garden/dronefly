@@ -7,6 +7,8 @@ from functools import partial
 from typing import DefaultDict, Tuple
 
 import inflect
+from pyinaturalist import ClientSession
+from pyrate_limiter import FileLockSQLiteBucket
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
@@ -77,7 +79,10 @@ class INatCog(
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
-        self.inat_client = iNatClient(loop=bot.loop, creds={"refresh": True})
+        session = ClientSession(bucket_class=FileLockSQLiteBucket)
+        self.inat_client = iNatClient(
+            loop=bot.loop, creds={"refresh": True}, session=session
+        )
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)
