@@ -4,11 +4,12 @@ import re
 from abc import ABC
 from datetime import timedelta
 from functools import partial
+import os
 from typing import DefaultDict, Tuple
 
 import inflect
-from pyinaturalist import ClientSession
-from pyrate_limiter import FileLockSQLiteBucket
+from platformdirs import user_data_dir
+from pyinaturalist import ClientSession, FileLockSQLiteBucket
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 from .api import INatAPI
@@ -79,7 +80,10 @@ class INatCog(
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
-        session = ClientSession(bucket_class=FileLockSQLiteBucket)
+        session = ClientSession(
+            bucket_class=FileLockSQLiteBucket,
+            lock_path=os.path.join(user_data_dir(), "inatcog", "pyinat.lock"),
+        )
         self.inat_client = iNatClient(
             loop=bot.loop, creds={"refresh": True}, session=session
         )
