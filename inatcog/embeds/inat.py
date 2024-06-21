@@ -1035,6 +1035,15 @@ class INatEmbeds(MixinMeta):
         ids = user.identifications_count
         url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.id})"
         embed.add_field(name="Ids", value=url, inline=True)
+        try:
+            annotations = user.annotated_observations_count
+        except AttributeError:
+            annotations = 0
+        url = (
+            f"[{annotations:,}]({WWW_BASE_URL}/observations"
+            f"?annotation_user_id={user.id}&place_id=any&verifiable=any)"
+        )
+        embed.add_field(name="Annotations", value=url, inline=True)
         return embed
 
     async def make_stats_embed(self, member, user, project):
