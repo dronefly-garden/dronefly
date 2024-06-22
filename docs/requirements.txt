@@ -1,4 +1,3 @@
-aiodns==3.0.0
 aiohttp==3.9.3
 aiohttp-json-rpc==0.13.3
 aiohttp-retry==2.8.3
@@ -7,7 +6,6 @@ aiosignal==1.3.1
 alabaster==0.7.13
 apsw==3.45.2.0
 astroid==2.15.8
-async-timeout==4.0.3
 attrs==23.2.0
 Babel==2.14.0
 backports.tarfile==1.2.0
@@ -27,10 +25,10 @@ dill==0.3.8
 discord.py==2.3.2
 distro==1.9.0
 docutils==0.19
-dronefly-core==0.3.9.dev0
-dronefly-discord==0.1.5rc0
+dronefly-core @ git+https://github.com/dronefly-garden/dronefly-core@6a540ae6c138e22ee225958062c846539e54cc07
+dronefly-discord @ git+https://github.com/dronefly-garden/dronefly-discord@3478ae778638e8dfabb4df6648aa41040f4674e6
 ebird-api==3.0.6
-filelock==3.15.1
+filelock==3.15.3
 frozenlist==1.4.1
 html2markdown==0.1.7
 idna==3.6
@@ -61,10 +59,9 @@ pathspec==0.12.1
 platformdirs==4.2.0
 pluggy==1.5.0
 psutil==5.9.8
-pycares==4.3.0
 pycparser==2.22
 Pygments==2.17.2
-pyinaturalist==0.20.0.dev0
+pyinaturalist @ git+https://github.com/pyinat/pyinaturalist@e76700bf9d71fa1d63b31e59ce735ebf71827a4c
 pylint==2.17.7
 pyrate-limiter==2.10.0
 pytest==7.4.4
@@ -81,7 +78,7 @@ Red-DiscordBot==3.5.9
 Red-Lavalink==0.11.0
 regex==2024.5.15
 requests==2.32.3
-requests-cache==1.2.0
+requests-cache==1.2.1
 requests-ratelimiter==0.6.0
 rich==13.7.1
 schema==0.7.5
@@ -105,7 +102,7 @@ typing_extensions==4.10.0
 tzlocal==5.2
 Unidecode==1.3.8
 url-normalize==1.4.3
-urllib3==2.2.1
+urllib3==2.2.2
 uvloop==0.19.0
 wrapt==1.16.0
 yarl==1.9.4
