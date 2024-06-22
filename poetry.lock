@@ -873,35 +873,44 @@ name = "dronefly-core"
 version = "0.3.9.dev0"
 description = "Core dronefly components"
 optional = false
-python-versions = "<3.13,>=3.8.1"
-files = [
-    {file = "dronefly_core-0.3.9.dev0-py3-none-any.whl", hash = "sha256:c7c822abb67152f4f5b6630033a7ed109a6065010da5c7609e90d2c3c8e673fb"},
-    {file = "dronefly_core-0.3.9.dev0.tar.gz", hash = "sha256:5a54cfd52e080eab27b7bb5799d85238f0e4a964731d2d9ec9ae92d0a2cbc901"},
-]
+python-versions = ">=3.8.1,<3.13"
+files = []
+develop = false
 
 [package.dependencies]
-dateparser = ">=1.1.1,<2.0.0"
-html2markdown = ">=0.1.7,<0.2.0"
-inflect = ">=5.3.0,<6.0.0"
-pyinaturalist = "0.20.0.dev0"
+dateparser = "^1.1.1"
+filelock = "^3.13.3"
+html2markdown = "^0.1.7"
+inflect = "^5.3.0"
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "e76700bf9d71fa1d63b31e59ce735ebf71827a4c"}
 rich = ">=13.4"
+
+[package.source]
+type = "git"
+url = "https://github.com/dronefly-garden/dronefly-core"
+reference = "6a540ae6c138e22ee225958062c846539e54cc07"
+resolved_reference = "6a540ae6c138e22ee225958062c846539e54cc07"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.5rc0"
+version = "0.1.5.pre0"
 description = "Dronefly Discord library"
 optional = false
-python-versions = "<3.12,>=3.8.1"
-files = [
-    {file = "dronefly_discord-0.1.5rc0-py3-none-any.whl", hash = "sha256:1ea19bd1884b67bb71db281ac59f82036bc1726cd901dbe218abb4391f4ddfb8"},
-    {file = "dronefly_discord-0.1.5rc0.tar.gz", hash = "sha256:73ef33effd461a58ceda86df3c2c928125d6ae5d2bd90f3cc48742cd11f4f203"},
-]
+python-versions = ">=3.8.1,<3.12"
+files = []
+develop = false
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = "0.3.9.dev0"
-inflect = ">=5.3.0,<6.0.0"
-pyinaturalist = "0.20.0.dev0"
+dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "6a540ae6c138e22ee225958062c846539e54cc07"}
+inflect = "^5.3.0"
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "e76700bf9d71fa1d63b31e59ce735ebf71827a4c"}
+
+[package.source]
+type = "git"
+url = "https://github.com/dronefly-garden/dronefly-discord"
+reference = "3478ae778638e8dfabb4df6648aa41040f4674e6"
+resolved_reference = "3478ae778638e8dfabb4df6648aa41040f4674e6"
 
 [[package]]
 name = "ebird-api"
@@ -1880,14 +1889,12 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyinaturalist"
-version = "0.20.0.dev0"
+version = "0.20.0"
 description = "iNaturalist API client for python"
 optional = false
-python-versions = "<4.0,>=3.8"
-files = [
-    {file = "pyinaturalist-0.20.0.dev0-py3-none-any.whl", hash = "sha256:9d31089e6897b91f64eaac1835bd98343dd292f56b57f7e54f5ac789d8027636"},
-    {file = "pyinaturalist-0.20.0.dev0.tar.gz", hash = "sha256:bc6c288ec7b1c9168c802e20aa3213428654ba7513d3ab3b18c589c2310fbe64"},
-]
+python-versions = "^3.8"
+files = []
+develop = false
 
 [package.dependencies]
 attrs = ">=21.2"
@@ -1903,6 +1910,12 @@ rich = ">=10.9"
 [package.extras]
 all = ["filelock (>2.0)", "ujson (>5.0)"]
 docs = ["furo (>=2023.7,<2024.0)", "ipython (>=8.12,<9.0)", "linkify-it-py (>=2.0,<3.0)", "matplotlib (>=3.7)", "myst-parser (>=1.0)", "nbsphinx (>=0.9,<0.10)", "pillow (>=10.1)", "sphinx (>=6.2,<7.0)", "sphinx-autodoc-typehints (==1.20)", "sphinx-automodapi (>=0.15,<0.16)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.5)", "sphinxcontrib-apidoc (>=0.3,<0.4)", "sphinxext-opengraph (>=0.9)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/pyinat/pyinaturalist"
+reference = "e76700bf9d71fa1d63b31e59ce735ebf71827a4c"
+resolved_reference = "e76700bf9d71fa1d63b31e59ce735ebf71827a4c"
 
 [[package]]
 name = "pylint"
@@ -3094,4 +3107,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "0a7632c1045518cbead52ac69f5b26d614ddb17f7205b1abf2deaa1bc2d6b3a2"
+content-hash = "e7515ad026e4fbe8df9233c461b80cbb4442dad3c90cbf48d6b21fdff1d37711"
