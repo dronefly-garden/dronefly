@@ -13,7 +13,7 @@ beautifulsoup4==4.12.3
 black==24.4.2
 Brotli==1.1.0
 cattrs==23.2.3
-certifi==2024.6.2
+certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
