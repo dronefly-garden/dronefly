@@ -882,14 +882,14 @@ dateparser = "^1.1.1"
 filelock = "^3.13.3"
 html2markdown = "^0.1.7"
 inflect = "^5.3.0"
-pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "192437bfe112bd017d2a2b3344a72ad498602af6"}
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist"}
 rich = ">=13.4"
 
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "c2783b122af6bb508c804207d1467db9588aabb2"
-resolved_reference = "c2783b122af6bb508c804207d1467db9588aabb2"
+reference = "HEAD"
+resolved_reference = "82f259db9792099ac53a22a6b3aa48894b9bde41"
 
 [[package]]
 name = "dronefly-discord"
@@ -902,15 +902,15 @@ develop = false
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "c2783b122af6bb508c804207d1467db9588aabb2"}
+dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core"}
 inflect = "^5.3.0"
-pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "192437bfe112bd017d2a2b3344a72ad498602af6"}
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist"}
 
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-discord"
-reference = "5b0337b65a8fc718dc93e49951b488b8263dcb69"
-resolved_reference = "5b0337b65a8fc718dc93e49951b488b8263dcb69"
+reference = "HEAD"
+resolved_reference = "355030e5469f16dff0181fcce3cc7a6b3f5682f0"
 
 [[package]]
 name = "ebird-api"
@@ -1909,13 +1909,13 @@ rich = ">=10.9"
 
 [package.extras]
 all = ["filelock (>2.0)", "ujson (>5.0)"]
-docs = ["furo (>=2023.7,<2024.0)", "ipython (>=8.12,<9.0)", "linkify-it-py (>=2.0,<3.0)", "matplotlib (>=3.7)", "myst-parser (>=1.0)", "nbsphinx (>=0.9,<0.10)", "pillow (>=10.1)", "sphinx (>=6.2,<7.0)", "sphinx-autodoc-typehints (==1.20)", "sphinx-automodapi (>=0.15,<0.16)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.5)", "sphinxcontrib-apidoc (>=0.3,<0.4)", "sphinxext-opengraph (>=0.9)"]
+docs = ["furo (>=2024.4,<2025.0)", "ipython (>=8.12,<9.0)", "linkify-it-py (>=2.0,<3.0)", "matplotlib (>=3.7)", "myst-parser (>=1.0)", "nbsphinx (>=0.9,<0.10)", "pillow (>=10.1)", "sphinx (>=6.2,<7.0)", "sphinx-autodoc-typehints (==1.20)", "sphinx-automodapi (>=0.15,<0.16)", "sphinx-copybutton (>=0.5)", "sphinx-design (>=0.5)", "sphinxcontrib-apidoc (>=0.3,<0.4)", "sphinxext-opengraph (>=0.9)"]
 
 [package.source]
 type = "git"
 url = "https://github.com/pyinat/pyinaturalist"
-reference = "192437bfe112bd017d2a2b3344a72ad498602af6"
-resolved_reference = "192437bfe112bd017d2a2b3344a72ad498602af6"
+reference = "HEAD"
+resolved_reference = "12c04689c921a4d2e5cd4352c8e7c525e693b7f0"
 
 [[package]]
 name = "pylint"
@@ -3107,4 +3107,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "8afdc69ef7d9c459b166a9331efbc1d88bfa86e6de023cf83c507e8be75c4ddf"
+content-hash = "d2a7b032febb804c37ac7520e46e4621d092079bfe24c88fb68948f89b32c4c6"
