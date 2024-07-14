@@ -125,9 +125,10 @@ class TaxonReplyConverter:
             return await get_query_from_msg(msg, query_str)
 
         ref = ctx.message.reference
+        query_str = ""
         if ref:
             query_str = await get_query_from_ref_msg(ref, argument)
-        else:
+        elif argument:
             link = DISCORD_MSG_PAT.search(argument)
             if link:
                 query_str = await get_query_from_link(link, argument)
