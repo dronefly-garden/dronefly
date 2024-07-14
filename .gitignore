@@ -113,3 +113,7 @@ red_setup_logs
 
 # Visual Studio Code stuff
 .vscode/
+
+# pyinaturalist requests and rate limiter db and lock files
+*.db
+*.lock
