@@ -222,7 +222,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • Buttons to change taxon row details:
           • :regional_indicator_d: toggles direct taxon count.
           • :regional_indicator_c: toggles common names (user life list only).
-        • Specify `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `sort by obs` to sort by #obs instead of name.
+        • Use `asc` or `desc` to sort ascending or descending.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
@@ -264,12 +266,16 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         f"No life list {query_response.obs_query_description()}"
                     )
                 per_page = 10
+                sort_by = _query.sort_by or None
+                order = _query.order or None
                 life_list_formatter = LifeListFormatter(
                     life_list,
                     per_rank,
                     query_response,
                     with_taxa=True,
                     per_page=per_page,
+                    sort_by=sort_by,
+                    order=order,
                 )
                 await LifeListMenu(
                     source=LifeListSource(life_list_formatter),
