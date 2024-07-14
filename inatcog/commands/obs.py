@@ -13,6 +13,7 @@ from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
+from dronefly.discord.menus import LifeListMenu
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -22,7 +23,7 @@ from ..common import grouper
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
-from ..menus.inat import BaseMenu, LifeListSource
+from ..menus.inat import LifeListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -221,7 +222,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • Buttons to change taxon row details:
           • :regional_indicator_d: toggles direct taxon count.
           • :regional_indicator_c: toggles common names (user life list only).
-        • Specify `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `sort by obs` to sort by #obs instead of name.
+        • Use `asc` or `desc` to sort ascending or descending.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
@@ -263,14 +266,18 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         f"No life list {query_response.obs_query_description()}"
                     )
                 per_page = 10
+                sort_by = _query.sort_by or None
+                order = _query.order or None
                 life_list_formatter = LifeListFormatter(
                     life_list,
                     per_rank,
                     query_response,
                     with_taxa=True,
                     per_page=per_page,
+                    sort_by=sort_by,
+                    order=order,
                 )
-                await BaseMenu(
+                await LifeListMenu(
                     source=LifeListSource(life_list_formatter),
                     delete_message_after=False,
                     clear_reactions_after=True,
