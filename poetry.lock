@@ -873,7 +873,7 @@ rich = ">=13.4"
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core"
 reference = "HEAD"
-resolved_reference = "89e59ae1cb9684bcc1a6c278b49b58112c1aead8"
+resolved_reference = "825ff9fde81e0089f28de7ff832f4c4ecc121e07"
 
 [[package]]
 name = "dronefly-discord"
@@ -894,7 +894,7 @@ pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist"}
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-discord"
 reference = "HEAD"
-resolved_reference = "dcfe9645586031514ec74a5d4ddf7ec19ee77e3d"
+resolved_reference = "a6e4f0baadddc3021bbb52ca14066826bc7dc23e"
 
 [[package]]
 name = "ebird-api"
