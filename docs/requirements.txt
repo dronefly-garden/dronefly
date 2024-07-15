@@ -26,7 +26,7 @@ discord.py==2.4.0
 distro==1.9.0
 docutils==0.19
 dronefly-core @ git+https://github.com/dronefly-garden/dronefly-core@53867201aad50aeffd23e3261f66f7d735065587
-dronefly-discord @ git+https://github.com/dronefly-garden/dronefly-discord@a6e4f0baadddc3021bbb52ca14066826bc7dc23e
+dronefly-discord @ git+https://github.com/dronefly-garden/dronefly-discord@32d3eaef7c582c4b041924497071e657debd73bf
 ebird-api==3.0.6
 filelock==3.15.4
 frozenlist==1.4.1
