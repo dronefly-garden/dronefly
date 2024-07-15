@@ -255,7 +255,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 per_rank = _query.per or "main"
                 if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
                     raise BadArgument(
-                        f"Specify `per <rank-or-keyword>`. "
+                        "Specify `per <rank-or-keyword>`. "
                         f"See `{ctx.clean_prefix}help life` for details."
                     )
                 life_list = await ctx.inat_client.observations.life_list(
@@ -267,6 +267,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     )
                 per_page = 10
                 sort_by = _query.sort_by or None
+                if sort_by not in [None, "obs", "name"]:
+                    raise BadArgument(
+                        "Specify `sort by obs` or `sort by name` (default)"
+                        f"See `{ctx.clean_prefix}help life` for details."
+                    )
                 order = _query.order or None
                 life_list_formatter = LifeListFormatter(
                     life_list,

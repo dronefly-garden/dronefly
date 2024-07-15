@@ -102,8 +102,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         • `opt month=#` `opt year=#` `opt day=#` - observed this month, year, or day of month (use commas if more than one)
 
         **Sort order:**
-        • newest to oldest added is the default
-        • `reverse` - oldest to newest added
+        • newest to oldest added is the default (i.e. `desc` = descending)
+        • `asc` - oldest to newest added (i.e. ascending)
         • `newest` - newest to oldest observed
         • `oldest` - oldest to newest observed
 
@@ -179,12 +179,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`unseen`**`  not by me from home`
         **`rg`**`      opt quality_grade=research`
         **`nid`**`     opt quality_grade=needs_id`
-        **`oldest`**`  opt order=asc`
-        **`      `**`      order_by=observed_on`
-        **`newest`**`  opt order=desc`
-        **`      `**`      order_by=observed_on`
-        **`reverse`**` opt order_by=asc`
-        **`faves`**`   opt popular order_by=votes`
+        **`oldest`**`  sort by observed asc`
+        **`newest`**`  sort by observed desc`
+        **`faves`**`   sort by votes opt popular`
         **`spp`**`     opt hrank=species` (alias `species`)
         """  # noqa: E501
         await ctx.send_help()
