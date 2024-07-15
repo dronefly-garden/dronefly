@@ -873,7 +873,7 @@ rich = ">=13.4"
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core"
 reference = "HEAD"
-resolved_reference = "825ff9fde81e0089f28de7ff832f4c4ecc121e07"
+resolved_reference = "53867201aad50aeffd23e3261f66f7d735065587"
 
 [[package]]
 name = "dronefly-discord"
