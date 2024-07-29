@@ -23,6 +23,21 @@ class INatPlaceTable:
         response = None
         home_id = None
 
+        _guild = guild
+        if not _guild and user:
+            try:
+                user_config = await get_valid_user_config(self.cog, user, anywhere=True)
+                server_id = await user_config.server()
+                _guild = next(
+                    (
+                        server
+                        for server in self.cog.bot.guilds
+                        if server.id == server_id
+                    ),
+                    None,
+                )
+            except LookupError:
+                pass
         if isinstance(query, str):
             abbrev = query.lower()
             if abbrev == "home" and user:
@@ -33,16 +48,16 @@ class INatPlaceTable:
                     home_id = await user_config.home()
                 except LookupError:
                     pass
-                if not home_id and guild:
-                    guild_config = self.cog.config.guild(guild)
+                if not home_id and _guild:
+                    guild_config = self.cog.config.guild(_guild)
                     home_id = await guild_config.home()
                 if not home_id:
                     home_id = await self.cog.config.home()
         if home_id or isinstance(query, int) or query.isnumeric():
             place_id = home_id or query
             response = await self.cog.api.get_places(int(place_id))
-        elif guild:
-            guild_config = self.cog.config.guild(guild)
+        elif _guild:
+            guild_config = self.cog.config.guild(_guild)
             places = await guild_config.places()
             if abbrev in places:
                 response = await self.cog.api.get_places(places[abbrev])
