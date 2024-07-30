@@ -4,7 +4,7 @@ from typing import Union
 from pyinaturalist.models import Place
 
 from .converters.base import QuotedContextMemberConverter
-from .utils import get_valid_user_config
+from .utils import get_home_server, get_valid_user_config
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 
@@ -23,21 +23,7 @@ class INatPlaceTable:
         response = None
         home_id = None
 
-        _guild = guild
-        if not _guild and user:
-            try:
-                user_config = await get_valid_user_config(self.cog, user, anywhere=True)
-                server_id = await user_config.server()
-                _guild = next(
-                    (
-                        server
-                        for server in self.cog.bot.guilds
-                        if server.id == server_id
-                    ),
-                    None,
-                )
-            except LookupError:
-                pass
+        _guild = guild or await get_home_server(self.cog, user)
         if isinstance(query, str):
             abbrev = query.lower()
             if abbrev == "home" and user:

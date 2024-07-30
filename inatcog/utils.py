@@ -199,3 +199,20 @@ async def get_lang(
     """Get configured preferred language for user."""
     dronefly_config = await get_dronefly_user_config(ctx, user, anywhere)
     return dronefly_config.get(COG_TO_CORE_USER_KEY["lang"])
+
+
+async def get_home_server(
+    cog: commands.Cog,
+    user: Union[discord.Member, discord.User],
+) -> discord.Guild:
+    guild = None
+    try:
+        user_config = await get_valid_user_config(cog, user, anywhere=True)
+        server_id = await user_config.server()
+        guild = next(
+            (server for server in cog.bot.guilds if server.id == server_id),
+            None,
+        )
+    except LookupError:
+        pass
+    return guild
