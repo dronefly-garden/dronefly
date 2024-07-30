@@ -42,19 +42,24 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known.
 
-        `Aliases: [p]who`
+        `Aliases: [p]me, [p]who`
 
         First characters of the nickname or username are matched provided that user is cached by the server (e.g. if they were recently active).
-        Otherwise, the nickname or username must be exact. If there is more than one username that exactly matches, append '#' plus the 4-digit discriminator to disambiguate.
+        Otherwise, the nickname or username must be exact.
 
         Examples:
 
-        `[p]user Syn`
-          matches `SyntheticBee#4951` if they spoke recently.
-        `[p]user SyntheticBee`
-          matches `SyntheticBee#4951` even if not recently active, assuming there is only one `SyntheticBee`.
-        `[p]user SyntheticBee#4951`
-          matches `SyntheticBee#4951` even if not recently active.
+        `[p]me`
+          Matches yourself.
+
+        Assuming a user is on the server with nickname `benarmstrong` and username `syntheticbee`:
+
+        `[p]user syntheticbee`
+          Exactly matches the username `syntheticbee` even if not recently active.
+        `[p]user ben`
+          May match syntheticbee by their nickname if they spoke recently.
+        `[p]user syn`
+          May match syntheticbee by their username if they spoke recently.
 
         If the server has defined any event_projects, then observations, species, & leaf taxa stats for each project are shown.
         Leaf taxa are explained here:
