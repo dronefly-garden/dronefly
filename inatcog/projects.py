@@ -3,6 +3,9 @@ from typing import Union
 
 from pyinaturalist.models import Project
 
+from .converters.base import QuotedContextMemberConverter
+from .utils import get_home_server
+
 
 class UserProject(Project):
     """A collection project for observations by specific users.
@@ -100,19 +103,25 @@ class INatProjectTable:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_project(self, guild, query: Union[int, str]):
+    async def get_project(
+        self,
+        guild,
+        query: Union[int, str],
+        user: QuotedContextMemberConverter = None,
+    ):
         """Get project by guild abbr or via id#/keyword lookup in API."""
         project = None
         response = None
         abbrev = None
 
+        _guild = guild or await get_home_server(self.cog, user)
         if isinstance(query, str):
             abbrev = query.lower()
         if isinstance(query, int) or query.isnumeric():
             project_id = query
             response = await self.cog.api.get_projects(int(project_id))
-        if guild and abbrev:
-            guild_config = self.cog.config.guild(guild)
+        if _guild and abbrev:
+            guild_config = self.cog.config.guild(_guild)
             projects = await guild_config.projects()
             if abbrev in projects:
                 response = await self.cog.api.get_projects(projects[abbrev])
