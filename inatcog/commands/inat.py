@@ -15,6 +15,10 @@ from inatcog.converters.base import InheritableBoolConverter, ServerScopeConvert
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
 
+# ToDo: make this configurable:
+# - currently only contains iNaturalist and Dronefly server ids
+HUB_SERVERS = [525711945270296587, 615263302485803019]
+
 LISTEN_VALUE = {
     True: "enabled in channels and threads",
     False: "disabled",
@@ -915,6 +919,54 @@ class CommandsInat(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         prefixes = await config.bot_prefixes()
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
+
+    @inat_set.command(name="server")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_server(self, ctx, server_id: int):
+        """Set this server as the satellite of an iNat hub server."""
+        bot = self.bot.user.name
+        if ctx.guild.id in HUB_SERVERS:
+            await ctx.send(
+                "This server is already an iNat hub server so cannot use another server as its hub."
+            )
+            return
+        hub_server = None
+        if server_id in HUB_SERVERS:
+            hub_server = next(
+                (server for server in ctx.bot.guilds if server.id == server_id),
+                None,
+            )
+        if not hub_server:
+            await ctx.send(
+                f"That `server_id` is not a hub server where {bot} is a member."
+            )
+            return
+        config = self.config.guild(ctx.guild)
+        await config.server.set(hub_server.id)
+        await ctx.send(
+            f"{bot} will use {hub_server.name} as this satellite server's hub server."
+        )
+
+    @inat_show.command(name="server")
+    async def show_server(self, ctx):
+        """Show iNat hub server if set."""
+        if ctx.guild.id in HUB_SERVERS:
+            await ctx.send("This server is an iNat hub server.")
+            return
+        config = self.config.guild(ctx.guild)
+        server_id = await config.server()
+        if not server_id:
+            await ctx.send("This server does not have an iNat hub server set.")
+            return
+        server_name = f"Unknown server (`{server_id}`)"
+        if server_id in HUB_SERVERS:
+            hub_server = next(
+                (server for server in ctx.bot.guilds if server.id == server_id),
+                None,
+            )
+            if hub_server:
+                server_name = f"{hub_server.name} (`{hub_server.id}`)"
+        await ctx.send(f"This server has its iNat hub server set to: {server_name}")
 
     @inat_set.command(name="home")
     @checks.admin_or_permissions(manage_messages=True)
