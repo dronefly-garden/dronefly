@@ -4,7 +4,8 @@ from typing import Union
 from pyinaturalist.models import Place
 
 from .converters.base import QuotedContextMemberConverter
-from .utils import get_home_server, get_valid_user_config
+from .constants import HUB_SERVERS
+from .utils import get_home_server, get_hub_server, get_valid_user_config
 
 RESERVED_PLACES = ["home", "none", "clear", "all", "any"]
 
@@ -22,6 +23,14 @@ class INatPlaceTable:
         place = None
         response = None
         home_id = None
+
+        async def _get_place(guild, abbrev):
+            response = None
+            guild_config = self.cog.config.guild(guild)
+            places = await guild_config.places()
+            if abbrev in places:
+                response = await self.cog.api.get_places(places[abbrev])
+            return response
 
         _guild = guild or await get_home_server(self.cog, user)
         if isinstance(query, str):
@@ -43,10 +52,11 @@ class INatPlaceTable:
             place_id = home_id or query
             response = await self.cog.api.get_places(int(place_id))
         elif _guild:
-            guild_config = self.cog.config.guild(_guild)
-            places = await guild_config.places()
-            if abbrev in places:
-                response = await self.cog.api.get_places(places[abbrev])
+            response = await _get_place(_guild, abbrev)
+            if not response and _guild.id not in HUB_SERVERS:
+                hub_server = await get_hub_server(self.cog, _guild)
+                if hub_server:
+                    response = await _get_place(hub_server, abbrev)
 
         if not response:
             response = await self.cog.api.get_places(

@@ -216,3 +216,18 @@ async def get_home_server(
     except LookupError:
         pass
     return guild
+
+
+async def get_hub_server(
+    cog: commands.Cog,
+    guild: discord.Guild,
+) -> discord.Guild:
+    hub_server = None
+    guild_config = cog.config.guild(guild)
+    if guild_config:
+        server_id = await guild_config.server()
+        hub_server = next(
+            (server for server in cog.bot.guilds if server.id == server_id),
+            None,
+        )
+    return hub_server
