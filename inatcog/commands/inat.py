@@ -11,13 +11,10 @@ from redbot.core.utils.chat_formatting import pagify
 
 from dronefly.discord.embeds import make_embed
 
+from inatcog.constants import HUB_SERVERS
 from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
-
-# ToDo: make this configurable:
-# - currently only contains iNaturalist and Dronefly server ids
-HUB_SERVERS = [525711945270296587, 615263302485803019]
 
 LISTEN_VALUE = {
     True: "enabled in channels and threads",
@@ -632,6 +629,18 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await config.bot_prefixes.clear()
 
         await ctx.send("Server ignored bot prefixes cleared.")
+
+    @inat_clear.command(name="server")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def clear_server(self, ctx):
+        """Clear iNat hub server."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.server.clear()
+
+        await ctx.send("iNat hub server cleared.")
 
     @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
