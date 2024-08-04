@@ -4,7 +4,7 @@ from typing import Union
 from pyinaturalist.models import Project
 
 from .converters.base import QuotedContextMemberConverter
-from .utils import get_home_server
+from .utils import get_home_server, get_hub_server
 
 
 class UserProject(Project):
@@ -114,17 +114,26 @@ class INatProjectTable:
         response = None
         abbrev = None
 
+        async def _get_project_abbrev(guild, abbrev):
+            response = None
+            guild_config = self.cog.config.guild(guild)
+            projects = await guild_config.projects()
+            if abbrev in projects:
+                response = await self.cog.api.get_projects(projects[abbrev])
+            return response
+
         _guild = guild or await get_home_server(self.cog, user)
         if isinstance(query, str):
             abbrev = query.lower()
         if isinstance(query, int) or query.isnumeric():
             project_id = query
             response = await self.cog.api.get_projects(int(project_id))
-        if _guild and abbrev:
-            guild_config = self.cog.config.guild(_guild)
-            projects = await guild_config.projects()
-            if abbrev in projects:
-                response = await self.cog.api.get_projects(projects[abbrev])
+        elif _guild and abbrev:
+            response = await _get_project_abbrev(_guild, abbrev)
+            if not response:
+                hub_server = await get_hub_server(self.cog, _guild)
+                if hub_server:
+                    response = await _get_project_abbrev(hub_server, abbrev)
 
         if not response:
             response = await self.cog.api.get_projects("autocomplete", q=query)

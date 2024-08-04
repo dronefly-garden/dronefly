@@ -9,7 +9,7 @@ from dronefly.core.commands import Context as DroneflyContext
 from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands
 
-from .constants import COG_NAME
+from .constants import COG_NAME, HUB_SERVERS
 
 COG_TO_CORE_USER_KEY = {
     "inat_user_id": "inat_user_id",
@@ -222,6 +222,9 @@ async def get_hub_server(
     cog: commands.Cog,
     guild: discord.Guild,
 ) -> discord.Guild:
+    if guild.id in HUB_SERVERS:
+        return None
+
     hub_server = None
     guild_config = cog.config.guild(guild)
     if guild_config:
