@@ -15,7 +15,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
-from ..utils import get_home_server, has_valid_user_config
+from ..utils import get_home_server, get_hub_server, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -39,12 +39,18 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             guild = ctx.guild or await get_home_server(self, ctx.author)
             if guild:
                 guild_config = self.config.guild(guild)
-                places = await guild_config.places()
+                places = await guild_config.places() or {}
+                hub_server = await get_hub_server(ctx.cog, guild)
+                if hub_server:
+                    hub_config = self.config.guild(hub_server)
+                    hub_places = await hub_config.places()
+                    if hub_places:
+                        places |= hub_places
                 place_abbrevs = [
                     abbrev for abbrev in places if places[abbrev] == place.id
                 ]
                 if place_abbrevs:
-                    abbrevs = ", ".join(place_abbrevs)
+                    abbrevs = ", ".join(sorted(place_abbrevs))
                 else:
                     abbrevs = "*none*"
                     can_add_places = await has_valid_user_config(
@@ -95,8 +101,15 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         guild = ctx.guild or await get_home_server(self, ctx.author)
         if not guild:
             return
-        config = self.config.guild(guild)
-        places = await config.places()
+        guild_config = self.config.guild(guild)
+        places = await guild_config.places()
+        hub_server = await get_hub_server(ctx.cog, guild)
+        hub_places = {}
+        if hub_server:
+            hub_config = self.config.guild(hub_server)
+            if hub_config:
+                hub_places = await hub_config.places()
+        places |= hub_places
         result_pages = []
 
         # Prefetch all uncached places, 500 at a time
