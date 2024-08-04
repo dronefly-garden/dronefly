@@ -17,7 +17,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
-from ..utils import get_home_server, has_valid_user_config
+from ..utils import get_home_server, get_hub_server, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -51,7 +51,12 @@ class CommandsProject(INatEmbeds, MixinMeta):
             guild = ctx.guild or await get_home_server(self, ctx.author)
             if guild:
                 guild_config = self.config.guild(guild)
-                projects = await guild_config.projects()
+                projects = await guild_config.projects() or {}
+                hub_server = await get_hub_server(ctx.cog, guild)
+                if hub_server:
+                    hub_config = self.config.guild(hub_server)
+                    hub_projects = await hub_config.projects() or {}
+                    projects |= hub_projects
                 proj_abbrevs = [
                     abbrev for abbrev in projects if projects[abbrev] == project.id
                 ]
@@ -107,7 +112,14 @@ class CommandsProject(INatEmbeds, MixinMeta):
         if not guild:
             return
         config = self.config.guild(guild)
-        projects = await config.projects()
+        projects = await config.projects() or {}
+        hub_server = await get_hub_server(ctx.cog, guild)
+        if hub_server:
+            hub_config = self.config.guild(hub_server)
+            if hub_config:
+                hub_projects = await hub_config.projects() or {}
+                projects |= hub_projects
+
         result_pages = []
 
         # Prefetch all uncached projects, 10 at a time
