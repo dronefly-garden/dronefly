@@ -43,9 +43,8 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                 hub_server = await get_hub_server(ctx.cog, guild)
                 if hub_server:
                     hub_config = self.config.guild(hub_server)
-                    hub_places = await hub_config.places()
-                    if hub_places:
-                        places |= hub_places
+                    hub_places = await hub_config.places() or {}
+                    places |= hub_places
                 place_abbrevs = [
                     abbrev for abbrev in places if places[abbrev] == place.id
                 ]
@@ -102,14 +101,13 @@ class CommandsPlace(INatEmbeds, MixinMeta):
         if not guild:
             return
         guild_config = self.config.guild(guild)
-        places = await guild_config.places()
+        places = await guild_config.places() or {}
         hub_server = await get_hub_server(ctx.cog, guild)
-        hub_places = {}
         if hub_server:
             hub_config = self.config.guild(hub_server)
             if hub_config:
-                hub_places = await hub_config.places()
-        places |= hub_places
+                hub_places = await hub_config.places() or {}
+                places |= hub_places
         result_pages = []
 
         # Prefetch all uncached places, 500 at a time
