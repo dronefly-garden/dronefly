@@ -111,6 +111,7 @@ class INatCog(
             event_projects={},
             places={},
             home=97394,  # North America
+            server=None,
             projects={},
             project_emojis={},  # deprecated
         )
