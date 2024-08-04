@@ -216,7 +216,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         • If the life list is for one user, the title links to it.
         • Buttons to change `per` details and taxon root:
-          • :leaves: toggles alphabetial list of leaf taxa.
+          • :leaves: change to alphabetical list of child taxa, then leaf taxa, and back to any taxa.
           • :arrow_up_down: changes rank detail level: main (default), any, or selected taxon.
           • :top: toggles selected taxon as the tree root.
         • Buttons to change taxon row details:
@@ -253,7 +253,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     )
                 query_response = await self.query.get(ctx, _query)
                 per_rank = _query.per or "main"
-                if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
+                if per_rank not in [*RANK_KEYWORDS, "child", "leaf", "main", "any"]:
                     raise BadArgument(
                         "Specify `per <rank-or-keyword>`. "
                         f"See `{ctx.clean_prefix}help life` for details."

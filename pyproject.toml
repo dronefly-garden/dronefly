@@ -16,9 +16,9 @@ readme = "README.md"
 python = ">=3.8.1,<3.12"
 Red-DiscordBot = "^3.5.10"
 #dronefly-core = "=0.3.9.dev0"
-dronefly-core = { git = "https://github.com/dronefly-garden/dronefly-core", rev = "0940ab6da1a1ee9b2bb388789e0db3722d5e5b16" }
+dronefly-core = { git = "https://github.com/dronefly-garden/dronefly-core", rev = "e535fd42d8da19c6425c0179e52c14dd298313b4" }
 #dronefly-discord = "=0.1.5.pre0"
-dronefly-discord = { git = "https://github.com/dronefly-garden/dronefly-discord", rev = "e213bc16588f2204d179ccc42f4b83d82545b29d" }
+dronefly-discord = { git = "https://github.com/dronefly-garden/dronefly-discord", rev = "aa346f44355ce5207845779e063e66f2bb45ca32" }
 ebird-api = "^3.0.6"
 filelock = "^3.13.3"
 timeago = "^1.0.15"
