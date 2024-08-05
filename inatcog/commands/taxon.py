@@ -13,7 +13,9 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.constants import TRACHEOPHYTA_ID
+from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
+from dronefly.discord.menus import TaxonListMenu
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
@@ -24,6 +26,7 @@ from ..embeds.common import (
 )
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
+from ..menus.inat import TaxonListSource
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 
@@ -74,6 +77,66 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
+
+    @taxon.command(name="list")
+    @use_client
+    async def taxon_list(self, ctx, *, query: Optional[str]):
+        """List a taxon's children.
+
+        - *Taxon query terms* match a single taxon to display.
+        - *Reply* to another display to display its taxon.
+        - The *query* is optional when that display contains a taxon.
+        **Related help topics:**
+        - `[p]taxon_query` for *taxon query* terms
+        - `[p]help s taxa` to search and browse matching taxa
+        """
+        error_msg = None
+        msg = None
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+            if not query_response:
+                return
+            try:
+                per_rank = "child"
+                short_description = "Children"
+                taxon = query_response.taxon
+                if not taxon.children:
+                    taxon = await ctx.inat_client.taxa.populate(taxon)
+                if not taxon.children:
+                    raise LookupError(f"{taxon.name} has no child taxa")
+                taxon_list = [taxon, *taxon.children]
+                per_page = 10
+                sort_by = _query.sort_by or None
+                if sort_by not in [None, "obs", "name"]:
+                    raise BadArgument(
+                        "Specify `sort by obs` or `sort by name` (default)"
+                        f"See `{ctx.clean_prefix}help taxon list` for details."
+                    )
+                order = _query.order or None
+                taxon_list_formatter = TaxonListFormatter(
+                    taxon_list,
+                    per_rank,
+                    query_response,
+                    with_taxa=True,
+                    per_page=per_page,
+                    sort_by=sort_by,
+                    order=order,
+                    short_description=short_description,
+                )
+                await TaxonListMenu(
+                    source=TaxonListSource(taxon_list_formatter),
+                    delete_message_after=False,
+                    clear_reactions_after=True,
+                    timeout=60,
+                    cog=self,
+                    page_start=0,
+                ).start(ctx=ctx)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
+        else:
+            if msg:
+                await add_reactions_with_cancel(ctx, msg, [])
 
     @taxon.command(name="map")
     async def taxon_map(self, ctx, *, taxa_list):

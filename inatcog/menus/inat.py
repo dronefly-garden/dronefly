@@ -23,7 +23,9 @@ class TaxonListSource(CoreTaxonListSource):
         ctx = menu.ctx
         ctx.selected = selected
         query_response = self.formatter.query_response
-        embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
+        embed = make_embed(
+            title=f"{self.formatter.short_description} {query_response.obs_query_description()}"
+        )
         if self._url:
             embed.url = self._url
         embed.description = formatter.format_page(menu.current_page, ctx.selected)
