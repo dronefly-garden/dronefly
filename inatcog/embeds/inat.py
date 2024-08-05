@@ -16,12 +16,11 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_names,
     format_user_link,
-    LifeListFormatter,
     ObservationFormatter,
     QualifiedTaxonFormatter,
     TaxonFormatter,
 )
-from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
+from dronefly.core.utils import obs_url_from_v1
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -575,18 +574,6 @@ class INatEmbeds(MixinMeta):
                 )
             return summary_counts
         return ""
-
-    def make_life_list_embed(self, formatter: LifeListFormatter):
-        """Return embed for life list."""
-        query_response = formatter.query_response
-        embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
-        if query_response.user:
-            embed.url = lifelists_url_from_query_response(query_response)
-        embed.description = formatter.format_page(0)
-        last_page = formatter.last_page() + 1
-        if last_page > 1:
-            embed.set_footer(text=f"Page 1/{last_page}")
-        return embed
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""

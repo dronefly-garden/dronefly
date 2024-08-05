@@ -7,7 +7,7 @@ from typing import Optional
 import discord
 from redbot.vendored.discord.ext import menus
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.discord.menus import LifeListMenu, LifeListSource as CoreLifeListSource
+from dronefly.discord.menus import TaxonListMenu, TaxonListSource as CoreTaxonListSource
 
 from ..embeds.common import make_embed
 
@@ -17,9 +17,9 @@ ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 
 
-class LifeListSource(CoreLifeListSource):
-    def format_page(self, menu: LifeListMenu, page, selected: Optional[int] = None):
-        formatter = self._life_list_formatter
+class TaxonListSource(CoreTaxonListSource):
+    def format_page(self, menu: TaxonListMenu, page, selected: Optional[int] = None):
+        formatter = self._taxon_list_formatter
         ctx = menu.ctx
         ctx.selected = selected
         query_response = self.formatter.query_response

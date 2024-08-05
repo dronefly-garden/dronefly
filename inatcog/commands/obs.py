@@ -8,12 +8,12 @@ import urllib.parse
 
 from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.formatters.generic import LifeListFormatter
+from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
-from dronefly.discord.menus import LifeListMenu
+from dronefly.discord.menus import TaxonListMenu
 from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -23,7 +23,7 @@ from ..common import grouper
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
-from ..menus.inat import LifeListSource
+from ..menus.inat import TaxonListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -265,6 +265,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     raise LookupError(
                         f"No life list {query_response.obs_query_description()}"
                     )
+                taxon_list = life_list.data
                 per_page = 10
                 sort_by = _query.sort_by or None
                 if sort_by not in [None, "obs", "name"]:
@@ -273,8 +274,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         f"See `{ctx.clean_prefix}help life` for details."
                     )
                 order = _query.order or None
-                life_list_formatter = LifeListFormatter(
-                    life_list,
+                taxon_list_formatter = TaxonListFormatter(
+                    taxon_list,
                     per_rank,
                     query_response,
                     with_taxa=True,
@@ -282,8 +283,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     sort_by=sort_by,
                     order=order,
                 )
-                await LifeListMenu(
-                    source=LifeListSource(life_list_formatter),
+                await TaxonListMenu(
+                    source=TaxonListSource(taxon_list_formatter),
                     delete_message_after=False,
                     clear_reactions_after=True,
                     timeout=60,
