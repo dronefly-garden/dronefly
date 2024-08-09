@@ -110,9 +110,6 @@ class INatProjectTable:
         user: QuotedContextMemberConverter = None,
     ):
         """Get project by guild abbr or via id#/keyword lookup in API."""
-        project = None
-        response = None
-        abbrev = None
 
         async def _get_project_abbrev(guild, abbrev):
             response = None
@@ -122,18 +119,22 @@ class INatProjectTable:
                 response = await self.cog.api.get_projects(projects[abbrev])
             return response
 
+        abbrev = query.lower() if isinstance(query, str) else None
+        project = None
+        response = None
         _guild = guild or await get_home_server(self.cog, user)
-        if isinstance(query, str):
-            abbrev = query.lower()
-        if isinstance(query, int) or query.isnumeric():
-            project_id = query
-            response = await self.cog.api.get_projects(int(project_id))
-        elif _guild and abbrev:
+
+        if _guild and abbrev:
             response = await _get_project_abbrev(_guild, abbrev)
             if not response:
                 hub_server = await get_hub_server(self.cog, _guild)
                 if hub_server:
                     response = await _get_project_abbrev(hub_server, abbrev)
+
+        if not response:
+            if isinstance(query, int) or query.isnumeric():
+                project_id = int(query)
+                response = await self.cog.api.get_projects(project_id)
 
         if not response:
             response = await self.cog.api.get_projects("autocomplete", q=query)
