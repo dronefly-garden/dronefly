@@ -145,17 +145,19 @@ async def get_dronefly_user_config(
 
     Supplies defaults from the guild and global configs if:
 
+    - a guild scope is established either by the context having a guild
+      or if the user has a server defined in their config
     - the Dronefly user is not known either globally or in the guild scope
       (i.e. anywhere=False vs. True)
     """
-    cog = get_cog(ctx)
-    global_config = cog.config
-    guild_config = cog.config.guild(ctx.guild) if ctx.guild else None
     try:
         user_config = await get_valid_user_config(ctx, user or ctx.author, anywhere)
         user_config_dict = await user_config.all()
     except LookupError:
         user_config_dict = None
+    guild = ctx.guild or user_config_dict.get("server")
+    global_config = ctx.config
+    guild_config = ctx.config.guild(guild) if guild else None
 
     dronefly_config = {}
     for cog_key, core_key in COG_TO_CORE_USER_KEY.items():
