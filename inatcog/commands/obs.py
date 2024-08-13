@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, Union
 import urllib.parse
 
-from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
+from dronefly.core.constants import RANK_KEYWORDS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
@@ -14,7 +14,7 @@ from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
 from dronefly.discord.menus import TaxonListMenu
-from pyinaturalist.models import Observation
+from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -274,9 +274,14 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         f"See `{ctx.clean_prefix}help life` for details."
                     )
                 order = _query.order or None
+                # TODO: support this lower down?
+                _per_rank = per_rank
+                if per_rank in RANK_EQUIVALENTS:
+                    _per_rank = RANK_EQUIVALENTS[per_rank]
+
                 taxon_list_formatter = TaxonListFormatter(
                     taxon_list,
-                    per_rank,
+                    _per_rank,
                     query_response,
                     with_taxa=True,
                     per_page=per_page,
