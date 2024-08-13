@@ -223,6 +223,9 @@ class INatEmbed(discord.Embed):
         content["obs_on"] = self.obs_on()
         content["obs_d1"] = self.obs_d1()
         content["obs_d2"] = self.obs_d2()
+        content["per"] = None
+        content["sort_by"] = None
+        content["order"] = None
         return content
 
     def query(self, query: Query = EMPTY_QUERY):  # Query
@@ -243,6 +246,11 @@ class INatEmbed(discord.Embed):
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
+        # TODO: support storing these in the embed and reading them out to
+        # merge with the query
+        per = query.per
+        sort_by = query.sort_by
+        order = query.order
         # If the query contains any date selectors, they supersede any that the
         # embed may have had (i.e. mixing and matching different date selectors
         # from the the base query and new query are likely not what the user meant)
@@ -283,6 +291,9 @@ class INatEmbed(discord.Embed):
             obs_on=obs_on,
             obs_d1=obs_d1,
             obs_d2=obs_d2,
+            per=per,
+            sort_by=sort_by,
+            order=order,
         )
         return query
 
