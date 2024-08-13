@@ -12,10 +12,11 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
 )
-from dronefly.core.constants import TRACHEOPHYTA_ID
+from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import TaxonListMenu
+from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
@@ -83,27 +84,36 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def taxon_list(self, ctx, *, query: Optional[str]):
         """List a taxon's children.
 
-        - *Taxon query terms* match a single taxon to display.
-        - *Reply* to another display to display its taxon.
-        - The *query* is optional when that display contains a taxon.
+        • *Taxon query terms* match a single taxon to display.
+        • Use `per <rank>` to show descendant taxon at that rank's level; `per child` is the default.
+        • *Reply* to another display to display its taxon.
+        • The *query* is optional when that display contains a taxon.
         **Related help topics:**
-        - `[p]taxon_query` for *taxon query* terms
-        - `[p]help s taxa` to search and browse matching taxa
-        """
+        • `[p]taxon_query` for *taxon query* terms
+        • `[p]help s taxa` to search and browse matching taxa
+        """  # noqa: E501
         error_msg = None
         msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if not query_response:
                 return
             try:
-                per_rank = "child"
-                short_description = "Children"
+                per_rank = _query.per or "child"
+                if per_rank not in [*RANK_KEYWORDS, "child"]:
+                    raise BadArgument(
+                        "Specify `per <rank-or-keyword>`. "
+                        f"See `{ctx.clean_prefix}help taxon list` for details."
+                    )
+                short_description = self.p.plural(per_rank).capitalize()
                 taxon = query_response.taxon
                 if not taxon.children:
                     taxon = await ctx.inat_client.taxa.populate(taxon)
                 if not taxon.children:
                     raise LookupError(f"{taxon.name} has no child taxa")
-                taxon_list = [taxon, *taxon.children]
+                taxon_list = [
+                    taxon,
+                    *[_taxon for _taxon in taxon.children if _taxon.is_active],
+                ]
                 per_page = 10
                 sort_by = _query.sort_by or None
                 if sort_by not in [None, "obs", "name"]:
@@ -111,10 +121,55 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         "Specify `sort by obs` or `sort by name` (default)"
                         f"See `{ctx.clean_prefix}help taxon list` for details."
                     )
+                _per_rank = per_rank
+                if per_rank != "child":
+                    _per_rank = RANK_EQUIVALENTS.get(per_rank) or per_rank
+                    rank_level = RANK_LEVELS[_per_rank]
+                    if rank_level >= taxon.rank_level:
+                        raise BadArgument(
+                            f"The rank `{per_rank}` is not lower than "
+                            f"the taxon rank: `{taxon.rank}`."
+                        )
+                    _children = [
+                        child for child in taxon_list if child.rank_level == rank_level
+                    ]
+                    _without_rank_ids = [
+                        child.id for child in taxon_list if child not in _children
+                    ]
+                    if len(_without_rank_ids) > 0:
+                        # One chance at retrieving the remaining children, i.e. if the
+                        # remainder (direct children - those at the specified rank level)
+                        # don't constitute a single page of results, then show children
+                        # instead.
+                        _descendants = await ctx.inat_client.taxa.search(
+                            taxon_id=_without_rank_ids,
+                            rank_level=rank_level,
+                            is_active=True,
+                            per_page=500,
+                        )
+                        # The choice of 2500 as our limit is arbitrary:
+                        # - will take 5 more API calls to satisfy
+                        # - encompasses the largest genera (e.g. Astragalus)
+                        # - meant to limit unreasonable sized queries so they don't make
+                        #   excessive API demands
+                        # - TODO: switch to using a local DB built from full taxonomy dump
+                        #   so we can lift this restriction
+                        if _descendants.count() > 2500:
+                            short_description = "Children"
+                            await ctx.send(
+                                f"Too many {self.p.plural(_per_rank)}. "
+                                "Listing children instead."
+                            )
+                            _per_rank = "child"
+                        else:
+                            taxon_list = [taxon, *_children, *_descendants.all()]
+                if _per_rank != "child":
+                    # List all ranks at the same level, not just the specified rank
+                    _per_rank = RANKS_FOR_LEVEL[rank_level]
                 order = _query.order or None
                 taxon_list_formatter = TaxonListFormatter(
                     taxon_list,
-                    per_rank,
+                    _per_rank,
                     query_response,
                     with_taxa=True,
                     per_page=per_page,

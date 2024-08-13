@@ -222,7 +222,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • Buttons to change taxon row details:
           • :regional_indicator_d: toggles direct taxon count.
           • :regional_indicator_c: toggles common names (user life list only).
-        • Use `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `per any` for maximum detail or `per <rank>` to show taxa at that rank's level.
         • Use `sort by obs` to sort by #obs instead of name.
         • Use `asc` or `desc` to sort ascending or descending.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
