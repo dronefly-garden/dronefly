@@ -140,32 +140,33 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         # remainder (direct children - those at the specified rank level)
                         # don't constitute a single page of results, then show children
                         # instead.
-                        _descendants = await ctx.inat_client.taxa.search(
-                            taxon_id=_without_rank_ids,
-                            rank_level=rank_level,
-                            is_active=True,
-                            per_page=500,
-                        )
-                        # The choice of 2500 as our limit is arbitrary:
-                        # - will take 5 more API calls to satisfy
-                        # - encompasses the largest genera (e.g. Astragalus)
-                        # - meant to limit unreasonable sized queries so they don't make
-                        #   excessive API demands
-                        # - TODO: switch to using a local DB built from full taxonomy dump
-                        #   so we can lift this restriction
-                        if _descendants.count() > 2500:
-                            short_description = "Children"
-                            await ctx.send(
-                                f"Too many {self.p.plural(_per_rank)}. "
-                                "Listing children instead."
+                        async with ctx.typing():
+                            _descendants = await ctx.inat_client.taxa.search(
+                                taxon_id=_without_rank_ids,
+                                rank_level=rank_level,
+                                is_active=True,
+                                per_page=500,
                             )
-                            _per_rank = "child"
-                        else:
-                            taxon_list = [
-                                taxon,
-                                *_children,
-                                *(await _descendants.async_all()),
-                            ]
+                            # The choice of 2500 as our limit is arbitrary:
+                            # - will take 5 more API calls to satisfy
+                            # - encompasses the largest genera (e.g. Astragalus)
+                            # - meant to limit unreasonable sized queries so they don't make
+                            #   excessive API demands
+                            # - TODO: switch to using a local DB built from full taxonomy dump
+                            #   so we can lift this restriction
+                            if _descendants.count() > 2500:
+                                short_description = "Children"
+                                await ctx.send(
+                                    f"Too many {self.p.plural(_per_rank)}. "
+                                    "Listing children instead."
+                                )
+                                _per_rank = "child"
+                            else:
+                                taxon_list = [
+                                    taxon,
+                                    *_children,
+                                    *(await _descendants.async_all()),
+                                ]
                 if _per_rank == "child":
                     short_description = "Children"
                 else:
