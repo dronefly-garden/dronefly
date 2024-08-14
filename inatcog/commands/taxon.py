@@ -162,7 +162,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                             )
                             _per_rank = "child"
                         else:
-                            taxon_list = [taxon, *_children, *_descendants.all()]
+                            taxon_list = [
+                                taxon,
+                                *_children,
+                                *(await _descendants.async_all()),
+                            ]
                 if _per_rank != "child":
                     # List all ranks at the same level, not just the specified rank
                     _per_rank = RANKS_FOR_LEVEL[rank_level]
