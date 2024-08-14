@@ -104,7 +104,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         "Specify `per <rank-or-keyword>`. "
                         f"See `{ctx.clean_prefix}help taxon list` for details."
                     )
-                short_description = self.p.plural(per_rank).capitalize()
                 taxon = query_response.taxon
                 if not taxon.children:
                     taxon = await ctx.inat_client.taxa.populate(taxon)
@@ -167,7 +166,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                                 *_children,
                                 *(await _descendants.async_all()),
                             ]
-                if _per_rank != "child":
+                if _per_rank == "child":
+                    short_description = "Children"
+                else:
+                    short_description = self.p.plural(_per_rank).capitalize()
                     # List all ranks at the same level, not just the specified rank
                     _per_rank = RANKS_FOR_LEVEL[rank_level]
                 order = _query.order or None
