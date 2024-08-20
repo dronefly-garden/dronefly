@@ -316,6 +316,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
+    @commands.command(name="reply", aliases=["replies"], hidden=True)
+    async def topic_reply(self, ctx):
+        """Convenient alias for 'describe reply' message command."""
+        await ctx.send_help(self.bot.get_command("describe reply"))
+
     @describe.command(name="advanced")
     async def describe_advanced(self, ctx):
         """\u200b*Advanced* query options via `opt`.
@@ -415,16 +420,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See `[p]help user add` if you're a server owner or mod.
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="reactions", aliases=["reaction"], hidden=True)
-    async def topic_reaction(self, ctx):
+    async def topic_reactions(self, ctx):
         """Convenient alias for 'describe reactions' message command."""
         await ctx.send_help(self.bot.get_command("describe reactions"))
-
-    @commands.command(name="reply", aliases=["replies"], hidden=True)
-    async def topic_reply(self, ctx):
-        """Convenient alias for 'describe reply' message command."""
-        await ctx.send_help(self.bot.get_command("describe reply"))
 
     @commands.group()
     async def inat(self, ctx):
