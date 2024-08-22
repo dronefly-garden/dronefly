@@ -876,14 +876,14 @@ dateparser = "^1.1.1"
 filelock = "^3.13.3"
 html2markdown = "^0.1.7"
 inflect = "^5.3.0"
-pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "12c04689c921a4d2e5cd4352c8e7c525e693b7f0"}
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "8b4f4c6d6b0f7799fcd3663ff2cc3148f34e3b85"}
 rich = ">=13.4"
 
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "c8a1fb38ba6ac6392960b4b0861b1b0076d1f2ae"
-resolved_reference = "c8a1fb38ba6ac6392960b4b0861b1b0076d1f2ae"
+reference = "35a1d06f5835b8618cf7431e320800c88cb2df36"
+resolved_reference = "35a1d06f5835b8618cf7431e320800c88cb2df36"
 
 [[package]]
 name = "dronefly-discord"
@@ -896,15 +896,15 @@ develop = false
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "c8a1fb38ba6ac6392960b4b0861b1b0076d1f2ae"}
+dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "35a1d06f5835b8618cf7431e320800c88cb2df36"}
 inflect = "^5.3.0"
-pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "12c04689c921a4d2e5cd4352c8e7c525e693b7f0"}
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "8b4f4c6d6b0f7799fcd3663ff2cc3148f34e3b85"}
 
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-discord"
-reference = "3e237798a07094f77dfa4d8c6752e8948941131c"
-resolved_reference = "3e237798a07094f77dfa4d8c6752e8948941131c"
+reference = "b77f639cc0859c6c5b2352b370180833df76d8c6"
+resolved_reference = "b77f639cc0859c6c5b2352b370180833df76d8c6"
 
 [[package]]
 name = "ebird-api"
@@ -1089,21 +1089,25 @@ test = ["flufl.flake8", "importlib-resources (>=1.3)", "jaraco.test (>=5.4)", "p
 
 [[package]]
 name = "importlib-resources"
-version = "6.4.0"
+version = "6.4.4"
 description = "Read resources from Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "importlib_resources-6.4.0-py3-none-any.whl", hash = "sha256:50d10f043df931902d4194ea07ec57960f66a80449ff867bfe782b4c486ba78c"},
-    {file = "importlib_resources-6.4.0.tar.gz", hash = "sha256:cdb2b453b8046ca4e3798eb1d84f3cce1446a0e8e7b5ef4efb600f19fc398145"},
+    {file = "importlib_resources-6.4.4-py3-none-any.whl", hash = "sha256:dda242603d1c9cd836c3368b1174ed74cb4049ecd209e7a1a0104620c18c5c11"},
+    {file = "importlib_resources-6.4.4.tar.gz", hash = "sha256:20600c8b7361938dc0bb2d5ec0297802e575df486f5a544fa414da65e13721f7"},
 ]
 
 [package.dependencies]
 zipp = {version = ">=3.1.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["jaraco.test (>=5.4)", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)", "zipp (>=3.17)"]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)"]
+cover = ["pytest-cov"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+enabler = ["pytest-enabler (>=2.2)"]
+test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "zipp (>=3.17)"]
+type = ["pytest-mypy"]
 
 [[package]]
 name = "inflect"
@@ -1165,21 +1169,21 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-ena
 
 [[package]]
 name = "jaraco-context"
-version = "5.3.0"
+version = "6.0.1"
 description = "Useful decorators and context managers"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jaraco.context-5.3.0-py3-none-any.whl", hash = "sha256:3e16388f7da43d384a1a7cd3452e72e14732ac9fe459678773a3608a812bf266"},
-    {file = "jaraco.context-5.3.0.tar.gz", hash = "sha256:c2f67165ce1f9be20f32f650f25d8edfc1646a8aeee48ae06fb35f90763576d2"},
+    {file = "jaraco.context-6.0.1-py3-none-any.whl", hash = "sha256:f797fc481b490edb305122c9181830a3a5b76d84ef6d1aef2fb9b47ab956f9e4"},
+    {file = "jaraco_context-6.0.1.tar.gz", hash = "sha256:9bae4ea555cf0b14938dc0aee7c9f32ed303aa20a3b73e7dc80111628792d1b3"},
 ]
 
 [package.dependencies]
 "backports.tarfile" = {version = "*", markers = "python_version < \"3.12\""}
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["portend", "pytest (>=6,!=8.1.1)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+test = ["portend", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [[package]]
 name = "jaraco-functools"
@@ -1892,11 +1896,11 @@ attrs = ">=21.2"
 keyring = ">=22.3"
 platformdirs = ">=2.6"
 python-dateutil = ">=2.0"
-python-forge = ">=18.6"
 requests = ">=2.25"
 requests-cache = ">=1.2"
 requests-ratelimiter = ">=0.5.1"
 rich = ">=10.9"
+setuptools = "^72.2.0"
 
 [package.extras]
 all = ["filelock (>2.0)", "ujson (>5.0)"]
@@ -1905,8 +1909,8 @@ docs = ["furo (>=2024.4,<2025.0)", "ipython (>=8.12,<9.0)", "linkify-it-py (>=2.
 [package.source]
 type = "git"
 url = "https://github.com/pyinat/pyinaturalist"
-reference = "12c04689c921a4d2e5cd4352c8e7c525e693b7f0"
-resolved_reference = "12c04689c921a4d2e5cd4352c8e7c525e693b7f0"
+reference = "8b4f4c6d6b0f7799fcd3663ff2cc3148f34e3b85"
+resolved_reference = "8b4f4c6d6b0f7799fcd3663ff2cc3148f34e3b85"
 
 [[package]]
 name = "pylint"
@@ -2024,21 +2028,6 @@ files = [
 six = ">=1.5"
 
 [[package]]
-name = "python-forge"
-version = "18.6.0"
-description = "forge (python signatures)"
-optional = false
-python-versions = "*"
-files = [
-    {file = "python_forge-18.6.0-py35-none-any.whl", hash = "sha256:bf91f9a42150d569c2e9a0d90ab60a8cbed378bdf185e5120532a3481067395c"},
-]
-
-[package.extras]
-dev = ["coverage", "mypy", "pylint", "pytest", "sphinx", "sphinx-autodoc-typehints", "sphinx-paramlinks"]
-docs = ["docutils", "requests", "sphinx (>=1.7.4)", "sphinx-paramlinks"]
-testing = ["coverage", "mypy", "pylint", "pytest"]
-
-[[package]]
 name = "python-slugify"
 version = "8.0.4"
 description = "A Python slugify application that also handles Unicode"
@@ -2069,13 +2058,13 @@ files = [
 
 [[package]]
 name = "pywin32-ctypes"
-version = "0.2.2"
+version = "0.2.3"
 description = "A (partial) reimplementation of pywin32 using ctypes/cffi"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pywin32-ctypes-0.2.2.tar.gz", hash = "sha256:3426e063bdd5fd4df74a14fa3cf80a0b42845a87e1d1e81f6549f9daec593a60"},
-    {file = "pywin32_ctypes-0.2.2-py3-none-any.whl", hash = "sha256:bf490a1a709baf35d688fe0ecf980ed4de11d2b3e37b51e5442587a75d9957e7"},
+    {file = "pywin32-ctypes-0.2.3.tar.gz", hash = "sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755"},
+    {file = "pywin32_ctypes-0.2.3-py3-none-any.whl", hash = "sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8"},
 ]
 
 [[package]]
@@ -2537,6 +2526,22 @@ cryptography = ">=2.0"
 jeepney = ">=0.6"
 
 [[package]]
+name = "setuptools"
+version = "72.2.0"
+description = "Easily download, build, install, upgrade, and uninstall Python packages"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "setuptools-72.2.0-py3-none-any.whl", hash = "sha256:f11dd94b7bae3a156a95ec151f24e4637fb4fa19c878e4d191bfb8b2d82728c4"},
+    {file = "setuptools-72.2.0.tar.gz", hash = "sha256:80aacbf633704e9c8bfa1d99fa5dd4dc59573efcf9e4042c13d3bcef91ac2ef9"},
+]
+
+[package.extras]
+core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.text (>=3.7)", "more-itertools (>=8.8)", "ordered-set (>=3.1.1)", "packaging (>=24)", "platformdirs (>=2.6.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "mypy (==1.11.*)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf", "pytest-ruff (<0.4)", "pytest-ruff (>=0.2.1)", "pytest-ruff (>=0.3.2)", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -2762,13 +2767,13 @@ files = [
 
 [[package]]
 name = "tomlkit"
-version = "0.13.0"
+version = "0.13.2"
 description = "Style preserving TOML library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tomlkit-0.13.0-py3-none-any.whl", hash = "sha256:7075d3042d03b80f603482d69bf0c8f345c2b30e41699fd8883227f89972b264"},
-    {file = "tomlkit-0.13.0.tar.gz", hash = "sha256:08ad192699734149f5b97b45f1f18dad7eb1b6d16bc72ad0c2335772650d7b72"},
+    {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
+    {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
 
 [[package]]
@@ -3097,4 +3102,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12"
-content-hash = "7be827c22912f2076ca0494bc684a014e300b25a0e70ee42936dee4754d604c7"
+content-hash = "03343631723fdc961dcd9061136127c2a0fce6176311c747e9b28b938c39c41f"
