@@ -18,7 +18,7 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
 contextlib2==21.6.0
-cryptography==42.0.8
+cryptography==43.0.1
 css-html-js-minify==2.5.5
 dateparser==1.2.0
 dill==0.3.8
