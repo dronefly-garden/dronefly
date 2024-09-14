@@ -200,13 +200,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • See `[p]query` and `[p]taxon_query` for help with *query* terms.
 
         e.g.
+        `[p]topids bees`
+        → Top identifiers by number of bee observations they identified for others
+        `[p]topids in prj arthropod ecology`
+        → Top identifiers by number of observations they identified for others in the Arthropod Ecology in Action project
+        `[p]topids arthropods from nova scotia`
+        → Top identifiers by number of arthropod observations they identified for others from Nova Scotia
         ```
-        [p]topids bees
-              -> Top identifiers by number of bee observations they identified for others
-        [p]topids in prj arthropod ecology
-              -> Top identifiers by number of observations they identified for others in the Arthropod Ecology in Action project
-        [p]topids arthropods from nova scotia
-              -> Top identifiers by number of arthropod observations they identified for others from Nova Scotia
         """  # noqa: E501
         await self._tabulate_query(ctx, query, view="ids")
 
@@ -219,13 +219,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • See `[p]query` and `[p]taxon_query` for help with *query* terms.
 
         e.g.
-        ```
-        [p]topobs bees
-              -> Top observers by observation count of bees
-        [p]topobs in prj arthropod ecology
-              -> Top observers by observation count of observations in the Arthropod Ecology in Action project
-        [p]topobs arthropods from nova scotia
-              -> Top observers by observation count of arthropods from Nova Scotia
+        `[p]topobs bees`
+        → Top observers of bees
+        `[p]topobs in prj arthropod ecology`
+        → Top observers in the Arthropod Ecology in Action project
+        `[p]topobs arthropods from nova scotia`
+        → Top observers of arthropods from Nova Scotia
         """  # noqa: E501
         await self._tabulate_query(ctx, query)
 
@@ -238,13 +237,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
         • See `[p]query` and `[p]taxon_query` for help with *query* terms.
 
         e.g.
-        ```
-        [p]topspp bees
-              -> Top observers by species count of bees
-        [p]topspp in prj arthropod ecology
-              -> Top observers by species count of observations in the Arthropod Ecology in Action project
-        [p]topspp arthropods from nova scotia
-              -> Top observers by species count of arthropods from Nova Scotia
+        `[p]topspp bees`
+        → Top observers by spp of bees
+        `[p]topspp in prj arthropod ecology`
+        → Top observers by spp in Arthropod Ecology in Action project
+        `[p]topspp arthropods from nova scotia`
+        → Top observers by spp of arthropods from NS
         """  # noqa: E501
         await self._tabulate_query(ctx, query, view="spp")
 
