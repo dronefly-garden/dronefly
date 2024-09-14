@@ -11,6 +11,7 @@ from redbot.core.utils.chat_formatting import pagify
 
 from dronefly.discord.embeds import make_embed
 
+from inatcog.constants import HUB_SERVERS
 from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
 from inatcog.embeds.inat import INatEmbed, INatEmbeds
 from inatcog.interfaces import MixinMeta
@@ -102,8 +103,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         • `opt month=#` `opt year=#` `opt day=#` - observed this month, year, or day of month (use commas if more than one)
 
         **Sort order:**
-        • newest to oldest added is the default
-        • `reverse` - oldest to newest added
+        • newest to oldest added is the default (i.e. `desc` = descending)
+        • `asc` - oldest to newest added (i.e. ascending)
         • `newest` - newest to oldest observed
         • `oldest` - oldest to newest observed
 
@@ -179,12 +180,9 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`unseen`**`  not by me from home`
         **`rg`**`      opt quality_grade=research`
         **`nid`**`     opt quality_grade=needs_id`
-        **`oldest`**`  opt order=asc`
-        **`      `**`      order_by=observed_on`
-        **`newest`**`  opt order=desc`
-        **`      `**`      order_by=observed_on`
-        **`reverse`**` opt order_by=asc`
-        **`faves`**`   opt popular order_by=votes`
+        **`oldest`**`  sort by observed asc`
+        **`newest`**`  sort by observed desc`
+        **`faves`**`   sort by votes opt popular`
         **`spp`**`     opt hrank=species` (alias `species`)
         """  # noqa: E501
         await ctx.send_help()
@@ -318,6 +316,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await ctx.send_help()
 
+    @commands.command(name="reply", aliases=["replies"], hidden=True)
+    async def topic_reply(self, ctx):
+        """Convenient alias for 'describe reply' message command."""
+        await ctx.send_help(self.bot.get_command("describe reply"))
+
     @describe.command(name="advanced")
     async def describe_advanced(self, ctx):
         """\u200b*Advanced* query options via `opt`.
@@ -417,16 +420,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See `[p]help user add` if you're a server owner or mod.
         """  # noqa: E501
+        await ctx.send_help()
 
     @commands.command(name="reactions", aliases=["reaction"], hidden=True)
-    async def topic_reaction(self, ctx):
+    async def topic_reactions(self, ctx):
         """Convenient alias for 'describe reactions' message command."""
         await ctx.send_help(self.bot.get_command("describe reactions"))
-
-    @commands.command(name="reply", aliases=["replies"], hidden=True)
-    async def topic_reply(self, ctx):
-        """Convenient alias for 'describe reply' message command."""
-        await ctx.send_help(self.bot.get_command("describe reply"))
 
     @commands.group()
     async def inat(self, ctx):
@@ -631,6 +630,18 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await config.bot_prefixes.clear()
 
         await ctx.send("Server ignored bot prefixes cleared.")
+
+    @inat_clear.command(name="server")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def clear_server(self, ctx):
+        """Clear iNat hub server."""
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.server.clear()
+
+        await ctx.send("iNat hub server cleared.")
 
     @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
@@ -918,6 +929,54 @@ class CommandsInat(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         prefixes = await config.bot_prefixes()
         await ctx.send(f"Other bot prefixes are: {repr(list(prefixes))}")
+
+    @inat_set.command(name="server")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_server(self, ctx, server_id: int):
+        """Set this server as the satellite of an iNat hub server."""
+        bot = self.bot.user.name
+        if ctx.guild.id in HUB_SERVERS:
+            await ctx.send(
+                "This server is already an iNat hub server so cannot use another server as its hub."
+            )
+            return
+        hub_server = None
+        if server_id in HUB_SERVERS:
+            hub_server = next(
+                (server for server in ctx.bot.guilds if server.id == server_id),
+                None,
+            )
+        if not hub_server:
+            await ctx.send(
+                f"That `server_id` is not a hub server where {bot} is a member."
+            )
+            return
+        config = self.config.guild(ctx.guild)
+        await config.server.set(hub_server.id)
+        await ctx.send(
+            f"{bot} will use {hub_server.name} as this satellite server's hub server."
+        )
+
+    @inat_show.command(name="server")
+    async def show_server(self, ctx):
+        """Show iNat hub server if set."""
+        if ctx.guild.id in HUB_SERVERS:
+            await ctx.send("This server is an iNat hub server.")
+            return
+        config = self.config.guild(ctx.guild)
+        server_id = await config.server()
+        if not server_id:
+            await ctx.send("This server does not have an iNat hub server set.")
+            return
+        server_name = f"Unknown server (`{server_id}`)"
+        if server_id in HUB_SERVERS:
+            hub_server = next(
+                (server for server in ctx.bot.guilds if server.id == server_id),
+                None,
+            )
+            if hub_server:
+                server_name = f"{hub_server.name} (`{hub_server.id}`)"
+        await ctx.send(f"This server has its iNat hub server set to: {server_name}")
 
     @inat_set.command(name="home")
     @checks.admin_or_permissions(manage_messages=True)

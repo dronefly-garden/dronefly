@@ -10,14 +10,14 @@ This guide has a number of sections aimed at introducing our new
 and existing users to Discord itself, the iNaturalist Discord Server,
 and its bots and channels.
 
-If you already know the :ref:`Discord Basics` and how to use Discord, you may
-wish to skip ahead to :ref:`Set Up Your Roles` and then the sections introducing you
-to :ref:`Participating` in the various channels on the server.
+If you already know the :ref:`guide_for_participants:Discord Basics` and how to use Discord, you may
+wish to skip ahead to :ref:`guide_for_participants:Set Up Your Roles` and then the sections introducing you
+to :ref:`guide_for_participants:Participating` in the various channels on the server.
 
-Once you're comfortable with all that, :ref:`Using the Discord Bots` addresses using 
+Once you're comfortable with all that, :ref:`guide_for_participants:Using the Discord Bots` addresses using 
 Dronefly and Dumbo, and is the largest and most technical section of the Guide.
 
-Finally, :ref:`Appendices` covers miscellaneous topics.
+Finally, :ref:`guide_for_participants:Appendices` covers miscellaneous topics.
 
 ==============
 Discord Basics
@@ -87,7 +87,7 @@ allows you to take a variety of actions, including:
 Invite People - Inviting friends and other naturalist professionals to join us (if you
 use this, create from #introductions)
 
-Notification Settings - Adjusting your notification settings (see :ref:`Appendix A - Notification Settings`)
+Notification Settings - Adjusting your notification settings (see :ref:`guide_for_participants:Appendix A - Notification Settings`)
 
 Privacy Settings - Allowing or prohibiting direct messages from other users
 
@@ -218,7 +218,7 @@ to post questions: https://forum.inaturalist.org/
 (Please use #bot-commands for status checks.)
 
 Participating - #id-help and #work-party (under iNat Stuff and Teams)
------------------------------------------------------------------
+---------------------------------------------------------------------
 
 Use the #id-help channel for:
 
@@ -271,7 +271,7 @@ Using the Discord Bots
 Access to the Discord bots is one of the great benefits of being on the
 server. Bots are primarily for obtaining information.
 
-There are several bots, most of which are instances of `Red Discord
+There are several bots, all of which are instances of `Red Discord
 Bot <https://github.com/Cog-Creators/Red-DiscordBot>`__, each with a
 different function. You can access the functions of the bots using the
 prefix specific to the bot:
@@ -279,19 +279,26 @@ prefix specific to the bot:
 `Dronefly <https://github.com/dronefly-garden/dronefly/>`__ (``,``) - Accesses
 iNaturalist and other naturalist-related web platforms.
 
-Dumbo (``-``) - For general purpose admin & info functions, not strictly
-nature-related (e.g. Twitter and Wikipedia).
+Dumbo (``-``) - For general purpose info & entertainment functions, not strictly
+nature-related (e.g. Trivia, Weather, Wikipedia).
 
 Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
 YouTube in voice channels.
 
-`Rythm <https://rythm.fm/>`_ (``!``) - Plays audio (e.g. music) from SoundCloud, Twitch, YouTube 
-and more in voice channels. 
+Polistes (``;``) - Server management bot. Mostly handles behind-the-scenes
+server operations. A few member-facing features are also provided through
+this bot, such as the role assignment menus and buttons.
 
-(CuckooBee (``/`` or ``c.``) is the development version of Dronefly, so if
-you’re not interested in bot development, you won’t need it. If you
-indicate that you’re interested in helping with bot testing, you may
-occasionally receive an invite to participate in testing features.)
+Two other bots are present for development and testing purposes. For the
+most part, you can ignore these unless you're involved as a Dronefly bot
+developer or tester.
+
+SeedWasp (``w,``) is the beta version of Dronefly. Some functions that
+will be available in the next version of Dronefly, such as slash-commands,
+are provided by this bot.
+
+CuckooBee (``c.``) is the development version of Dronefly. Occasionally,
+a tester may be asked to try new things on this bot instead of on Dronefly.
 
 |image14|
 
@@ -428,7 +435,7 @@ Search subcommands
 ``users`` - Search iNat users.
 
 Arrow reactions allow paging through pages of results. See
-:ref:`Appendix C - Search Result Icons` for icons.
+:ref:`guide_for_participants:Appendix C - Search Result Icons` for icons.
 
 |image69|
 
@@ -1153,151 +1160,6 @@ Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
 ``$volume``
 
 - Set the volume, 1% - 150%.
-
-Rythm commands
------------------
-
-Access help using ``!help``.
-
-Syntax: ``!play <query>``
-
-Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
-
-``!aliases``
-
-- List command aliases.
-
-``!clear``
-
-- Clears the queue.
-
-``!disconnect``
-
-- Disconnect the bot from the voice channel it is in.
-
-``!donate``
-
-- Info about donating to support Rythm!
-
-``!forward``
-
-- Forwards by a certain amount in the current track.
-
-``!info``
-
-- Info about Rythm!
-
-``!invite``
-
-- Links!
-
-``!join``
-
-- Summons the bot to your voice channel.
-
-``!leavecleanup``
-
-- Removes absent user's songs from the Queue.
-
-``!loop``
-
-- Loop the currently playing song.
-
-``!loopqueue``
-
-- Loops the whole queue.
-
-``!lyrics``
-
-- Gets the lyrics of the current playing song
-
-``!move``
-
-- Moves a certain song to the first position in the queue or to a chosen position
-
-``!np``
-
-- Shows what song the bot is currently playing.
-
-``!pause``
-
-- Pauses the currently playing track.
-
-``!ping``
-
-- Checks the bot's response time to Discord.
-
-``!play``
-
-- Plays a song with the given name or url.
-
-``!playskip``
-
-- Adds a song to the top of the queue then skips to it.
-
-``!playtop``
-
-- Like the play command, but queues from the top.
-
-``!queue``
-
-- View the queue. To view different pages, type the command with the specified page number after it (`queue 2`).
-
-``!remove``
-
-- Removes a certain entry from the queue.
-
-``!removedupes``
-
-- Removes duplicate songs from the queue.
-
-``!replay``
-
-- Reset the progress of the current song
-
-``!resume``
-
-- Resume paused music.
-
-``!rewind``
-
-- Rewinds by a certain amount in the current track.
-
-``!search``
-
-- Searches YouTube for results of a URL.
-
-``!seek``
-
-- Seeks to a certain point in the current track.
-
-``!settings``
-
-- Change Rythm's settings.
-
-``!shuffle``
-
-- Shuffles the queue.
-
-``!skip``
-
-- Skips the currently playing song.
-
-``!skipto``
-
-- Skips to a certain position in the queue.
-
-``!soundcloud``
-
-- Searches Soundcloud for a song
-
-``!stats``
-
-- Shows the stats of the bot.
-
-``!volume``
-
-- Check or change the current volume.
 
 ==========
 Appendices

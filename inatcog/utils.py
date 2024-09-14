@@ -9,7 +9,7 @@ from dronefly.core.commands import Context as DroneflyContext
 from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands
 
-from .constants import COG_NAME
+from .constants import COG_NAME, HUB_SERVERS
 
 COG_TO_CORE_USER_KEY = {
     "inat_user_id": "inat_user_id",
@@ -144,17 +144,22 @@ async def get_dronefly_user_config(
     """Return the config parameters for a Dronefly user.
 
     Supplies defaults from the guild and global configs if:
+
+    - a guild scope is established either by the context having a guild
+      or if the user has a server defined in their config
     - the Dronefly user is not known either globally or in the guild scope
       (i.e. anywhere=False vs. True)
     """
-    cog = get_cog(ctx)
-    global_config = cog.config
-    guild_config = cog.config.guild(ctx.guild) if ctx.guild else None
+    _user = user or ctx.author
     try:
-        user_config = await get_valid_user_config(ctx, user or ctx.author, anywhere)
+        user_config = await get_valid_user_config(ctx, _user, anywhere)
         user_config_dict = await user_config.all()
     except LookupError:
         user_config_dict = None
+    cog = get_cog(ctx)
+    guild = ctx.guild or await get_home_server(cog, _user)
+    global_config = cog.config
+    guild_config = cog.config.guild(guild) if guild else None
 
     dronefly_config = {}
     for cog_key, core_key in COG_TO_CORE_USER_KEY.items():
@@ -198,3 +203,38 @@ async def get_lang(
     """Get configured preferred language for user."""
     dronefly_config = await get_dronefly_user_config(ctx, user, anywhere)
     return dronefly_config.get(COG_TO_CORE_USER_KEY["lang"])
+
+
+async def get_home_server(
+    cog: commands.Cog,
+    user: Union[discord.Member, discord.User],
+) -> discord.Guild:
+    guild = None
+    try:
+        user_config = await get_valid_user_config(cog, user, anywhere=True)
+        server_id = await user_config.server()
+        guild = next(
+            (server for server in cog.bot.guilds if server.id == server_id),
+            None,
+        )
+    except LookupError:
+        pass
+    return guild
+
+
+async def get_hub_server(
+    cog: commands.Cog,
+    guild: discord.Guild,
+) -> discord.Guild:
+    if guild.id in HUB_SERVERS:
+        return None
+
+    hub_server = None
+    guild_config = cog.config.guild(guild)
+    if guild_config:
+        server_id = await guild_config.server()
+        hub_server = next(
+            (server for server in cog.bot.guilds if server.id == server_id),
+            None,
+        )
+    return hub_server

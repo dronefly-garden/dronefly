@@ -215,21 +215,26 @@ class INatTaxonQuery:
         """Query for one or more taxa and return paginator for matching taxa, if any.
 
         Notes:
+
         - In its original conception, this was used only for comma-delimited
           lists of taxon queries for map & related, or a list of taxon ancestor
           IDs. These had a small, definite number of elements (whatever the user
           typed, or all the ancestors of a taxon), were de-duplicated, and
           didn't need to be paginated.
+
         - We want to go one step further here and return multiple taxa, whether or
           not multiple were given as input:
+
             - The return is then a paginator for all matching taxa.
             - Which may be filtered in some fashion, e.g.
                 - All taxa matching the supplied name(s).
                 - For a given rank keyword.
             - And if there are no filters, then just all results matching the
               query.
+
         - The "rank" filter is baked into maybe_match_taxon_compound (I think)
           and needs to be pulled out of that.
+
             - In fact, most of that relates to selecting "one best" match,
               so really isn't needed here.
         """

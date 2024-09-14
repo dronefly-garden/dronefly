@@ -17,7 +17,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
-from ..utils import has_valid_user_config
+from ..utils import get_home_server, get_hub_server, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -35,7 +35,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
         - *abbreviation* defined with `[p]project add`; see `[p]help project add` for details.
         """
         try:
-            project = await self.project_table.get_project(ctx.guild, query)
+            project = await self.project_table.get_project(ctx.guild, query, ctx.author)
             embed = make_embed(
                 title=project.title,
                 url=project.url,
@@ -48,9 +48,15 @@ class CommandsProject(INatEmbeds, MixinMeta):
             if project.icon:
                 embed.set_thumbnail(url=project.icon)
             embed.add_field(name="Project number", value=project.id)
-            if ctx.guild:
-                guild_config = self.config.guild(ctx.guild)
-                projects = await guild_config.projects()
+            guild = ctx.guild or await get_home_server(self, ctx.author)
+            if guild:
+                guild_config = self.config.guild(guild)
+                projects = await guild_config.projects() or {}
+                hub_server = await get_hub_server(ctx.cog, guild)
+                if hub_server:
+                    hub_config = self.config.guild(hub_server)
+                    hub_projects = await hub_config.projects() or {}
+                    projects |= hub_projects
                 proj_abbrevs = [
                     abbrev for abbrev in projects if projects[abbrev] == project.id
                 ]
@@ -102,11 +108,18 @@ class CommandsProject(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def project_list(self, ctx, *, match=""):
         """List projects with abbreviations on this server."""
-        if not ctx.guild:
+        guild = ctx.guild or await get_home_server(self, ctx.author)
+        if not guild:
             return
+        config = self.config.guild(guild)
+        projects = await config.projects() or {}
+        hub_server = await get_hub_server(ctx.cog, guild)
+        if hub_server:
+            hub_config = self.config.guild(hub_server)
+            if hub_config:
+                hub_projects = await hub_config.projects() or {}
+                projects |= hub_projects
 
-        config = self.config.guild(ctx.guild)
-        projects = await config.projects()
         result_pages = []
 
         # Prefetch all uncached projects, 10 at a time
@@ -119,7 +132,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
             list(filter(None, results))
             for results in grouper(
                 [
-                    projects[abbrev]
+                    int(projects[abbrev])
                     for abbrev in projects
                     if int(projects[abbrev]) not in self.api.projects_cache
                 ],
@@ -138,7 +151,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
                     "%s (places: %s, guild: %d)",
                     err,
                     ",".join(proj_id_group),
-                    ctx.guild.id,
+                    guild.id,
                 )
 
         # Iterate over projects and do a quick cache lookup per project:
@@ -147,7 +160,9 @@ class CommandsProject(INatEmbeds, MixinMeta):
             proj_str_text = ""
             if proj_id in self.api.projects_cache:
                 try:
-                    project = await self.project_table.get_project(ctx.guild, proj_id)
+                    project = await self.project_table.get_project(
+                        guild, proj_id, ctx.author
+                    )
                     proj_str = f"{abbrev}: [{project.title}]({project.url})"
                     proj_str_text = f"{abbrev} {project.title}"
                 except LookupError as err:
@@ -161,7 +176,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
                         "Project in cache could not be retrieved: %s (project: %d, guild: %d)",
                         err,
                         proj_id,
-                        ctx.guild.id,
+                        guild.id,
                     )
                     # In the unlikely case of the deletion of a project that is cached:
                     proj_str = f"{abbrev}: {proj_id} not found."
@@ -174,7 +189,7 @@ class CommandsProject(INatEmbeds, MixinMeta):
                     "Project deleted? %s: %d (guild: %d)",
                     abbrev,
                     proj_id,
-                    ctx.guild.id,
+                    guild.id,
                 )
                 proj_str = f"{abbrev}: [{proj_id}]({WWW_BASE_URL}/projects/{proj_id})"
                 proj_str_text = abbrev
@@ -239,7 +254,9 @@ class CommandsProject(INatEmbeds, MixinMeta):
         error_msg = None
         async with ctx.typing():
             try:
-                proj = await self.project_table.get_project(ctx.guild, project)
+                proj = await self.project_table.get_project(
+                    ctx.guild, project, ctx.author
+                )
                 ctx_member = await MemberConverter.convert(ctx, user)
                 member = ctx_member.member
                 user = await self.user_table.get_user(member)

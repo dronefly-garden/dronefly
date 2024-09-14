@@ -67,7 +67,9 @@ class INatQuery:
         args = get_base_query_args(query)
 
         args["project"] = (
-            await self.cog.project_table.get_project(ctx.guild, query.project)
+            await self.cog.project_table.get_project(
+                ctx.guild, query.project, ctx.author
+            )
             if has_value(query.project)
             else None
         )

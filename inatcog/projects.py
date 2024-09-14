@@ -3,6 +3,9 @@ from typing import Union
 
 from pyinaturalist.models import Project
 
+from .converters.base import QuotedContextMemberConverter
+from .utils import get_home_server, get_hub_server
+
 
 class UserProject(Project):
     """A collection project for observations by specific users.
@@ -12,12 +15,17 @@ class UserProject(Project):
     of both:
 
     1. Open membership, users join on the web:
+
        - members_only: True
        - do not set any "observed_by_user?" rules
+
     2. Closed membership, admins edit the project to join users:
+
        - members_only: False
        - set at least one "observed_by_user?" rule
+
     3. Closed membership, users join on web and admins edit project to "approve" join:
+
        - members_only: True
        - set at least one "observed_by_user?" rule
        - a user's observations are included when both the user joins *and* the
@@ -95,22 +103,38 @@ class INatProjectTable:
     def __init__(self, cog):
         self.cog = cog
 
-    async def get_project(self, guild, query: Union[int, str]):
+    async def get_project(
+        self,
+        guild,
+        query: Union[int, str],
+        user: QuotedContextMemberConverter = None,
+    ):
         """Get project by guild abbr or via id#/keyword lookup in API."""
-        project = None
-        response = None
-        abbrev = None
 
-        if isinstance(query, str):
-            abbrev = query.lower()
-        if isinstance(query, int) or query.isnumeric():
-            project_id = query
-            response = await self.cog.api.get_projects(int(project_id))
-        if guild and abbrev:
+        async def _get_project_abbrev(guild, abbrev):
+            response = None
             guild_config = self.cog.config.guild(guild)
             projects = await guild_config.projects()
             if abbrev in projects:
                 response = await self.cog.api.get_projects(projects[abbrev])
+            return response
+
+        abbrev = query.lower() if isinstance(query, str) else None
+        project = None
+        response = None
+        _guild = guild or await get_home_server(self.cog, user)
+
+        if _guild and abbrev:
+            response = await _get_project_abbrev(_guild, abbrev)
+            if not response:
+                hub_server = await get_hub_server(self.cog, _guild)
+                if hub_server:
+                    response = await _get_project_abbrev(hub_server, abbrev)
+
+        if not response:
+            if isinstance(query, int) or query.isnumeric():
+                project_id = int(query)
+                response = await self.cog.api.get_projects(project_id)
 
         if not response:
             response = await self.cog.api.get_projects("autocomplete", q=query)

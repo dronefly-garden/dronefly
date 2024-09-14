@@ -6,14 +6,15 @@ from contextlib import asynccontextmanager
 from typing import Optional, Union
 import urllib.parse
 
-from dronefly.core.constants import RANK_KEYWORDS, RANK_LEVELS
+from dronefly.core.constants import RANK_KEYWORDS
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.formatters.generic import LifeListFormatter
+from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
-from pyinaturalist.models import Observation
+from dronefly.discord.menus import TaxonListMenu
+from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -22,7 +23,7 @@ from ..common import grouper
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
-from ..menus.inat import BaseMenu, LifeListSource
+from ..menus.inat import TaxonListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -215,13 +216,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         • If the life list is for one user, the title links to it.
         • Buttons to change `per` details and taxon root:
-          • :leaves: toggles alphabetial list of leaf taxa.
+          • :leaves: change to alphabetical list of child taxa, then leaf taxa, and back to any taxa.
           • :arrow_up_down: changes rank detail level: main (default), any, or selected taxon.
           • :top: toggles selected taxon as the tree root.
         • Buttons to change taxon row details:
           • :regional_indicator_d: toggles direct taxon count.
           • :regional_indicator_c: toggles common names (user life list only).
-        • Specify `per any` for maximum detail or `per <rank>` to show taxa of just this rank.
+        • Use `per any` for maximum detail or `per <rank>` to show taxa at that rank's level.
+        • Use `sort by obs` to sort by #obs instead of name.
+        • Use `asc` or `desc` to sort ascending or descending.
         • See `[p]query` and `[p]taxon_query` for help with *query* terms, or `[p]glossary` for an explanation of *leaf taxa*.
 
         e.g.
@@ -250,9 +253,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     )
                 query_response = await self.query.get(ctx, _query)
                 per_rank = _query.per or "main"
-                if per_rank not in [*RANK_KEYWORDS, "leaf", "main", "any"]:
+                if per_rank not in [*RANK_KEYWORDS, "child", "leaf", "main", "any"]:
                     raise BadArgument(
-                        f"Specify `per <rank-or-keyword>`. "
+                        "Specify `per <rank-or-keyword>`. "
                         f"See `{ctx.clean_prefix}help life` for details."
                     )
                 life_list = await ctx.inat_client.observations.life_list(
@@ -262,16 +265,31 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     raise LookupError(
                         f"No life list {query_response.obs_query_description()}"
                     )
+                taxon_list = life_list.data
                 per_page = 10
-                life_list_formatter = LifeListFormatter(
-                    life_list,
-                    per_rank,
+                sort_by = _query.sort_by or None
+                if sort_by not in [None, "obs", "name"]:
+                    raise BadArgument(
+                        "Specify `sort by obs` or `sort by name` (default)"
+                        f"See `{ctx.clean_prefix}help life` for details."
+                    )
+                order = _query.order or None
+                # TODO: support this lower down?
+                _per_rank = per_rank
+                if per_rank in RANK_EQUIVALENTS:
+                    _per_rank = RANK_EQUIVALENTS[per_rank]
+
+                taxon_list_formatter = TaxonListFormatter(
+                    taxon_list,
+                    _per_rank,
                     query_response,
                     with_taxa=True,
                     per_page=per_page,
+                    sort_by=sort_by,
+                    order=order,
                 )
-                await BaseMenu(
-                    source=LifeListSource(life_list_formatter),
+                await TaxonListMenu(
+                    source=TaxonListSource(taxon_list_formatter),
                     delete_message_after=False,
                     clear_reactions_after=True,
                     timeout=60,

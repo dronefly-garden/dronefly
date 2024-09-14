@@ -42,19 +42,24 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known.
 
-        `Aliases: [p]who`
+        `Aliases: [p]me, [p]who`
 
         First characters of the nickname or username are matched provided that user is cached by the server (e.g. if they were recently active).
-        Otherwise, the nickname or username must be exact. If there is more than one username that exactly matches, append '#' plus the 4-digit discriminator to disambiguate.
+        Otherwise, the nickname or username must be exact.
 
         Examples:
 
-        `[p]user Syn`
-          matches `SyntheticBee#4951` if they spoke recently.
-        `[p]user SyntheticBee`
-          matches `SyntheticBee#4951` even if not recently active, assuming there is only one `SyntheticBee`.
-        `[p]user SyntheticBee#4951`
-          matches `SyntheticBee#4951` even if not recently active.
+        `[p]me`
+          Matches yourself.
+
+        Assuming a user is on the server with nickname `benarmstrong` and username `syntheticbee`:
+
+        `[p]user syntheticbee`
+          Exactly matches the username `syntheticbee` even if not recently active.
+        `[p]user ben`
+          May match syntheticbee by their nickname if they spoke recently.
+        `[p]user syn`
+          May match syntheticbee by their username if they spoke recently.
 
         If the server has defined any event_projects, then observations, species, & leaf taxa stats for each project are shown.
         Leaf taxa are explained here:
@@ -258,17 +263,39 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
     async def user_show_settings(self, ctx, config, setting: str = "all"):
         """iNat user settings."""
-        if setting not in ["all", "known", "home", "lang"]:
+        if setting not in ["all", "known", "home", "lang", "server"]:
             await ctx.send(f"Unknown setting: {setting}")
             return
         if setting in ["all", "known"]:
             known_all = await config.known_all()
             await ctx.send(f"known: {known_all}")
+        guild = ctx.guild
+        if setting in ["all", "server"]:
+            server_id = await config.server()
+            home_server = None
+            home_server_name = "none"
+            if server_id:
+                if guild:
+                    guilds = ctx.author.mutual_guilds
+                else:
+                    guilds = ctx.bot.guilds
+                home_server = next(
+                    (server for server in guilds if server.id == server_id), None
+                )
+                if not home_server:
+                    home_server_name = f"Unknown Discord server #{server_id}"
+                elif not guild:
+                    # If in a DM and the user has a home server set, use it to
+                    # look up the `home` place setting below.
+                    guild = home_server
+            if home_server:
+                home_server_name = home_server.name
+            await ctx.send(f"server: {home_server_name}")
         if setting in ["all", "home"]:
             home_id = await config.home()
             if home_id:
                 try:
-                    home = await self.place_table.get_place(ctx.guild, home_id)
+                    home = await self.place_table.get_place(guild, home_id)
                     await ctx.send(f"home: {home.display_name} (<{home.url}>)")
                 except LookupError:
                     await ctx.send(f"Non-existent place ({home_id})")
@@ -327,6 +354,76 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return
 
         await self.user_show_settings(ctx, config)
+
+    @user_set.command(name="server")
+    @known_inat_user()
+    async def user_set_server(self, ctx, *, value: str = None):
+        """Set a Discord server as your home server.
+
+        `[p]user set server` show your home Discord server
+        `[p]user set server clear` clear your Discord home server
+        `[p]user set server this` set this server as your Discord home server
+        `[p]user set server [id]` set the Discord home server using its Server ID#
+
+        Where [id] is a Discord Server ID. See:
+
+        https://support.discord.com/hc/en-us/search?query=Find+my+server+ID
+
+        The abbreviations saved on your home server with `,place add` and
+        `,project add` can be used in commands that you DM to the bot so long
+        as both you and the bot are members of that server.
+        """
+        try:
+            config = await get_valid_user_config(self, ctx.author, anywhere=True)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+
+        if value is not None:
+            value = re.sub(DEQUOTE, r"\1", value)
+            bot = self.bot.user.name
+            if value.lower() in ["clear", "none", ""]:
+                await config.server.clear()
+                await ctx.send(
+                    f"{bot} no longer has a home Discord server set for you."
+                )
+            else:
+                try:
+                    home_server = None
+                    if value.lower() == "this":
+                        if ctx.guild:
+                            home_server = ctx.guild
+                        else:
+                            await ctx.send(
+                                f"You must type `{ctx.clean_prefix}user set server this` in a "
+                                "server channel."
+                            )
+                    else:
+                        if ctx.guild:
+                            guilds = ctx.author.mutual_guilds
+                        else:
+                            guilds = ctx.bot.guilds
+                        server_id = int(value)
+                        home_server = next(
+                            (server for server in guilds if server.id == server_id),
+                            None,
+                        )
+                        if not home_server:
+                            await ctx.send(
+                                f"Specify an ID for a server where both you and {bot} are members. "
+                                f"Alternatively, type `{ctx.clean_prefix}user set server this` in "
+                                "a channel on that server."
+                            )
+                    if home_server:
+                        await config.server.set(home_server.id)
+                        await ctx.send(
+                            f"{bot} will use {home_server.name} as your Discord home server."
+                        )
+                except (LookupError, ValueError) as err:
+                    await ctx.send(err)
+                    return
+
+        await self.user_show_settings(ctx, config, "server")
 
     @user_set.command(name="home")
     @known_inat_user()

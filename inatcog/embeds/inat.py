@@ -16,12 +16,11 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_names,
     format_user_link,
-    LifeListFormatter,
     ObservationFormatter,
     QualifiedTaxonFormatter,
     TaxonFormatter,
 )
-from dronefly.core.utils import lifelists_url_from_query_response, obs_url_from_v1
+from dronefly.core.utils import obs_url_from_v1
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -224,6 +223,9 @@ class INatEmbed(discord.Embed):
         content["obs_on"] = self.obs_on()
         content["obs_d1"] = self.obs_d1()
         content["obs_d2"] = self.obs_d2()
+        content["per"] = None
+        content["sort_by"] = None
+        content["order"] = None
         return content
 
     def query(self, query: Query = EMPTY_QUERY):  # Query
@@ -244,6 +246,11 @@ class INatEmbed(discord.Embed):
         place = query.place or self.place_id()
         project = query.project or self.project_id()
         controlled_term = query.controlled_term or self.controlled_term()
+        # TODO: support storing these in the embed and reading them out to
+        # merge with the query
+        per = query.per
+        sort_by = query.sort_by
+        order = query.order
         # If the query contains any date selectors, they supersede any that the
         # embed may have had (i.e. mixing and matching different date selectors
         # from the the base query and new query are likely not what the user meant)
@@ -284,6 +291,9 @@ class INatEmbed(discord.Embed):
             obs_on=obs_on,
             obs_d1=obs_d1,
             obs_d2=obs_d2,
+            per=per,
+            sort_by=sort_by,
+            order=order,
         )
         return query
 
@@ -575,18 +585,6 @@ class INatEmbeds(MixinMeta):
                 )
             return summary_counts
         return ""
-
-    def make_life_list_embed(self, formatter: LifeListFormatter):
-        """Return embed for life list."""
-        query_response = formatter.query_response
-        embed = make_embed(title=f"Life list {query_response.obs_query_description()}")
-        if query_response.user:
-            embed.url = lifelists_url_from_query_response(query_response)
-        embed.description = formatter.format_page(0)
-        last_page = formatter.last_page() + 1
-        if last_page > 1:
-            embed.set_footer(text=f"Page 1/{last_page}")
-        return embed
 
     async def make_obs_counts_embed(self, query_response: QueryResponse):
         """Return embed for observation counts from place or by user."""
@@ -1035,6 +1033,15 @@ class INatEmbeds(MixinMeta):
         ids = user.identifications_count
         url = f"[{ids:,}]({WWW_BASE_URL}/identifications?user_id={user.id})"
         embed.add_field(name="Ids", value=url, inline=True)
+        try:
+            annotations = user.annotated_observations_count
+        except AttributeError:
+            annotations = 0
+        url = (
+            f"[{annotations:,}]({WWW_BASE_URL}/observations"
+            f"?annotation_user_id={user.id}&place_id=any&verifiable=any)"
+        )
+        embed.add_field(name="Annotations", value=url, inline=True)
         return embed
 
     async def make_stats_embed(self, member, user, project):

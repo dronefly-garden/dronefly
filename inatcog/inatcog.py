@@ -112,6 +112,7 @@ class INatCog(
             event_projects={},
             places={},
             home=97394,  # North America
+            server=None,
             projects={},
             project_emojis={},  # deprecated
         )
@@ -129,6 +130,7 @@ class INatCog(
         self._ready_event: asyncio.Event = asyncio.Event()
 
     async def cog_before_invoke(self, ctx: commands.Context):
+        """Initialization before cog is invoked."""
         await self._ready_event.wait()
 
     async def initialize(self) -> None:

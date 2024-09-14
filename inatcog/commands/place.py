@@ -15,7 +15,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..places import RESERVED_PLACES
-from ..utils import has_valid_user_config
+from ..utils import get_home_server, get_hub_server, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -36,14 +36,20 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             place = await self.place_table.get_place(ctx.guild, query, ctx.author)
             embed = make_embed(title=place.display_name, url=place.url)
             embed.add_field(name="Place number", value=place.id)
-            if ctx.guild:
-                guild_config = self.config.guild(ctx.guild)
-                places = await guild_config.places()
+            guild = ctx.guild or await get_home_server(self, ctx.author)
+            if guild:
+                guild_config = self.config.guild(guild)
+                places = await guild_config.places() or {}
+                hub_server = await get_hub_server(ctx.cog, guild)
+                if hub_server:
+                    hub_config = self.config.guild(hub_server)
+                    hub_places = await hub_config.places() or {}
+                    places |= hub_places
                 place_abbrevs = [
                     abbrev for abbrev in places if places[abbrev] == place.id
                 ]
                 if place_abbrevs:
-                    abbrevs = ", ".join(place_abbrevs)
+                    abbrevs = ", ".join(sorted(place_abbrevs))
                 else:
                     abbrevs = "*none*"
                     can_add_places = await has_valid_user_config(
@@ -90,12 +96,18 @@ class CommandsPlace(INatEmbeds, MixinMeta):
     @place.command(name="list")
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     async def place_list(self, ctx, *, match=""):
-        """List places with abbreviations on this server."""
-        if not ctx.guild:
+        """List places with abbreviations added with `[c]place add`."""
+        guild = ctx.guild or await get_home_server(self, ctx.author)
+        if not guild:
             return
-
-        config = self.config.guild(ctx.guild)
-        places = await config.places()
+        guild_config = self.config.guild(guild)
+        places = await guild_config.places() or {}
+        hub_server = await get_hub_server(ctx.cog, guild)
+        if hub_server:
+            hub_config = self.config.guild(hub_server)
+            if hub_config:
+                hub_places = await hub_config.places() or {}
+                places |= hub_places
         result_pages = []
 
         # Prefetch all uncached places, 500 at a time
@@ -108,7 +120,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             list(filter(None, results))
             for results in grouper(
                 [
-                    places[abbrev]
+                    int(places[abbrev])
                     for abbrev in places
                     if int(places[abbrev]) not in self.api.places_cache
                 ],
@@ -127,7 +139,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     "%s (places: %s, guild: %d)",
                     err,
                     ",".join(place_id_group),
-                    ctx.guild.id,
+                    guild.id,
                 )
 
         # Iterate over places and do a quick cache lookup per place:
@@ -136,7 +148,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
             place_str_text = ""
             if place_id in self.api.places_cache:
                 try:
-                    place = await self.place_table.get_place(ctx.guild, place_id)
+                    place = await self.place_table.get_place(guild, place_id)
                     place_str = f"{abbrev}: [{place.display_name}]({place.url})"
                     place_str_text = f"{abbrev} {place.display_name}"
                 except LookupError as err:
@@ -150,7 +162,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                         "Place in cache could not be retrieved: %s (place: %d, guild: %d)",
                         err,
                         place_id,
-                        ctx.guild.id,
+                        guild.id,
                     )
             # Most likely this is a deleted place. Show the abbrev, id, and link. The
             # user can check by clicking the link if it 404's and take action as
@@ -160,7 +172,7 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                     "Place deleted? %s: %d (guild: %d)",
                     abbrev,
                     place_id,
-                    ctx.guild.id,
+                    guild.id,
                 )
                 place_str = f"{abbrev}: [{place_id}]({WWW_BASE_URL}/places/{place_id})"
                 place_str_text = abbrev
