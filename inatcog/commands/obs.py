@@ -501,13 +501,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def tabulate_top_identifiers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
-        """Top observations IDed per IDer (alias `[p]topids`)."""
+        """Top observations IDed per IDer (alias for `[p]top ids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @commands.command(name="topids", hidden=True)
     @use_client
     async def top_identifiers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top observations IDed per IDer (alias `[p]tab topids`)."""
+        """Top observations IDed per IDer (alias for `[p]top ids`)."""
         await self._tabulate_query(ctx, query, view="ids")
 
     @tabulate.command(name="topobs")
@@ -515,25 +515,25 @@ class CommandsObs(INatEmbeds, MixinMeta):
     async def tabulate_top_observers(
         self, ctx, *, query: Optional[TaxonReplyConverter]
     ):
-        """Top observations per observer (alias `[p]topobs`)."""
+        """Top observations per observer (alias for `[p]top obs`)."""
         await self._tabulate_query(ctx, query)
 
     @commands.command(name="topobs", hidden=True)
     @use_client
     async def top_observers_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top observations per observer (alias `[p]tab topobs`)."""
+        """Top observations per observer (alias for `[p]top obs`)."""
         await self._tabulate_query(ctx, query)
 
     @tabulate.command(name="topspp", alias=["topsp"])
     @use_client
     async def tabulate_top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top species per observer (alias `[p]topspp`)."""
+        """Top species per observer (alias for `[p]top spp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.command(name="topspp", alias=["topsp"], hidden=True)
     @use_client
     async def top_species_alias(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top species per observer (alias `[p]tab topspp`)."""
+        """Top species per observer (alias for `[p]top spp`)."""
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.hybrid_command()
