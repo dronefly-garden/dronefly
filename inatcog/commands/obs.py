@@ -193,19 +193,59 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @top.command(name="identifiers", aliases=["id", "ids"])
     @use_client
     async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top observations IDed per IDer (alias `[p]topids`)."""
+        """Top observations IDed per IDer (alias `[p]topids`).
+
+        • Leaderboard of up to 500 top identifiers of observations matching the *query* terms not made by themselves.
+        • Species counts shown in parentheses are per community taxon of the observations, *not* per taxon of the IDer's identifications.
+        • See `[p]query` and `[p]taxon_query` for help with *query* terms.
+
+        e.g.
+        ```
+        [p]topids bees
+              -> Top identifiers by number of bee observations they identified for others
+        [p]topids in prj arthropod ecology
+              -> Top identifiers by number of observations they identified for others in the Arthropod Ecology in Action project
+        [p]topids arthropods from nova scotia
+              -> Top identifiers by number of arthropod observations they identified for others from Nova Scotia
+        """  # noqa: E501
         await self._tabulate_query(ctx, query, view="ids")
 
     @top.command(name="observers", aliases=["obs"])
     @use_client
     async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top observations per observer (alias `[p]topobs`)."""
+        """Top observations per observer (alias `[p]topobs`).
+
+        • Leaderboard of up to 500 top observers by observation count matching the *query* terms.
+        • See `[p]query` and `[p]taxon_query` for help with *query* terms.
+
+        e.g.
+        ```
+        [p]topobs bees
+              -> Top observers by observation count of bees
+        [p]topobs in prj arthropod ecology
+              -> Top observers by observation count of observations in the Arthropod Ecology in Action project
+        [p]topobs arthropods from nova scotia
+              -> Top observers by observation count of arthropods from Nova Scotia
+        """  # noqa: E501
         await self._tabulate_query(ctx, query)
 
     @top.command(name="species", aliases=["spp", "sp"])
     @use_client
     async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
-        """Top species per observer (alias `[p]topspp`)."""
+        """Top species per observer (alias `[p]topspp`).
+
+        • Leaderboard of up to 500 top observers by species count matching the *query* terms.
+        • See `[p]query` and `[p]taxon_query` for help with *query* terms.
+
+        e.g.
+        ```
+        [p]topspp bees
+              -> Top observers by species count of bees
+        [p]topspp in prj arthropod ecology
+              -> Top observers by species count of observations in the Arthropod Ecology in Action project
+        [p]topspp arthropods from nova scotia
+              -> Top observers by species count of arthropods from Nova Scotia
+        """  # noqa: E501
         await self._tabulate_query(ctx, query, view="spp")
 
     @commands.group(invoke_without_command=True)
