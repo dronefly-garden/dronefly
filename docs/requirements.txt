@@ -12,7 +12,7 @@ backports.tarfile==1.2.0
 beautifulsoup4==4.12.3
 black==24.8.0
 Brotli==1.1.0
-cattrs==24.1.0
+cattrs==24.1.1
 certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.3.2
@@ -25,15 +25,15 @@ dill==0.3.8
 discord.py==2.4.0
 distro==1.9.0
 docutils==0.19
-dronefly-core @ git+https://github.com/dronefly-garden/dronefly-core@d4842f46d3d338f56638749def9d23d862e286f1
-dronefly-discord @ git+https://github.com/dronefly-garden/dronefly-discord@192e9531e9a1e4a047e0aeb57d9da141c6991c7d
+dronefly-core==0.3.9.dev1
+dronefly-discord==0.1.5rc1
 ebird-api==3.0.6
-filelock==3.16.0
+filelock==3.16.1
 frozenlist==1.4.1
 html2markdown==0.1.7
 idna==3.8
 imagesize==1.4.1
-importlib_metadata==8.4.0
+importlib_metadata==8.5.0
 inflect==5.6.2
 iniconfig==2.0.0
 isort==5.13.2
@@ -42,7 +42,7 @@ jaraco.context==6.0.1
 jaraco.functools==4.0.2
 jeepney==0.8.0
 Jinja2==3.1.4
-keyring==25.3.0
+keyring==25.4.0
 lazy-object-proxy==1.10.0
 lxml==5.3.0
 Markdown==3.7
@@ -61,7 +61,7 @@ pluggy==1.5.0
 psutil==6.0.0
 pycparser==2.22
 Pygments==2.18.0
-pyinaturalist @ git+https://github.com/pyinat/pyinaturalist@8b4f4c6d6b0f7799fcd3663ff2cc3148f34e3b85
+pyinaturalist==0.20.0.dev1
 pylint==2.17.7
 pyrate-limiter==2.10.0
 pytest==7.4.4
@@ -70,13 +70,13 @@ pytest-mock==3.14.0
 python-dateutil==2.9.0.post0
 python-forge==18.6.0
 python-slugify==8.0.4
-pytz==2024.1
+pytz==2024.2
 PyYAML==6.0.2
 rapidfuzz==3.9.6
 Red-Commons==1.0.0
 Red-DiscordBot==3.5.13
 Red-Lavalink==0.11.0
-regex==2024.7.24
+regex==2024.9.11
 requests==2.32.3
 requests-cache==1.2.1
 requests-ratelimiter==0.7.0
@@ -102,8 +102,8 @@ typing_extensions==4.12.2
 tzlocal==5.2
 Unidecode==1.3.8
 url-normalize==1.4.3
-urllib3==2.2.2
+urllib3==2.2.3
 uvloop==0.20.0
 wrapt==1.16.0
 yarl==1.9.4
-zipp==3.20.1
+zipp==3.20.2
