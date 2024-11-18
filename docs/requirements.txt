@@ -1,4 +1,4 @@
-aiohttp==3.9.5
+aiohttp==3.10.11
 aiohttp-json-rpc==0.13.3
 aiohttp-retry==2.8.3
 aiolimiter==1.1.0
