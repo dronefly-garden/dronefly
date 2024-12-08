@@ -31,7 +31,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
-from ..utils import get_valid_user_config
+from ..utils import cache_busting_id, get_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -1061,7 +1061,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             return
 
         await ctx.send(
-            f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}"
+            f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}?{cache_busting_id()}"
         )
 
     @commands.command()

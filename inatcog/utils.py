@@ -2,6 +2,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 import functools
+from time import time
 from typing import Optional, Union
 
 import discord
@@ -17,6 +18,22 @@ COG_TO_CORE_USER_KEY = {
     "lang": "inat_lang",
 }
 COG_HAS_USER_DEFAULTS = ["home"]
+
+
+def cache_busting_id():
+    """A unique id suitable to bust Discord's cache of a URL unfurl.
+
+    Append this string to any URL that Discord previews as an embed (an "unfurl" in
+    Discord parlance) to bust the cache.
+
+    The Discord URL unfurl is reported here to be cached "up to 30 minutes":
+
+      - https://github.com/discord/discord-api-docs/issues/1663#issuecomment-632970964
+
+    Since that would be 4 digits, we're generous and generate IDs from 0 through 9999,
+    so should work to bust their cache for roughly 2.78 hours.
+    """
+    return str(int(time() % 10000)).zfill(4)
 
 
 def use_client(coro_or_command):
