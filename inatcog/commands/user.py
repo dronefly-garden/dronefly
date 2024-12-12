@@ -1064,8 +1064,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
         msgs = []
         if own_stats:
             msgs.append(
-                "*Note: If your stats are incomplete, press "
-                "**Regenerate stats** at the bottom of your page:*"
+                "-# Note: If your stats are incomplete, press "
+                "**Regenerate stats** at the bottom of your page:"
             )
         msgs.append(
             f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}?{cache_busting_id()}"
