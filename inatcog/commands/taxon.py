@@ -13,9 +13,9 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
-from dronefly.core.formatters.generic import TaxonListFormatter
+from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonListFormatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
-from dronefly.discord.menus import TaxonListMenu
+from dronefly.discord.menus import TaxonListMenu, TaxonMenu
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -75,9 +75,30 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
+        error_msg = None
+        msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
                 await self.send_embed_for_taxon(ctx, query_response)
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+            if not query_response:
+                return
+            try:
+                taxon_formatter = QualifiedTaxonFormatter(query_response)
+                await TaxonMenu(
+                    taxon_formatter=taxon_formatter,
+                    delete_message_after=False,
+                    clear_reactions_after=True,
+                    timeout=60,
+                    cog=self,
+                ).start(ctx=ctx)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
+        else:
+            if msg:
+                await add_reactions_with_cancel(ctx, msg, [])
 
     @taxon.command(name="list")
     @use_client
