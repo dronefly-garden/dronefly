@@ -31,7 +31,7 @@ from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
 from ..projects import UserProject
-from ..utils import get_valid_user_config
+from ..utils import cache_busting_id, get_valid_user_config
 
 
 class CommandsUser(INatEmbeds, MixinMeta):
@@ -1060,9 +1060,17 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await ctx.send(err)
             return
 
-        await ctx.send(
-            f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}"
+        own_stats = member.id == ctx.author.id
+        msgs = []
+        if own_stats:
+            msgs.append(
+                "-# Note: If your stats are incomplete, press "
+                "**Regenerate stats** at the bottom of your page:"
+            )
+        msgs.append(
+            f"https://www.inaturalist.org/stats/{stats_year}/{inat_user.login}?{cache_busting_id()}"
         )
+        await ctx.send("\n".join(msgs))
 
     @commands.command()
     async def iuser(self, ctx, *, login: str):
@@ -1120,7 +1128,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def my_inatyear(self, ctx, year: int = None):
         """URL for your iNat year graphs.
 
-        Where *year* is a valid year on or after 1950."""
+        Where *year* is a valid year on or after 1950 (defaults to this year).
+
+        To update your personal stats:
+        - follow the URL for your stats page
+        - login to iNaturalist
+        - scroll to the page bottom
+        - press the **Regenerate stats** button
+        - wait for the page to fully update
+        - use this command again to show the updated stats
+        """  # noqa: E501
         await self.user_inatyear(ctx, user="me", year=year)
 
     @my.command(name="obs")

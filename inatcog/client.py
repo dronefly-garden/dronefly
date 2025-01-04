@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from functools import partial
 from typing import Optional, Union
 
+import asyncio
 import discord
 from dronefly.core.clients.inat import iNatClient as CoreiNatClient
 from dronefly.core.commands import Context as DroneflyContext
@@ -12,7 +13,11 @@ from .utils import get_dronefly_ctx
 
 def asyncify(self, method):
     async def async_wrapper(*args, **kwargs):
-        return await self.loop.run_in_executor(None, partial(method, *args, **kwargs))
+        future = self.loop.run_in_executor(None, partial(method, *args, **kwargs))
+        try:
+            return await asyncio.wait_for(future, timeout=20)
+        except TimeoutError:
+            raise LookupError("iNaturalist API request timed out")
 
     return async_wrapper
 

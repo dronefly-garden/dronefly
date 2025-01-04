@@ -184,6 +184,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
         **`newest`**`  sort by observed desc`
         **`faves`**`   sort by votes opt popular`
         **`spp`**`     opt hrank=species` (alias `species`)
+        **`most`**`    per species sort by obs`
+        **`least`**`   per species sort by obs asc`
         """  # noqa: E501
         await ctx.send_help()
 
