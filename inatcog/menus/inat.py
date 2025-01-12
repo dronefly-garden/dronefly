@@ -7,9 +7,14 @@ from typing import Optional
 import discord
 from redbot.vendored.discord.ext import menus
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.discord.menus import TaxonListMenu, TaxonListSource as CoreTaxonListSource
-
-from ..embeds.common import make_embed
+from dronefly.core.menus import (
+    TaxonListSource as CoreTaxonListSource,
+    TaxonSource as CoreTaxonSource,
+)
+from dronefly.discord.embeds import make_embed, make_taxa_embed
+from dronefly.discord.menus import (
+    TaxonListMenu,
+)
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
@@ -30,6 +35,19 @@ class TaxonListSource(CoreTaxonListSource):
             embed.url = self._url
         embed.description = formatter.format_page(menu.current_page, ctx.selected)
         embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
+        return embed
+
+
+class TaxonSource(CoreTaxonSource):
+    def format_page(self):
+        formatter = self._taxon_formatter
+        embed = make_taxa_embed(
+            taxon=self.query_response.taxon,
+            formatter=self.formatter,
+            description=formatter.format(
+                with_title=False, with_ancestors=self.with_ancestors
+            ),
+        )
         return embed
 
 

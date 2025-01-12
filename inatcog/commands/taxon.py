@@ -2,6 +2,7 @@
 
 import contextlib
 from contextlib import asynccontextmanager
+import copy
 import re
 import textwrap
 from typing import List, Optional
@@ -27,7 +28,7 @@ from ..embeds.common import (
 )
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
-from ..menus.inat import TaxonListSource
+from ..menus.inat import TaxonListSource, TaxonSource
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 
@@ -75,30 +76,57 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
+
+        async def get_taxon_formatter(query_response):
+            """Populate taxon formatter with iNat entities supplying additional details."""
+            formatter_params = {
+                "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
+                "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                "with_url": False,
+            }
+            place = query_response.place
+            if place:
+                taxon = await ctx.inat_client.taxa.populate(
+                    query_response.taxon, preferred_place_id=place.id
+                )
+            else:
+                taxon = await ctx.inat_client.taxa.populate(query_response.taxon)
+            formatter_params["taxon"] = taxon
+            user = query_response.user
+            title_query_response = copy.copy(query_response)
+            if user:
+                title_query_response.user = None
+            elif place:
+                title_query_response.place = None
+            obs_args = title_query_response.obs_args()
+            # i.e. any args other than the ones accounted for in taxon.observations_count
+            if [arg for arg in obs_args if arg != "taxon_id"]:
+                formatter_params["observations"] = await self.api.get_observations(
+                    per_page=0, **obs_args
+                )
+            taxon_formatter = QualifiedTaxonFormatter(
+                title_query_response,
+                **formatter_params,
+            )
+            return taxon_formatter
+
         error_msg = None
-        msg = None
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if not query_response:
                 return
             try:
-                taxon_formatter = QualifiedTaxonFormatter(query_response)
+                taxon_formatter = await get_taxon_formatter(query_response)
                 await TaxonMenu(
-                    taxon_formatter=taxon_formatter,
+                    source=TaxonSource(taxon_formatter),
                     delete_message_after=False,
                     clear_reactions_after=True,
-                    timeout=60,
+                    timeout=0,
                     cog=self,
                 ).start(ctx=ctx)
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
             await apologize(ctx, error_msg)
-        else:
-            if msg:
-                await add_reactions_with_cancel(ctx, msg, [])
 
     @taxon.command(name="list")
     @use_client
