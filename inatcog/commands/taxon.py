@@ -15,7 +15,7 @@ from dronefly.core.formatters.generic import (
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
-from dronefly.discord.menus import TaxonListMenu
+from dronefly.discord.menus import TaxonListMenu, TaxonListSource
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -27,7 +27,6 @@ from ..embeds.common import (
 )
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
-from ..menus.inat import TaxonListSource
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 
