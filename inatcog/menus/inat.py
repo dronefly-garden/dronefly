@@ -6,10 +6,10 @@ from typing import Optional
 
 import discord
 from redbot.vendored.discord.ext import menus
+from pyinaturalist import Taxon
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.discord.menus import TaxonListMenu, TaxonListSource as CoreTaxonListSource
-
-from ..embeds.common import make_embed
+from dronefly.discord.embeds import make_embed
+from dronefly.discord.menus import TaxonListSource as CoreTaxonListSource
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
@@ -18,18 +18,18 @@ INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
 
 
 class TaxonListSource(CoreTaxonListSource):
-    def format_page(self, menu: TaxonListMenu, page, selected: Optional[int] = None):
+    def format_page(
+        self, page: list[Taxon], page_number: int = 0, selected: Optional[int] = None
+    ):
         formatter = self._taxon_list_formatter
-        ctx = menu.ctx
-        ctx.selected = selected
-        query_response = self.formatter.query_response
+        query_response = self.query_response
         embed = make_embed(
             title=f"{self.formatter.short_description} {query_response.obs_query_description()}"
         )
         if self._url:
             embed.url = self._url
-        embed.description = formatter.format_page(menu.current_page, ctx.selected)
-        embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
+        embed.description = formatter.format_page(page, page_number, selected)
+        embed.set_footer(text=f"Page {page_number + 1}/{self.get_max_pages()}")
         return embed
 
 

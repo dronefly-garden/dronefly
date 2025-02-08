@@ -318,16 +318,19 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     _per_rank = RANK_EQUIVALENTS[per_rank]
 
                 taxon_list_formatter = TaxonListFormatter(
-                    taxon_list,
-                    _per_rank,
-                    query_response,
                     with_taxa=True,
+                )
+                source = TaxonListSource(
+                    entries=taxon_list,
+                    query_response=query_response,
+                    formatter=taxon_list_formatter,
                     per_page=per_page,
+                    per_rank=_per_rank,
                     sort_by=sort_by,
                     order=order,
                 )
                 await TaxonListMenu(
-                    source=TaxonListSource(taxon_list_formatter),
+                    source=source,
                     delete_message_after=False,
                     clear_reactions_after=True,
                     timeout=60,
