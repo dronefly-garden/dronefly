@@ -13,7 +13,7 @@ from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
-from dronefly.discord.menus import TaxonListMenu
+from dronefly.discord.menus import TaxonListMenu, TaxonListSource
 from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -23,7 +23,6 @@ from ..common import grouper
 from ..converters.reply import EmptyArgument, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
-from ..menus.inat import TaxonListSource
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
@@ -318,16 +317,19 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     _per_rank = RANK_EQUIVALENTS[per_rank]
 
                 taxon_list_formatter = TaxonListFormatter(
-                    taxon_list,
-                    _per_rank,
-                    query_response,
                     with_taxa=True,
+                )
+                source = TaxonListSource(
+                    entries=taxon_list,
+                    query_response=query_response,
+                    formatter=taxon_list_formatter,
                     per_page=per_page,
+                    per_rank=_per_rank,
                     sort_by=sort_by,
                     order=order,
                 )
                 await TaxonListMenu(
-                    source=TaxonListSource(taxon_list_formatter),
+                    source=source,
                     delete_message_after=False,
                     clear_reactions_after=True,
                     timeout=60,
