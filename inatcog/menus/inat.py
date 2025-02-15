@@ -6,26 +6,11 @@ import re
 import discord
 from redbot.vendored.discord.ext import menus
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.menus import TaxonSource as CoreTaxonSource
-from dronefly.discord.embeds import make_taxa_embed
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
 ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
-
-
-class TaxonSource(CoreTaxonSource):
-    def format_page(self):
-        formatter = self._taxon_formatter
-        embed = make_taxa_embed(
-            taxon=self.query_response.taxon,
-            formatter=self.formatter,
-            description=formatter.format(
-                with_title=False, with_ancestors=self.with_ancestors
-            ),
-        )
-        return embed
 
 
 # TODO: derive a base class from this that:
