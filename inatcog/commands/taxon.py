@@ -105,7 +105,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     )
                 taxon = query_response.taxon
                 if not taxon.children:
-                    taxon = await ctx.inat_client.taxa.populate(taxon)
+                    taxon = await ctx.inat_client.taxa.populate(taxon, refresh=True)
                 if not taxon.children:
                     raise LookupError(f"{taxon.name} has no child taxa")
                 taxon_list = [
