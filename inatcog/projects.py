@@ -1,10 +1,35 @@
 """Module to handle projects."""
 from typing import Union
 
+from redbot.core import Config
 from pyinaturalist.models import Project
 
+from .client import iNatClient
 from .converters.base import QuotedContextMemberConverter
 from .utils import get_home_server, get_hub_server
+
+
+async def get_event_project_config(guild_config: Config, abbrev: str):
+    event_projects = await guild_config.event_projects()
+    event_project = event_projects.get(abbrev)
+    return event_project
+
+
+async def get_event_project_id(guild_config: Config, abbrev: str):
+    event_project = await get_event_project_config(guild_config, abbrev)
+    event_project_id = int(event_project["project_id"]) if event_project else 0
+    if not (event_project and event_project_id > 0):
+        raise LookupError("Event project not known.")
+    return event_project
+
+
+async def get_event_project(guild_config: Config, abbrev: str, client: iNatClient):
+    event_project_id = await get_event_project_id(guild_config, abbrev)
+    paginator = client.projects.from_ids(event_project_id, limit=1)
+    projects = await paginator.async_all() if paginator else None
+    if projects:
+        return projects[0]
+    raise LookupError("iNat project not found.")
 
 
 class UserProject(Project):

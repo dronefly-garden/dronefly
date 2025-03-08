@@ -538,37 +538,47 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await self.user_show_settings(ctx, config, "lang")
 
     async def _user_list_filters(self, ctx, abbrev, config, event_projects):
-        filter_role = None
-        filter_role_id = None
+        filter_roles = []
+        filter_role_ids = None
         filter_message = None
         if abbrev:
             if abbrev in ["active", "inactive"]:
-                filter_role_id = await (
-                    config.active_role()
+                filter_role_ids = await (
+                    [config.active_role()]
                     if abbrev == "active"
-                    else config.inactive_role()
+                    else [config.inactive_role()]
                 )
-                if not filter_role_id:
+                if not filter_role_ids:
                     raise BadArgument(
                         f"The {abbrev} role is undefined. "
                         f"To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
                     )
             elif abbrev in event_projects:
-                filter_role_id = event_projects[abbrev]["role"]
+                filter_role_ids = event_projects[abbrev]["role"]
+                if not isinstance(filter_role_ids, list):
+                    filter_role_ids = [filter_role_ids]
             else:
                 raise BadArgument(
                     "That event doesn't exist."
                     f" To create it, use: `{ctx.clean_prefix}inat set event`"
                 )
 
-        if filter_role_id:
-            filter_role = next(
-                (role for role in ctx.guild.roles if role.id == filter_role_id), None
-            )
-            if not filter_role:
+        if filter_role_ids:
+            for role in ctx.guild.roles:
+                if role.id in filter_role_ids:
+                    filter_roles.append(role)
+            filter_roles = [
+                role for role in ctx.guild.roles if role.id in filter_role_ids
+            ]
+            if len(filter_roles) < len(filter_role_ids):
+                role_mentions = [
+                    f"<@&{filter_role_id}" for filter_role_id in filter_role_ids
+                ]
                 raise BadArgument(
-                    f"The defined {abbrev} role doesn't exist: <@&{filter_role_id}>."
-                    f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                    f"One or more defined roles for `{abbrev}` "
+                    f"don't exist: {' ,'.join(role_mentions)}. "
+                    "To clear all roles for the event, use: "
+                    f"`{ctx.clean_prefix}inat set event role None`"
                 )
 
         filter_emoji = None
@@ -593,7 +603,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                         f" To update it, use: `{ctx.clean_prefix}inat set event`"
                     )
 
-        return (filter_role, filter_emoji, filter_message)
+        return (filter_roles, filter_emoji, filter_message)
 
     async def _user_list_event_info(self, ctx, abbrev, event_projects):
         team_roles = []
@@ -667,7 +677,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ctx,
         abbrev,
         event_projects,
-        filter_role,
+        filter_roles,
         filter_emoji,
         filter_message,
     ):
@@ -685,8 +695,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
             has_opposite_team_role = False
             reaction_mismatch = False
             # i.e. only members can have roles
-            if filter_role and discord_member:
-                for role in [filter_role, *team_roles]:
+            if filter_roles and discord_member:
+                for role in [*filter_roles, *team_roles]:
                     if role in discord_member.roles:
                         response += f" {role.mention}"
                         if role in team_roles:
@@ -808,12 +818,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # following:
             # 1. no project abbreviation (i.e. `,user list` shows all users)
             # 2. user is in the event project
-            # 3. the member holds the event role
+            # 3. the member holds an event role
             # 4. the member has reacted to the menu to join the event
             candidate = (
                 not abbrev
                 or abbrev in project_abbrevs
-                or filter_role in dmember.roles
+                or set(filter_roles).intersection(dmember.roles)
                 or (
                     filter_message
                     and dmember.id in menu_reactions_by_user
@@ -840,11 +850,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # Partition into those whose role and reactions match the event
             # they signed up for vs. those who don't match, and therefore
             # need attention by a project admin.
-            if filter_role or filter_message:
+            if filter_roles or filter_message:
                 event_membership_is_consistent = (
                     abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
-                    and filter_role in dmember.roles
+                    and set(filter_roles).intersection(dmember.roles)
                     and not has_opposite_team_role
                     and not reaction_mismatch
                 )
@@ -927,12 +937,15 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for user_id in menu_reactions_by_user
             if user_id not in checked_user_ids
         ]
-        if filter_role:
-            role_user_ids = [
-                member.id
-                for member in filter_role.members
-                if member.id not in checked_user_ids
-            ]
+        if filter_roles:
+            role_user_ids = []
+            for filter_role in filter_roles:
+                for member in filter_role.members:
+                    if (
+                        member.id not in checked_user_ids
+                        and member.id not in role_user_ids
+                    ):
+                        role_user_ids.append(member.id)
             candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
         else:
             candidate_user_ids = reaction_user_ids
@@ -972,9 +985,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
         try:
-            (filter_role, filter_emoji, filter_message) = await self._user_list_filters(
-                ctx, abbrev, config, event_projects
-            )
+            (
+                filter_roles,
+                filter_emoji,
+                filter_message,
+            ) = await self._user_list_filters(ctx, abbrev, config, event_projects)
         except BadArgument as err:
             await ctx.send(
                 embed=make_embed(
@@ -986,7 +1001,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         error_msg = None
         pages = []
         async with ctx.typing():
-            # If filter_role is given, resulting list of names will be partitioned
+            # If filter_roles are given, resulting list of names will be partitioned
             # into matching and non matching names, where "non-matching" is any
             # discrepancy between the role(s) assigned and the project they're in,
             # or when a non-server-member is in the specified event project.
@@ -998,7 +1013,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     ctx,
                     abbrev,
                     event_projects,
-                    filter_role,
+                    filter_roles,
                     filter_emoji,
                     filter_message,
                 )

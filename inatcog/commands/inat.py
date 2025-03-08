@@ -11,10 +11,11 @@ from redbot.core.utils.chat_formatting import pagify
 
 from dronefly.discord.embeds import make_embed
 
-from inatcog.constants import HUB_SERVERS
-from inatcog.converters.base import InheritableBoolConverter, ServerScopeConverter
-from inatcog.embeds.inat import INatEmbed, INatEmbeds
-from inatcog.interfaces import MixinMeta
+from ..constants import HUB_SERVERS
+from ..converters.base import InheritableBoolConverter, ServerScopeConverter
+from ..embeds.inat import INatEmbed, INatEmbeds
+from ..interfaces import MixinMeta
+from ..projects import get_event_project_config
 
 LISTEN_VALUE = {
     True: "enabled in channels and threads",
@@ -26,7 +27,7 @@ LISTEN_VALUE = {
 class CommandsInat(INatEmbeds, MixinMeta):
     """Mixin providing inat command group."""
 
-    @commands.hybrid_group()
+    @commands.group()
     async def describe(self, ctx):
         """Describe iNat features, terms, and syntax.
 
@@ -1013,7 +1014,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         line = f"**Abbrev:** {abbrev}{main} **Project id:** {project_id}"
         role = event.get("role")
         if role:
-            line += f" **Role:** <@&{role}>"
+            if isinstance(role, list):
+                role_mentions = [f"<@&{_role}>" for _role in role]
+                line += f" **Roles:** {', '.join(role_mentions)}"
+            else:
+                line += f" **Role:** <@&{role}>"
         emoji = event.get("emoji")
         if emoji:
             line += f" **Emoji:** {emoji}"
@@ -1027,7 +1032,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
             line += f" **Teams:** {teams}"
         return line
 
-    @inat_set.command(name="event")
+    @inat_set.group(name="event", invoke_without_command=True)
     @checks.admin_or_permissions(manage_roles=True)
     async def set_event(
         self,
@@ -1125,3 +1130,46 @@ class CommandsInat(INatEmbeds, MixinMeta):
             description += line + "\n"
         embed.description = description
         await ctx.send(embed=embed)
+
+    @set_event.command(name="role")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_event_role(
+        self, ctx, project_abbrev: str, role: Union[discord.Role, None, str]
+    ):
+        """Adds a role for an existing event.
+
+        Normally event team membership is indicated only by a single role. This command allows an event project to be assigned additional roles.
+
+        If no role or None is specified, all roles are cleared from the event.
+        """  # noqa: E501
+        guild_config = self.config.guild(ctx.guild)
+        event_config = await get_event_project_config(guild_config, project_abbrev)
+        if not event_config:
+            await ctx.send("Event project not found.")
+            return
+
+        role_ids = event_config["role"] or []
+        if not isinstance(role_ids, list):
+            role_ids = [role_ids]
+        try:
+            if role is None:
+                role_ids = []
+            else:
+                if isinstance(role, str):
+                    raise LookupError(f"Not a role in this guild: {role}")
+                if role.id in role_ids:
+                    raise LookupError(
+                        f"Role is already set for this event: {role.mention}"
+                    )
+                role_ids.append(role.id)
+        except LookupError as err:
+            await ctx.send(err)
+            return
+
+        event_projects = await guild_config.event_projects()
+        event_projects[project_abbrev]["role"] = role_ids
+        await guild_config.event_projects.set(event_projects)
+        role_mentions = [f"<@&{role_id}>" for role_id in role_ids]
+        await ctx.send(
+            f"Event project role(s) set for `{project_abbrev}`: {', '.join(role_mentions)}"
+        )

@@ -13,6 +13,7 @@ from ..checks import can_manage_users
 from ..client import iNatClient
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
+from ..projects import get_event_project
 from ..utils import use_client
 
 _ACTION = {
@@ -49,23 +50,6 @@ class CommandsEvent(INatEmbeds, MixinMeta):
             except LookupError as err:
                 raise LookupError("Your iNat login is not known here.") from err
             return manager_inat_user
-
-        async def get_event_project_id(ctx: commands.Context, abbrev: str):
-            guild_config = self.config.guild(ctx.guild)
-            event_projects = await guild_config.event_projects()
-            event_project = event_projects.get(abbrev)
-            event_project_id = int(event_project["project_id"]) if event_project else 0
-            if not (event_project and event_project_id > 0):
-                raise LookupError("Event project not known.")
-            return event_project_id
-
-        async def get_event_project(client: iNatClient, abbrev: str):
-            event_project_id = await get_event_project_id(client.red_ctx, abbrev)
-            paginator = client.projects.from_ids(event_project_id, limit=1)
-            projects = await paginator.async_all() if paginator else None
-            if projects:
-                return projects[0]
-            raise LookupError("iNat project not found.")
 
         async def check_manager(project: Project, manager_inat_user: User):
             # checks the validity of the bot user and the manager user:
@@ -142,7 +126,8 @@ class CommandsEvent(INatEmbeds, MixinMeta):
         msg = None
         try:
             manager_inat_user = await get_manager_inat_user(client)
-            project = await get_event_project(client, abbrev)
+            guild_config = self.config.guild(ctx.guild)
+            project = await get_event_project(guild_config, abbrev, client)
             await check_manager(project, manager_inat_user)
             inat_user = await get_inat_user(user)
 
