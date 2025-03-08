@@ -555,7 +555,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     )
             elif abbrev in event_projects:
                 filter_role_ids = event_projects[abbrev]["role"]
-                if not isinstance(filter_role_ids, list):
+                if filter_role_ids and not isinstance(filter_role_ids, list):
                     filter_role_ids = [filter_role_ids]
             else:
                 raise BadArgument(
