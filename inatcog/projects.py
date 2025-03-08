@@ -20,7 +20,7 @@ async def get_event_project_id(guild_config: Config, abbrev: str):
     event_project_id = int(event_project["project_id"]) if event_project else 0
     if not (event_project and event_project_id > 0):
         raise LookupError("Event project not known.")
-    return event_project
+    return event_project_id
 
 
 async def get_event_project(guild_config: Config, abbrev: str, client: iNatClient):
