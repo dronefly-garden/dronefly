@@ -367,6 +367,13 @@ class INatAPI:
 
         if user_ids and project_ids:
             raise ValueError("Specify project_ids or user_ids, not both.")
+        if project_ids:
+            logger.info(
+                "Bulk user load projects: %s",
+                ", ".join([str(id) for id in project_ids]),
+            )
+        else:
+            logger.info("Bulk user load individual users count: %d", len(user_ids))
         remaining_user_ids = [*user_ids] if user_ids else []
         remaining_user_ids_page = []
         more = True
@@ -415,9 +422,10 @@ class INatAPI:
                     more = False
         if missing_user_ids:
             logger.info(
-                "Users missing from bulk load (deleted or 0 observations): %s",
+                "Bulk user load missing ids (deleted or 0 observations): %s",
                 ", ".join([str(id) for id in missing_user_ids]),
             )
+        logger.info("Bulk user load total users loaded: %d", len(users))
 
         # return all user results as a single page
         return {
