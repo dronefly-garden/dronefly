@@ -66,7 +66,10 @@ class INatUserTable:
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:
-                    if inat_user_id not in self.cog.api.users_cache:
+                    if (
+                        inat_user_id not in self.cog.api.users_cache
+                        and inat_user_id not in uncached_known_user_ids
+                    ):
                         uncached_known_user_ids.append(inat_user_id)
                     known_users.append([discord_member, inat_user_id])
 
