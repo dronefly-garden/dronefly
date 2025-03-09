@@ -365,18 +365,20 @@ class INatAPI:
         if not (project_ids or user_ids):
             return
 
+        if user_ids and project_ids:
+            raise ValueError("Specify project_ids or user_ids, not both.")
+        remaining_user_ids = [*user_ids] if user_ids else []
         page = 1
         more = True
         users = []
-        # Note: This will only handle up to 10,000 users. Anything more
-        # needs to set id_above and id_below. With luck, we won't ever
-        # need to deal with projects this big!
         while more:
+            last_remaining_user_ids_count = len(remaining_user_ids)
             params = {"page": page}
             if project_ids:
                 params["project_id"] = ",".join(map(str, project_ids))
-            if user_ids:
-                params["user_id"] = ",".join(map(str, user_ids))
+            if remaining_user_ids:
+                # The max we can fetch at once is 500:
+                params["user_id"] = ",".join(map(str, remaining_user_ids[0:500]))
             response = await self.get_observations("observers", **params)
             results = response.get("results") or []
             for observer in results:
@@ -391,13 +393,31 @@ class INatAPI:
                         users.append(user)
                         self.users_cache[user_id] = user_json
                         self.users_login_cache[user["login"]] = user_id
+                        if user_id in remaining_user_ids:
+                            remaining_user_ids.remove(user_id)
             # default values provided defensively to exit loop if missing
             per_page = response.get("per_page") or len(results)
             total_results = response.get("total_results") or len(results)
-            if results and (page * per_page < total_results):
-                page += 1
+            if project_ids:
+                # paginate through all project results (note: our testing shows
+                # this only returns the 1st page of 500!)
+                if results and (page * per_page < total_results):
+                    page += 1
+                else:
+                    more = False
             else:
-                more = False
+                # When user_ids are specified, stop when there are no more
+                # user IDs to get, or an attempt to get more either doesn't
+                # fetch any more, or fails to remove any more from the
+                # remainder.
+                if not results or len(remaining_user_ids) in (
+                    0,
+                    last_remaining_user_ids_count,
+                ):
+                    # TODO: handle any that we asked for but couldn't be fetched
+                    # - note: if this is > 500 we have a problem, as we only
+                    # ask for 500 at a time!
+                    more = False
 
         # return all user results as a single page
         return {
