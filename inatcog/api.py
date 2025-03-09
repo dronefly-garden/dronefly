@@ -407,13 +407,11 @@ class INatAPI:
                 # terminate the loop after the 1st page when processing projects
                 more = False
             else:
-                # When user_ids are specified, stop when there are no more
-                # user IDs to get, or an attempt to get more either doesn't
-                # fetch any more, or fails to remove any more from the
-                # remainder.
-                if not results or len(remaining_user_ids) in (
-                    0,
-                    last_remaining_user_ids_count,
+                # When user_ids are specified, stop when there are none left over
+                # to get or the last get didn't reduce the number left over.
+                if (
+                    not remaining_user_ids
+                    or len(remaining_user_ids) == last_remaining_user_ids_count
                 ):
                     more = False
         if missing_user_ids:
