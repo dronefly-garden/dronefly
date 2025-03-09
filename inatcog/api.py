@@ -372,15 +372,18 @@ class INatAPI:
         more = True
         users = []
         missing_user_ids = []
+        per_page = 500
         while more:
-            last_remaining_user_ids_count = len(remaining_user_ids)
-            params = {"per_page": 500}
+            params = {"per_page": per_page}
             if project_ids:
                 params["project_id"] = ",".join(map(str, project_ids))
             if remaining_user_ids:
-                # The max we can fetch at once is 500:
-                remaining_user_ids_page = remaining_user_ids[0:500]
-                remaining_user_ids = remaining_user_ids[500:]
+                # The max we can fetch at once is 500, but we specify slices
+                # of all requested user ids instead of passing page=#; some
+                # requested users may not be included in the results, so the
+                # actual number returned per API call may be less than 500.
+                remaining_user_ids_page = remaining_user_ids[0:per_page]
+                remaining_user_ids = remaining_user_ids[per_page:]
                 params["user_id"] = ",".join(map(str, remaining_user_ids_page))
             response = await self.get_observations("observers", **params)
             results = response.get("results") or []
@@ -408,11 +411,7 @@ class INatAPI:
                 more = False
             else:
                 # When user_ids are specified, stop when there are none left over
-                # to get or the last get didn't reduce the number left over.
-                if (
-                    not remaining_user_ids
-                    or len(remaining_user_ids) == last_remaining_user_ids_count
-                ):
+                if not remaining_user_ids:
                     more = False
         if missing_user_ids:
             logger.info(
