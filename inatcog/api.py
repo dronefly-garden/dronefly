@@ -368,17 +368,20 @@ class INatAPI:
         if user_ids and project_ids:
             raise ValueError("Specify project_ids or user_ids, not both.")
         remaining_user_ids = [*user_ids] if user_ids else []
-        page = 1
+        remaining_user_ids_page = []
         more = True
         users = []
+        missing_user_ids = []
         while more:
             last_remaining_user_ids_count = len(remaining_user_ids)
-            params = {"page": page}
+            params = {"per_page": 500}
             if project_ids:
                 params["project_id"] = ",".join(map(str, project_ids))
             if remaining_user_ids:
                 # The max we can fetch at once is 500:
-                params["user_id"] = ",".join(map(str, remaining_user_ids[0:500]))
+                remaining_user_ids_page = remaining_user_ids[0:500]
+                remaining_user_ids = remaining_user_ids[500:]
+                params["user_id"] = ",".join(map(str, remaining_user_ids_page))
             response = await self.get_observations("observers", **params)
             results = response.get("results") or []
             for observer in results:
@@ -393,18 +396,16 @@ class INatAPI:
                         users.append(user)
                         self.users_cache[user_id] = user_json
                         self.users_login_cache[user["login"]] = user_id
-                        if user_id in remaining_user_ids:
-                            remaining_user_ids.remove(user_id)
-            # default values provided defensively to exit loop if missing
-            per_page = response.get("per_page") or len(results)
-            total_results = response.get("total_results") or len(results)
+                        if user_ids:
+                            remaining_user_ids_page.remove(user_id)
+            # Record any users that weren't retrieved in this page as missing:
+            if remaining_user_ids_page:
+                missing_user_ids.extend(remaining_user_ids_page)
+
             if project_ids:
-                # paginate through all project results (note: our testing shows
-                # this only returns the 1st page of 500!)
-                if results and (page * per_page < total_results):
-                    page += 1
-                else:
-                    more = False
+                # iNat only indexes the top 500 observer user ids, so we
+                # terminate the loop after the 1st page when processing projects
+                more = False
             else:
                 # When user_ids are specified, stop when there are no more
                 # user IDs to get, or an attempt to get more either doesn't
@@ -414,10 +415,12 @@ class INatAPI:
                     0,
                     last_remaining_user_ids_count,
                 ):
-                    # TODO: handle any that we asked for but couldn't be fetched
-                    # - note: if this is > 500 we have a problem, as we only
-                    # ask for 500 at a time!
                     more = False
+        if missing_user_ids:
+            logger.info(
+                "Users missing from bulk load (deleted or 0 observations): %s",
+                ", ".join([str(id) for id in missing_user_ids]),
+            )
 
         # return all user results as a single page
         return {
