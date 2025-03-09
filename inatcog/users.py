@@ -88,7 +88,7 @@ class INatUserTable:
                 # - yield the registered user's user_id, but don't look up the
                 #   user as this can be quite costly when iterating over all of
                 #   them
-                inat_user = User(id=inat_user_id, login="*uncached*")
+                inat_user = User(id=inat_user_id, login=str(inat_user_id))
             else:
                 try:
                     user_json = await self.cog.api.get_users(inat_user_id)
