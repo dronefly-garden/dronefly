@@ -37,7 +37,11 @@ class INatUserTable:
         return user
 
     async def get_member_pairs(
-        self, guild: discord.Guild, users, anywhere: True
+        self,
+        guild: discord.Guild,
+        users,
+        anywhere: True,
+        mock_users_without_observations=True,
     ) -> AsyncIterator[Tuple[discord.Member, User]]:
         """
         yields:
@@ -76,13 +80,23 @@ class INatUserTable:
                 pass
 
         for (discord_member, inat_user_id) in known_users:
-            try:
-                user_json = await self.cog.api.get_users(inat_user_id)
-            except LookupError:
-                continue
-            if user_json:
-                results = user_json["results"]
-                if results:
-                    inat_user = User.from_json(results[0])
+            if (
+                inat_user_id not in self.cog.api.users_cache
+                and mock_users_without_observations
+            ):
+                # Optimize listing these users:
+                # - yield the registered user's user_id, but don't look up the
+                #   user as this can be quite costly when iterating over all of
+                #   them
+                inat_user = User(id=inat_user_id, login="*uncached*")
+            else:
+                try:
+                    user_json = await self.cog.api.get_users(inat_user_id)
+                except LookupError:
+                    continue
+                if user_json:
+                    results = user_json["results"]
+                    if results:
+                        inat_user = User.from_json(results[0])
             if inat_user:
                 yield (discord_member, inat_user)
