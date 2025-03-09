@@ -422,7 +422,8 @@ class INatAPI:
                     more = False
         if missing_user_ids:
             logger.info(
-                "Bulk user load missing ids (deleted or 0 observations): %s",
+                "Bulk user load missing these %d ids (no obs or deleted): %s",
+                len(missing_user_ids),
                 ", ".join([str(id) for id in missing_user_ids]),
             )
         logger.info("Bulk user load total users loaded: %d", len(users))
