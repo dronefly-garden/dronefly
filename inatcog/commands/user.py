@@ -722,7 +722,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if is_member or isinstance(dmember, discord.User):
                     user_is = f"`{dmember.id}` {dmember.mention} is "
                 else:
-                    user_is = f"`{dmember}` is "
+                    user_is = f":wave: `{dmember}` is "
             else:
                 user_is = ":ghost: *unknown user* is "
             if isinstance(iuser, User):
