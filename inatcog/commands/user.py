@@ -724,7 +724,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 else:
                     user_is = f"`{dmember}` is "
             else:
-                user_is = ":ghost: *(unknown user)* is "
+                user_is = f":ghost: `{dmember}` is "
             if isinstance(iuser, User):
                 profile_link = format_user_link(iuser)
             elif iuser:
