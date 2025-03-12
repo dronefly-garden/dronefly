@@ -724,7 +724,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 else:
                     user_is = f"`{dmember}` is "
             else:
-                user_is = f":ghost: `{dmember}` is "
+                user_is = ":ghost: *unknown user* is "
             if isinstance(iuser, User):
                 profile_link = format_user_link(iuser)
             elif iuser:
@@ -766,16 +766,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if prj_id:
                 event_user_ids = projects[prj_id].observed_by_ids()
 
-        # Every server member known to the bot that has a known iNat user ID
-        # (i.e. `,user add` performed in this server):
+        # Every Discord user known to the bot that has a known iNat user ID
+        # (i.e. `,user add` performed in this server) whether or not they
+        # are still a member of this server:
         known_user_ids_by_inat_id = {}
         for (discord_user_id, user_config) in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
-            if inat_user_id:
-                if guild_id in user_config.get("known_in"):
-                    discord_member = ctx.guild.get_member(discord_user_id)
-                    if discord_member:
-                        known_user_ids_by_inat_id[inat_user_id] = discord_user_id
+            if inat_user_id and guild_id in user_config.get("known_in"):
+                known_user_ids_by_inat_id[inat_user_id] = discord_user_id
 
         # Every Discord user's reactions to the event menu message (if any),
         # whether or not they are presently a server member or are known
@@ -820,18 +818,26 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # 2. user is in the event project
             # 3. the member holds an event role
             # 4. the member has reacted to the menu to join the event
+            is_member = isinstance(dmember, discord.Member)
+            is_user = is_member or isinstance(dmember, discord.User)
+            _discord_user_id = dmember.id if is_user else dmember
             candidate = (
                 not abbrev
                 or abbrev in project_abbrevs
-                or set(filter_roles).intersection(dmember.roles)
                 or (
-                    filter_message
-                    and dmember.id in menu_reactions_by_user
-                    and filter_emoji in menu_reactions_by_user[dmember.id]
+                    is_member
+                    and (
+                        set(filter_roles).intersection(dmember.roles)
+                        or (
+                            filter_message
+                            and dmember.id in menu_reactions_by_user
+                            and filter_emoji in menu_reactions_by_user[dmember.id]
+                        )
+                    )
                 )
             )
             # This removes the member from further checks later.
-            checked_user_ids.append(dmember.id)
+            checked_user_ids.append(_discord_user_id)
             # Non-candidates are skipped (i.e. nothing indicates they are in,
             # or wanted to be in the event).
             if not candidate:
@@ -839,20 +845,22 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
             known_inat_user_ids_in_event.append(iuser.id)
 
-            line = formatted_user(dmember, iuser, project_abbrevs)
-            (
-                roles_and_reactions,
-                has_opposite_team_role,
-                reaction_mismatch,
-            ) = check_roles_and_reactions(dmember.id, dmember)
-            line += roles_and_reactions
+            line = formatted_user(_discord_user_id, iuser, project_abbrevs)
+            if is_member:
+                (
+                    roles_and_reactions,
+                    has_opposite_team_role,
+                    reaction_mismatch,
+                ) = check_roles_and_reactions(dmember.id, dmember)
+                line += roles_and_reactions
 
             # Partition into those whose role and reactions match the event
             # they signed up for vs. those who don't match, and therefore
             # need attention by a project admin.
             if filter_roles or filter_message:
                 event_membership_is_consistent = (
-                    abbrev in project_abbrevs
+                    is_member
+                    and abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
                     and set(filter_roles).intersection(dmember.roles)
                     and not has_opposite_team_role
@@ -954,13 +962,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
             discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
             line = formatted_user(user)
-            (
-                roles_and_reactions,
-                _has_opposite_team_role,
-                _reaction_mismatch,
-            ) = check_roles_and_reactions(discord_user_id, discord_member)
-            line += roles_and_reactions
             if discord_member:
+                (
+                    roles_and_reactions,
+                    _has_opposite_team_role,
+                    _reaction_mismatch,
+                ) = check_roles_and_reactions(discord_user_id, discord_member)
+                line += roles_and_reactions
                 non_matching_names.insert(0, line)
             else:
                 non_matching_names.append(line)

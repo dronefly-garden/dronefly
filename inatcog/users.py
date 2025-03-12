@@ -60,9 +60,8 @@ class INatUserTable:
             inat_user = None
 
             discord_member = guild.get_member(discord_id)
-            if discord_member and (
-                guild.id in users[discord_id].get("known_in")
-                or (anywhere and users[discord_id].get("known_all"))
+            if guild.id in users[discord_id].get("known_in") or (
+                anywhere and users[discord_id].get("known_all")
             ):
                 inat_user_id = users[discord_id].get("inat_user_id")
                 if inat_user_id:
@@ -71,7 +70,7 @@ class INatUserTable:
                         and inat_user_id not in uncached_known_user_ids
                     ):
                         uncached_known_user_ids.append(inat_user_id)
-                    known_users.append([discord_member, inat_user_id])
+                    known_users.append([discord_member or discord_id, inat_user_id])
 
         if uncached_known_user_ids:
             try:
