@@ -867,7 +867,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     and not reaction_mismatch
                 )
             else:
-                event_membership_is_consistent = True
+                event_membership_is_consistent = is_member
             if event_membership_is_consistent:
                 matching_names.append(line)
             else:
