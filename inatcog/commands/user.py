@@ -845,7 +845,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
             known_inat_user_ids_in_event.append(iuser.id)
 
-            line = formatted_user(_discord_user_id, iuser, project_abbrevs)
+            line = formatted_user(dmember or _discord_user_id, iuser, project_abbrevs)
             if is_member:
                 (
                     roles_and_reactions,
