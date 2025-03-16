@@ -651,9 +651,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             main_event_project_ids,
         )
 
-    async def _user_list_get_projects(
-        self, ctx, event_project_ids, main_event_project_ids
-    ):
+    async def _user_list_get_project(self, ctx, event_project_ids):
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
@@ -663,13 +661,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for response in responses
             if response
         }
-
-        # Only do the extra work to initially cache all the observers when
-        # listing all users.
-        # - TODO: review caching and make it a little less magic
-        if main_event_project_ids and not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(list(main_event_project_ids))
-            self.user_cache_init[ctx.guild.id] = True
         return projects
 
     async def _user_list_match_members(
@@ -754,9 +745,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             event_project_ids,
             main_event_project_ids,
         ) = await self._user_list_event_info(ctx, abbrev, event_projects)
-        projects = await self._user_list_get_projects(
-            ctx, event_project_ids, main_event_project_ids
-        )
+        projects = await self._user_list_get_project(ctx, event_project_ids)
 
         # Current event project members:
         event_user_ids = []

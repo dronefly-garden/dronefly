@@ -3,7 +3,7 @@ from json import JSONDecodeError
 import logging
 from time import time
 from types import SimpleNamespace
-from typing import List, Optional, Union
+from typing import List, Union
 
 from aiohttp import (
     ClientConnectorError,
@@ -350,30 +350,14 @@ class INatAPI:
             return self.users_cache[user_id]
         return None
 
-    async def get_observers_from_projects(
-        self, project_ids: Optional[List] = None, user_ids: Optional[List] = None
-    ):
-        """Get observers for a list of project ids.
+    async def bulk_load_users_from_observers(self, user_ids: List):
+        """Bulk load users that are observers.
 
-        Since the cache is filled as a side effect, this method can be
-        used to prime the cache prior to fetching multiple users at once
-        by id.
-
-        Users may also be specified, and in that case, project ids may be
-        omitted. The cache will then be primed from a list of user ids.
+        This method can be used to prime the cache prior to fetching multiple
+        users at once by id, greatly reducing the API cost over an individual
+        API call per user.
         """
-        if not (project_ids or user_ids):
-            return
-
-        if user_ids and project_ids:
-            raise ValueError("Specify project_ids or user_ids, not both.")
-        if project_ids:
-            logger.info(
-                "Bulk user load projects: %s",
-                ", ".join([str(id) for id in project_ids]),
-            )
-        else:
-            logger.info("Bulk user load individual users count: %d", len(user_ids))
+        logger.info("Bulk user load individual users count: %d", len(user_ids))
         remaining_user_ids = [*user_ids] if user_ids else []
         remaining_user_ids_page = []
         more = True
@@ -382,8 +366,6 @@ class INatAPI:
         per_page = 500
         while more:
             params = {"per_page": per_page}
-            if project_ids:
-                params["project_id"] = ",".join(map(str, project_ids))
             if remaining_user_ids:
                 # The max we can fetch at once is 500, but we specify slices
                 # of all requested user ids instead of passing page=#; some
@@ -412,14 +394,9 @@ class INatAPI:
             if remaining_user_ids_page:
                 missing_user_ids.extend(remaining_user_ids_page)
 
-            if project_ids:
-                # iNat only indexes the top 500 observer user ids, so we
-                # terminate the loop after the 1st page when processing projects
+            # Stop when there are none left over
+            if not remaining_user_ids:
                 more = False
-            else:
-                # When user_ids are specified, stop when there are none left over
-                if not remaining_user_ids:
-                    more = False
         if missing_user_ids:
             logger.info(
                 "Bulk user load missing these %d ids (no obs or deleted): %s",
@@ -428,7 +405,7 @@ class INatAPI:
             )
         logger.info("Bulk user load total users loaded: %d", len(users))
 
-        # return all user results as a single page
+        # Return all users that both exist and have observations as a single page.
         return {
             "total_results": len(users),
             "pages": 1,

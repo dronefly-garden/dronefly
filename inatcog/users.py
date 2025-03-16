@@ -75,7 +75,7 @@ class INatUserTable:
         if uncached_known_user_ids:
             try:
                 # cache all the remaining known users in one call
-                await self.cog.api.get_observers_from_projects(
+                await self.cog.api.bulk_load_users_from_observers(
                     user_ids=uncached_known_user_ids
                 )
             except LookupError:
