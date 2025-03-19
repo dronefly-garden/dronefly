@@ -711,8 +711,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if dmember:
                 is_member = isinstance(dmember, discord.Member)
                 if is_member or isinstance(dmember, discord.User):
+                    discord_user_id = dmember.id
                     user_is = f"`{dmember.id}` {dmember.mention} is "
                 else:
+                    discord_user_id = dmember
                     user_is = f":wave: `{dmember}` is "
             else:
                 user_is = ":ghost: *unknown user* is "
@@ -729,7 +731,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             response = f"{user_is}{profile_link}"
             discord_user_ids = [*known_user_ids_by_inat_id[iuser.id]]
             if len(discord_user_ids) > 1:
-                discord_user_ids.remove(dmember.id)
+                discord_user_ids.remove(discord_user_id)
                 response += " alt:"
                 for id in discord_user_ids:
                     response += f" <@{id}>"
