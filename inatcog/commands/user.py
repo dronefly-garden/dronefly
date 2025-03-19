@@ -726,7 +726,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 else:
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
-            response = f"{user_is}{profile_link}\n"
+            response = f"{user_is}{profile_link}"
+            discord_user_ids = [*known_user_ids_by_inat_id[iuser.id]]
+            if len(discord_user_ids) > 1:
+                discord_user_ids.remove(dmember.id)
+                response += " alt:"
+                for id in discord_user_ids:
+                    response += f" <@{id}>"
+            response += "\n"
             if project_abbrevs:
                 response += f"{' '.join(project_abbrevs)}"
             return response
@@ -762,7 +769,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
         for (discord_user_id, user_config) in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
             if inat_user_id and guild_id in user_config.get("known_in"):
-                known_user_ids_by_inat_id[inat_user_id] = discord_user_id
+                if inat_user_id in known_user_ids_by_inat_id:
+                    discord_user_ids = known_user_ids_by_inat_id[inat_user_id]
+                else:
+                    discord_user_ids = []
+                discord_user_ids.append(discord_user_id)
+                known_user_ids_by_inat_id[inat_user_id] = discord_user_ids
 
         # Every Discord user's reactions to the event menu message (if any),
         # whether or not they are presently a server member or are known
@@ -842,7 +854,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     reaction_mismatch,
                 ) = check_roles_and_reactions(dmember.id, dmember)
                 line += roles_and_reactions
-
             # Partition into those whose role and reactions match the event
             # they signed up for vs. those who don't match, and therefore
             # need attention by a project admin.
@@ -894,8 +905,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 inat_user_id, event_project_ids, projects
             )
 
-            known_discord_user_id = known_user_ids_by_inat_id.get(inat_user_id)
-            if not known_discord_user_id:
+            known_discord_user_ids = known_user_ids_by_inat_id.get(inat_user_id)
+            if not known_discord_user_ids:
                 # 1. Not known in this server (can show only iNat info)
                 line = formatted_user(None, inat_user or inat_user_id, project_abbrevs)
                 non_matching_names.append(line)
@@ -906,13 +917,15 @@ class CommandsUser(INatEmbeds, MixinMeta):
             #   known server members
             # - we can show iNat info and some Discord info from the discord.User
             #   object (reactions, but not roles since only members can have roles)
-            checked_user_ids.append(known_discord_user_id)
-            discord_user = self.bot.get_user(known_discord_user_id)
-            line = ":ghost: " + formatted_user(
-                discord_user or known_discord_user_id,
-                inat_user or inat_user_id,
-                project_abbrevs,
-            )
+            for known_discord_user_id in known_discord_user_ids:
+                if known_discord_user_id not in checked_user_ids:
+                    checked_user_ids.append(known_discord_user_id)
+                    discord_user = self.bot.get_user(known_discord_user_id)
+                    line = ":ghost: " + formatted_user(
+                        discord_user or known_discord_user_id,
+                        inat_user or inat_user_id,
+                        project_abbrevs,
+                    )
             (
                 roles_and_reactions,
                 _has_opposite_team_role,
