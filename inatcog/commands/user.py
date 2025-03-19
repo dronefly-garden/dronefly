@@ -848,7 +848,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if not candidate:
                 continue
 
-            known_inat_user_ids_in_event.append(iuser.id)
+            inat_user_id = iuser.id if isinstance(iuser, User) else iuser
+            known_inat_user_ids_in_event.append(inat_user_id)
 
             line = formatted_user(dmember or _discord_user_id, iuser, project_abbrevs)
             if is_member:
