@@ -704,7 +704,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         def formatted_user(
             dmember: Union[discord.Member, discord.User, int],
-            iuser: User = None,
+            iuser: Union[User, int] = None,
             project_abbrevs: list = [],
         ):
             is_member = False
@@ -731,9 +731,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
             response = f"{user_is}{profile_link}"
-            discord_user_ids = [*known_user_ids_by_inat_id[inat_user_id]]
+            if inat_user_id in known_user_ids_by_inat_id:
+                discord_user_ids = [*known_user_ids_by_inat_id[inat_user_id]]
+            else:
+                discord_user_ids = []
             if len(discord_user_ids) > 1:
-                discord_user_ids.remove(discord_user_id)
+                if discord_user_id in discord_user_ids:
+                    discord_user_ids.remove(discord_user_id)
                 response += " alt:"
                 for id in discord_user_ids:
                     response += f" <@{id}>"
