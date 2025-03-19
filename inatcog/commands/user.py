@@ -719,8 +719,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
             else:
                 user_is = ":ghost: *unknown user* is "
             if isinstance(iuser, User):
+                inat_user_id = iuser.id
                 profile_link = format_user_link(iuser)
             elif iuser:
+                inat_user_id = iuser
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
                 if is_member:
@@ -729,7 +731,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
             response = f"{user_is}{profile_link}"
-            discord_user_ids = [*known_user_ids_by_inat_id[iuser.id]]
+            discord_user_ids = [*known_user_ids_by_inat_id[inat_user_id]]
             if len(discord_user_ids) > 1:
                 discord_user_ids.remove(discord_user_id)
                 response += " alt:"
