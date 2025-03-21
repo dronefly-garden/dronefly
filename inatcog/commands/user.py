@@ -725,6 +725,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 inat_user_id = iuser
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
+                inat_user_id = None
                 if is_member:
                     profile_link = "not added in this server"
                 else:
