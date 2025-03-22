@@ -742,6 +742,12 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 response += " alt:"
                 for id in discord_user_ids:
                     response += f" <@{id}>"
+                    alt = ctx.guild.get_member(id)
+                    if filter_roles:
+                        all_roles = [*filter_roles, *team_roles]
+                        for role in alt.roles:
+                            if role in all_roles:
+                                response += " " + role.mention
             response += "\n"
             if project_abbrevs:
                 response += f"{' '.join(project_abbrevs)}"
@@ -868,11 +874,23 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # they signed up for vs. those who don't match, and therefore
             # need attention by a project admin.
             if filter_roles or filter_message:
+                if is_member:
+                    known_discord_user_ids = known_user_ids_by_inat_id.get(inat_user_id)
+                    if known_discord_user_ids and len(known_discord_user_ids) > 1:
+                        has_filter_roles = any(
+                            set(filter_roles).intersection(
+                                ctx.guild.get_member(alt).roles
+                            )
+                            for alt in known_discord_user_ids
+                        )
+                    else:
+                        has_filter_roles = set(filter_roles).intersection(dmember.roles)
+                else:
+                    has_filter_roles = False
                 event_membership_is_consistent = (
-                    is_member
+                    has_filter_roles
                     and abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
-                    and set(filter_roles).intersection(dmember.roles)
                     and not has_opposite_team_role
                     and not reaction_mismatch
                 )
