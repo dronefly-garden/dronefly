@@ -80,6 +80,26 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if error_msg:
             await apologize(ctx, error_msg)
 
+    @user.command(name="add_id")
+    @checks.is_owner()
+    async def user_add_id(self, ctx, discord_user_id: int, inat_user_id: int):
+        """Add user by Discord id# and iNat id# regardless of membership in any server.
+
+        - Only use this if the user config was removed in error and you need to add them back.
+        - No validation is performed on arguments other than to ensure they are type int.
+        """
+        config = self.config.user_from_id(discord_user_id)
+        known_in = await config.known_in()
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if guild_id != 0 and guild_id not in known_in:
+            known_in.append(guild_id)
+            await config.known_in.set(known_in)
+        await config.inat_user_id.set(inat_user_id)
+        await ctx.send(
+            f"<@{discord_user_id}> is added as "
+            f"[{inat_user_id}](https://www.inaturalist.org/people/{inat_user_id})."
+        )
+
     @user.command(name="add")
     @can_manage_users()
     async def user_add(self, ctx, discord_user: str, inat_user: str):
