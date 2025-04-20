@@ -87,7 +87,7 @@ class INatCog(
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
-        self.user_cache_init = {}
+        self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
         self.predicate_locks = {}
         self.member_as: DefaultDict[Tuple[int, int], AntiSpam] = DefaultDict(

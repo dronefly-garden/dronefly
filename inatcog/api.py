@@ -3,7 +3,7 @@ from json import JSONDecodeError
 import logging
 from time import time
 from types import SimpleNamespace
-from typing import List, Optional, Union
+from typing import List, Union
 
 from aiohttp import (
     ClientConnectorError,
@@ -350,33 +350,30 @@ class INatAPI:
             return self.users_cache[user_id]
         return None
 
-    async def get_observers_from_projects(
-        self, project_ids: Optional[List] = None, user_ids: Optional[List] = None
-    ):
-        """Get observers for a list of project ids.
+    async def bulk_load_users_from_observers(self, user_ids: List):
+        """Bulk load users that are observers.
 
-        Since the cache is filled as a side effect, this method can be
-        used to prime the cache prior to fetching multiple users at once
-        by id.
-
-        Users may also be specified, and in that case, project ids may be
-        omitted. The cache will then be primed from a list of user ids.
+        This method can be used to prime the cache prior to fetching multiple
+        users at once by id, greatly reducing the API cost over an individual
+        API call per user.
         """
-        if not (project_ids or user_ids):
-            return
-
-        page = 1
+        logger.info("Bulk user load individual users count: %d", len(user_ids))
+        remaining_user_ids = [*user_ids] if user_ids else []
+        remaining_user_ids_page = []
         more = True
         users = []
-        # Note: This will only handle up to 10,000 users. Anything more
-        # needs to set id_above and id_below. With luck, we won't ever
-        # need to deal with projects this big!
+        missing_user_ids = []
+        per_page = 500
         while more:
-            params = {"page": page}
-            if project_ids:
-                params["project_id"] = ",".join(map(str, project_ids))
-            if user_ids:
-                params["user_id"] = ",".join(map(str, user_ids))
+            params = {"per_page": per_page}
+            if remaining_user_ids:
+                # The max we can fetch at once is 500, but we specify slices
+                # of all requested user ids instead of passing page=#; some
+                # requested users may not be included in the results, so the
+                # actual number returned per API call may be less than 500.
+                remaining_user_ids_page = remaining_user_ids[0:per_page]
+                remaining_user_ids = remaining_user_ids[per_page:]
+                params["user_id"] = ",".join(map(str, remaining_user_ids_page))
             response = await self.get_observations("observers", **params)
             results = response.get("results") or []
             for observer in results:
@@ -391,15 +388,24 @@ class INatAPI:
                         users.append(user)
                         self.users_cache[user_id] = user_json
                         self.users_login_cache[user["login"]] = user_id
-            # default values provided defensively to exit loop if missing
-            per_page = response.get("per_page") or len(results)
-            total_results = response.get("total_results") or len(results)
-            if results and (page * per_page < total_results):
-                page += 1
-            else:
-                more = False
+                        if user_ids:
+                            remaining_user_ids_page.remove(user_id)
+            # Record any users that weren't retrieved in this page as missing:
+            if remaining_user_ids_page:
+                missing_user_ids.extend(remaining_user_ids_page)
 
-        # return all user results as a single page
+            # Stop when there are none left over
+            if not remaining_user_ids:
+                more = False
+        if missing_user_ids:
+            logger.info(
+                "Bulk user load missing these %d ids (no obs or deleted): %s",
+                len(missing_user_ids),
+                ", ".join([str(id) for id in missing_user_ids]),
+            )
+        logger.info("Bulk user load total users loaded: %d", len(users))
+
+        # Return all users that both exist and have observations as a single page.
         return {
             "total_results": len(users),
             "pages": 1,

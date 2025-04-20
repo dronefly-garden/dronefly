@@ -80,6 +80,26 @@ class CommandsUser(INatEmbeds, MixinMeta):
         if error_msg:
             await apologize(ctx, error_msg)
 
+    @user.command(name="add_id")
+    @checks.is_owner()
+    async def user_add_id(self, ctx, discord_user_id: int, inat_user_id: int):
+        """Add user by Discord id# and iNat id# regardless of membership in any server.
+
+        - Only use this if the user config was removed in error and you need to add them back.
+        - No validation is performed on arguments other than to ensure they are type int.
+        """
+        config = self.config.user_from_id(discord_user_id)
+        known_in = await config.known_in()
+        guild_id = ctx.guild.id if ctx.guild else 0
+        if guild_id != 0 and guild_id not in known_in:
+            known_in.append(guild_id)
+            await config.known_in.set(known_in)
+        await config.inat_user_id.set(inat_user_id)
+        await ctx.send(
+            f"<@{discord_user_id}> is added as "
+            f"[{inat_user_id}](https://www.inaturalist.org/people/{inat_user_id})."
+        )
+
     @user.command(name="add")
     @can_manage_users()
     async def user_add(self, ctx, discord_user: str, inat_user: str):
@@ -538,37 +558,47 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await self.user_show_settings(ctx, config, "lang")
 
     async def _user_list_filters(self, ctx, abbrev, config, event_projects):
-        filter_role = None
-        filter_role_id = None
+        filter_roles = []
+        filter_role_ids = None
         filter_message = None
         if abbrev:
             if abbrev in ["active", "inactive"]:
-                filter_role_id = await (
-                    config.active_role()
+                filter_role_ids = await (
+                    [config.active_role()]
                     if abbrev == "active"
-                    else config.inactive_role()
+                    else [config.inactive_role()]
                 )
-                if not filter_role_id:
+                if not filter_role_ids:
                     raise BadArgument(
                         f"The {abbrev} role is undefined. "
                         f"To set it, use: `{ctx.clean_prefix}inat set {abbrev}`"
                     )
             elif abbrev in event_projects:
-                filter_role_id = event_projects[abbrev]["role"]
+                filter_role_ids = event_projects[abbrev]["role"]
+                if filter_role_ids and not isinstance(filter_role_ids, list):
+                    filter_role_ids = [filter_role_ids]
             else:
                 raise BadArgument(
                     "That event doesn't exist."
                     f" To create it, use: `{ctx.clean_prefix}inat set event`"
                 )
 
-        if filter_role_id:
-            filter_role = next(
-                (role for role in ctx.guild.roles if role.id == filter_role_id), None
-            )
-            if not filter_role:
+        if filter_role_ids:
+            for role in ctx.guild.roles:
+                if role.id in filter_role_ids:
+                    filter_roles.append(role)
+            filter_roles = [
+                role for role in ctx.guild.roles if role.id in filter_role_ids
+            ]
+            if len(filter_roles) < len(filter_role_ids):
+                role_mentions = [
+                    f"<@&{filter_role_id}" for filter_role_id in filter_role_ids
+                ]
                 raise BadArgument(
-                    f"The defined {abbrev} role doesn't exist: <@&{filter_role_id}>."
-                    f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                    f"One or more defined roles for `{abbrev}` "
+                    f"don't exist: {' ,'.join(role_mentions)}. "
+                    "To clear all roles for the event, use: "
+                    f"`{ctx.clean_prefix}inat set event role None`"
                 )
 
         filter_emoji = None
@@ -593,7 +623,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                         f" To update it, use: `{ctx.clean_prefix}inat set event`"
                     )
 
-        return (filter_role, filter_emoji, filter_message)
+        return (filter_roles, filter_emoji, filter_message)
 
     async def _user_list_event_info(self, ctx, abbrev, event_projects):
         team_roles = []
@@ -641,9 +671,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             main_event_project_ids,
         )
 
-    async def _user_list_get_projects(
-        self, ctx, event_project_ids, main_event_project_ids
-    ):
+    async def _user_list_get_project(self, ctx, event_project_ids):
         responses = [
             await self.api.get_projects(prj_id, refresh_cache=True)
             for prj_id in event_project_ids
@@ -653,13 +681,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for response in responses
             if response
         }
-
-        # Only do the extra work to initially cache all the observers when
-        # listing all users.
-        # - TODO: review caching and make it a little less magic
-        if main_event_project_ids and not self.user_cache_init.get(ctx.guild.id):
-            await self.api.get_observers_from_projects(list(main_event_project_ids))
-            self.user_cache_init[ctx.guild.id] = True
         return projects
 
     async def _user_list_match_members(
@@ -667,7 +688,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         ctx,
         abbrev,
         event_projects,
-        filter_role,
+        filter_roles,
         filter_emoji,
         filter_message,
     ):
@@ -685,8 +706,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
             has_opposite_team_role = False
             reaction_mismatch = False
             # i.e. only members can have roles
-            if filter_role and discord_member:
-                for role in [filter_role, *team_roles]:
+            if filter_roles and discord_member:
+                for role in [*filter_roles, *team_roles]:
                     if role in discord_member.roles:
                         response += f" {role.mention}"
                         if role in team_roles:
@@ -703,29 +724,51 @@ class CommandsUser(INatEmbeds, MixinMeta):
 
         def formatted_user(
             dmember: Union[discord.Member, discord.User, int],
-            iuser: User = None,
+            iuser: Union[User, int] = None,
             project_abbrevs: list = [],
         ):
             is_member = False
             if dmember:
                 is_member = isinstance(dmember, discord.Member)
                 if is_member or isinstance(dmember, discord.User):
+                    discord_user_id = dmember.id
                     user_is = f"`{dmember.id}` {dmember.mention} is "
                 else:
-                    user_is = f"`{dmember}` is "
+                    discord_user_id = dmember
+                    user_is = f":wave: `{dmember}` is "
             else:
-                user_is = ":ghost: *(unknown user)* is "
+                user_is = ":ghost: *unknown user* is "
             if isinstance(iuser, User):
+                inat_user_id = iuser.id
                 profile_link = format_user_link(iuser)
             elif iuser:
+                inat_user_id = iuser
                 profile_link = f"[{iuser}](https://www.inaturalist.org/people/{iuser})"
             else:
+                inat_user_id = None
                 if is_member:
                     profile_link = "not added in this server"
                 else:
                     profile_link = "not a member of this server"
                 user_is = ":grey_question: " + user_is
-            response = f"{user_is}{profile_link}\n"
+            response = f"{user_is}{profile_link}"
+            if inat_user_id in known_user_ids_by_inat_id:
+                discord_user_ids = [*known_user_ids_by_inat_id[inat_user_id]]
+            else:
+                discord_user_ids = []
+            if len(discord_user_ids) > 1:
+                if discord_user_id in discord_user_ids:
+                    discord_user_ids.remove(discord_user_id)
+                response += " alt:"
+                for id in discord_user_ids:
+                    response += f" <@{id}>"
+                    alt = ctx.guild.get_member(id)
+                    if filter_roles:
+                        all_roles = [*filter_roles, *team_roles]
+                        for role in alt.roles:
+                            if role in all_roles:
+                                response += " " + role.mention
+            response += "\n"
             if project_abbrevs:
                 response += f"{' '.join(project_abbrevs)}"
             return response
@@ -744,9 +787,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
             event_project_ids,
             main_event_project_ids,
         ) = await self._user_list_event_info(ctx, abbrev, event_projects)
-        projects = await self._user_list_get_projects(
-            ctx, event_project_ids, main_event_project_ids
-        )
+        projects = await self._user_list_get_project(ctx, event_project_ids)
 
         # Current event project members:
         event_user_ids = []
@@ -756,16 +797,19 @@ class CommandsUser(INatEmbeds, MixinMeta):
             if prj_id:
                 event_user_ids = projects[prj_id].observed_by_ids()
 
-        # Every server member known to the bot that has a known iNat user ID
-        # (i.e. `,user add` performed in this server):
+        # Every Discord user known to the bot that has a known iNat user ID
+        # (i.e. `,user add` performed in this server) whether or not they
+        # are still a member of this server:
         known_user_ids_by_inat_id = {}
         for (discord_user_id, user_config) in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
-            if inat_user_id:
-                if guild_id in user_config.get("known_in"):
-                    discord_member = ctx.guild.get_member(discord_user_id)
-                    if discord_member:
-                        known_user_ids_by_inat_id[inat_user_id] = discord_user_id
+            if inat_user_id and guild_id in user_config.get("known_in"):
+                if inat_user_id in known_user_ids_by_inat_id:
+                    discord_user_ids = known_user_ids_by_inat_id[inat_user_id]
+                else:
+                    discord_user_ids = []
+                discord_user_ids.append(discord_user_id)
+                known_user_ids_by_inat_id[inat_user_id] = discord_user_ids
 
         # Every Discord user's reactions to the event menu message (if any),
         # whether or not they are presently a server member or are known
@@ -808,48 +852,70 @@ class CommandsUser(INatEmbeds, MixinMeta):
             # following:
             # 1. no project abbreviation (i.e. `,user list` shows all users)
             # 2. user is in the event project
-            # 3. the member holds the event role
+            # 3. the member holds an event role
             # 4. the member has reacted to the menu to join the event
+            is_member = isinstance(dmember, discord.Member)
+            is_user = is_member or isinstance(dmember, discord.User)
+            _discord_user_id = dmember.id if is_user else dmember
             candidate = (
                 not abbrev
                 or abbrev in project_abbrevs
-                or filter_role in dmember.roles
                 or (
-                    filter_message
-                    and dmember.id in menu_reactions_by_user
-                    and filter_emoji in menu_reactions_by_user[dmember.id]
+                    is_member
+                    and (
+                        set(filter_roles).intersection(dmember.roles)
+                        or (
+                            filter_message
+                            and dmember.id in menu_reactions_by_user
+                            and filter_emoji in menu_reactions_by_user[dmember.id]
+                        )
+                    )
                 )
             )
             # This removes the member from further checks later.
-            checked_user_ids.append(dmember.id)
+            checked_user_ids.append(_discord_user_id)
             # Non-candidates are skipped (i.e. nothing indicates they are in,
             # or wanted to be in the event).
             if not candidate:
                 continue
 
-            known_inat_user_ids_in_event.append(iuser.id)
+            inat_user_id = iuser.id if isinstance(iuser, User) else iuser
+            known_inat_user_ids_in_event.append(inat_user_id)
 
-            line = formatted_user(dmember, iuser, project_abbrevs)
-            (
-                roles_and_reactions,
-                has_opposite_team_role,
-                reaction_mismatch,
-            ) = check_roles_and_reactions(dmember.id, dmember)
-            line += roles_and_reactions
-
+            line = formatted_user(dmember or _discord_user_id, iuser, project_abbrevs)
+            if is_member:
+                (
+                    roles_and_reactions,
+                    has_opposite_team_role,
+                    reaction_mismatch,
+                ) = check_roles_and_reactions(dmember.id, dmember)
+                line += roles_and_reactions
             # Partition into those whose role and reactions match the event
             # they signed up for vs. those who don't match, and therefore
             # need attention by a project admin.
-            if filter_role or filter_message:
+            if filter_roles or filter_message:
+                if is_member:
+                    known_discord_user_ids = known_user_ids_by_inat_id.get(inat_user_id)
+                    if known_discord_user_ids and len(known_discord_user_ids) > 1:
+                        has_filter_roles = any(
+                            set(filter_roles).intersection(
+                                ctx.guild.get_member(alt).roles
+                            )
+                            for alt in known_discord_user_ids
+                        )
+                    else:
+                        has_filter_roles = set(filter_roles).intersection(dmember.roles)
+                else:
+                    has_filter_roles = False
                 event_membership_is_consistent = (
-                    abbrev in project_abbrevs
+                    has_filter_roles
+                    and abbrev in project_abbrevs
                     and abbrev not in team_abbrevs
-                    and filter_role in dmember.roles
                     and not has_opposite_team_role
                     and not reaction_mismatch
                 )
             else:
-                event_membership_is_consistent = True
+                event_membership_is_consistent = is_member
             if event_membership_is_consistent:
                 matching_names.append(line)
             else:
@@ -887,8 +953,8 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 inat_user_id, event_project_ids, projects
             )
 
-            known_discord_user_id = known_user_ids_by_inat_id.get(inat_user_id)
-            if not known_discord_user_id:
+            known_discord_user_ids = known_user_ids_by_inat_id.get(inat_user_id)
+            if not known_discord_user_ids:
                 # 1. Not known in this server (can show only iNat info)
                 line = formatted_user(None, inat_user or inat_user_id, project_abbrevs)
                 non_matching_names.append(line)
@@ -899,13 +965,15 @@ class CommandsUser(INatEmbeds, MixinMeta):
             #   known server members
             # - we can show iNat info and some Discord info from the discord.User
             #   object (reactions, but not roles since only members can have roles)
-            checked_user_ids.append(known_discord_user_id)
-            discord_user = self.bot.get_user(known_discord_user_id)
-            line = ":ghost: " + formatted_user(
-                discord_user or known_discord_user_id,
-                inat_user or inat_user_id,
-                project_abbrevs,
-            )
+            for known_discord_user_id in known_discord_user_ids:
+                if known_discord_user_id not in checked_user_ids:
+                    checked_user_ids.append(known_discord_user_id)
+                    discord_user = self.bot.get_user(known_discord_user_id)
+                    line = ":ghost: " + formatted_user(
+                        discord_user or known_discord_user_id,
+                        inat_user or inat_user_id,
+                        project_abbrevs,
+                    )
             (
                 roles_and_reactions,
                 _has_opposite_team_role,
@@ -927,12 +995,15 @@ class CommandsUser(INatEmbeds, MixinMeta):
             for user_id in menu_reactions_by_user
             if user_id not in checked_user_ids
         ]
-        if filter_role:
-            role_user_ids = [
-                member.id
-                for member in filter_role.members
-                if member.id not in checked_user_ids
-            ]
+        if filter_roles:
+            role_user_ids = []
+            for filter_role in filter_roles:
+                for member in filter_role.members:
+                    if (
+                        member.id not in checked_user_ids
+                        and member.id not in role_user_ids
+                    ):
+                        role_user_ids.append(member.id)
             candidate_user_ids = set(reaction_user_ids).union(role_user_ids)
         else:
             candidate_user_ids = reaction_user_ids
@@ -941,13 +1012,13 @@ class CommandsUser(INatEmbeds, MixinMeta):
             discord_member = ctx.guild.get_member(discord_user_id)
             user = discord_member or discord_user or discord_user_id
             line = formatted_user(user)
-            (
-                roles_and_reactions,
-                _has_opposite_team_role,
-                _reaction_mismatch,
-            ) = check_roles_and_reactions(discord_user_id, discord_member)
-            line += roles_and_reactions
             if discord_member:
+                (
+                    roles_and_reactions,
+                    _has_opposite_team_role,
+                    _reaction_mismatch,
+                ) = check_roles_and_reactions(discord_user_id, discord_member)
+                line += roles_and_reactions
                 non_matching_names.insert(0, line)
             else:
                 non_matching_names.append(line)
@@ -972,9 +1043,11 @@ class CommandsUser(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         event_projects = await config.event_projects()
         try:
-            (filter_role, filter_emoji, filter_message) = await self._user_list_filters(
-                ctx, abbrev, config, event_projects
-            )
+            (
+                filter_roles,
+                filter_emoji,
+                filter_message,
+            ) = await self._user_list_filters(ctx, abbrev, config, event_projects)
         except BadArgument as err:
             await ctx.send(
                 embed=make_embed(
@@ -986,7 +1059,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         error_msg = None
         pages = []
         async with ctx.typing():
-            # If filter_role is given, resulting list of names will be partitioned
+            # If filter_roles are given, resulting list of names will be partitioned
             # into matching and non matching names, where "non-matching" is any
             # discrepancy between the role(s) assigned and the project they're in,
             # or when a non-server-member is in the specified event project.
@@ -998,7 +1071,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     ctx,
                     abbrev,
                     event_projects,
-                    filter_role,
+                    filter_roles,
                     filter_emoji,
                     filter_message,
                 )

@@ -27,7 +27,7 @@ async def get_taxon_preferred_establishment_means(ctx, taxon):
         establishment_means = taxon.establishment_means
         place_id = establishment_means.place.id
         if getattr(taxon, "listed_taxa", None) is None:
-            taxon = await ctx.client.taxa.populate(taxon)
+            taxon = await ctx.client.taxa.populate(taxon, refresh=True)
     except (AttributeError, LookupError):
         return None
 

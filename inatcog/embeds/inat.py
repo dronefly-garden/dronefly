@@ -795,7 +795,7 @@ class INatEmbeds(MixinMeta):
     async def get_image_embed(self, ctx, taxon, index=1):
         """Make embed showing default image for taxon."""
         lang = await get_lang(ctx)
-        _taxon = await ctx.inat_client.taxa.populate(taxon)
+        _taxon = await ctx.inat_client.taxa.populate(taxon, refresh=True)
         embed = make_image_embed(_taxon, index=index, lang=lang)
         return embed
 
@@ -812,10 +812,10 @@ class INatEmbeds(MixinMeta):
             place = arg.place
             if place:
                 taxon = await ctx.inat_client.taxa.populate(
-                    arg.taxon, preferred_place_id=place.id
+                    arg.taxon, preferred_place_id=place.id, refresh=True
                 )
             else:
-                taxon = await ctx.inat_client.taxa.populate(arg.taxon)
+                taxon = await ctx.inat_client.taxa.populate(arg.taxon, refresh=True)
             formatter_params["taxon"] = taxon
             user = arg.user
             title_query_response = copy.copy(arg)
@@ -833,7 +833,7 @@ class INatEmbeds(MixinMeta):
                 title_query_response, **formatter_params
             )
         elif isinstance(arg, Taxon):
-            taxon = await ctx.inat_client.taxa.populate(arg)
+            taxon = await ctx.inat_client.taxa.populate(arg, refresh=True)
             formatter_params["taxon"] = taxon
             user = None
             place = None
