@@ -890,12 +890,12 @@ rich = ">=13.4"
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "HEAD"
-resolved_reference = "017bf5f5032b820a9a9539dfb23a9057838ff304"
+reference = "e738208137ddf3cffbe992d7d6da343d651aace1"
+resolved_reference = "e738208137ddf3cffbe992d7d6da343d651aace1"
 
 [[package]]
 name = "dronefly-discord"
-version = "0.1.9"
+version = "0.1.10.dev0"
 description = "Dronefly Discord library"
 optional = false
 python-versions = ">=3.11,<3.12"
@@ -905,15 +905,14 @@ develop = false
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = "=0.4.2"
+dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "e738208137ddf3cffbe992d7d6da343d651aace1"}
 inflect = "^5.3.0"
-pyinaturalist = "^0.20.0"
 
 [package.source]
 type = "git"
 url = "https://github.com/dronefly-garden/dronefly-discord"
-reference = "HEAD"
-resolved_reference = "63fe72b32e1f3cb8bf58ca26e0454c12637bed95"
+reference = "ab24c795f0457600795090aab9a9004e504428a7"
+resolved_reference = "ab24c795f0457600795090aab9a9004e504428a7"
 
 [[package]]
 name = "ebird-api"
@@ -3440,4 +3439,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "3baaff7ef2588e3990349c4b3dba5b86646daf017a70c0e1634d8e0f78754880"
+content-hash = "d3701ecf9112b29018d7f0dcc1785304b9b478df3389f5b0596c54d8403f083b"
