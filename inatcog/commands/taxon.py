@@ -218,10 +218,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """North American flora info from bonap.net."""
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if query_response:
-                base_url = "https://bonap.net/MapGallery/County/"
-                maps_url = "https://bonap.net/NAPA/TaxonMaps/Genus/County/"
-                taxon = query_response.taxon
-                name = re.sub(r" ", "%20", taxon.name)
+                base_taxon_map_url = "https://bonap.net/MapGallery/County/"
+                base_species_maps_url = "https://bonap.net/NAPA/TaxonMaps/Genus/County/"
+                taxon = ctx.inat_client.taxa(
+                    query_response.taxon.id, refresh=True, all_names=True
+                )
+                name = taxon.name
                 lang = await get_lang(ctx)
                 full_name = format_taxon_name(taxon, lang=lang)
                 if TRACHEOPHYTA_ID not in taxon.ancestor_ids:
@@ -230,21 +232,67 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     )
                     await add_reactions_with_cancel(ctx, msg, [])
                     return
-                if taxon.rank == "genus":
-                    msg = await ctx.send(
-                        (
-                            f"{full_name} species maps: {maps_url}{name}\n"
-                            f"Genus map: {base_url}Genus/{name}.png"
-                        )
-                    )
-                elif taxon.rank == "species":
-                    msg = await ctx.send(f"{full_name} map:\n{base_url}{name}.png")
-                else:
+
+                if taxon.rank not in ("genus", "species"):
                     msg = await ctx.send(
                         f"{full_name} must be a genus or species, not: {taxon.rank}"
                     )
                     await add_reactions_with_cancel(ctx, msg, [])
                     return
+
+                # Find first map at bonap.net for current valid name, or if not
+                # found, then any invalid name for the same taxon.
+                taxon_map_url = None
+                taxon_names = [
+                    name,
+                    *(
+                        name["name"]
+                        for name in taxon.names
+                        if name.get("lexicon") == "scientific-names"
+                        and not name.get("is_valid")
+                    ),
+                ]
+                _name = name
+                _full_name = full_name
+                found = False
+                while not found and taxon_names:
+                    name = taxon_names.pop(0)
+                    _rank = "Genus/" if taxon.rank == "genus" else ""
+                    taxon_map_url = (
+                        f"{base_taxon_map_url}{_rank}{re.sub(r' ', '%20', name)}.png"
+                    )
+                    resp = await self.api.session.head(
+                        taxon_map_url, raise_for_status=False
+                    )
+                    if resp.status == 200:
+                        if name != _name:
+                            full_name = (
+                                f"{_full_name} replaces *{name}* (no longer valid)"
+                            )
+                        found = True
+                    elif resp.status == 404:
+                        # i.e. valid name not found, but bonap may know it by an invalid name
+                        if taxon_names:
+                            continue
+                    else:
+                        await apologize(
+                            ctx, f"bonap.net not responding (Error {resp.status})"
+                        )
+                        return
+                if not found:
+                    await apologize(ctx, f"{_full_name} not found at bonap.net")
+                    return
+
+                if taxon.rank == "genus":
+                    species_maps_url = base_species_maps_url + name
+                    msg = await ctx.send(
+                        (
+                            f"{full_name} species maps: {species_maps_url}\n"
+                            f"Map for: {full_name}\n{taxon_map_url}"
+                        )
+                    )
+                else:  # i.e. species
+                    msg = await ctx.send(f"Map for: {full_name}\n{taxon_map_url}")
                 cancelled = await (self.bot.get_command("tabulate")(ctx, query=_query))
                 if cancelled and msg:
                     with contextlib.suppress(discord.HTTPException):
