@@ -78,6 +78,7 @@ class INatCog(
         self.config = Config.get_conf(self, identifier=1607)
         self.api = INatAPI()
         self.inat_client = iNatClient(loop=bot.loop, creds={"refresh": True})
+        self.interactions = dict()
         self.p = inflect.engine()  # pylint: disable=invalid-name
         self.obs_query = INatObsQuery(self)
         self.taxon_query = INatTaxonQuery(self)
@@ -136,7 +137,11 @@ class INatCog(
         """Initialization after bot is ready."""
         await self.bot.wait_until_ready()
         await self._migrate_config(await self.config.schema_version(), _SCHEMA_VERSION)
+        await self._load_interactions()
         self._ready_event.set()
+
+    async def _load_interactions(self) -> None:
+        return
 
     async def _migrate_config(self, from_version: int, to_version: int) -> None:
         if from_version == to_version:
