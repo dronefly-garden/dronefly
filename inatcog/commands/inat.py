@@ -237,6 +237,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See also: `[p]groups`, `[p]macros`, and `[p]query`.
 
+        **`roachesonly`**` blattodea opt`
+        **`       `**`       without_taxon_id=118903`
         **`seaslugs`**`    opt taxon_ids=`
         **`       `**`       130687,775798,775804,`
         **`       `**`       49784,500752,47113,`
