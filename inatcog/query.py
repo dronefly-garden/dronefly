@@ -60,24 +60,20 @@ class INatQuery:
             else None
         )
         args["user"] = (
-            await get_inat_user(self.cog, ctx, query.user)
-            if has_value(query.user)
-            else None
+            await get_inat_user(ctx, query.user) if has_value(query.user) else None
         )
         args["unobserved_by"] = (
-            await get_inat_user(self.cog, ctx, query.unobserved_by)
+            await get_inat_user(ctx, query.unobserved_by)
             if has_value(query.unobserved_by)
             else None
         )
         args["except_by"] = (
-            await get_inat_user(self.cog, ctx, query.except_by)
+            await get_inat_user(ctx, query.except_by)
             if has_value(query.except_by)
             else None
         )
         args["id_by"] = (
-            await get_inat_user(self.cog, ctx, query.id_by)
-            if has_value(query.id_by)
-            else None
+            await get_inat_user(ctx, query.id_by) if has_value(query.id_by) else None
         )
         args["controlled_term"] = (
             await self._get_controlled_term(*query.controlled_term)

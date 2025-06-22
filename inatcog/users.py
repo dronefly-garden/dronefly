@@ -108,7 +108,7 @@ class INatUserTable:
                 yield (discord_member, inat_user)
 
 
-async def get_inat_user(cog, ctx: Context, user: str):
+async def get_inat_user(ctx: Context, user: str):
     """Get iNat user from iNat user_id, known member, or iNat login, in that order."""
 
     async def _get_user(cog, user: str, **kwargs):
@@ -122,16 +122,16 @@ async def get_inat_user(cog, ctx: Context, user: str):
 
     _user = None
     if user.isnumeric():
-        _user = await _get_user(cog, user)
+        _user = await _get_user(ctx.cog, user)
     if not _user:
         try:
             who = await MemberConverter.convert(ctx, re.sub(DEQUOTE, r"\1", user))
-            _user = await cog.user_table.get_user(who.member)
+            _user = await ctx.cog.user_table.get_user(who.member)
         except (BadArgument, LookupError):
             pass
 
     if isinstance(user, str) and not _user and " " not in str(user):
-        _user = await _get_user(cog, user, by_login_id=True)
+        _user = await _get_user(ctx.cog, user, by_login_id=True)
 
     if not _user:
         raise LookupError("iNat member is not known or iNat login is not valid.")
