@@ -1,9 +1,13 @@
 """Module to handle users."""
+import re
 from typing import AsyncIterator, Tuple, Union
 
 import discord
 from pyinaturalist.models import User
+from redbot.core.commands import BadArgument, Context
 
+from .common import DEQUOTE
+from .converters.base import MemberConverter
 from .utils import get_valid_user_config
 
 
@@ -102,3 +106,34 @@ class INatUserTable:
                         inat_user = User.from_json(results[0])
             if inat_user:
                 yield (discord_member, inat_user)
+
+
+async def get_inat_user(cog, ctx: Context, user: str):
+    """Get iNat user from iNat user_id, known member, or iNat login, in that order."""
+
+    async def _get_user(cog, user: str, **kwargs):
+        try:
+            response = await cog.api.get_users(user, **kwargs)
+            if response and response["results"] and len(response["results"]) == 1:
+                return User.from_json(response["results"][0])
+        except (BadArgument, LookupError):
+            pass
+        return None
+
+    _user = None
+    if user.isnumeric():
+        _user = await _get_user(cog, user)
+    if not _user:
+        try:
+            who = await MemberConverter.convert(ctx, re.sub(DEQUOTE, r"\1", user))
+            _user = await cog.user_table.get_user(who.member)
+        except (BadArgument, LookupError):
+            pass
+
+    if isinstance(user, str) and not _user and " " not in str(user):
+        _user = await _get_user(cog, user, by_login_id=True)
+
+    if not _user:
+        raise LookupError("iNat member is not known or iNat login is not valid.")
+
+    return _user
