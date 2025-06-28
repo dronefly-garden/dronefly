@@ -15,8 +15,8 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-Red-DiscordBot = "^3.5.16"
-dronefly-discord = { git = "https://github.com/dronefly-garden/dronefly-discord@PR-taxon-menu", rev = "ab24c795f0457600795090aab9a9004e504428a7" }
+Red-DiscordBot = "^3.5.20"
+dronefly-discord = { path = "../dronefly-discord", develop = true }
 ebird-api = "^3.0.6"
 filelock = "^3.13.3"
 timeago = "^1.0.15"

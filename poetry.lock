@@ -871,27 +871,25 @@ files = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.4.2"
+version = "0.4.3.dev0"
 description = "Core dronefly components"
 optional = false
 python-versions = ">=3.11,<3.13"
 groups = ["main"]
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 dateparser = "^1.1.1"
 filelock = "^3.13.3"
 html2markdown = "^0.1.7"
 inflect = "^5.3.0"
-pyinaturalist = "^0.20.0"
+pyinaturalist = {git = "https://github.com/pyinat/pyinaturalist", rev = "9e3429a8dd6cb9b4ea4ade5a5a74f4f559c29fcd"}
 rich = ">=13.4"
 
 [package.source]
-type = "git"
-url = "https://github.com/dronefly-garden/dronefly-core"
-reference = "e738208137ddf3cffbe992d7d6da343d651aace1"
-resolved_reference = "e738208137ddf3cffbe992d7d6da343d651aace1"
+type = "directory"
+url = "../dronefly-core"
 
 [[package]]
 name = "dronefly-discord"
@@ -901,18 +899,16 @@ optional = false
 python-versions = ">=3.11,<3.12"
 groups = ["main"]
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 discord-py = ">=2.3.1"
-dronefly-core = {git = "https://github.com/dronefly-garden/dronefly-core", rev = "e738208137ddf3cffbe992d7d6da343d651aace1"}
+dronefly-core = {path = "../dronefly-core", develop = true}
 inflect = "^5.3.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/dronefly-garden/dronefly-discord"
-reference = "ab24c795f0457600795090aab9a9004e504428a7"
-resolved_reference = "ab24c795f0457600795090aab9a9004e504428a7"
+type = "directory"
+url = "../dronefly-discord"
 
 [[package]]
 name = "ebird-api"
@@ -1811,14 +1807,14 @@ files = [
 
 [[package]]
 name = "packaging"
-version = "24.2"
+version = "25.0"
 description = "Core utilities for Python packages"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev", "docs"]
 files = [
-    {file = "packaging-24.2-py3-none-any.whl", hash = "sha256:09abb1bccd265c01f4a3aa3f7a7db064b36514d2cba19a2f694fe6150451a759"},
-    {file = "packaging-24.2.tar.gz", hash = "sha256:c228a6dc5e932d346bc5739379109d49e8853dd8223571c7c5b55260edc0b97f"},
+    {file = "packaging-25.0-py3-none-any.whl", hash = "sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"},
+    {file = "packaging-25.0.tar.gz", hash = "sha256:d443872c98d677bf60f6a1f2f8c1cb748e8fe762d2bf9d3148b5599295b0fc4f"},
 ]
 
 [[package]]
@@ -2414,14 +2410,14 @@ dev = ["black (==22.1.0)", "flake8 (==4.0.1)", "isort (==5.10.1)"]
 
 [[package]]
 name = "red-discordbot"
-version = "3.5.18"
+version = "3.5.20"
 description = "A highly customisable Discord bot"
 optional = false
 python-versions = "<3.12,>=3.8.1"
 groups = ["main"]
 files = [
-    {file = "red_discordbot-3.5.18-py3-none-any.whl", hash = "sha256:51048b356003bffc17057a705d6eced538b997f770f4401731af7e0fccd8e7a3"},
-    {file = "red_discordbot-3.5.18.tar.gz", hash = "sha256:bf760a35c54b57bd51f6d03eba66e77d8cedc58da0f59fc3243b0a1ed359523c"},
+    {file = "red_discordbot-3.5.20-py3-none-any.whl", hash = "sha256:ee66ae9acb1547006dd66d267e2159c8c434ce918179f264687eff9eb4efd9d8"},
+    {file = "red_discordbot-3.5.20.tar.gz", hash = "sha256:7e64d9297b9341e68b0a35238bfe4d3d1a118dbe75f0da88d6930a9975b8d7ec"},
 ]
 
 [package.dependencies]
@@ -2443,7 +2439,7 @@ markdown-it-py = "3.0.0"
 mdurl = "0.1.2"
 multidict = "6.1.0"
 orjson = "3.10.15"
-packaging = "24.2"
+packaging = "25.0"
 platformdirs = "4.3.6"
 propcache = "0.2.0"
 psutil = "7.0.0"
@@ -2453,21 +2449,21 @@ pyyaml = "6.0.2"
 rapidfuzz = "3.9.7"
 red-commons = "1.0.0"
 red-lavalink = "0.11.0"
-rich = "13.9.4"
+rich = "14.0.0"
 schema = "0.7.7"
 six = "1.17.0"
-typing-extensions = "4.13.0"
+typing-extensions = "4.13.2"
 uvloop = {version = "0.21.0", markers = "sys_platform != \"win32\" and platform_python_implementation == \"CPython\""}
 yarl = "1.15.2"
 zstandard = "0.23.0"
 
 [package.extras]
 all = ["asyncpg (==0.30.0)"]
-dev = ["alabaster (==0.7.13)", "astroid (==3.2.4)", "asyncpg (==0.30.0)", "black (==23.12.1)", "certifi (==2025.1.31)", "charset-normalizer (==3.4.1)", "dill (==0.3.9)", "docutils (==0.20.1)", "exceptiongroup (==1.2.2) ; python_version != \"3.11\"", "imagesize (==1.4.1)", "importlib-metadata (==8.5.0)", "iniconfig (==2.1.0)", "isort (==5.13.2)", "jinja2 (==3.1.6)", "markupsafe (==2.1.5)", "mccabe (==0.7.0)", "mypy-extensions (==1.0.0)", "pathspec (==0.12.1)", "pluggy (==1.5.0)", "pylint (==3.2.7)", "pytest (==7.4.4)", "pytest-asyncio (==0.21.2)", "pytest-mock (==3.14.0)", "pytz (==2025.2)", "requests (==2.32.3)", "snowballstemmer (==2.2.0)", "sphinx (==7.1.2)", "sphinx-prompt (==1.7.0)", "sphinx-rtd-theme (==3.0.2)", "sphinxcontrib-applehelp (==1.0.4)", "sphinxcontrib-devhelp (==1.0.2)", "sphinxcontrib-htmlhelp (==2.0.1)", "sphinxcontrib-jquery (==4.1)", "sphinxcontrib-jsmath (==1.0.1)", "sphinxcontrib-qthelp (==1.0.3)", "sphinxcontrib-serializinghtml (==1.1.5)", "sphinxcontrib-trio (==1.1.2)", "tomli (==2.2.1)", "tomli (==2.2.1) ; python_version != \"3.11\"", "tomlkit (==0.13.2)", "urllib3 (==2.2.3)", "zipp (==3.20.2)"]
-doc = ["alabaster (==0.7.13)", "certifi (==2025.1.31)", "charset-normalizer (==3.4.1)", "docutils (==0.20.1)", "imagesize (==1.4.1)", "importlib-metadata (==8.5.0)", "jinja2 (==3.1.6)", "markupsafe (==2.1.5)", "pytz (==2025.2)", "requests (==2.32.3)", "snowballstemmer (==2.2.0)", "sphinx (==7.1.2)", "sphinx-prompt (==1.7.0)", "sphinx-rtd-theme (==3.0.2)", "sphinxcontrib-applehelp (==1.0.4)", "sphinxcontrib-devhelp (==1.0.2)", "sphinxcontrib-htmlhelp (==2.0.1)", "sphinxcontrib-jquery (==4.1)", "sphinxcontrib-jsmath (==1.0.1)", "sphinxcontrib-qthelp (==1.0.3)", "sphinxcontrib-serializinghtml (==1.1.5)", "sphinxcontrib-trio (==1.1.2)", "urllib3 (==2.2.3)", "zipp (==3.20.2)"]
+dev = ["alabaster (==0.7.13)", "astroid (==3.2.4)", "asyncpg (==0.30.0)", "black (==23.12.1)", "certifi (==2025.4.26)", "charset-normalizer (==3.4.2)", "dill (==0.4.0)", "docutils (==0.20.1)", "exceptiongroup (==1.2.2) ; python_version != \"3.11\"", "imagesize (==1.4.1)", "importlib-metadata (==8.5.0)", "iniconfig (==2.1.0)", "isort (==5.13.2)", "jinja2 (==3.1.6)", "markupsafe (==2.1.5)", "mccabe (==0.7.0)", "mypy-extensions (==1.1.0)", "pathspec (==0.12.1)", "pluggy (==1.5.0)", "pylint (==3.2.7)", "pytest (==7.4.4)", "pytest-asyncio (==0.21.2)", "pytest-mock (==3.14.0)", "pytz (==2025.2)", "requests (==2.32.3)", "snowballstemmer (==2.2.0)", "sphinx (==7.1.2)", "sphinx-prompt (==1.7.0)", "sphinx-rtd-theme (==3.0.2)", "sphinxcontrib-applehelp (==1.0.4)", "sphinxcontrib-devhelp (==1.0.2)", "sphinxcontrib-htmlhelp (==2.0.1)", "sphinxcontrib-jquery (==4.1)", "sphinxcontrib-jsmath (==1.0.1)", "sphinxcontrib-qthelp (==1.0.3)", "sphinxcontrib-serializinghtml (==1.1.5)", "sphinxcontrib-trio (==1.1.2)", "tomli (==2.2.1)", "tomli (==2.2.1) ; python_version != \"3.11\"", "tomlkit (==0.13.2)", "urllib3 (==2.2.3)", "zipp (==3.20.2)"]
+doc = ["alabaster (==0.7.13)", "certifi (==2025.4.26)", "charset-normalizer (==3.4.2)", "docutils (==0.20.1)", "imagesize (==1.4.1)", "importlib-metadata (==8.5.0)", "jinja2 (==3.1.6)", "markupsafe (==2.1.5)", "pytz (==2025.2)", "requests (==2.32.3)", "snowballstemmer (==2.2.0)", "sphinx (==7.1.2)", "sphinx-prompt (==1.7.0)", "sphinx-rtd-theme (==3.0.2)", "sphinxcontrib-applehelp (==1.0.4)", "sphinxcontrib-devhelp (==1.0.2)", "sphinxcontrib-htmlhelp (==2.0.1)", "sphinxcontrib-jquery (==4.1)", "sphinxcontrib-jsmath (==1.0.1)", "sphinxcontrib-qthelp (==1.0.3)", "sphinxcontrib-serializinghtml (==1.1.5)", "sphinxcontrib-trio (==1.1.2)", "urllib3 (==2.2.3)", "zipp (==3.20.2)"]
 postgres = ["asyncpg (==0.30.0)"]
-style = ["black (==23.12.1)", "mypy-extensions (==1.0.0)", "pathspec (==0.12.1)", "tomli (==2.2.1)"]
-test = ["astroid (==3.2.4)", "dill (==0.3.9)", "exceptiongroup (==1.2.2) ; python_version != \"3.11\"", "iniconfig (==2.1.0)", "isort (==5.13.2)", "mccabe (==0.7.0)", "pluggy (==1.5.0)", "pylint (==3.2.7)", "pytest (==7.4.4)", "pytest-asyncio (==0.21.2)", "pytest-mock (==3.14.0)", "tomli (==2.2.1) ; python_version != \"3.11\"", "tomlkit (==0.13.2)"]
+style = ["black (==23.12.1)", "mypy-extensions (==1.1.0)", "pathspec (==0.12.1)", "tomli (==2.2.1)"]
+test = ["astroid (==3.2.4)", "dill (==0.4.0)", "exceptiongroup (==1.2.2) ; python_version != \"3.11\"", "iniconfig (==2.1.0)", "isort (==5.13.2)", "mccabe (==0.7.0)", "pluggy (==1.5.0)", "pylint (==3.2.7)", "pytest (==7.4.4)", "pytest-asyncio (==0.21.2)", "pytest-mock (==3.14.0)", "tomli (==2.2.1) ; python_version != \"3.11\"", "tomlkit (==0.13.2)"]
 
 [[package]]
 name = "red-lavalink"
@@ -2668,14 +2664,14 @@ docs = ["furo (>=2023.3,<2024.0)", "myst-parser (>=1.0)", "sphinx (>=5.2,<6.0)",
 
 [[package]]
 name = "rich"
-version = "13.9.4"
+version = "14.0.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
 groups = ["main"]
 files = [
-    {file = "rich-13.9.4-py3-none-any.whl", hash = "sha256:6049d5e6ec054bf2779ab3358186963bac2ea89175919d699e378b99738c2a90"},
-    {file = "rich-13.9.4.tar.gz", hash = "sha256:439594978a49a09530cff7ebc4b5c7103ef57baf48d5ea3184f21d9a2befa098"},
+    {file = "rich-14.0.0-py3-none-any.whl", hash = "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0"},
+    {file = "rich-14.0.0.tar.gz", hash = "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725"},
 ]
 
 [package.dependencies]
@@ -2959,14 +2955,14 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.13.0"
+version = "4.13.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "docs"]
 files = [
-    {file = "typing_extensions-4.13.0-py3-none-any.whl", hash = "sha256:c8dd92cc0d6425a97c18fbb9d1954e5ff92c1ca881a309c45f06ebc0b79058e5"},
-    {file = "typing_extensions-4.13.0.tar.gz", hash = "sha256:0a4ac55a5820789d87e297727d229866c9650f6521b64206413c4fbada24d95b"},
+    {file = "typing_extensions-4.13.2-py3-none-any.whl", hash = "sha256:a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c"},
+    {file = "typing_extensions-4.13.2.tar.gz", hash = "sha256:e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef"},
 ]
 
 [[package]]
@@ -3439,4 +3435,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.12"
-content-hash = "d3701ecf9112b29018d7f0dcc1785304b9b478df3389f5b0596c54d8403f083b"
+content-hash = "1a935c538cd0e87547b100eadc0d2a8a2f9612d60e1f972db93e2d0485ce2bfd"
