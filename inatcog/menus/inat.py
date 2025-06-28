@@ -30,16 +30,13 @@ class UserButton(discord.ui.Button):
         self.emoji = "\N{BUST IN SILHOUETTE}"
 
     async def callback(self, interaction: discord.Interaction):
-        # await self.view.show_checked_page(self.view.current_page + 1, interaction)
-        pass
+        await self.view.show_page(interaction)
 
     async def interaction_check(self, interaction: discord.Interaction):
         """Just extends the default reaction_check to check if owner is registered here."""
         cog = self.view.cog
         try:
-            interaction.valid_user = await get_valid_user_config(
-                cog, interaction.user, anywhere=False
-            )
+            await get_valid_user_config(cog, interaction.user, anywhere=False)
         except LookupError:
             await interaction.response.send_message(
                 content="You are not known here.", ephemeral=True
@@ -59,8 +56,7 @@ class QueryUserButton(discord.ui.Button):
         self.emoji = "\N{BUSTS IN SILHOUETTE}"
 
     async def callback(self, interaction: discord.Interaction):
-        # await self.view.show_checked_page(self.view.current_page + 1, interaction)
-        pass
+        await self.view.show_page(interaction)
 
 
 class TaxonMenu(DiscordTaxonMenu):
@@ -69,11 +65,13 @@ class TaxonMenu(DiscordTaxonMenu):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-
         self.user_button = UserButton(discord.ButtonStyle.grey, 0)
         # self.query_user_button = QueryUserButton(discord.ButtonStyle.grey, 0)
+        self.clear_items()
         self.add_item(self.user_button)
-        # Aself.add_item(self.query_user_button)
+        # self.add_item(self.query_user_button)
+        self.add_item(self.taxonomy_button)
+        self.add_item(self.stop_button)
 
 
 # TODO: derive a base class from this that:
