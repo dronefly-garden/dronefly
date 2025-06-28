@@ -1,6 +1,4 @@
 """Module to query iNat."""
-import re
-
 from dronefly.core.query.query import (
     get_base_query_args,
     has_value,
@@ -8,11 +6,10 @@ from dronefly.core.query.query import (
     QueryResponse,
 )
 from dronefly.core.models.controlled_terms import match_controlled_term
-from pyinaturalist.models import ControlledTerm, User
-from redbot.core.commands import BadArgument, Context
+from pyinaturalist.models import ControlledTerm
+from redbot.core.commands import Context
 
-from .common import DEQUOTE
-from .converters.base import MemberConverter
+from .users import get_inat_user
 
 
 class INatQuery:
@@ -20,35 +17,6 @@ class INatQuery:
 
     def __init__(self, cog):
         self.cog = cog
-
-    async def _get_user(self, user: str, **kwargs):
-        try:
-            response = await self.cog.api.get_users(user, **kwargs)
-            if response and response["results"] and len(response["results"]) == 1:
-                return User.from_json(response["results"][0])
-        except (BadArgument, LookupError):
-            pass
-        return None
-
-    async def get_inat_user(self, ctx: Context, user: str):
-        """Get iNat user from iNat user_id, known member, or iNat login, in that order."""
-        _user = None
-        if user.isnumeric():
-            _user = await self._get_user(user)
-        if not _user:
-            try:
-                who = await MemberConverter.convert(ctx, re.sub(DEQUOTE, r"\1", user))
-                _user = await self.cog.user_table.get_user(who.member)
-            except (BadArgument, LookupError):
-                pass
-
-        if isinstance(user, str) and not _user and " " not in str(user):
-            _user = await self._get_user(user, by_login_id=True)
-
-        if not _user:
-            raise LookupError("iNat member is not known or iNat login is not valid.")
-
-        return _user
 
     async def _get_controlled_term(self, query_term: str, query_term_value: str):
         controlled_terms_dict = await self.cog.api.get_controlled_terms()
@@ -92,22 +60,20 @@ class INatQuery:
             else None
         )
         args["user"] = (
-            await self.get_inat_user(ctx, query.user) if has_value(query.user) else None
+            await get_inat_user(ctx, query.user) if has_value(query.user) else None
         )
         args["unobserved_by"] = (
-            await self.get_inat_user(ctx, query.unobserved_by)
+            await get_inat_user(ctx, query.unobserved_by)
             if has_value(query.unobserved_by)
             else None
         )
         args["except_by"] = (
-            await self.get_inat_user(ctx, query.except_by)
+            await get_inat_user(ctx, query.except_by)
             if has_value(query.except_by)
             else None
         )
         args["id_by"] = (
-            await self.get_inat_user(ctx, query.id_by)
-            if has_value(query.id_by)
-            else None
+            await get_inat_user(ctx, query.id_by) if has_value(query.id_by) else None
         )
         args["controlled_term"] = (
             await self._get_controlled_term(*query.controlled_term)

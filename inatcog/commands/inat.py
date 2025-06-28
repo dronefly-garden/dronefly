@@ -237,6 +237,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         See also: `[p]groups`, `[p]macros`, and `[p]query`.
 
+        **`roachesonly`**` blattodea opt`
+        **`       `**`       without_taxon_id=118903`
         **`seaslugs`**`    opt taxon_ids=`
         **`       `**`       130687,775798,775804,`
         **`       `**`       49784,500752,47113,`
@@ -338,7 +340,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Boolean options without a parameter default to `=true`, e.g. `,tab my opt verifiable` means `,tab my opt verifiable=true`. Other values can be `=false` or `=any`.
 
         **Other options:**
-        `csi` `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id` `geoprivacy` `taxon_geoprivacy` `q` `search_on`
+        `csi` `hour` `day` `month` `year` `hrank` `lrank` `id` `not_id` `quality_grade` `order` `order_by` `page` `rank` `iconic_taxa` `taxon_ids` `without_taxon_id` `geoprivacy` `taxon_geoprivacy` `q` `search_on`
 
         See the [get observations API documentation](https://api.inaturalist.org/v1/docs/#!/Observations/get_observations) for detailed descriptions of these options and what parameter values are allowed. Not all options make sense for all queries/commands.
         """  # noqa: E501
