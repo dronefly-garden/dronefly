@@ -763,7 +763,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 for id in discord_user_ids:
                     response += f" <@{id}>"
                     alt = ctx.guild.get_member(id)
-                    if filter_roles:
+                    if alt and filter_roles:
                         all_roles = [*filter_roles, *team_roles]
                         for role in alt.roles:
                             if role in all_roles:
