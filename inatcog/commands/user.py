@@ -722,6 +722,10 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     reaction_mismatch = True
             return (response, has_opposite_team_role, reaction_mismatch)
 
+        def get_member_roles(id):
+            member = ctx.guild.get_member(id)
+            return member.roles if member else []
+
         def formatted_user(
             dmember: Union[discord.Member, discord.User, int],
             iuser: Union[User, int] = None,
@@ -898,9 +902,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
                     known_discord_user_ids = known_user_ids_by_inat_id.get(inat_user_id)
                     if known_discord_user_ids and len(known_discord_user_ids) > 1:
                         has_filter_roles = any(
-                            set(filter_roles).intersection(
-                                ctx.guild.get_member(alt).roles
-                            )
+                            set(filter_roles).intersection(get_member_roles(alt))
                             for alt in known_discord_user_ids
                         )
                     else:
