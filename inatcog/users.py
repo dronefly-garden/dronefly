@@ -8,7 +8,7 @@ from redbot.core.commands import BadArgument, Context
 
 from .common import DEQUOTE
 from .converters.base import MemberConverter
-from .utils import get_valid_user_config
+from .utils import get_cog, get_valid_user_config
 
 
 class INatUserTable:
@@ -120,18 +120,19 @@ async def get_inat_user(ctx: Context, user: str):
             pass
         return None
 
+    cog = get_cog(ctx)
     _user = None
     if user.isnumeric():
-        _user = await _get_user(ctx.cog, user)
+        _user = await _get_user(cog, user)
     if not _user:
         try:
             who = await MemberConverter.convert(ctx, re.sub(DEQUOTE, r"\1", user))
-            _user = await ctx.cog.user_table.get_user(who.member)
+            _user = await cog.user_table.get_user(who.member)
         except (BadArgument, LookupError):
             pass
 
     if isinstance(user, str) and not _user and " " not in str(user):
-        _user = await _get_user(ctx.cog, user, by_login_id=True)
+        _user = await _get_user(cog, user, by_login_id=True)
 
     if not _user:
         raise LookupError("iNat member is not known or iNat login is not valid.")
