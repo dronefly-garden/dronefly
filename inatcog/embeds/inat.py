@@ -62,6 +62,7 @@ from ..taxa import (
     TAXON_IDBY_HEADER,
     TAXON_IDBY_HEADER_PAT,
 )
+from ..users import get_inat_user
 from ..utils import get_lang, has_valid_user_config
 
 logger = logging.getLogger("red.dronefly." + __name__)
@@ -1320,7 +1321,7 @@ class INatEmbeds(MixinMeta):
         )
         if response:
             try:
-                _user = await self.query.get_inat_user(ctx, response.content)
+                _user = await get_inat_user(ctx, response.content)
             except (LookupError, discord.ext.commands.errors.BadArgument) as error:
                 error_msg = await msg.channel.send(error)
                 await asyncio.sleep(15)
