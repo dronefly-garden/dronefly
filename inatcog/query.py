@@ -6,7 +6,6 @@ from dronefly.core.query.query import (
     QueryResponse,
 )
 from dronefly.core.models.controlled_terms import match_controlled_term
-from pyinaturalist.models import ControlledTerm
 from redbot.core.commands import Context
 
 from .users import get_inat_user
@@ -18,11 +17,9 @@ class INatQuery:
     def __init__(self, cog):
         self.cog = cog
 
-    async def _get_controlled_term(self, query_term: str, query_term_value: str):
-        controlled_terms_dict = await self.cog.api.get_controlled_terms()
-        controlled_terms = [
-            ControlledTerm.from_json(term) for term in controlled_terms_dict["results"]
-        ]
+    async def _get_controlled_term(self, ctx, query_term: str, query_term_value: str):
+        async with self.cog.inat_client.set_ctx_from_user(ctx) as client:
+            controlled_terms = await client.annotations.all()
         controlled_term = match_controlled_term(
             controlled_terms, query_term, query_term_value
         )
@@ -76,7 +73,7 @@ class INatQuery:
             await get_inat_user(ctx, query.id_by) if has_value(query.id_by) else None
         )
         args["controlled_term"] = (
-            await self._get_controlled_term(*query.controlled_term)
+            await self._get_controlled_term(ctx, *query.controlled_term)
             if has_value(query.controlled_term)
             else None
         )
