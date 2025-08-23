@@ -111,13 +111,6 @@ class INatAPI:
 
         return None
 
-    async def get_controlled_terms(self, *args, **kwargs):
-        """Query API for controlled terms."""
-
-        endpoint = "/".join(("/v1/controlled_terms", *args))
-        full_url = f"{API_BASE_URL}{endpoint}"
-        return await self._get_rate_limited(full_url, **kwargs)
-
     async def get_observations(self, *args, **kwargs):
         """Query API for observations.
 

@@ -36,6 +36,7 @@ class iNatClient(CoreiNatClient):
             self, self.observations.taxon_summary
         )
         self.observations.life_list = asyncify(self, self.observations.life_list)
+        self.annotations.all = asyncify(self, self.annotations.all)
 
     @asynccontextmanager
     async def set_ctx_from_user(
