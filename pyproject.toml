@@ -15,8 +15,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 Red-DiscordBot = "^3.5.22"
-dronefly-core = "=0.4.2"
-dronefly-discord = "=0.1.9"
+dronefly-core = "=0.5.0.dev0"
+dronefly-discord = "=0.2.0.dev0"
 
 ebird-api = "^3.0.6"
 filelock = "^3.13.3"
