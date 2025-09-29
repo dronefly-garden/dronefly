@@ -14,7 +14,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-Red-DiscordBot = "^3.5.16"
+Red-DiscordBot = "^3.5.22"
 dronefly-core = "=0.4.2"
 dronefly-discord = "=0.1.9"
 
