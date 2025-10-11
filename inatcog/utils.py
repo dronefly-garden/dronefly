@@ -153,19 +153,26 @@ async def valid_user_config(
     yield user_config
 
 
-async def get_dronefly_user_config(
+async def get_dronefly_user_defaults(
     ctx: commands.Context,
     user: Optional[Union[discord.Member, discord.User]] = None,
     anywhere: bool = True,
 ) -> dict:
-    """Return the config parameters for a Dronefly user.
+    """Return the user's Dronefly defaults.
 
-    Supplies defaults from the guild and global configs if:
+    Defaults are supplied from the user's own config, the guild config, or
+    global config, whichever is applicable according to the following rules.
 
-    - a guild scope is established either by the context having a guild
-      or if the user has a server defined in their config
-    - the Dronefly user is not known either globally or in the guild scope
-      (i.e. anywhere=False vs. True)
+    - for each default:
+      - if the user is known either in the guild scope (`anywhere=False`)
+        or globally (`anywhere=True`) and their user config has that default,
+        use it
+      - otherwise use a guild default
+        - if `ctx.guild` if set and the guild config has that default,
+          use it
+        - otherwise if the user's config has `home_server` set and
+          that guild has the default, use it
+      - otherwise use a global default if there is one
     """
     _user = user or ctx.author
     try:
@@ -178,7 +185,9 @@ async def get_dronefly_user_config(
     global_config = cog.config
     guild_config = cog.config.guild(guild) if guild else None
 
-    dronefly_config = {}
+    # Not all defaults are defined in all scopes. Retrieve
+    # all applicable defaults and map them to DroneflyUser params.
+    dronefly_user_params = {}
     for cog_key, core_key in COG_TO_CORE_USER_KEY.items():
         value = None
         if user_config_dict:
@@ -188,8 +197,8 @@ async def get_dronefly_user_config(
                 value = await (guild_config.get_attr(cog_key))()
             if value is None:
                 value = await (global_config.get_attr(cog_key))()
-        dronefly_config[core_key] = value
-    return dronefly_config
+        dronefly_user_params[core_key] = value
+    return dronefly_user_params
 
 
 async def get_dronefly_user(
@@ -197,9 +206,10 @@ async def get_dronefly_user(
     user: Optional[Union[discord.Member, discord.User]] = None,
     anywhere: bool = True,
 ) -> DroneflyUser:
-    """Get a Dronefly user and their configuration in the current context."""
-    dronefly_user_config = await get_dronefly_user_config(ctx, user, anywhere)
-    return DroneflyUser(user.id if user else ctx.author.id, **dronefly_user_config)
+    """Get a Dronefly user with defaults supplied from the current context."""
+    discord_user_id = user.id if user else ctx.author.id
+    dronefly_user_defaults = await get_dronefly_user_defaults(ctx, user, anywhere)
+    return DroneflyUser(discord_user_id, **dronefly_user_defaults)
 
 
 async def get_home(
@@ -208,8 +218,8 @@ async def get_home(
     anywhere: bool = True,
 ) -> dict:
     """Get configured home place for user."""
-    dronefly_config = await get_dronefly_user_config(ctx, user, anywhere)
-    return dronefly_config.get(COG_TO_CORE_USER_KEY["home"])
+    dronefly_user_defaults = await get_dronefly_user_defaults(ctx, user, anywhere)
+    return dronefly_user_defaults.get(COG_TO_CORE_USER_KEY["home"])
 
 
 async def get_lang(
@@ -218,8 +228,8 @@ async def get_lang(
     anywhere: bool = True,
 ) -> dict:
     """Get configured preferred language for user."""
-    dronefly_config = await get_dronefly_user_config(ctx, user, anywhere)
-    return dronefly_config.get(COG_TO_CORE_USER_KEY["lang"])
+    dronefly_user_defaults = await get_dronefly_user_defaults(ctx, user, anywhere)
+    return dronefly_user_defaults.get(COG_TO_CORE_USER_KEY["lang"])
 
 
 async def get_home_server(
