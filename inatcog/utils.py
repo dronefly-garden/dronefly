@@ -6,7 +6,6 @@ from time import time
 from typing import Optional, Union
 
 import discord
-from dronefly.core.commands import Context as DroneflyContext
 from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands
 
@@ -74,17 +73,6 @@ def get_cog(cog_or_ctx=Union[commands.Cog, commands.Context]) -> commands.Cog:
         # Something is seriously wrong if we ever get here:
         raise discord.BadArugment(f"Cog not found: {COG_NAME}")
     return cog
-
-
-async def get_dronefly_ctx(
-    red_ctx: commands.Context,
-    user: Optional[Union[discord.Member, discord.User]] = None,
-    anywhere=True,
-):
-    dronefly_user = await get_dronefly_user(
-        red_ctx, user or red_ctx.author, anywhere=anywhere
-    )
-    return DroneflyContext(author=dronefly_user)
 
 
 async def get_valid_user_config(

@@ -1,41 +1,86 @@
+import re
 from typing import Optional, Union
 
-from redbot.core.commands import Context
+from redbot.core.commands import BadArgument, Context
 from discord import Member, User
 
 from dronefly.core.models import BaseConfig
 
+from .common import DEQUOTE
+from .converters.base import MemberConverter
 from .utils import get_cog, get_home_server, get_hub_server, get_valid_user_config
 
 
-class ContextualConfig(BaseConfig):
-    """Config for the current context and member or user."""
+class ContextConfig(BaseConfig):
+    """Config for the current context."""
 
     def __init__(
-        self, ctx: Context, member_or_user: Optional[Union[Member, User]] = None
+        self, ctx: Context, discord_user: Optional[Union[Member, User]] = None
     ):
         self.ctx = ctx
         self.cog = get_cog(ctx)
-        self.member_or_user = member_or_user
+        self.discord_user = discord_user or self.ctx.author
 
-    async def user(self, name_or_id: Union[str, int]):
-        """TODO"""
+    async def user_id(self, name_or_id: Union[str, int]) -> Union[int, str]:
+        """Get best matching iNat user id in this context.
 
-    async def place(self, abbrev: str):
+        Match in this order:
+          - if numeric, return its integer value (i.e. it could be an iNat id)
+          - if it matches a known member with an iNat id, return the matching iNat id
+          - if it's a string without blanks, return it (i.e. it could be an iNat login)
+        """
+        user_id = None
+
+        if name_or_id.isnumeric():
+            user_id = int(name_or_id)
+
+        if not user_id:
+            try:
+                # Maybe the name matches a known member
+                discord_user = (
+                    await MemberConverter.convert(
+                        self.ctx, re.sub(DEQUOTE, r"\1", name_or_id)
+                    )
+                ).member
+                user_config = await get_valid_user_config(
+                    self.cog, discord_user, anywhere=False
+                )
+                if user_config:
+                    user_id = await user_config.inat_user_id()
+            except (BadArgument, LookupError):
+                pass
+
+        if not user_id and isinstance(name_or_id, str) and " " not in str(name_or_id):
+            # Maybe it's a login id
+            user_id = name_or_id
+
+        if not user_id:
+            raise LookupError("iNat member is not known.")
+
+        return user_id
+
+    async def place_id(
+        self, abbrev: str, discord_user: Optional[Union[Member, User]] = None
+    ):
+        """Return place id for abbrev if the config defines one."""
+
         async def _get_place_id(guild, abbrev):
             guild_config = self.cog.config.guild(guild)
             places = await guild_config.places()
-            return places[abbrev]
+            return places.get(abbrev)
 
         _abbrev = abbrev.lower() if isinstance(abbrev, str) else None
         home_id = None
         place_id = None
-        _guild = self.ctx.guild or await get_home_server(self.cog, self.member_or_user)
+        _discord_user = discord_user or self.discord_user
+        _guild = self.ctx.guild or await get_home_server(
+            self.cog, discord_user or self.ctx.author
+        )
 
-        if _abbrev == "home" and self.user:
+        if _abbrev == "home" and _discord_user:
             try:
                 user_config = await get_valid_user_config(
-                    self.cog, self.member_or_user, anywhere=True
+                    self.cog, _discord_user, anywhere=True
                 )
                 home_id = await user_config.home()
             except LookupError:
@@ -58,7 +103,11 @@ class ContextualConfig(BaseConfig):
                 place_id = int(home_id or _abbrev)
         return place_id
 
-    async def project(self, abbrev: str):
+    async def project_id(
+        self, abbrev: str, discord_user: Optional[Union[Member, User]] = None
+    ):
+        """Return project id for abbrev if the config defines one."""
+
         async def _get_project_id(guild, abbrev):
             guild_config = self.cog.config.guild(guild)
             projects = await guild_config.projects()
@@ -66,7 +115,8 @@ class ContextualConfig(BaseConfig):
 
         project_id = None
         _abbrev = abbrev.lower() if isinstance(abbrev, str) else None
-        _guild = self.ctx.guild or await get_home_server(self.cog, self.member_or_user)
+        _discord_user = discord_user or self.discord_user
+        _guild = self.ctx.guild or await get_home_server(self.cog, _discord_user)
 
         if _guild and abbrev:
             project_id = await _get_project_id(_guild, _abbrev)
