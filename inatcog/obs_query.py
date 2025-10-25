@@ -1,5 +1,5 @@
 """Module to query iNat observations."""
-from dronefly.core.query.query import Query, QueryResponse
+from dronefly.core.query.query import Query, QueryResponse, prepare_query
 from dronefly.core.parsers.constants import VALID_OBS_SORT_BY
 from pyinaturalist.models import Observation, Observations
 from redbot.core.commands import BadArgument
@@ -24,7 +24,8 @@ class INatObsQuery:
     async def query_single_obs(self, ctx, query: Query):
         """Query observations and return first if found."""
 
-        query_response = await self.cog.query.get(ctx, query)
+        # query_response = await self.cog.query.get(ctx, query)
+        query_response = await prepare_query(ctx.inat_client, query)
         _check_obs_query_fields(query_response)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 1
@@ -41,7 +42,8 @@ class INatObsQuery:
     async def query_observations(self, ctx, query: Query, page=1):
         """Query observations and return iterator for any found."""
 
-        query_response = await self.cog.query.get(ctx, query)
+        # query_response = await self.cog.query.get(ctx, query)
+        query_response = await prepare_query(ctx.inat_client, query)
         _check_obs_query_fields(query_response)
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 200

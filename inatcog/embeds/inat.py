@@ -1462,28 +1462,23 @@ class INatEmbeds(MixinMeta):
 
     async def edit_totals_locked(
         self,
-        msg,
+        msg: discord.Message,
         taxon,
         inat_user,
         action,
         counts_pat,
     ):
         """Update totals for message locked."""
-        if msg.id not in self.reaction_locks:
-            self.reaction_locks[msg.id] = asyncio.Lock()
-        async with self.reaction_locks[msg.id]:
-            # If permitted, refetch the message because it may have changed prior to
-            # acquiring lock
-            if (
-                msg.guild
-                and not msg.channel.permissions_for(msg.guild.me).read_message_history
-            ):
-                try:
-                    msg = await msg.channel.fetch_message(msg.id)
-                except discord.errors.NotFound:
-                    return  # message has been deleted, nothing left to do
-            embeds = msg.embeds
-            inat_embed = INatEmbed.from_discord_embed(embeds[0])
+        full_message_id = (
+            f"{msg.guild.id}-{msg.channel.id}-{msg.id}"
+            if msg.guild
+            else f"{msg.channel.id}-{msg.id}"
+        )
+        if full_message_id not in self.reaction_locks:
+            self.reaction_locks[full_message_id] = asyncio.Lock()
+        async with self.reaction_locks[full_message_id]:
+            # FIXME: handle exceptions (internally inconsistent?)
+            inat_embed = self.interactions.get(full_message_id)
             description = inat_embed.description or ""
             mat = re.search(counts_pat, description)
             if action == "toggle":
@@ -1562,24 +1557,19 @@ class INatEmbeds(MixinMeta):
         return description
 
     async def edit_place_totals_locked(
-        self, msg, taxon, place, action, place_counts_pat
+        self, msg: discord.Message, taxon, place, action, place_counts_pat
     ):
         """Update place totals for message locked."""
-        if msg.id not in self.reaction_locks:
-            self.reaction_locks[msg.id] = asyncio.Lock()
-        async with self.reaction_locks[msg.id]:
-            # If permitted, refetch the message because it may have changed prior to
-            # acquiring lock
-            if (
-                msg.guild
-                and not msg.channel.permissions_for(msg.guild.me).read_message_history
-            ):
-                try:
-                    msg = await msg.channel.fetch_message(msg.id)
-                except discord.errors.NotFound:
-                    return  # message has been deleted, nothing left to do
-            embeds = msg.embeds
-            inat_embed = INatEmbed.from_discord_embed(embeds[0])
+        full_message_id = (
+            f"{msg.guild.id}-{msg.channel.id}-{msg.id}"
+            if msg.guild
+            else f"{msg.channel.id}-{msg.id}"
+        )
+        if full_message_id not in self.reaction_locks:
+            self.reaction_locks[full_message_id] = asyncio.Lock()
+        async with self.reaction_locks[full_message_id]:
+            # FIXME: handle exceptions (internally inconsistent?)
+            inat_embed = self.interactions[full_message_id]
             description = inat_embed.description or ""
             mat = re.search(place_counts_pat, description)
             if action == "toggle":
