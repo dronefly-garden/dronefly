@@ -19,7 +19,7 @@ from redbot.core.commands.help import RedHelpFormatter, HelpSettings
 CATEGORY_TAG = "\u200b"
 CATEGORY_NAME = "iNat features, terms, and syntax"
 PRIORITIZED_COG = "iNat"
-EMPTY_SYNTAX_BOX = re.compile(r"```.*\nSyntax: None\n+```", re.MULTILINE)
+EMPTY_SYNTAX_BOX = re.compile(r"\*\*Syntax:\n\*\*```\nNone\n```", re.MULTILINE)
 
 
 def _additional_help(ctx, obj):

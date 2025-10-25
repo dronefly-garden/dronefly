@@ -8,7 +8,8 @@ from dronefly.core.clients.inat import iNatClient as CoreiNatClient
 from dronefly.core.commands import Context as DroneflyContext
 from redbot.core import commands
 
-from .utils import get_dronefly_ctx
+from .config import ContextConfig
+from .utils import get_dronefly_user
 
 
 def asyncify(self, method):
@@ -22,6 +23,20 @@ def asyncify(self, method):
     return async_wrapper
 
 
+async def get_dronefly_ctx(
+    red_ctx: commands.Context,
+    user: Optional[Union[discord.Member, discord.User]] = None,
+    anywhere=True,
+):
+    discord_user = user or red_ctx.author
+    dronefly_user = await get_dronefly_user(
+        red_ctx, user or red_ctx.author, anywhere=anywhere
+    )
+    return DroneflyContext(
+        author=dronefly_user, config=ContextConfig(red_ctx, discord_user)
+    )
+
+
 class iNatClient(CoreiNatClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,7 +46,6 @@ class iNatClient(CoreiNatClient):
         self.projects.add_users = asyncify(self, self.projects.add_users)
         self.projects.delete_users = asyncify(self, self.projects.delete_users)
         self.taxa.search = asyncify(self, self.taxa.search)
-        self.annotations.all = asyncify(self, self.annotations.all)
 
     @asynccontextmanager
     async def set_ctx_from_user(

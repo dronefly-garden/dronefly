@@ -266,7 +266,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         - `by <name>` user's obs; also `by me` or just `my` (a *macro*) for yourself
         - `from <place>` obs in that place; also `from home` or just `home` (a *macro*) for your *home place*
         - `in prj <project>` obs in the *project*
-        - `with <term> <value>` has *controlled term* with *value*
+        - `with <annotation> [value]` obs has *annotation* with *value*
         - `not by <name>` obs of taxa unobserved by the user
         - `id by <name>` obs ided by the user
         - `except by <name>` excludes obs by the user
