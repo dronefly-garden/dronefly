@@ -26,7 +26,7 @@ discord.py==2.4.0
 distro==1.9.0
 docutils==0.19
 dronefly-core==0.4.2
-dronefly-discord==0.1.8
+dronefly-discord==0.1.9
 ebird-api==3.3.0
 filelock==3.17.0
 frozenlist==1.5.0
