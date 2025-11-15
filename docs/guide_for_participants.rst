@@ -282,9 +282,6 @@ iNaturalist and other naturalist-related web platforms.
 Dumbo (``-``) - For general purpose info & entertainment functions, not strictly
 nature-related (e.g. Trivia, Weather, Wikipedia).
 
-Pickerel (``$``) - Plays audio (e.g. music) from SoundCloud, Spotify, and
-YouTube in voice channels.
-
 Polistes (``;``) - Server management bot. Mostly handles behind-the-scenes
 server operations. A few member-facing features are also provided through
 this bot, such as the role assignment menus and buttons.
@@ -1061,105 +1058,6 @@ Dumbo also has custom commands:
 
 - ``https://en.wiktionary.org/wiki/{0:query}``
 - put word being searched after command
-
-Pickerel commands
------------------
-
-Access help using ``$help``.
-
-Syntax: ``$play <query>``
-
-Note: Please use these *Commands* in #vc-music channel, and listen in |image43|
-
-``$autoplay``
-
-- Starts auto play. (DJ role required if enabled)
-
-``$bump``
-
-- Bump a track number to the top of the queue.
-
-``$bumpplay``
-
-- Force play a URL or search for a track.
-
-``$eq``
-
-- Equalizer management.
-
-``$genre``
-
-- Pick a Spotify playlist from a list of categories to star...
-
-``$local``
-
-- Local playback commands.
-
-``$now``
-
-- Now playing.
-
-|image44|
-
-``$pause``
-
-- Pause or resume a playing track.
-
-``$percent``
-
-- Queue percentage.
-
-``$play``
-
-- Play a URL or search for a track. (DJ role required if enabled)
-
-``$playlist``
-
-- Playlist configuration options.
-
-``$prev``
-
-- Skip to the start of the previously played track.
-
-``$queue``
-
-- List the songs in the queue.
-
-``$remove``
-
-- Remove a specific track number from the queue.
-
-``$repeat``
-
-- Toggle repeat.
-
-``$search``
-
-- Pick a track with a search.
-
-``$seek``
-
-- Seek ahead or behind on a track by seconds
-
-``$shuffle``
-
-- Toggle shuffle.
-
-``$sing``
-
-- Make Red sing one of her songs. (DJ role required if enabled)
-
-``$skip``
-
-- Skip to the next track, or to a given track number.
-
-``$stop``
-
-- Stop playback and clear the queue.
-
-``$volume``
-
-- Set the volume, 1% - 150%.
 
 ==========
 Appendices
