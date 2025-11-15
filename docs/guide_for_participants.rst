@@ -183,7 +183,7 @@ start a new topic, use the other.
 Basic chat functions
 ^^^^^^^^^^^^^^^^^^^^
 
-Typing\ ``@username`` will “ping” the user.
+Typing ``@username`` will “ping” the user.
 
 Typing ``#channel`` will create a link to that channel.
 
