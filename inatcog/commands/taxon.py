@@ -2,7 +2,6 @@
 
 import contextlib
 from contextlib import asynccontextmanager
-import copy
 import re
 import textwrap
 from typing import List, Optional
@@ -14,7 +13,8 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
-from dronefly.core.formatters.generic import QualifiedTaxonFormatter, TaxonListFormatter
+from dronefly.core.formatters.generic import TaxonListFormatter
+from dronefly.core.query.taxon import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
     TaxonListMenu,
@@ -88,31 +88,11 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 "max_len": MAX_EMBED_DESCRIPTION_LEN,
                 "with_url": False,
             }
-            place = query_response.place
-            if place:
-                taxon = await ctx.inat_client.taxa.populate(
-                    query_response.taxon, preferred_place_id=place.id
-                )
-            else:
-                taxon = await ctx.inat_client.taxa.populate(query_response.taxon)
-            formatter_params["taxon"] = taxon
-            user = query_response.user
-            title_query_response = copy.copy(query_response)
-            if user:
-                title_query_response.user = None
-            elif place:
-                title_query_response.place = None
-            obs_args = title_query_response.obs_args()
-            # i.e. any args other than the ones accounted for in taxon.observations_count
-            if [arg for arg in obs_args if arg != "taxon_id"]:
-                formatter_params["observations"] = await self.api.get_observations(
-                    per_page=0, **obs_args
-                )
-            taxon_formatter = QualifiedTaxonFormatter(
-                title_query_response,
+            return await get_query_taxon_formatter(
+                ctx.inat_client,
+                query_response,
                 **formatter_params,
             )
-            return taxon_formatter
 
         error_msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
