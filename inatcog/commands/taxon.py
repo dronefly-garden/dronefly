@@ -14,7 +14,7 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
-from dronefly.core.query.taxon import get_query_taxon_formatter
+from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
     TaxonListMenu,
