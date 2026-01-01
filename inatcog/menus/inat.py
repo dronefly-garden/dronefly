@@ -30,6 +30,10 @@ class UserButton(discord.ui.Button):
         self.emoji = "\N{BUST IN SILHOUETTE}"
 
     async def callback(self, interaction: discord.Interaction):
+        user = await self.view.cog.user_table.get_user(
+            interaction.user, refresh_cache=True
+        )
+        await self.view.toggle_user_count(interaction, user)
         await self.view.show_page(interaction)
 
     async def interaction_check(self, interaction: discord.Interaction):
