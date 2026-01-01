@@ -10,6 +10,8 @@ from .common import DEQUOTE
 from .converters.base import MemberConverter
 from .utils import get_cog, get_home_server, get_hub_server, get_valid_user_config
 
+LOWEST_DISCORD_ID = 10**16
+
 
 class ContextConfig(BaseConfig):
     """Config for the current context."""
@@ -21,7 +23,7 @@ class ContextConfig(BaseConfig):
         self.cog = get_cog(ctx)
         self.discord_user = discord_user or self.ctx.author
 
-    async def user_id(self, name_or_id: Union[str, int]) -> Union[int, str]:
+    async def user_id(self, user: Union[Member, User, str, int]) -> Union[int, str]:
         """Get best matching iNat user id in this context.
 
         Match in this order:
@@ -29,35 +31,51 @@ class ContextConfig(BaseConfig):
           - if it matches a known member with an iNat id, return the matching iNat id
           - if it's a string without blanks, return it (i.e. it could be an iNat login)
         """
+
+        async def inat_user_id_for_discord_user(discord_user):
+            user_id = None
+            user_config = await get_valid_user_config(
+                self.cog, discord_user, anywhere=False
+            )
+            if user_config:
+                user_id = await user_config.inat_user_id()
+            return user_id
+
         user_id = None
 
-        if name_or_id.isnumeric():
-            user_id = int(name_or_id)
+        if isinstance(user, Member) or isinstance(user, User):
+            discord_user = user
+        elif isinstance(user, int) or user.isnumeric():
+            user_id = int(user)
 
-        if not user_id:
+        if discord_user or not user_id:
             try:
-                # Maybe the name matches a known member
-                discord_user = (
-                    await MemberConverter.convert(
-                        self.ctx, re.sub(DEQUOTE, r"\1", name_or_id)
-                    )
-                ).member
-                user_config = await get_valid_user_config(
-                    self.cog, discord_user, anywhere=False
-                )
-                if user_config:
-                    user_id = await user_config.inat_user_id()
+                if not discord_user:
+                    # Maybe the name matches a known member
+                    discord_user = (
+                        await MemberConverter.convert(
+                            self.ctx, re.sub(DEQUOTE, r"\1", user)
+                        )
+                    ).member
+                user_id = await inat_user_id_for_discord_user(discord_user)
             except (BadArgument, LookupError):
                 pass
 
-        if not user_id and isinstance(name_or_id, str) and " " not in str(name_or_id):
+        if not user_id and isinstance(user, str) and " " not in str(user):
             # Maybe it's a login id
-            user_id = name_or_id
+            user_id = user
 
         if not user_id:
             raise LookupError("iNat member is not known.")
 
         return user_id
+
+    async def user(self, user: Union[Member, User, str, int]) -> Union[int, str]:
+        user_id = await self.user_id(user)
+        # FIXME: update flake8 config to no longer require the noqa tags here
+        return await anext(  # noqa: F821
+            aiter(self.ctx.inat_client.users.from_ids(user_id)), None  # noqa: F821
+        )
 
     async def place_id(
         self, abbrev: str, discord_user: Optional[Union[Member, User]] = None
