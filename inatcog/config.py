@@ -70,13 +70,6 @@ class ContextConfig(BaseConfig):
 
         return user_id
 
-    async def user(self, user: Union[Member, User, str, int]) -> Union[int, str]:
-        user_id = await self.user_id(user)
-        # FIXME: update flake8 config to no longer require the noqa tags here
-        return await anext(  # noqa: F821
-            aiter(self.ctx.inat_client.users.from_ids(user_id)), None  # noqa: F821
-        )
-
     async def place_id(
         self, abbrev: str, discord_user: Optional[Union[Member, User]] = None
     ):

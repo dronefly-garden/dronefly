@@ -31,7 +31,10 @@ class UserButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         client = self.view.ctx.inat_client
-        user = await client.ctx.config.user(interaction.user)
+        user_id = await client.ctx.config.user_id(interaction.user)
+        user = await anext(  # noqa: F821
+            aiter(client.users.from_ids(user_id)), None  # noqa: F821
+        )
         await self.view.toggle_user_count(interaction, user)
         await self.view.show_page(interaction)
 
