@@ -19,6 +19,7 @@ from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
     TaxonListMenu,
     TaxonListSource,
+    TaxonMenu,
     TaxonSource,
 )
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
@@ -32,7 +33,6 @@ from ..embeds.common import (
 )
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
-from ..menus.inat import TaxonMenu
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 

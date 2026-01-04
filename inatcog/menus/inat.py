@@ -2,53 +2,16 @@
 import contextlib
 from math import ceil, floor
 import re
-from typing import Any, Optional
+from typing import Optional
 
 import discord
 from redbot.vendored.discord.ext import menus
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.discord.menus import TaxonMenu as DiscordTaxonMenu
-
-from ..utils import get_valid_user_config
 
 LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
 ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
-
-
-# TODO: provide base validators in core that can use the bot config
-# instead. Then move UserButton and QueryUserButton back down a layer.
-class UserButton(discord.ui.Button):
-    def __init__(
-        self,
-        style: discord.ButtonStyle,
-        row: Optional[int],
-    ):
-        super().__init__(style=style, row=row, custom_id="user")
-        self.style = style
-        self.emoji = "\N{BUST IN SILHOUETTE}"
-
-    async def callback(self, interaction: discord.Interaction):
-        client = self.view.ctx.inat_client
-        await interaction.response.defer()
-        user = await (
-            await client.users.from_dronefly_users([interaction.user])
-        ).async_one()
-        await self.view.source.toggle_user_count(self.view.inat_client, user)
-        await self.view.show_page(interaction)
-
-    async def interaction_check(self, interaction: discord.Interaction):
-        """Just extends the default reaction_check to check if owner is registered here."""
-        cog = self.view.cog
-        try:
-            await get_valid_user_config(cog, interaction.user, anywhere=False)
-        except LookupError:
-            await interaction.response.send_message(
-                content="You are not known here.", ephemeral=True
-            )
-            return False
-        return True
 
 
 class QueryUserButton(discord.ui.Button):
@@ -63,21 +26,6 @@ class QueryUserButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await self.view.show_page(interaction)
-
-
-class TaxonMenu(DiscordTaxonMenu):
-    def __init__(
-        self,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(**kwargs)
-        self.user_button = UserButton(discord.ButtonStyle.grey, 0)
-        # self.query_user_button = QueryUserButton(discord.ButtonStyle.grey, 0)
-        self.clear_items()
-        self.add_item(self.user_button)
-        # self.add_item(self.query_user_button)
-        self.add_item(self.taxonomy_button)
-        self.add_item(self.stop_button)
 
 
 # TODO: derive a base class from this that:
