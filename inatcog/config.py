@@ -41,6 +41,7 @@ class ContextConfig(BaseConfig):
                 user_id = await user_config.inat_user_id()
             return user_id
 
+        discord_user = None
         user_id = None
 
         if isinstance(user, Member) or isinstance(user, User):

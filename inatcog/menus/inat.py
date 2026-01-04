@@ -2,7 +2,7 @@
 import contextlib
 from math import ceil, floor
 import re
-from typing import Optional
+
 
 import discord
 from redbot.vendored.discord.ext import menus
@@ -12,20 +12,6 @@ LETTER_A = "\N{REGIONAL INDICATOR SYMBOL LETTER A}"
 MAX_LETTER_EMOJIS = 10
 ENTRY_EMOJIS = [chr(ord(LETTER_A) + i) for i in range(0, MAX_LETTER_EMOJIS - 1)]
 INAT_LOGO = "https://static.inaturalist.org/sites/1-logo_square.png"
-
-
-class QueryUserButton(discord.ui.Button):
-    def __init__(
-        self,
-        style: discord.ButtonStyle,
-        row: Optional[int],
-    ):
-        super().__init__(style=style, row=row, custom_id="query_user")
-        self.style = style
-        self.emoji = "\N{BUSTS IN SILHOUETTE}"
-
-    async def callback(self, interaction: discord.Interaction):
-        await self.view.show_page(interaction)
 
 
 # TODO: derive a base class from this that:
