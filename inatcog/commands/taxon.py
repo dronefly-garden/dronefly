@@ -102,6 +102,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 taxon_formatter = await get_taxon_formatter(query_response)
                 await TaxonMenu(
                     source=TaxonSource(taxon_formatter),
+                    inat_client=ctx.inat_client,
                     delete_message_after=False,
                     clear_reactions_after=True,
                     timeout=0,

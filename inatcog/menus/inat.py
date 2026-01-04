@@ -31,10 +31,11 @@ class UserButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         client = self.view.ctx.inat_client
+        await interaction.response.defer()
         user = await (
             await client.users.from_dronefly_users([interaction.user])
         ).async_one()
-        await self.view.toggle_user_count(interaction, user)
+        await self.view.source.toggle_user_count(self.view.inat_client, user)
         await self.view.show_page(interaction)
 
     async def interaction_check(self, interaction: discord.Interaction):
