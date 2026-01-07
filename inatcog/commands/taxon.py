@@ -504,12 +504,20 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]taxon_query` for query help."""
+
+        error_msg = None
         async with self._get_taxon_response(ctx, query, ranks=["species"]) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @taxon.command(name="related")
     @checks.bot_has_permissions(embed_links=True)
