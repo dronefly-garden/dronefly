@@ -23,19 +23,24 @@ class ContextConfig(BaseConfig):
         self.cog = get_cog(ctx)
         self.discord_user = discord_user or self.ctx.author
 
-    async def user_id(self, user: Union[Member, User, str, int]) -> Union[int, str]:
+    async def user_id(
+        self, user: Union[Member, User, str, int], anywhere: bool = True
+    ) -> Union[int, str]:
         """Get best matching iNat user id in this context.
 
         Match in this order:
           - if numeric, return its integer value (i.e. it could be an iNat id)
           - if it matches a known member with an iNat id, return the matching iNat id
           - if it's a string without blanks, return it (i.e. it could be an iNat login)
+
+        Specify `anywhere=False` to restrict lookup to users registered in the current
+        server.
         """
 
         async def inat_user_id_for_discord_user(discord_user):
             user_id = None
             user_config = await get_valid_user_config(
-                self.cog, discord_user, anywhere=False
+                self.cog, discord_user, anywhere=anywhere
             )
             if user_config:
                 user_id = await user_config.inat_user_id()
