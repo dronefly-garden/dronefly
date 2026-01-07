@@ -64,6 +64,34 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         yield query_response, _query
 
+    async def _start_taxon_menu(self, ctx, query_response, image_number: int = None):
+        async def get_taxon_formatter():
+            """Populate taxon formatter with iNat entities supplying additional details."""
+            formatter_params = {
+                "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
+                "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                "with_url": False,
+            }
+            if image_number is not None:
+                formatter_params["image_number"] = image_number
+                formatter_params["image_description"] = ""
+            return await get_query_taxon_formatter(
+                ctx.inat_client,
+                query_response,
+                **formatter_params,
+            )
+
+        taxon_formatter = await get_taxon_formatter()
+        await TaxonMenu(
+            source=TaxonSource(taxon_formatter),
+            inat_client=ctx.inat_client,
+            for_place=bool(query_response.place),
+            delete_message_after=False,
+            clear_reactions_after=True,
+            timeout=0,
+            cog=self,
+        ).start(ctx=ctx)
+
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
     @use_client
@@ -81,34 +109,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]help s taxa` to search and browse matching taxa
         """
 
-        async def get_taxon_formatter(query_response):
-            """Populate taxon formatter with iNat entities supplying additional details."""
-            formatter_params = {
-                "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
-                "max_len": MAX_EMBED_DESCRIPTION_LEN,
-                "with_url": False,
-            }
-            return await get_query_taxon_formatter(
-                ctx.inat_client,
-                query_response,
-                **formatter_params,
-            )
-
         error_msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if not query_response:
                 return
             try:
-                taxon_formatter = await get_taxon_formatter(query_response)
-                await TaxonMenu(
-                    source=TaxonSource(taxon_formatter),
-                    inat_client=ctx.inat_client,
-                    for_place=bool(query_response.place),
-                    delete_message_after=False,
-                    clear_reactions_after=True,
-                    timeout=0,
-                    cog=self,
-                ).start(ctx=ctx)
+                await self._start_taxon_menu(ctx, query_response)
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
         if error_msg:
@@ -536,9 +542,16 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Default image for a taxon.
 
         See `[p]taxon_query` for *query* help."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if query_response:
-                await self.send_embed_for_taxon_image(ctx, query_response.taxon, number)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response, image_number=number)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
