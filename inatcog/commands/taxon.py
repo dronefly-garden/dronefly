@@ -14,6 +14,7 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
+from dronefly.core.query import QueryResponse
 from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
@@ -64,7 +65,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
         yield query_response, _query
 
-    async def _start_taxon_menu(self, ctx, query_response, image_number: int = None):
+    async def _start_taxon_menu(
+        self,
+        ctx,
+        query_response,
+        image_number: int = None,
+        related_embed: discord.Embed = None,
+    ):
         async def get_taxon_formatter():
             """Populate taxon formatter with iNat entities supplying additional details."""
             formatter_params = {
@@ -86,6 +93,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             source=TaxonSource(taxon_formatter),
             inat_client=ctx.inat_client,
             for_place=bool(query_response.place),
+            related_embed=related_embed,
             delete_message_after=False,
             clear_reactions_after=True,
             timeout=0,
@@ -525,22 +533,20 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
             query_response = await self.query.get(ctx, _query)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-        if query_response and query_response.taxon:
-            _taxa_list = f"{query_response.taxon.id},{taxa_list}"
-        else:
-            _taxa_list = taxa_list
-        try:
+            if query_response and query_response.taxon:
+                _taxa_list = f"{query_response.taxon.id},{taxa_list}"
+            else:
+                _taxa_list = taxa_list
             (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
-            (taxon, related_embed) = await self.make_related_embed(
+            (related_taxon, related_embed) = await self.make_related_embed(
                 ctx, taxa, missing_taxa
             )
-        except LookupError as err:
+            related_query_response = QueryResponse(taxon=related_taxon)
+            await self._start_taxon_menu(
+                ctx, related_query_response, related_embed=related_embed
+            )
+        except (BadArgument, LookupError) as err:
             await apologize(ctx, err)
-            return
-        await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
 
     @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
