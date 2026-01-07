@@ -414,23 +414,37 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @use_client
     async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query, scientific_name=True) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @taxon.command(name="lang")
     @use_client
     async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query, locale=locale) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @use_client
     @commands.command(hidden=True)
