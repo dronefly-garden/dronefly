@@ -58,6 +58,13 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 _query.main.ranks = _ranks
             self.check_taxon_query(ctx, _query)
             query_response = await self.query.get(ctx, _query, **kwargs)
+            if not query_response.per:
+                if query_response.user:
+                    query_response.per = "obs"
+                elif query_response.place:
+                    query_response.per = "place"
+                else:
+                    query_response.per = "obs"
         except EmptyArgument:
             await ctx.send_help()
         except (BadArgument, LookupError) as err:

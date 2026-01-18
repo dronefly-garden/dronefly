@@ -77,4 +77,5 @@ class INatQuery:
             if has_value(query.controlled_term)
             else None
         )
+        args["per"] = query.per if has_value(query.per) else None
         return QueryResponse(**args)
