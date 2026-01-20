@@ -1,4 +1,5 @@
 """Module for obs command group."""
+import copy
 import logging
 import re
 from collections import namedtuple
@@ -10,10 +11,16 @@ from dronefly.core.constants import RANK_KEYWORDS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
+from dronefly.core.query.formatters import get_query_count_formatter
 from dronefly.core.query.query import Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
-from dronefly.discord.menus import TaxonListMenu, TaxonListSource
+from dronefly.discord.menus import (
+    CountMenu,
+    CountSource,
+    TaxonListMenu,
+    TaxonListSource,
+)
 from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -34,6 +41,45 @@ logger = logging.getLogger("red.dronefly." + __name__)
 
 class CommandsObs(INatEmbeds, MixinMeta):
     """Mixin providing obs command group."""
+
+    async def _start_count_menu(
+        self,
+        ctx,
+        query_response,
+    ):
+        if not query_response.per:
+            _query_response = copy.copy(query_response)
+            if query_response.user:
+                _query_response.per = "obs"
+            elif _query_response.unobserved_by:
+                _query_response.per = "unobs"
+            elif _query_response.id_by:
+                _query_response.per = "ident"
+            elif _query_response.place:
+                _query_response.per = "place"
+            else:
+                _query_response.per = "obs"
+        else:
+            _query_response = query_response
+        for_place = _query_response.per == "place"
+        count_formatter = await get_query_count_formatter(
+            client=ctx.inat_client, query_response=_query_response
+        )
+        await CountMenu(
+            # Discord parameters
+            delete_message_after=False,
+            clear_reactions_after=True,
+            timeout=0,
+            # Dronefly-discord parameters
+            cog=self,
+            inat_client=ctx.inat_client,
+            source=CountSource(
+                count=count_formatter.source.count,
+                formatter=count_formatter,
+            ),
+            # Core parameters
+            for_place=for_place,
+        ).start(ctx=ctx)
 
     @asynccontextmanager
     async def _single_obs(self, ctx, query):
@@ -368,21 +414,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
              -> per user (self listed; others react to add) but only fish from canada are tabulated
         ```
         """  # noqa: E501
-        error_msg = None
-        msg = None
         async with ctx.typing():
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
                 query_response = await self.query.get(ctx, _query)
-                msg = await ctx.send(
-                    embed=await self.make_obs_counts_embed(query_response)
-                )
+                await self._start_count_menu(ctx, query_response)
             except (BadArgument, LookupError) as err:
-                error_msg = str(err)
-        if error_msg:
-            await apologize(ctx, error_msg)
-        else:
-            await self.add_obs_reaction_emojis(ctx, msg, query_response)
+                await apologize(ctx, str(err))
 
     @tabulate.command(name="maverick")
     @use_client
