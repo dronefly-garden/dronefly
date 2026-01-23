@@ -111,7 +111,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     await apologize(ctx, err.args[0])
                     return
         if taxon:
-            await self.send_embed_for_taxon(ctx, taxon)
+            await (self.bot.get_command("taxon")(ctx, query=str(taxon.id)))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -125,7 +125,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         See also `[p]help last taxon image`"""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await self.send_embed_for_taxon_image(ctx, last.obs.taxon, number)
+            await (self.bot.get_command("img")(ctx, query=str(last.obs.taxon.id)))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -195,7 +195,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     ctx, full_record, rank_keyword
                 )
                 if ancestor:
-                    await self.send_embed_for_taxon(ctx, ancestor)
+                    await (self.bot.get_command("taxon")(ctx, query=str(ancestor.id)))
                 else:
                     await apologize(
                         ctx, f"The last observation has no {rank_keyword} ancestor."
@@ -218,7 +218,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     await apologize(ctx, err.args[0])
                     return
         if taxon:
-            await self.send_embed_for_taxon(ctx, taxon, include_ancestors=False)
+            await (self.bot.get_command("map")(ctx, query=str(taxon.id)))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -249,7 +249,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await self.send_embed_for_taxon_image(ctx, last.taxon, number)
+        await (self.bot.get_command("taxon image")(ctx, query=str(last.taxon.id)))
 
     @last_taxon.command(name="related")
     @use_client
@@ -306,6 +306,6 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 ctx, full_record, rank_keyword
             )
             if ancestor:
-                await self.send_embed_for_taxon(ctx, ancestor)
+                await (self.bot.get_command("taxon")(ctx, query=str(ancestor.id)))
             else:
                 await apologize(ctx, f"The last taxon has no {rank} ancestor.")
