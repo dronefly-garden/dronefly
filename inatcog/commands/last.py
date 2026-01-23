@@ -218,7 +218,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     await apologize(ctx, err.args[0])
                     return
         if taxon:
-            await (self.bot.get_command("map")(ctx, query=str(taxon.id)))
+            await (self.bot.get_command("taxon")(ctx, query=str(taxon.id)))
         else:
             await apologize(ctx, "Nothing found")
 
