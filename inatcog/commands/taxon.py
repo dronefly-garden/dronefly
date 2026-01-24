@@ -14,7 +14,7 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
-from dronefly.core.query import QueryResponse
+from dronefly.core.query import QueryResponse, prepare_query_for_taxon
 from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
@@ -57,7 +57,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 _ranks.extend(ranks)
                 _query.main.ranks = _ranks
             self.check_taxon_query(ctx, _query)
-            query_response = await self.query.get(ctx, _query, **kwargs)
+            query_response = await prepare_query_for_taxon(
+                ctx.inat_client, _query, **kwargs
+            )
             if not query_response.per:
                 if query_response.user:
                     query_response.per = "obs"
@@ -67,7 +69,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     query_response.per = "obs"
         except EmptyArgument:
             await ctx.send_help()
-        except (BadArgument, LookupError) as err:
+        except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, str(err))
 
         yield query_response, _query
@@ -172,11 +174,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
                 per_page = 10
                 sort_by = _query.sort_by or None
-                if sort_by not in [None, "obs", "name"]:
-                    raise BadArgument(
-                        "Specify `sort by obs` or `sort by name` (default)"
-                        f"See `{ctx.clean_prefix}help taxon list` for details."
-                    )
                 _per_rank = per_rank
                 if per_rank != "child":
                     _per_rank = RANK_EQUIVALENTS.get(per_rank) or per_rank
@@ -548,7 +545,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         query_response = None
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
-            query_response = await self.query.get(ctx, _query)
+            query_response = await prepare_query_for_taxon(ctx.inat_client, _query)
             if query_response and query_response.taxon:
                 _taxa_list = f"{query_response.taxon.id},{taxa_list}"
             else:
@@ -561,7 +558,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await self._start_taxon_menu(
                 ctx, related_query_response, related_embed=related_embed
             )
-        except (BadArgument, LookupError) as err:
+        except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, err)
 
     @commands.command(hidden=True)

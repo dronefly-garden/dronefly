@@ -1,5 +1,4 @@
 """Module for obs command group."""
-import copy
 import logging
 import re
 from collections import namedtuple
@@ -12,7 +11,7 @@ from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.formatters import get_query_count_formatter
-from dronefly.core.query.query import Query
+from dronefly.core.query.query import prepare_query_for_count, Query
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
 from dronefly.discord.menus import (
@@ -47,23 +46,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         ctx,
         query_response,
     ):
-        if not query_response.per:
-            _query_response = copy.copy(query_response)
-            if query_response.user:
-                _query_response.per = "obs"
-            elif _query_response.unobserved_by:
-                _query_response.per = "unobs"
-            elif _query_response.id_by:
-                _query_response.per = "ident"
-            elif _query_response.place:
-                _query_response.per = "place"
-            else:
-                _query_response.per = "obs"
-        else:
-            _query_response = query_response
-        for_place = _query_response.per == "place"
+        for_place = query_response.per == "place"
         count_formatter = await get_query_count_formatter(
-            client=ctx.inat_client, query_response=_query_response
+            client=ctx.inat_client, query_response=query_response
         )
         await CountMenu(
             # Discord parameters
@@ -417,9 +402,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         async with ctx.typing():
             _query = query or await TaxonReplyConverter.convert(ctx, "")
             try:
-                query_response = await self.query.get(ctx, _query)
+                query_response = await prepare_query_for_count(ctx.inat_client, _query)
                 await self._start_count_menu(ctx, query_response)
-            except (BadArgument, LookupError) as err:
+            except (BadArgument, LookupError, ValueError) as err:
                 await apologize(ctx, str(err))
 
     @tabulate.command(name="maverick")

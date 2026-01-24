@@ -1,18 +1,13 @@
 """Module to query iNat observations."""
-from dronefly.core.query.query import Query, QueryResponse, prepare_query
-from dronefly.core.parsers.constants import VALID_OBS_SORT_BY
+from dronefly.core.query.query import (
+    Query,
+    prepare_query_for_single_obs,
+    prepare_query_for_search_obs,
+)
 from pyinaturalist.models import Observation, Observations
 from redbot.core.commands import BadArgument
 
 from .utils import get_home
-
-
-def _check_obs_query_fields(query_response: QueryResponse):
-    sort_by = query_response.sort_by
-    if sort_by is not None and sort_by not in VALID_OBS_SORT_BY:
-        raise BadArgument(
-            f"Invalid `sort by`. Must be one of: `{', '.join(VALID_OBS_SORT_BY.keys())}`"
-        )
 
 
 class INatObsQuery:
@@ -24,9 +19,10 @@ class INatObsQuery:
     async def query_single_obs(self, ctx, query: Query):
         """Query observations and return first if found."""
 
-        # query_response = await self.cog.query.get(ctx, query)
-        query_response = await prepare_query(ctx.inat_client, query)
-        _check_obs_query_fields(query_response)
+        try:
+            query_response = await prepare_query_for_single_obs(ctx.inat_client, query)
+        except ValueError as err:
+            raise BadArgument(str(err)) from err
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 1
         home = await get_home(ctx)
@@ -42,9 +38,10 @@ class INatObsQuery:
     async def query_observations(self, ctx, query: Query, page=1):
         """Query observations and return iterator for any found."""
 
-        # query_response = await self.cog.query.get(ctx, query)
-        query_response = await prepare_query(ctx.inat_client, query)
-        _check_obs_query_fields(query_response)
+        try:
+            query_response = await prepare_query_for_search_obs(ctx.inat_client, query)
+        except ValueError as err:
+            raise BadArgument(str(err)) from err
         kwargs = query_response.obs_args()
         kwargs["per_page"] = 200
         kwargs["page"] = page
