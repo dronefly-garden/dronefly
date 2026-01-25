@@ -19,7 +19,7 @@ class INatQuery:
 
     async def _get_controlled_term(self, ctx, query_term: str, query_term_value: str):
         async with self.cog.inat_client.set_ctx_from_user(ctx) as client:
-            controlled_terms = await client.annotations.all()
+            controlled_terms = await client.annotations.async_all()
         controlled_term = match_controlled_term(
             controlled_terms, query_term, query_term_value
         )
@@ -77,4 +77,5 @@ class INatQuery:
             if has_value(query.controlled_term)
             else None
         )
+        args["per"] = query.per if has_value(query.per) else None
         return QueryResponse(**args)

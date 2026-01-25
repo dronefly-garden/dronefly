@@ -3,6 +3,7 @@ import contextlib
 from math import ceil, floor
 import re
 
+
 import discord
 from redbot.vendored.discord.ext import menus
 from dronefly.core.formatters.constants import WWW_BASE_URL

@@ -14,8 +14,15 @@ from dronefly.core.formatters.generic import (
 )
 from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
+from dronefly.core.query import QueryResponse, prepare_query_for_taxon
+from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
-from dronefly.discord.menus import TaxonListMenu, TaxonListSource
+from dronefly.discord.menus import (
+    TaxonListMenu,
+    TaxonListSource,
+    TaxonMenu,
+    TaxonSource,
+)
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -50,13 +57,58 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 _ranks.extend(ranks)
                 _query.main.ranks = _ranks
             self.check_taxon_query(ctx, _query)
-            query_response = await self.query.get(ctx, _query, **kwargs)
+            query_response = await prepare_query_for_taxon(
+                ctx.inat_client, _query, **kwargs
+            )
+            if not query_response.per:
+                if query_response.user:
+                    query_response.per = "obs"
+                elif query_response.place:
+                    query_response.per = "place"
+                else:
+                    query_response.per = "obs"
         except EmptyArgument:
             await ctx.send_help()
-        except (BadArgument, LookupError) as err:
+        except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, str(err))
 
         yield query_response, _query
+
+    async def _start_taxon_menu(
+        self,
+        ctx,
+        query_response,
+        image_number: int = None,
+        related_embed: discord.Embed = None,
+    ):
+        async def get_taxon_formatter():
+            """Populate taxon formatter with iNat entities supplying additional details."""
+            formatter_params = {
+                "lang": ctx.inat_client.ctx.get_inat_user_default("inat_lang"),
+                "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                "with_url": False,
+            }
+            if image_number is not None:
+                formatter_params["image_number"] = image_number
+                formatter_params["image_description"] = ""
+            return await get_query_taxon_formatter(
+                ctx.inat_client,
+                query_response,
+                **formatter_params,
+            )
+
+        taxon_formatter = await get_taxon_formatter()
+        for_place = query_response.per == "place"
+        await TaxonMenu(
+            source=TaxonSource(taxon_formatter),
+            inat_client=ctx.inat_client,
+            for_place=for_place,
+            related_embed=related_embed,
+            delete_message_after=False,
+            clear_reactions_after=True,
+            timeout=0,
+            cog=self,
+        ).start(ctx=ctx)
 
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
@@ -74,9 +126,17 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
+
+        error_msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @taxon.command(name="list")
     @use_client
@@ -114,11 +174,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
                 per_page = 10
                 sort_by = _query.sort_by or None
-                if sort_by not in [None, "obs", "name"]:
-                    raise BadArgument(
-                        "Specify `sort by obs` or `sort by name` (default)"
-                        f"See `{ctx.clean_prefix}help taxon list` for details."
-                    )
                 _per_rank = per_rank
                 if per_rank != "child":
                     _per_rank = RANK_EQUIVALENTS.get(per_rank) or per_rank
@@ -372,23 +427,37 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @use_client
     async def taxon_sci(self, ctx, *, query: Optional[str]):
         """Search for taxon matching the scientific name."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query, scientific_name=True) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @taxon.command(name="lang")
     @use_client
     async def taxon_loc(self, ctx, locale: str, *, query: Optional[str]):
         """Search for taxon matching specific locale/language."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query, locale=locale) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @use_client
     @commands.command(hidden=True)
@@ -440,12 +509,20 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Species information. (alias `[p]t` *query* `rank sp`)
 
         See `[p]taxon_query` for query help."""
+
+        error_msg = None
         async with self._get_taxon_response(ctx, query, ranks=["species"]) as (
             query_response,
             _query,
         ):
-            if query_response:
-                await self.send_embed_for_taxon(ctx, query_response)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @taxon.command(name="related")
     @checks.bot_has_permissions(embed_links=True)
@@ -468,23 +545,21 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         query_response = None
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
-            query_response = await self.query.get(ctx, _query)
-        except (BadArgument, LookupError) as err:
-            await apologize(ctx, str(err))
-            return
-        if query_response and query_response.taxon:
-            _taxa_list = f"{query_response.taxon.id},{taxa_list}"
-        else:
-            _taxa_list = taxa_list
-        try:
+            query_response = await prepare_query_for_taxon(ctx.inat_client, _query)
+            if query_response and query_response.taxon:
+                _taxa_list = f"{query_response.taxon.id},{taxa_list}"
+            else:
+                _taxa_list = taxa_list
             (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
-            (taxon, related_embed) = await self.make_related_embed(
+            (related_taxon, related_embed) = await self.make_related_embed(
                 ctx, taxa, missing_taxa
             )
-        except LookupError as err:
+            related_query_response = QueryResponse(taxon=related_taxon)
+            await self._start_taxon_menu(
+                ctx, related_query_response, related_embed=related_embed
+            )
+        except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, err)
-            return
-        await self.send_embed_for_taxon(ctx, taxon, related_embed=related_embed)
 
     @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
@@ -500,9 +575,16 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """Default image for a taxon.
 
         See `[p]taxon_query` for *query* help."""
+        error_msg = None
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if query_response:
-                await self.send_embed_for_taxon_image(ctx, query_response.taxon, number)
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response, image_number=number)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
 
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)

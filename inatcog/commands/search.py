@@ -105,7 +105,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 except LookupError as err:
                     await apologize(ctx, str(err))
                     return
-                await self.send_embed_for_taxon(ctx, query_response, with_keep=True)
+                await (
+                    self.bot.get_command("taxon")(
+                        ctx, query=str(query_response.taxon.id)
+                    )
+                )
                 return
             mat = re.search(PAT_USER_LINK, result)
             if mat:
