@@ -70,6 +70,7 @@ html_theme_options = {
     "nav_title": "Dronefly Project",
     "localtoc_label_text": "Contents",
     "globaltoc_depth": 2,
+    "version_dropdown": True,
 }
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
