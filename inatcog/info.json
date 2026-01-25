@@ -2,8 +2,8 @@
   "author" : ["SyntheticBee"],
   "install_msg": "Bzz, bzz.",
   "name" : "iNatCog",
-  "short" : "Commands using the iNat API v1.",
-  "description" : "Commands using the iNat API v1 (https://api.inaturalist.org/v1).",
+  "short" : "iNaturalist for Discord",
+  "description" : "Advanced tools for iNaturalist Discord communities.",
   "end_user_data_statement": "This cog stores user ids linked to corresponding external API user ids for the purpose of fetching their information from the API, and user preferences for the cog.",
   "requirements" : [
     "Red-DiscordBot>=3.5.22,<3.6",
