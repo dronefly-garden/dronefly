@@ -518,23 +518,29 @@ the ``by <user>`` and ``from <place>`` conventions.
 Dronefly Custom Commands
 ------------------------
 
-Dronefly also utilizes custom commands that can be used to draw data
-from other nature-related sites:
+Dronefly also has custom commands (aka "tags") to link to other nature-related
+sites, often accepting search terms as parameters:
 
-``,adw``
+``,adw <text>``
 
-- ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
-- put search term after command
+- `Animal Diversity Web<https://animaldiversity.org/>`_
 
-``,aesglossary``
+  - e.g. ``,adw gray wolves`` ``,adw canis lupus`` ``,adw mammal anatomy``
+  - search: articles, species, descriptions, terms, images, sounds, specimens, maps
 
-- ``https://www.amentsoc.org/insects/glossary/terms/{0:query}``
-- put search term after command
+``,aes <text>`` ``,aesterm <term>``
 
-``,algae``
+- `Amateur Entomologists' Society<https://www.amentsoc.org/>`_
 
-- ``<https://www.algaebase.org/search/species/?name={urlencode:{args}}>``
-- put search term after command
+  - e.g. ``,aes mouthparts`` ``,aesterm labium``
+  - search: articles, fact sheets, glossary of terms
+
+``,algae <text>`` ``,algaeterm <text>``
+
+- `AlgaeBase <https://www.algaebase.org/>`_
+
+  - e.g. ``,algae meredith micr`` ``,algaeterm acroblastic branching``
+  - search: species, glossary of terms
 
 ``,antwiki``
 
