@@ -521,6 +521,15 @@ Dronefly Custom Commands
 Dronefly also has custom commands (aka "tags") to link to other nature-related
 sites, often accepting search terms as parameters:
 
+.. csv-table::
+   :header: "Commands", "Description"
+   :width: 100%
+   :widths: 30, 70
+
+   ":ref:`,adw <tag-adw>`", "Animal Diversity Web"
+   ":ref:`,aes <tag-aes>` :ref:`,aesterm <tag-aesterm>`", "Amateur Entomologists' Society"
+   ":ref:`,algae <tag-algae>` :ref:`,algaeterm <tag-algaeterm>`", "AlgaeBase"
+
 `Animal Diversity Web <https://animaldiversity.org/>`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
