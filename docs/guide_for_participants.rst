@@ -546,8 +546,6 @@ Animal Diversity Web full text search
   ,adw canis lupus
   ,adw mammal anatomy
 
-.. _tag-aesterm:
-
 `Amateur Entomologists' Society <https://www.amentsoc.org/>`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -563,6 +561,8 @@ Amateur Entomologists' Society full text search
 
   ,aes mouthparts
 
+.. _tag-aesterm:
+
 Amateur Entomologists' Society glossary pages
 """""""""""""""""""""""""""""""""""""""""""""
 
@@ -576,11 +576,10 @@ Amateur Entomologists' Society glossary pages
 `AlgaeBase <https://www.algaebase.org/>`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-AlgaeBase species scientific name search
-""""""""""""""""""""""""""""""""""""""""
-
 .. _tag-algae:
 
+AlgaeBase species scientific name search
+""""""""""""""""""""""""""""""""""""""""
 
 | **Command:** ``,algae <text>``
 | **Examples:**
