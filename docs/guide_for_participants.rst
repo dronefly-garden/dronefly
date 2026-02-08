@@ -535,8 +535,10 @@ sites, often accepting search terms as parameters:
 
 .. _tag-adw:
 
+Animal Diversity Web full text search
+"""""""""""""""""""""""""""""""""""""
+
 | **Command:** ``,adw <text>``
-| **Search:** articles, species, descriptions, terms, images, sounds, specimens, maps.
 | **Examples:**
 
 .. code-block::
@@ -544,23 +546,27 @@ sites, often accepting search terms as parameters:
   ,adw canis lupus
   ,adw mammal anatomy
 
+.. _tag-aesterm:
+
 `Amateur Entomologists' Society <https://www.amentsoc.org/>`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _tag-aes:
 
+Amateur Entomologists' Society full text search
+"""""""""""""""""""""""""""""""""""""""""""""""
+
 | **Command:** ``,aes <text>``
-| **Search:** articles, fact sheets, glossary of terms
 | **Examples:**
 
 .. code-block::
 
   ,aes mouthparts
 
-.. _tag-aesterm:
+Amateur Entomologists' Society glossary pages
+"""""""""""""""""""""""""""""""""""""""""""""
 
 | **Command:** ``,aesterm <term>``
-| **Link:** term from glossary
 | **Examples:**
 
 .. code-block::
@@ -570,10 +576,13 @@ sites, often accepting search terms as parameters:
 `AlgaeBase <https://www.algaebase.org/>`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+AlgaeBase species scientific name search
+""""""""""""""""""""""""""""""""""""""""
+
 .. _tag-algae:
 
+
 | **Command:** ``,algae <text>``
-| **Search:** species
 | **Examples:**
 
 .. code-block::
@@ -582,8 +591,10 @@ sites, often accepting search terms as parameters:
 
 .. _tag-algaeterm:
 
+AlgaeBase glossary of terms search
+""""""""""""""""""""""""""""""""""
+
 | **Command:** ``,algaeterm <text>``
-| **Search:** glossary of terms
 | **Examples:**
 
 .. code-block::
