@@ -523,14 +523,14 @@ sites, often accepting search terms as parameters:
 
 ``,adw <text>``
 
-- `Animal Diversity Web<https://animaldiversity.org/>`_
+- `Animal Diversity Web <https://animaldiversity.org/>`_
 
   - e.g. ``,adw gray wolves`` ``,adw canis lupus`` ``,adw mammal anatomy``
   - search: articles, species, descriptions, terms, images, sounds, specimens, maps
 
 ``,aes <text>`` ``,aesterm <term>``
 
-- `Amateur Entomologists' Society<https://www.amentsoc.org/>`_
+- `Amateur Entomologists' Society <https://www.amentsoc.org/>`_
 
   - e.g. ``,aes mouthparts`` ``,aesterm labium``
   - search: articles, fact sheets, glossary of terms
