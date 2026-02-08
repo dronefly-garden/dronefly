@@ -521,26 +521,52 @@ Dronefly Custom Commands
 Dronefly also has custom commands (aka "tags") to link to other nature-related
 sites, often accepting search terms as parameters:
 
-``,adw <text>``
+.. _tag-adw:
 
-- `Animal Diversity Web <https://animaldiversity.org/>`_
+`Animal Diversity Web <https://animaldiversity.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - e.g. ``,adw gray wolves`` ``,adw canis lupus`` ``,adw mammal anatomy``
-  - search: articles, species, descriptions, terms, images, sounds, specimens, maps
+| **Search:** articles, species, descriptions, terms, images, sounds, specimens, maps.
+| **Syntax:** ``,adw <text>``
+| **Examples:**
 
-``,aes <text>`` ``,aesterm <term>``
+.. code-block::
 
-- `Amateur Entomologists' Society <https://www.amentsoc.org/>`_
+  ,adw canis lupus
+  ,adw mammal anatomy
 
-  - e.g. ``,aes mouthparts`` ``,aesterm labium``
-  - search: articles, fact sheets, glossary of terms
+.. _tag-aes:
 
-``,algae <text>`` ``,algaeterm <text>``
+.. _tag-aesterm:
 
-- `AlgaeBase <https://www.algaebase.org/>`_
+`Amateur Entomologists' Society <https://www.amentsoc.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  - e.g. ``,algae meredith micr`` ``,algaeterm acroblastic branching``
-  - search: species, glossary of terms
+| **Search:** articles, fact sheets, glossary of terms
+| **Syntax:** ``,aes <text>`` or ``,aesterm <term>``
+| **Examples:**
+
+.. code-block::
+
+  ,aes mouthparts
+  ,aesterm labium
+
+.. _tag-algae:
+
+.. _tag-algaeterm:
+
+`AlgaeBase <https://www.algaebase.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+| **Search:** species, glossary of terms
+| **Syntax:** ``,algae <text>``or ``,algaeterm <text>``
+| **Examples:**
+
+.. code-block::
+
+  ,algae meredith micr
+  ,algaeterm acroblastic branching
+
 
 ``,antwiki``
 
