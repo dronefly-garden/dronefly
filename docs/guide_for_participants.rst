@@ -518,23 +518,87 @@ the ``by <user>`` and ``from <place>`` conventions.
 Dronefly Custom Commands
 ------------------------
 
-Dronefly also utilizes custom commands that can be used to draw data
-from other nature-related sites:
+Dronefly also has custom commands (aka "tags") to link to other nature-related
+sites, often accepting search terms as parameters:
 
-``,adw``
+.. csv-table::
+   :header: "Commands", "Description"
+   :width: 100%
+   :widths: 30, 70
 
-- ``http://animaldiversity.org/search/?q={0:query}&feature=INFORMATION``
-- put search term after command
+   ":ref:`,adw <tag-adw>`", "Animal Diversity Web"
+   ":ref:`,aes <tag-aes>` :ref:`,aesterm <tag-aesterm>`", "Amateur Entomologists' Society"
+   ":ref:`,algae <tag-algae>` :ref:`,algaeterm <tag-algaeterm>`", "AlgaeBase"
 
-``,aesglossary``
+`Animal Diversity Web <https://animaldiversity.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``https://www.amentsoc.org/insects/glossary/terms/{0:query}``
-- put search term after command
+.. _tag-adw:
 
-``,algae``
+Animal Diversity Web full text search
+"""""""""""""""""""""""""""""""""""""
 
-- ``<https://www.algaebase.org/search/species/?name={urlencode:{args}}>``
-- put search term after command
+| **Command:** ``,adw <text>``
+| **Examples:**
+
+.. code-block::
+
+  ,adw canis lupus
+  ,adw mammal anatomy
+
+`Amateur Entomologists' Society <https://www.amentsoc.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _tag-aes:
+
+Amateur Entomologists' Society full text search
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+| **Command:** ``,aes <text>``
+| **Examples:**
+
+.. code-block::
+
+  ,aes mouthparts
+
+.. _tag-aesterm:
+
+Amateur Entomologists' Society glossary pages
+"""""""""""""""""""""""""""""""""""""""""""""
+
+| **Command:** ``,aesterm <term>``
+| **Examples:**
+
+.. code-block::
+
+  ,aesterm labium
+
+`AlgaeBase <https://www.algaebase.org/>`_
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _tag-algae:
+
+AlgaeBase species scientific name search
+""""""""""""""""""""""""""""""""""""""""
+
+| **Command:** ``,algae <text>``
+| **Examples:**
+
+.. code-block::
+
+  ,algae meredith micr
+
+.. _tag-algaeterm:
+
+AlgaeBase glossary of terms search
+""""""""""""""""""""""""""""""""""
+
+| **Command:** ``,algaeterm <text>``
+| **Examples:**
+
+.. code-block::
+
+  ,algaeterm acroblastic branching
 
 ``,antwiki``
 
