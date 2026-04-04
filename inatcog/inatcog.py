@@ -98,6 +98,7 @@ class INatCog(
         )  # North America
         self.config.register_guild(
             autoobs=False,
+            autoobs_preview=False,
             dot_taxon=False,
             active_role=None,
             bot_prefixes=[],
@@ -115,7 +116,11 @@ class INatCog(
             projects={},
             project_emojis={},  # deprecated
         )
-        self.config.register_channel(autoobs=None, dot_taxon=None)
+        self.config.register_channel(
+            autoobs=None,
+            autoobs_preview=None,
+            dot_taxon=None,
+        )
         self.config.register_user(
             home=None,
             inat_user_id=None,

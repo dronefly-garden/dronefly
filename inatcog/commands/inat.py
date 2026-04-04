@@ -35,7 +35,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @describe.command(name="autoobs")
     async def describe_autoobs(self, ctx):
-        """\u200b*Automatic observation* link preview feature.
+        """\u200b*Automatic observation* link display feature.
 
         When `autoobs` is on for the channel/server:
 
@@ -46,6 +46,10 @@ class CommandsInat(INatEmbeds, MixinMeta):
         Server mods and owners can set this up. See:
         `[p]help inat set autoobs server` and
         `[p]help inat set autoobs` (channel).
+
+        To include an image preview in the display, see:
+        `[p]help inat set autoobs server preview` and
+        `[p]help inat set autoobs preview` (channel).
 
         In DM with the bot, `autoobs` is always on and cannot be changed.
         """  # noqa: E501
@@ -651,9 +655,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
     @inat_set.group(name="autoobs", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs(self, ctx, state: InheritableBoolConverter):
-        """Set channel auto-observation mode.
+        """Set channel observation auto-display mode.
 
         A separate subcommand sets this feature for the whole server. See `[p]help set autoobs server` for details.
+
+        When set, automatically performs an observation display when a user's message includes an observation link.
 
         To set the mode for the channel:
         ```
@@ -677,7 +683,40 @@ class CommandsInat(INatEmbeds, MixinMeta):
         await ctx.send(f"Channel observation auto-preview is {value}.")
         return
 
-    @set_autoobs.command(name="server")
+    @set_autoobs.command(name="preview")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_autoobs_preview(self, ctx, state: InheritableBoolConverter):
+        """Set channel observation auto-display includes image preview.
+
+        A separate subcommand sets this feature for the whole server. See `[p]help set autoobs server preview` for details.
+
+        When set, includes an image preview in the automatic observation display. It has no effect if `autoobs` is off.
+
+        To set the mode for the channel:
+        ```
+        [p]inat set autoobs preview on
+        [p]inat set autoobs preview off
+        [p]inat set autoobs preview inherit
+        ```
+        When `inherit` is specified, channel mode inherits from the server setting.
+        """  # noqa: E501
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.channel(ctx.channel)
+        await config.autoobs_preview.set(state)
+
+        if state is None:
+            server_state = await self.config.guild(ctx.guild).autoobs_preview()
+            value = f"inherited from server ({'on' if server_state else 'off'})"
+        else:
+            value = "on" if state else "off"
+        await ctx.send(
+            f"Channel observation auto-display includes image preview is {value}."
+        )
+        return
+
+    @set_autoobs.group(name="server", invoke_without_command=True)
     @checks.admin_or_permissions(manage_messages=True)
     async def set_autoobs_server(self, ctx, state: bool):
         """Set server auto-observation mode.
@@ -695,7 +734,29 @@ class CommandsInat(INatEmbeds, MixinMeta):
         config = self.config.guild(ctx.guild)
         await config.autoobs.set(state)
         await ctx.send(
-            f"Server observation auto-preview is {'on' if state else 'off'}."
+            f"Server observation auto-display is {'on' if state else 'off'}."
+        )
+        return
+
+    @set_autoobs_server.command(name="preview")
+    @checks.admin_or_permissions(manage_messages=True)
+    async def set_autoobs_server_preview(self, ctx, state: bool):
+        """Set server observation auto-display includes image preview.
+
+        ```
+        [p]inat set autoobs server preview on
+        [p]inat set autoobs server preview off
+        ```
+
+        See `[p]autoobs` for usage of the feature.
+        """
+        if ctx.author.bot or ctx.guild is None:
+            return
+
+        config = self.config.guild(ctx.guild)
+        await config.autoobs_preview.set(state)
+        await ctx.send(
+            f"Server observation auto-display includes image preview is {'on' if state else 'off'}."
         )
         return
 
@@ -875,7 +936,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
     @inat_show.command(name="autoobs")
     async def show_autoobs(self, ctx):
-        """Show channel & server auto-observation mode.
+        """Show channel & server auto-observation modes.
 
         See `[p]autoobs` to learn about the feature."""
         if ctx.author.bot or ctx.guild is None:
@@ -883,16 +944,28 @@ class CommandsInat(INatEmbeds, MixinMeta):
 
         server_config = self.config.guild(ctx.guild)
         server_state = await server_config.autoobs()
+        server_value = "on" if server_state else "off"
+        server_preview = await server_config.autoobs_preview()
+        server_preview_value = "on" if server_preview else "off"
         await ctx.send(
-            f"Server observation auto-preview is {'on' if server_state else 'off'}."
+            f"Server observation auto-display is {server_value}"
+            f" with image preview {server_preview_value}."
         )
         channel_config = self.config.channel(ctx.channel)
         channel_state = await channel_config.autoobs()
         if channel_state is None:
-            value = f"inherited from server ({'on' if server_state else 'off'})"
+            channel_value = f"inherited from server ({server_value})"
         else:
-            value = "on" if channel_state else "off"
-        await ctx.send(f"Channel observation auto-preview is {value}.")
+            channel_value = "on" if channel_state else "off"
+        channel_preview = await channel_config.autoobs_preview()
+        if channel_preview is None:
+            channel_preview_value = f"inherited from server ({server_preview_value})"
+        else:
+            channel_preview_value = "on" if channel_preview else "off"
+        await ctx.send(
+            f"Channel observation auto-display is {channel_value}"
+            f" with image preview {channel_preview_value}."
+        )
         return
 
     @inat_show.command(name="dot_taxon")
