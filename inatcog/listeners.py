@@ -90,11 +90,26 @@ class Listeners(INatEmbeds, MixinMeta):
                 if re.match(prefix_pattern, message.content):
                     return
 
-        channel_autoobs = not guild or await self.config.channel(channel).autoobs()
+        if guild:
+            channel_autoobs = await self.config.channel(channel).autoobs()
+            channel_autoobs_preview = await self.config.channel(
+                channel
+            ).autoobs_preview()
+        else:
+            # i.e. channel is a DM: always enable the feature and assume a preview image
+            # will be attached by Discord, so don't include a preview image in the
+            # observation auto-display
+            channel_autoobs = True
+            channel_autoobs_preview = False
         if channel_autoobs is None:
             autoobs = await guild_config.autoobs()
         else:
             autoobs = channel_autoobs
+        if channel_autoobs_preview is None:
+            autoobs_preview = await guild_config.autoobs_preview()
+        else:
+            autoobs = channel_autoobs
+            autoobs_preview = channel_autoobs_preview
 
         if autoobs:
             ctx = PartialContext(
@@ -105,7 +120,9 @@ class Listeners(INatEmbeds, MixinMeta):
                 # Only output if an observation is found
                 async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
                     ctx.inat_client = inat_client
-                    embed = await self.make_obs_embed(ctx, obs, url, preview=False)
+                    embed = await self.make_obs_embed(
+                        ctx, obs, url, preview=autoobs_preview
+                    )
                     await self.send_obs_embed(ctx, embed, obs)
                     self.bot.dispatch("commandstats_action", ctx)
 
