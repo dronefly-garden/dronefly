@@ -12,7 +12,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
 )
-from dronefly.core.constants import RANKS_FOR_LEVEL, RANK_KEYWORDS, TRACHEOPHYTA_ID
+from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.query import QueryResponse, prepare_query_for_taxon
 from dronefly.core.query.formatters import get_query_taxon_formatter
@@ -225,8 +225,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     short_description = "Children"
                 else:
                     short_description = self.p.plural(_per_rank).capitalize()
-                    # List all ranks at the same level, not just the specified rank
-                    _per_rank = RANKS_FOR_LEVEL[rank_level]
                 order = _query.order or None
                 taxon_list_formatter = TaxonListFormatter(
                     with_taxa=True,
