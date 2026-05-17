@@ -140,7 +140,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         # don't constitute a single page of results, then show children
                         # instead.
                         async with ctx.typing():
-                            _descendants = await ctx.inat_client.taxa.search(
+                            _descendants = ctx.inat_client.taxa.search(
                                 taxon_id=_without_rank_ids,
                                 rank_level=rank_level,
                                 is_active=True,
