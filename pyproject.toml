@@ -6,7 +6,7 @@ max-line-length = 100
 
 [tool.poetry]
 name = "dronefly"
-version = "0.1.6"
+version = "0.2.dev0"
 description = "Chat platform software for naturalist-related sites"
 authors = ["Ben Armstrong <synrg@debian.org>"]
 license = "AGPL-3.0-or-later"
@@ -15,9 +15,9 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-Red-DiscordBot = "^3.5.16"
-dronefly-core = "=0.4.2"
-dronefly-discord = "=0.1.9"
+Red-DiscordBot = "^3.5.22"
+dronefly-core = { version = "=0.5.0.dev1", allow-prereleases = true }
+dronefly-discord = { version = "=0.2.0.dev1", allow-prereleases = true }
 
 ebird-api = "^3.0.6"
 filelock = "^3.13.3"
@@ -27,6 +27,7 @@ aiohttp-retry = "^2.4.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
+flake8-pyproject = "^1.2.4"
 pytest = "^7.2.1"
 pytest-mock = "^3.10.0"
 pylint = "^2.10.2"
