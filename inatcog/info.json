@@ -6,8 +6,8 @@
   "description" : "Advanced tools for iNaturalist Discord communities.",
   "end_user_data_statement": "This cog stores user ids linked to corresponding external API user ids for the purpose of fetching their information from the API, and user preferences for the cog.",
   "requirements" : [
-    "Red-DiscordBot>=3.5.22,<3.6",
-    "dronefly-discord=0.2.0.dev1",
+    "Red-DiscordBot>=3.5.24,<3.6",
+    "dronefly-discord=0.2.0",
     "timeago>=1.0.15,<2.0.0",
     "aiolimiter>=1.0.0,<2.0.0",
     "aiohttp-retry>=2.4.5,<3.0.0",
@@ -15,5 +15,5 @@
   ],
   "tags": ["inaturalist", "naturalist", "nature"],
   "hidden": false,
-  "min_bot_version": "3.5.22"
+  "min_bot_version": "3.5.24"
 }
