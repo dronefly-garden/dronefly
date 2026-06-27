@@ -37,7 +37,7 @@ from ..utils import cache_busting_id, get_valid_user_config
 class CommandsUser(INatEmbeds, MixinMeta):
     """Mixin providing user command group."""
 
-    @commands.group(invoke_without_command=True, aliases=["who"])
+    @commands.hybrid_group(aliases=["who"], fallback="show")
     @checks.bot_has_permissions(embed_links=True)
     async def user(self, ctx, *, who: QuotedContextMemberConverter):
         """Show user if their iNat id is known.
@@ -79,6 +79,14 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 error_msg = str(err)
         if error_msg:
             await apologize(ctx, error_msg)
+
+    @user.command(name="me")
+    @known_inat_user()
+    @checks.bot_has_permissions(embed_links=True)
+    async def user_me(self, ctx):  # pylint: disable=invalid-name
+        """Show your iNat info & stats for this server."""
+        member = await MemberConverter.convert(ctx, "me")
+        await self.user(ctx, who=member)
 
     @user.command(name="add_id")
     @checks.is_owner()
@@ -1184,8 +1192,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True)
     async def me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
-        member = await MemberConverter.convert(ctx, "me")
-        await self.user(ctx, who=member)
+        await self.user_me(ctx)
 
     @commands.group(invoke_without_command=True)
     @known_inat_user()
