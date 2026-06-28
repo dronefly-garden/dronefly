@@ -17,10 +17,15 @@ from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
-from dronefly.core.query import prepare_query_for_taxon
-from dronefly.core.query.formatters import get_query_taxon_formatter
+from dronefly.core.query import prepare_query_for_count, prepare_query_for_taxon
+from dronefly.core.query.formatters import (
+    get_query_count_formatter,
+    get_query_taxon_formatter,
+)
 from dronefly.discord.embeds import MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
+    CountMenu,
+    CountSource,
     TaxonMenu,
     TaxonSource,
 )
@@ -145,7 +150,6 @@ class Listeners(INatEmbeds, MixinMeta):
         if dot_taxon:
             mat = re.search(DOT_TAXON_PAT, message.content)
             if mat:
-                msg = None
                 ctx = PartialContext(
                     self.bot,
                     guild,
@@ -161,11 +165,38 @@ class Listeners(INatEmbeds, MixinMeta):
                         query = await NaturalQueryConverter.convert(ctx, mat["query"])
                         if query.controlled_term:
                             return
+                    except (BadArgument, LookupError):
+                        return
+                    # FIXME: refactor to eliminate duplication between the listener invocations
+                    # of tabulate and taxon menus vs. command invocations (more should be moved
+                    # down into dronefly-discord)
+                    if query.user or query.place or query.project:
+                        query_response = await prepare_query_for_count(
+                            ctx.inat_client, query
+                        )
+                        for_place = query_response.per == "place"
+                        count_formatter = await get_query_count_formatter(
+                            client=ctx.inat_client, query_response=query_response
+                        )
+                        await CountMenu(
+                            # Discord parameters
+                            delete_message_after=False,
+                            clear_reactions_after=True,
+                            timeout=0,
+                            # Dronefly-discord parameters
+                            cog=self,
+                            inat_client=ctx.inat_client,
+                            source=CountSource(
+                                count=count_formatter.source.count,
+                                formatter=count_formatter,
+                            ),
+                            # Core parameters
+                            for_place=for_place,
+                        ).start(ctx=ctx)
+                    else:
                         query_response = await prepare_query_for_taxon(
                             ctx.inat_client, query
                         )
-                        # FIXME: duplicated in CommandsTaxon._get_taxon_response()
-                        # and CommandsTaxon._start_taxon_menu()
                         if not query_response.per:
                             if query_response.user:
                                 query_response.per = "obs"
@@ -173,14 +204,6 @@ class Listeners(INatEmbeds, MixinMeta):
                                 query_response.per = "place"
                             else:
                                 query_response.per = "obs"
-                    except (BadArgument, LookupError):
-                        return
-                    if query.user or query.place or query.project:
-                        msg = await channel.send(
-                            embed=await self.make_obs_counts_embed(query_response)
-                        )
-                        await self.add_obs_reaction_emojis(ctx, msg, query_response)
-                    else:
                         formatter_params = {
                             "lang": ctx.inat_client.ctx.get_inat_user_default(
                                 "inat_lang"
