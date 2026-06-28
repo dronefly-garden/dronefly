@@ -6,9 +6,9 @@ import re
 import html2markdown
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
+from inatcog.menus.generic import EmbedListMenu, EmbedListSource
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from ..checks import can_manage_projects
 from ..common import grouper
@@ -25,7 +25,7 @@ logger = logging.getLogger("red.dronefly." + __name__)
 class CommandsProject(INatEmbeds, MixinMeta):
     """Mixin providing project command group."""
 
-    @commands.group(invoke_without_command=True, aliases=["prj"])
+    @commands.hybrid_group(aliases=["prj"], fallback="show")
     async def project(self, ctx, *, query):
         """iNat project for name, id number, or abbreviation.
 
@@ -216,8 +216,10 @@ class CommandsProject(INatEmbeds, MixinMeta):
                 )
                 for index, page in enumerate(pages, start=1)
             ]
-            # menu() does not support lazy load of embeds iterator.
-            await menu(ctx, embeds, DEFAULT_CONTROLS)
+            await EmbedListMenu(
+                source=EmbedListSource(entries=embeds, per_page=1),
+                timeout=0,
+            ).start(ctx=ctx)
         else:
             await apologize(ctx, "Nothing found")
 

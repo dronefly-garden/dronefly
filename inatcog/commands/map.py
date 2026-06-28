@@ -19,7 +19,7 @@ from inatcog.utils import use_client
 class CommandsMap(INatEmbeds, MixinMeta):
     """Mixin providing taxon command group."""
 
-    @commands.group(invoke_without_command=True)
+    @commands.hybrid_group(invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def map(self, ctx, *, taxa_list: Optional[str] = ""):
