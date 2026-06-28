@@ -17,6 +17,13 @@ from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .obs import maybe_match_obs
+from dronefly.core.query import prepare_query_for_taxon
+from dronefly.core.query.formatters import get_query_taxon_formatter
+from dronefly.discord.embeds import MAX_EMBED_DESCRIPTION_LEN
+from dronefly.discord.menus import (
+    TaxonMenu,
+    TaxonSource,
+)
 
 logger = logging.getLogger("red.dronefly." + __name__)
 
@@ -50,6 +57,9 @@ class PartialContext:
     assume_yes: bool = True
     interaction: Optional[discord.Interaction] = None
     inat_client: iNatClient = None
+
+    async def send(self, *args, **kwargs):
+        await self.channel.send(*args, **kwargs)
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -151,7 +161,40 @@ class Listeners(INatEmbeds, MixinMeta):
                         query = await NaturalQueryConverter.convert(ctx, mat["query"])
                         if query.controlled_term:
                             return
-                        query_response = await self.query.get(ctx, query)
+                        query_response = await prepare_query_for_taxon(
+                            ctx.inat_client, query
+                        )
+                        # FIXME: duplicated in CommandsTaxon._get_taxon_response()
+                        # and CommandsTaxon._start_taxon_menu()
+                        if not query_response.per:
+                            if query_response.user:
+                                query_response.per = "obs"
+                            elif query_response.place:
+                                query_response.per = "place"
+                            else:
+                                query_response.per = "obs"
+                        formatter_params = {
+                            "lang": ctx.inat_client.ctx.get_inat_user_default(
+                                "inat_lang"
+                            ),
+                            "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                            "with_url": False,
+                        }
+                        taxon_formatter = await get_query_taxon_formatter(
+                            ctx.inat_client,
+                            query_response,
+                            **formatter_params,
+                        )
+                        for_place = query_response.per == "place"
+                        await TaxonMenu(
+                            source=TaxonSource(taxon_formatter),
+                            inat_client=ctx.inat_client,
+                            for_place=for_place,
+                            delete_message_after=False,
+                            clear_reactions_after=True,
+                            timeout=0,
+                            cog=self,
+                        ).start(ctx=ctx)
                     except (BadArgument, LookupError):
                         return
                     if query.user or query.place or query.project:
