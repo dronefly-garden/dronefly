@@ -173,6 +173,14 @@ class Listeners(INatEmbeds, MixinMeta):
                                 query_response.per = "place"
                             else:
                                 query_response.per = "obs"
+                    except (BadArgument, LookupError):
+                        return
+                    if query.user or query.place or query.project:
+                        msg = await channel.send(
+                            embed=await self.make_obs_counts_embed(query_response)
+                        )
+                        await self.add_obs_reaction_emojis(ctx, msg, query_response)
+                    else:
                         formatter_params = {
                             "lang": ctx.inat_client.ctx.get_inat_user_default(
                                 "inat_lang"
@@ -195,18 +203,6 @@ class Listeners(INatEmbeds, MixinMeta):
                             timeout=0,
                             cog=self,
                         ).start(ctx=ctx)
-                    except (BadArgument, LookupError):
-                        return
-                    if query.user or query.place or query.project:
-                        msg = await channel.send(
-                            embed=await self.make_obs_counts_embed(query_response)
-                        )
-                        await self.add_obs_reaction_emojis(ctx, msg, query_response)
-                    else:
-                        msg = await channel.send(
-                            embed=await self.get_taxa_embed(ctx, query_response)
-                        )
-                        await self.add_taxon_reaction_emojis(ctx, msg, query_response)
                     self.bot.dispatch("commandstats_action", ctx)
 
     async def handle_member_reaction(
