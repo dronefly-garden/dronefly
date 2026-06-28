@@ -4,7 +4,6 @@ import logging
 import re
 
 from redbot.core import checks, commands
-from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.discord.embeds import make_embed
@@ -14,6 +13,7 @@ from ..common import grouper
 from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
+from ..menus.generic import EmbedListMenu, EmbedListSource
 from ..places import RESERVED_PLACES
 from ..utils import get_home_server, get_hub_server, has_valid_user_config
 
@@ -199,8 +199,10 @@ class CommandsPlace(INatEmbeds, MixinMeta):
                 )
                 for index, page in enumerate(pages, start=1)
             ]
-            # menu() does not support lazy load of embeds iterator.
-            await menu(ctx, embeds, DEFAULT_CONTROLS)
+            await EmbedListMenu(
+                source=EmbedListSource(entries=embeds, per_page=1),
+                timeout=0,
+            ).start(ctx=ctx)
         else:
             await apologize(ctx, "Nothing found")
 
