@@ -16,6 +16,7 @@ from .converters.base import NaturalQueryConverter
 from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
+from .menus.generic import EmbedMenu, EmbedSource
 from .obs import maybe_match_obs
 from dronefly.core.query import prepare_query_for_count, prepare_query_for_taxon
 from dronefly.core.query.formatters import (
@@ -138,7 +139,21 @@ class Listeners(INatEmbeds, MixinMeta):
                     embed = await self.make_obs_embed(
                         ctx, obs, url, preview=autoobs_preview
                     )
-                    await self.send_obs_embed(ctx, embed, obs)
+                    # Add extra sound embeds to the menu initial message if any
+                    initial_message_params = {}
+                    if obs.sounds:
+                        async with self.sound_message_params(
+                            ctx.channel, obs.sounds, embed=embed
+                        ) as params:
+                            if params:
+                                initial_message_params = params
+                    if not initial_message_params:
+                        initial_message_params["embed"] = embed
+
+                    await EmbedMenu(
+                        source=EmbedSource([embed]),
+                        timeout=0,
+                    ).start(ctx=ctx, **initial_message_params)
                     self.bot.dispatch("commandstats_action", ctx)
 
         channel_dot_taxon = not guild or await self.config.channel(channel).dot_taxon()

@@ -21,6 +21,7 @@ from dronefly.discord.menus import (
     TaxonListSource,
 )
 from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
+from inatcog.menus.generic import EmbedMenu, EmbedSource
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -169,7 +170,21 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     embed = await self.make_obs_embed(
                         ctx, res.obs, res.url, preview=res.preview
                     )
-                await self.send_obs_embed(ctx, embed, res.obs)
+                    # Add extra sound embeds to the menu initial message if any
+                    initial_message_params = {}
+                    if res.obs.sounds:
+                        async with self.sound_message_params(
+                            ctx.channel, res.obs.sounds, embed=embed
+                        ) as params:
+                            if params:
+                                initial_message_params = params
+                    if not initial_message_params:
+                        initial_message_params["embed"] = embed
+
+                    await EmbedMenu(
+                        source=EmbedSource([embed]),
+                        timeout=0,
+                    ).start(ctx=ctx, **initial_message_params)
 
     @obs.command(name="count")
     async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter]):
