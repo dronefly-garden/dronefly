@@ -23,7 +23,7 @@ logger = logging.getLogger("red.dronefly." + __name__)
 class CommandsPlace(INatEmbeds, MixinMeta):
     """Mixin providing place command group."""
 
-    @commands.group(invoke_without_command=True)
+    @commands.hybrid_group(fallback="show")
     async def place(self, ctx, *, query):
         """Show iNat place or abbreviation.
 
