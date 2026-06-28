@@ -56,6 +56,18 @@ class EmbedMenu(DiscordBaseMenu, CoreBaseMenu):
         self.add_item(self.stop_button)
         await self.send_initial_message(ctx, **initial_message_params)
 
+    async def interaction_check(self, interaction: discord.Interaction):
+        """Allow only owner to use interactions."""
+        if interaction.user.id not in (
+            *interaction.client.owner_ids,
+            getattr(self.author, "id", None),
+        ):
+            await interaction.response.send_message(
+                content="Only the command owner can do this.", ephemeral=True
+            )
+            return False
+        return True
+
 
 """
 class EmbedPagesMenu(EmbedMenu):
