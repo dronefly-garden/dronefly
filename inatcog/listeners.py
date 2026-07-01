@@ -185,63 +185,66 @@ class Listeners(INatEmbeds, MixinMeta):
                     # FIXME: refactor to eliminate duplication between the listener invocations
                     # of tabulate and taxon menus vs. command invocations (more should be moved
                     # down into dronefly-discord)
-                    if query.user or query.place or query.project:
-                        query_response = await prepare_query_for_count(
-                            ctx.inat_client, query
-                        )
-                        for_place = query_response.per == "place"
-                        count_formatter = await get_query_count_formatter(
-                            client=ctx.inat_client, query_response=query_response
-                        )
-                        await CountMenu(
-                            # Discord parameters
-                            delete_message_after=False,
-                            clear_reactions_after=True,
-                            timeout=0,
-                            # Dronefly-discord parameters
-                            cog=self,
-                            inat_client=ctx.inat_client,
-                            source=CountSource(
-                                count=count_formatter.source.count,
-                                formatter=count_formatter,
-                            ),
-                            # Core parameters
-                            for_place=for_place,
-                        ).start(ctx=ctx)
-                    else:
-                        query_response = await prepare_query_for_taxon(
-                            ctx.inat_client, query
-                        )
-                        if not query_response.per:
-                            if query_response.user:
-                                query_response.per = "obs"
-                            elif query_response.place:
-                                query_response.per = "place"
-                            else:
-                                query_response.per = "obs"
-                        formatter_params = {
-                            "lang": ctx.inat_client.ctx.get_inat_user_default(
-                                "inat_lang"
-                            ),
-                            "max_len": MAX_EMBED_DESCRIPTION_LEN,
-                            "with_url": False,
-                        }
-                        taxon_formatter = await get_query_taxon_formatter(
-                            ctx.inat_client,
-                            query_response,
-                            **formatter_params,
-                        )
-                        for_place = query_response.per == "place"
-                        await TaxonMenu(
-                            source=TaxonSource(taxon_formatter),
-                            inat_client=ctx.inat_client,
-                            for_place=for_place,
-                            delete_message_after=False,
-                            clear_reactions_after=True,
-                            timeout=0,
-                            cog=self,
-                        ).start(ctx=ctx)
-                    self.bot.dispatch("commandstats_action", ctx)
+                    try:
+                        if query.user or query.place or query.project:
+                            query_response = await prepare_query_for_count(
+                                ctx.inat_client, query
+                            )
+                            for_place = query_response.per == "place"
+                            count_formatter = await get_query_count_formatter(
+                                client=ctx.inat_client, query_response=query_response
+                            )
+                            await CountMenu(
+                                # Discord parameters
+                                delete_message_after=False,
+                                clear_reactions_after=True,
+                                timeout=0,
+                                # Dronefly-discord parameters
+                                cog=self,
+                                inat_client=ctx.inat_client,
+                                source=CountSource(
+                                    count=count_formatter.source.count,
+                                    formatter=count_formatter,
+                                ),
+                                # Core parameters
+                                for_place=for_place,
+                            ).start(ctx=ctx)
+                        else:
+                            query_response = await prepare_query_for_taxon(
+                                ctx.inat_client, query
+                            )
+                            if not query_response.per:
+                                if query_response.user:
+                                    query_response.per = "obs"
+                                elif query_response.place:
+                                    query_response.per = "place"
+                                else:
+                                    query_response.per = "obs"
+                            formatter_params = {
+                                "lang": ctx.inat_client.ctx.get_inat_user_default(
+                                    "inat_lang"
+                                ),
+                                "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                                "with_url": False,
+                            }
+                            taxon_formatter = await get_query_taxon_formatter(
+                                ctx.inat_client,
+                                query_response,
+                                **formatter_params,
+                            )
+                            for_place = query_response.per == "place"
+                            await TaxonMenu(
+                                source=TaxonSource(taxon_formatter),
+                                inat_client=ctx.inat_client,
+                                for_place=for_place,
+                                delete_message_after=False,
+                                clear_reactions_after=True,
+                                timeout=0,
+                                cog=self,
+                            ).start(ctx=ctx)
+                        self.bot.dispatch("commandstats_action", ctx)
+                    except LookupError as err:
+                        logger.info("%s Ignoring query: %s", err, mat["query"])
 
     async def handle_member_reaction(
         self,
