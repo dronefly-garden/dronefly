@@ -53,9 +53,6 @@ class EmbedMenu(DiscordBaseMenu, CoreBaseMenu):
         super().__init__()
         self.stop_button = StopButton(discord.ButtonStyle.red, 0)
 
-    async def on_timeout(self):
-        await self.message.edit(view=None)
-
     async def send_initial_message(self, ctx: commands.Context, **params):
         self.ctx = ctx
         self.message = await ctx.send(view=self, **params)
