@@ -291,7 +291,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await self._tabulate_query(ctx, query, view="spp")
 
-    @commands.hybrid_group(invoke_without_command=True)
+    @commands.hybrid_command()
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
