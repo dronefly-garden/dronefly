@@ -436,7 +436,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Convenient alias for 'describe reactions' message command."""
         await ctx.send_help(self.bot.get_command("describe reactions"))
 
-    @commands.hybrid_group()
+    @commands.group()
     async def inat(self, ctx):
         """Show/change iNat settings.
 
