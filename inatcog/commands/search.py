@@ -448,7 +448,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             selected_index = [0]
             await menu(ctx, embeds, controls, timeout=60)
 
-    @commands.group(aliases=["s"], invoke_without_command=True)
+    @commands.group(
+        aliases=["s"], invoke_without_command=True
+    )  # deprecated ,search group
     @checks.bot_has_permissions(embed_links=True, read_message_history=True)
     @use_client
     async def search(self, ctx, *, query: Optional[TaxonReplyConverter] = None):

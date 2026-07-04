@@ -17,7 +17,7 @@ from ..utils import use_client
 class CommandsLast(INatEmbeds, MixinMeta):
     """Mixin providing last command group."""
 
-    @commands.group()
+    @commands.group()  # deprecated ,last group
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def last(self, ctx):

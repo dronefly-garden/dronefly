@@ -27,7 +27,7 @@ LISTEN_VALUE = {
 class CommandsInat(INatEmbeds, MixinMeta):
     """Mixin providing inat command group."""
 
-    @commands.group()
+    @commands.hybrid_group()
     async def describe(self, ctx):
         """Describe iNat features, terms, and syntax.
 
@@ -436,7 +436,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Convenient alias for 'describe reactions' message command."""
         await ctx.send_help(self.bot.get_command("describe reactions"))
 
-    @commands.group()
+    @commands.hybrid_group()
     async def inat(self, ctx):
         """Show/change iNat settings.
 

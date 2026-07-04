@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class CommandsEvent(INatEmbeds, MixinMeta):
     """Mixin providing event command group."""
 
-    @commands.group()
+    @commands.group()  # deprecated ,event group
     @can_manage_users()
     async def event(self, ctx):
         """Commands to manage server events."""

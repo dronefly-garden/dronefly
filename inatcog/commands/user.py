@@ -1194,7 +1194,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         """Show your iNat info & stats for this server."""
         await self.user_me(ctx)
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True)  # deprecated ,my group
     @known_inat_user()
     @checks.bot_has_permissions(embed_links=True)
     async def my(self, ctx, *, project: str):  # pylint: disable=invalid-name

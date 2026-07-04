@@ -291,7 +291,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         await self._tabulate_query(ctx, query, view="spp")
 
-    @commands.group(invoke_without_command=True)
+    @commands.hybrid_group(invoke_without_command=True)
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def life(self, ctx, *, query: Optional[Union[TaxonReplyConverter, str]]):
@@ -390,7 +390,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if msg:
                 await add_reactions_with_cancel(ctx, msg, [])
 
-    @commands.group(invoke_without_command=True, aliases=["tab"])
+    @commands.group(
+        invoke_without_command=True, aliases=["tab"]
+    )  # deprecated ,tabulate group
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def tabulate(self, ctx, *, query: Optional[TaxonReplyConverter]):
