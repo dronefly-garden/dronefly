@@ -116,4 +116,10 @@ red_setup_logs
 
 # pyinaturalist requests and rate limiter db and lock files
 *.db
+# but we do actually need uv.lock so unignore it:
+!uv.lock
+# ignore everything else
 *.lock
+
+# local overrides for development
+uv.toml

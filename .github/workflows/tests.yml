@@ -18,29 +18,16 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-          python-version: ${{ matrix.python-version }}
-    - uses: snok/install-poetry@v1.4.1
-      with:
-        version: 2.1.1
-        virtualenvs-in-project: true
+    - uses: actions/checkout@v7.0.0
 
-    # Cache packages per python version, and reuse until lockfile changes
-    - name: Cache python packages
-      id: cache
-      uses: actions/cache@v3
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.3.2
       with:
-        path: .venv
-        key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true'
-      # Workaround for conflicting Red-DiscordBot dependency on too-old attrs. Force it.
-      run: poetry install -v
+      run: uv sync --locked --all-extras --dev
 
     - name: Test with pytest
-      run: |
-        source .venv/bin/activate
-        pytest
+      run: uv run pytest

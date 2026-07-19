@@ -1,42 +1,54 @@
+[project]
+name = "dronefly"
+version = "0.3"
+description = "Chat platform software for naturalist-related sites"
+authors = [{ name = "Ben Armstrong", email = "synrg@debian.org" }]
+requires-python = ">=3.11,<3.12"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "Red-DiscordBot>=3.5.24,<4",
+    "dronefly-discord>=0.2.1,<0.3",
+    "ebird-api>=3.0.6,<4",
+    "filelock>=3.13.3,<4",
+    "timeago>=1.0.15,<2",
+    "aiolimiter>=1.0.0,<2",
+    "aiohttp-retry>=2.4.5,<3",
+    "pip>=26.1.2",
+]
+
 [tool.bandit]
 exclude_dirs = ["tests"]
+
+[dependency-groups]
+dev = [
+    "black>=24.3.0,<25",
+    "flake8-pyproject>=1.2.4,<2",
+    "pytest>=7.2.1,<8",
+    "pytest-mock>=3.10.0,<4",
+    "pylint>=2.10.2,<3",
+    "pytest-asyncio>=0.20.3,<0.21",
+]
+docs = [
+    "sphinx>=5.1.1,<6",
+    "sphinx-material>=0.0.36,<0.0.37",
+    "sphinxcontrib_trio>=1.1.2,<2",
+]
 
 [tool.flake8]
 max-line-length = 100
 
-[tool.poetry]
-name = "dronefly"
-version = "0.2"
-description = "Chat platform software for naturalist-related sites"
-authors = ["Ben Armstrong <synrg@debian.org>"]
-license = "AGPL-3.0-or-later"
-readme = "README.md"
-package-mode = false
+[tool.uv]
+package = false
+default-groups = "all"
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.12"
-Red-DiscordBot = "^3.5.24"
-dronefly-discord = "^0.2.0"
-
-ebird-api = "^3.0.6"
-filelock = "^3.13.3"
-timeago = "^1.0.15"
-aiolimiter = "^1.0.0"
-aiohttp-retry = "^2.4.5"
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.3.0"
-flake8-pyproject = "^1.2.4"
-pytest = "^7.2.1"
-pytest-mock = "^3.10.0"
-pylint = "^2.10.2"
-pytest-asyncio = "^0.20.3"
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "^5.1.1"
-sphinx-material = "^0.0.36"
-sphinxcontrib_trio = "^1.1.2"
+[tool.uv.sources]
+dronefly = { workspace = true }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"
