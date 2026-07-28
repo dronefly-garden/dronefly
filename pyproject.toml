@@ -1,6 +1,6 @@
 [project]
 name = "dronefly"
-version = "0.3"
+version = "0.4"
 description = "Chat platform software for naturalist-related sites"
 authors = [{ name = "Ben Armstrong", email = "synrg@debian.org" }]
 requires-python = ">=3.11,<3.12"
@@ -12,7 +12,7 @@ classifiers = [
 ]
 dependencies = [
     "Red-DiscordBot>=3.5.24,<4",
-    "dronefly-discord>=0.2.1,<0.3",
+    "dronefly-discord>=0.2.2,<0.3",
     "ebird-api>=3.0.6,<4",
     "filelock>=3.13.3,<4",
     "timeago>=1.0.15,<2",
