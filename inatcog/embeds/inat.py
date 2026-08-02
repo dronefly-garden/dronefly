@@ -1,4 +1,5 @@
 """Module to handle iNat embed concerns."""
+
 import asyncio
 import contextlib
 import copy
@@ -141,7 +142,7 @@ class INatEmbed(discord.Embed):
         if self.description:
             mat_selected_obs_link = re.search(PAT_SELECTED_OBS_LINK, self.description)
             if mat_selected_obs_link:
-                mat = re.search(PAT_OBS_QUERY, mat_selected_obs_link["url"])
+                mat = re.search(PAT_OBS_LINK, mat_selected_obs_link["url"])
                 return mat["url"]
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
@@ -722,7 +723,7 @@ class INatEmbeds(MixinMeta):
                         error = "*This observation has no images.*"
 
             if image_only:
-                (title, url) = format_image_title_url(obs.taxon, obs, image_number)
+                title, url = format_image_title_url(obs.taxon, obs, image_number)
                 embed.title = title
                 embed.url = url
                 embed.description = (
@@ -1081,9 +1082,7 @@ class INatEmbeds(MixinMeta):
         reaction_emojis = (
             OBS_PLACE_REACTION_EMOJIS
             if _add_place_emojis(query_response)
-            else OBS_REACTION_EMOJIS
-            if _add_user_emojis(query_response)
-            else []
+            else OBS_REACTION_EMOJIS if _add_user_emojis(query_response) else []
         )
         return await add_reactions_with_cancel(ctx, msg, reaction_emojis)
 
@@ -1106,17 +1105,17 @@ class INatEmbeds(MixinMeta):
             reaction_emojis = (
                 TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else TAXON_REACTION_EMOJIS
-                if _add_user_emojis(query_response)
-                else []
+                else TAXON_REACTION_EMOJIS if _add_user_emojis(query_response) else []
             )
         else:
             reaction_emojis = (
                 NO_PARENT_TAXON_PLACE_REACTION_EMOJIS
                 if add_place_emojis
-                else NO_PARENT_TAXON_REACTION_EMOJIS
-                if _add_user_emojis(query_response)
-                else []
+                else (
+                    NO_PARENT_TAXON_REACTION_EMOJIS
+                    if _add_user_emojis(query_response)
+                    else []
+                )
             )
         return await add_reactions_with_cancel(
             ctx, msg, reaction_emojis, with_keep=with_keep
