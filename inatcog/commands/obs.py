@@ -1,4 +1,5 @@
 """Module for obs command group."""
+
 import logging
 import re
 from collections import namedtuple
@@ -11,12 +12,19 @@ from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
 from dronefly.core.query.formatters import get_query_count_formatter
-from dronefly.core.query.query import prepare_query_for_count, Query
+from dronefly.core.query.query import (
+    prepare_query_for_count,
+    Query,
+    prepare_query_for_search_obs,
+)
 from dronefly.core.utils import obs_url_from_v1
 from dronefly.discord.embeds import make_embed
 from dronefly.discord.menus import (
     CountMenu,
     CountSource,
+    ObservationSearchFormatter,
+    ObservationSearchMenu,
+    ObservationSearchSource,
     TaxonListMenu,
     TaxonListSource,
 )
@@ -189,27 +197,57 @@ class CommandsObs(INatEmbeds, MixinMeta):
     @obs.command(name="count")
     async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Count matching observations."""
-        await (self.bot.get_command("tabulate")(ctx, query=query))
+        await self.bot.get_command("tabulate")(ctx, query=query)
 
     @obs.command(name="lifelist")
     async def obs_lifelist(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Life list of matching taxa."""
-        await (self.bot.get_command("life")(ctx, query=query))
+        await self.bot.get_command("life")(ctx, query=query)
 
     @obs.command(name="map")
     async def obs_map(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Show map of observations."""
-        await (self.bot.get_command("map obs")(ctx, query=query))
+        await self.bot.get_command("map obs")(ctx, query=query)
 
     @obs.command(name="maverick")
     async def obs_maverick(self, ctx, *, query: Optional[str] = ""):
         """Count maverick observations."""
-        await (self.bot.get_command("tabulate maverick")(ctx, query=query))
+        await self.bot.get_command("tabulate maverick")(ctx, query=query)
 
     @obs.command(name="search")
+    @use_client
     async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter]):
         """Search for matching observations."""
-        await (self.bot.get_command("search obs")(ctx, query=query))
+        async with ctx.typing():
+            try:
+                _query = query or await TaxonReplyConverter.convert(ctx, "")
+                query_response = await prepare_query_for_search_obs(
+                    ctx.inat_client, _query
+                )
+                obs_args = query_response.obs_args()
+                observations = ctx.inat_client.observations.search(**obs_args)
+                if not observations:
+                    raise LookupError(
+                        f"No observations {query_response.obs_query_description()}"
+                    )
+                per_page = 4  # For eventual 4-up image view
+                formatter = ObservationSearchFormatter()
+                source = ObservationSearchSource(
+                    iterator=observations,
+                    query_response=query_response,
+                    formatter=formatter,
+                    per_page=per_page,
+                )
+                formatter.source = source
+                await ObservationSearchMenu(
+                    source=source,
+                    cog=self,
+                    delete_message_after=False,
+                    clear_reactions_after=True,
+                    timeout=0,
+                ).start(ctx=ctx)
+            except (BadArgument, LookupError, ValueError) as err:
+                await apologize(ctx, str(err))
 
     @obs.command(name="img", aliases=["image", "photo"])
     @checks.bot_has_permissions(embed_links=True)
@@ -595,7 +633,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
         mat = re.search(PAT_TAXON_LINK, query)
         if mat:
-            await (self.bot.get_command("taxon")(ctx, query=mat["taxon_id"]))
+            await self.bot.get_command("taxon")(ctx, query=mat["taxon_id"])
             return
 
         await apologize(ctx)
