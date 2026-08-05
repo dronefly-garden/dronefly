@@ -233,7 +233,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         f"No observations {query_response.obs_query_description()}"
                     )
                 per_page = 4  # For eventual 4-up image view
-                formatter = ObservationSearchFormatter()
+                formatter = ObservationSearchFormatter(
+                    with_links=True,
+                    with_summaries=True,
+                )
                 source = ObservationSearchSource(
                     iterator=observations,
                     query_response=query_response,
