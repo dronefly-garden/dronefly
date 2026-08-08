@@ -27,6 +27,7 @@ from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
     PAT_OBS_QUERY,
     PAT_SELECTED_OBS_LINK,
+    PAT_SELECTED_OBS_QUERY_LINK,
     PAT_TAXON_LINK,
 )
 from dronefly.core.query.query import EMPTY_QUERY, Query, QueryResponse, TaxonQuery
@@ -138,19 +139,32 @@ class INatEmbed(discord.Embed):
         self.params = self.get_params(taxon_id)
 
     def get_observations_url(self):
-        """Return observations url, if present."""
+        """Return observation(s) url, if present.
+
+        1. Selected observations query or link to individual observation in a list
+           take precedence
+        2. Otherwise, the url of the embed, if it is an obs query or obs link
+        3. Finally, look for an observations search link or single observation
+           link anywhere in the description
+
+        The first of these 3 cases to return an observations query or single observation
+        link will be considered the link that best describes what the embed is about.
+        """
         if self.description:
-            mat_selected_obs_link = re.search(PAT_SELECTED_OBS_LINK, self.description)
-            if mat_selected_obs_link:
-                mat = re.search(PAT_OBS_LINK, mat_selected_obs_link["url"])
-                return mat["url"]
+            mat_selected_query = re.search(
+                PAT_SELECTED_OBS_QUERY_LINK, self.description
+            )
+            if mat_selected_query:
+                return mat_selected_query["url"]
+            mat_selected_single_obs = re.search(PAT_SELECTED_OBS_LINK, self.description)
+            if mat_selected_single_obs:
+                return mat_selected_single_obs["url"]
         if self.url:
             if re.match(PAT_OBS_QUERY, self.url):
                 return self.url
+            if re.match(PAT_OBS_LINK, self.url):
+                return self.url
         if self.description:
-            mat_single_obs = re.search(PAT_OBS_LINK, self.description)
-            if mat_single_obs:
-                return mat_single_obs["url"]
             # Could be observations search, e.g. first link in description
             # of a taxon display. PAT_OBS_QUERY is greedy so cannot be used
             # against description! Match the first link first, and then the
@@ -162,6 +176,9 @@ class INatEmbed(discord.Embed):
                 mat = re.search(PAT_OBS_QUERY, mat_first_link["url"])
                 if mat:
                     return mat["url"]
+            mat_single_obs = re.search(PAT_OBS_LINK, self.description)
+            if mat_single_obs:
+                return mat_single_obs["url"]
         return None
 
     def get_taxon_url(self):
