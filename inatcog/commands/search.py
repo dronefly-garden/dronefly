@@ -1,4 +1,5 @@
 """Module for search command group."""
+
 from math import ceil
 import re
 from typing import Optional, Union
@@ -105,10 +106,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 except LookupError as err:
                     await apologize(ctx, str(err))
                     return
-                await (
-                    self.bot.get_command("taxon")(
-                        ctx, query=str(query_response.taxon.id)
-                    )
+                await self.bot.get_command("taxon")(
+                    ctx, query=str(query_response.taxon.id)
                 )
                 return
             mat = re.search(PAT_USER_LINK, result)
@@ -119,11 +118,11 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 return
             mat = re.search(PAT_PROJECT_LINK, result)
             if mat:
-                await (self.bot.get_command("project")(ctx, query=mat["project_id"]))
+                await self.bot.get_command("project")(ctx, query=mat["project_id"])
                 return
             mat = re.search(PAT_PLACE_LINK, result)
             if mat:
-                await (self.bot.get_command("place")(ctx, query=mat["place_id"]))
+                await self.bot.get_command("place")(ctx, query=mat["place_id"])
 
         async def next_page_reaction(
             ctx, pages, controls, message, page, timeout, reaction
@@ -280,9 +279,9 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             if keyword:
                 kw_lowered = keyword.lower()
                 if kw_lowered == "inactive":
-                    (url, kwargs) = get_inactive_query_args(query)
+                    url, kwargs = get_inactive_query_args(query)
                 elif kw_lowered == "obs":
-                    (query_title, url, kwargs) = await get_obs_query_args(query)
+                    query_title, url, kwargs = await get_obs_query_args(query)
                 else:
                     kwargs["sources"] = kw_lowered
                     url += f"&sources={keyword}"
@@ -290,7 +289,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         async def query_formatted_results(query, kwargs):
             thumbnails = []
-            (results, total_results, per_api_page) = await self.site_search.search(
+            results, total_results, per_api_page = await self.site_search.search(
                 ctx, query, **kwargs
             )
             per_embed_page = 10
@@ -298,16 +297,16 @@ class CommandsSearch(INatEmbeds, MixinMeta):
 
         def get_button_controls(results, query_type):
             all_buttons = [
-                "\U0001F1E6",  # :regional_indicator_a:
-                "\U0001F1E7",  # :regional_indicator_b:
-                "\U0001F1E8",  # :regional_indicator_c:
-                "\U0001F1E9",  # :regional_indicator_d:
-                "\U0001F1EA",  # :regional_indicator_e:
-                "\U0001F1EB",  # :regional_indicator_f:
-                "\U0001F1EC",  # :regional_indicator_g:
-                "\U0001F1ED",  # :regional_indicator_h:
-                "\U0001F1EE",  # :regional_indicator_i:
-                "\U0001F1EF",  # :regional_indicator_j:
+                "\U0001f1e6",  # :regional_indicator_a:
+                "\U0001f1e7",  # :regional_indicator_b:
+                "\U0001f1e8",  # :regional_indicator_c:
+                "\U0001f1e9",  # :regional_indicator_d:
+                "\U0001f1ea",  # :regional_indicator_e:
+                "\U0001f1eb",  # :regional_indicator_f:
+                "\U0001f1ec",  # :regional_indicator_g:
+                "\U0001f1ed",  # :regional_indicator_h:
+                "\U0001f1ee",  # :regional_indicator_i:
+                "\U0001f1ef",  # :regional_indicator_j:
             ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
@@ -430,7 +429,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                         clear_reactions_after=True,
                     )
                 else:
-                    (buttons, controls) = get_button_controls(results, query_type)
+                    buttons, controls = get_button_controls(results, query_type)
                     embeds = format_embeds(
                         results, total_results, per_api_page, per_embed_page, buttons
                     )
@@ -464,7 +463,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p]search` or `[p]search taxa`.
         """
-        await (self.bot.get_command("search obs")(ctx, query=query))
+        await self.bot.get_command("obs search")(ctx, query=query)
 
     @search.command(name="site")
     @checks.bot_has_permissions(embed_links=True)
@@ -570,4 +569,4 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           observation is either kept or dismissed, then you can react with
           :x: on the search display to dismiss it.
         """
-        await self._search(ctx, query, "obs")
+        await self.bot.get_command("obs search")(ctx, query=query)
