@@ -1,8 +1,6 @@
 # How to contribute to Dronefly
 
-Contributions to Dronefly are welcome. Please [join the iNaturalist Discord](https://discord.gg/kHAUzVR)
-and find us on channel **#bot-stuff** to join in ongoing development discussion. Mention **\@SyntheticBee** (synrg on github) when
-you join.
+Contributions to Dronefly are welcome. Please [join the Dronefly support Discord server](https://discord.gg/pUbZFDbDdD) and introduce yourself.
 
 TODO: Guidelines for contributions.
 
