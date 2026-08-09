@@ -31,7 +31,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def describe(self, ctx):
         """Describe iNat features, terms, and syntax.
 
-        Note: Each subcommand provides a help page. All of the `[p]describe` subcommands are also aliased as hidden commands, e.g. `[p]cheatsheet` is a shorter way to type `[p]describe cheatsheet`, etc."""  # noqa: E501
+        Note: Each subcommand provides a help page. All of the `[p]describe` subcommands are also aliased as hidden commands, e.g. `[p]cheatsheet` is a shorter way to type `[p]describe cheatsheet`, etc.
+        """  # noqa: E501
 
     @describe.command(name="autoobs")
     async def describe_autoobs(self, ctx):
@@ -414,27 +415,26 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Convenient alias for 'describe glossary' message command."""
         await ctx.send_help(self.bot.get_command("describe glossary"))
 
-    @describe.command(name="reactions", aliases=["reaction"])
-    async def describe_reactions(self, ctx):
-        """\u200bTaxon *reaction* buttons.
+    @describe.command(name="buttons")
+    async def describe_buttons(self, ctx):
+        """\u200b*Social* menu buttons.
 
-        Taxon reaction buttons appear on many different displays.  You may use them only if your iNat account is known in the server.
+        *Social* menu buttons allow you to update a bot display even if it wasn't started by you. They are:
         - :bust_in_silhouette: to count your observations and species
-        - :busts_in_silhouette: to write in another user to count
+        - :busts_in_silhouette: to select another user to count
         - :house: to count your home place obs and species
-        - :earth_africa: to write in another place to count
-        - :regional_indicator_t: to toggle the taxonomy tree
+        - :earth_africa: to select another place to count
 
-        See `[p]help user set known` if you're already known in a server and want to be known on other servers.  Otherwise, ask a mod to add you.
-
-        See `[p]help user add` if you're a server owner or mod.
+        You can use these buttons only if your iNat account is known to the bot.
+        - See `[p]help user add` and `[p]help user set home`
+        - See `[p]help user set known` if you're already known in a server and want to be known on other servers.  Otherwise, ask a mod to add you.
         """  # noqa: E501
         await ctx.send_help()
 
-    @commands.command(name="reactions", aliases=["reaction"], hidden=True)
-    async def topic_reactions(self, ctx):
-        """Convenient alias for 'describe reactions' message command."""
-        await ctx.send_help(self.bot.get_command("describe reactions"))
+    @commands.command(name="buttons", hidden=True)
+    async def topic_buttons(self, ctx):
+        """Convenient alias for 'describe buttons' message command."""
+        await ctx.send_help(self.bot.get_command("describe buttons"))
 
     @commands.group()
     async def inat(self, ctx):
@@ -1099,7 +1099,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
             line += f" **Emoji:** {emoji}"
         message = event.get("message")
         if message:
-            (channel_id, message_id) = message.split("-")
+            channel_id, message_id = message.split("-")
             link = f"[menu](https://discord.com/channels/{ctx.guild.id}/{channel_id}/{message_id})"
             line += f" **Message:** {link}"
         teams = event.get("teams")
