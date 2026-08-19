@@ -268,11 +268,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 selected_page = min((number or 1), max_pages) - 1
                 async with ctx.typing():
                     embeds = []
-                    for i in range(1, max_pages + 1):
+                    for i in range(0, max_pages):
                         # Image numbers are 1-based
                         embeds.append(
                             await self.make_obs_embed(
-                                ctx, result.obs, result.url, preview=i
+                                ctx, result.obs, result.url, preview=i + 1
                             )
                         )
                     menu = EmbedListMenu(
