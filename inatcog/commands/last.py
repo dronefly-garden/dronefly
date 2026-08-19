@@ -1,4 +1,5 @@
 """Module for last command group."""
+
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from dronefly.core.constants import RANK_EQUIVALENTS, RANK_KEYWORDS
@@ -69,8 +70,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 num = 1 if number is None else int(number)
             except ValueError:
                 num = 0
-            embed = await self.make_obs_embed(ctx, last.obs, last.url, preview=num)
-            await self.send_obs_embed(ctx, embed, last.obs)
+            await self.bot.get_command("obs img")(ctx, num, query=str(last.obs.id))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -111,7 +111,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     await apologize(ctx, err.args[0])
                     return
         if taxon:
-            await (self.bot.get_command("taxon")(ctx, query=str(taxon.id)))
+            await self.bot.get_command("taxon")(ctx, query=str(taxon.id))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -125,7 +125,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         See also `[p]help last taxon image`"""
         last = await self.get_last_obs_from_history(ctx)
         if last and last.obs and last.obs.taxon:
-            await (self.bot.get_command("img")(ctx, query=str(last.obs.taxon.id)))
+            await self.bot.get_command("img")(ctx, query=str(last.obs.taxon.id))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -164,7 +164,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         compare_taxon_id = last.obs.taxon.id
 
         taxa_list = f"{compare_taxon_id},{taxa_list}"
-        await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
+        await self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list)
 
     @last_obs.command(name="<rank>", aliases=RANK_KEYWORDS)
     @use_client
@@ -195,7 +195,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     ctx, full_record, rank_keyword
                 )
                 if ancestor:
-                    await (self.bot.get_command("taxon")(ctx, query=str(ancestor.id)))
+                    await self.bot.get_command("taxon")(ctx, query=str(ancestor.id))
                 else:
                     await apologize(
                         ctx, f"The last observation has no {rank_keyword} ancestor."
@@ -218,7 +218,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
                     await apologize(ctx, err.args[0])
                     return
         if taxon:
-            await (self.bot.get_command("taxon")(ctx, query=str(taxon.id)))
+            await self.bot.get_command("taxon")(ctx, query=str(taxon.id))
         else:
             await apologize(ctx, "Nothing found")
 
@@ -249,7 +249,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await (self.bot.get_command("taxon image")(ctx, query=str(last.taxon.id)))
+        await self.bot.get_command("taxon image")(ctx, query=str(last.taxon.id))
 
     @last_taxon.command(name="related")
     @use_client
@@ -276,7 +276,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
         compare_taxon_id = last.taxon.id
 
         taxa_list = f"{compare_taxon_id},{taxa_list}"
-        await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
+        await self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list)
 
     @last_taxon.command(name="<rank>", aliases=RANK_KEYWORDS)
     @use_client
@@ -306,6 +306,6 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 ctx, full_record, rank_keyword
             )
             if ancestor:
-                await (self.bot.get_command("taxon")(ctx, query=str(ancestor.id)))
+                await self.bot.get_command("taxon")(ctx, query=str(ancestor.id))
             else:
                 await apologize(ctx, f"The last taxon has no {rank} ancestor.")
