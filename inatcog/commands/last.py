@@ -48,8 +48,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        embed = await self.make_last_obs_embed(ctx, last)
-        await self.send_obs_embed(ctx, embed, last.obs)
+        await self.bot.get_command("obs")(ctx, query=str(last.obs.id))
 
     @last_obs.command(name="img", aliases=["image", "photo"])
     @use_client
