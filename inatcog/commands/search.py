@@ -6,18 +6,14 @@ from typing import Optional, Union
 import urllib.parse
 
 from dronefly.core.formatters.constants import WWW_BASE_URL
-from dronefly.core.formatters.generic import format_taxon_name
 from dronefly.core.parsers.url import (
-    PAT_OBS_LINK,
     PAT_PLACE_LINK,
     PAT_PROJECT_LINK,
     PAT_TAXON_LINK,
     PAT_USER_LINK,
 )
-from dronefly.core.query.query import EMPTY_QUERY, Query
-from dronefly.core.utils import obs_url_from_v1
+from dronefly.core.query.query import Query
 from dronefly.discord.embeds import make_embed
-from pyinaturalist.models import Observation
 from redbot.core import checks, commands
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
@@ -27,8 +23,7 @@ from ..converters.reply import TaxonReplyConverter
 from ..embeds.common import apologize
 from ..embeds.inat import INatEmbeds
 from ..interfaces import MixinMeta
-from ..menus.inat import SearchMenuPages, SearchObsSource
-from ..utils import get_home, use_client
+from ..utils import use_client
 
 
 class CommandsSearch(INatEmbeds, MixinMeta):
@@ -47,57 +42,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 selected_result_offset = last_index
             return results[selected_result_offset]
 
-        def get_thumbnail(page, thumbnails, result_index):
-            selected_result_offset = result_index + page * per_embed_page
-            last_index = len(results) - 1
-            if selected_result_offset > last_index:
-                selected_result_offset = last_index
-            return thumbnails[selected_result_offset]
-
-        def update_selected(pages, page, result_index):
-            embed = pages[page]
-            thumbnail = (
-                get_thumbnail(page, thumbnails, result_index) if thumbnails else None
-            )
-            embed.set_image(url=thumbnail)
-            results_page_start = page * per_embed_page
-            results_page_end = results_page_start + per_embed_page
-            page_of_results = results[results_page_start:results_page_end]
-            last_index = len(page_of_results) - 1
-            if result_index > last_index:
-                result_index = last_index
-            page = format_page(buttons, page_of_results, result_index)
-            embed.description = page
-            selected_index[0] = result_index
-            return pages
-
         async def _display_selected(ctx, result):
-            mat = re.search(PAT_OBS_LINK, result)
-            if mat:
-                home = await get_home(ctx)
-                obs_results = None
-                try:
-                    obs_results = (
-                        await self.api.get_observations(
-                            mat["obs_id"],
-                            include_new_projects=1,
-                            preferred_place_id=home,
-                        )
-                    )["results"]
-                except LookupError as err:
-                    await apologize(ctx, str(err))
-                    return
-                obs = Observation.from_json(obs_results[0]) if obs_results else None
-                if obs:
-                    embed = await self.make_obs_embed(
-                        ctx, obs, f"{WWW_BASE_URL}/observations/{obs.id}"
-                    )
-                    await self.send_obs_embed(
-                        ctx, embed, obs, timeout=10, with_keep=True
-                    )
-                    return
-                await apologize(ctx, "Not found")
-                return
             mat = re.search(PAT_TAXON_LINK, result)
             if mat:
                 query = await NaturalQueryConverter.convert(ctx, mat["taxon_id"])
@@ -124,76 +69,12 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             if mat:
                 await self.bot.get_command("place")(ctx, query=mat["place_id"])
 
-        async def next_page_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            pages = update_selected(pages, page, 0)
-            await DEFAULT_CONTROLS["➡️"](
-                ctx, pages, controls, message, page, timeout, reaction
-            )
-
-        async def prev_page_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            pages = update_selected(pages, page, 0)
-            await DEFAULT_CONTROLS["⬅️"](
-                ctx, pages, controls, message, page, timeout, reaction
-            )
-
-        async def prev_result_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            was_selected = selected_index[0]
-            if was_selected == 0:
-                # back to bottommost result on prev page:
-                selected_index[0] = per_embed_page - 1
-                target_page = (page - 1) % len(pages)
-                pages = update_selected(pages, target_page, selected_index[0])
-                if (
-                    ctx.guild
-                    and ctx.channel.permissions_for(ctx.guild.me).manage_messages
-                ):
-                    await message.remove_reaction(reaction, ctx.author)
-                prev_reaction = DEFAULT_CONTROLS["⬅️"]
-            else:
-                selected_index[0] -= 1
-                prev_reaction = update_selected_reaction
-            await prev_reaction(ctx, pages, controls, message, page, timeout, reaction)
-
-        async def next_result_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            was_selected = selected_index[0]
-            page_len = (
-                per_embed_page
-                if (page + 1) < len(pages)
-                else len(results) - ((len(pages) - 1) * per_embed_page)
-            )
-            if was_selected == page_len - 1:
-                next_reaction = next_page_reaction
-            else:
-                selected_index[0] += 1
-                pages = update_selected(pages, page, selected_index[0])
-                next_reaction = update_selected_reaction
-            await next_reaction(ctx, pages, controls, message, page, timeout, reaction)
-
         async def display_selected_reaction(
             ctx, pages, controls, message, page, timeout, reaction
         ):  # pylint: disable=too-many-arguments
             result = get_result(page, results, selected_index[0])
             if result:
                 await _display_selected(ctx, result)
-            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                await message.remove_reaction(reaction, ctx.author)
-            await menu(ctx, pages, controls, message, page, timeout)
-
-        async def update_selected_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            result_index = selected_index[0]
-            result = get_result(page, results, result_index)
-            if result:
-                pages = update_selected(pages, page, result_index)
             if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await message.remove_reaction(reaction, ctx.author)
             await menu(ctx, pages, controls, message, page, timeout)
@@ -205,17 +86,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             await display_selected_reaction(
                 ctx, pages, controls, message, page, timeout, reaction
             )
-
-        async def select_result_reaction(
-            ctx, pages, controls, message, page, timeout, reaction
-        ):  # pylint: disable=too-many-arguments
-            result_index = buttons.index(reaction)
-            result = get_result(page, results, result_index)
-            if result:
-                pages = update_selected(pages, page, result_index)
-            if ctx.guild and ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                await message.remove_reaction(reaction, ctx.author)
-            await menu(ctx, pages, controls, message, page, timeout)
 
         def make_search_embeds(
             query_title, page, thumbnails, index, per_embed_page, pages_len
@@ -242,32 +112,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             kwargs["is_active"] = "any"
             return (url, kwargs)
 
-        async def get_obs_query_args(query):
-            query_response = await self.query.get(ctx, query)
-            kwargs = query_response.obs_args()
-            # TODO: determine why we don't just use QueryResponse.obs_query_description
-            # and either use it directly or otherwise share code instead of duplicating
-            # most of it here.
-            if query_response.taxon:
-                query_title = format_taxon_name(query_response.taxon, with_term=True)
-            else:
-                query_title = "Observations"
-            if query_response.user:
-                query_title += f" by {query_response.user.login}"
-            if query_response.unobserved_by:
-                query_title += f" unobserved by {query_response.unobserved_by.login}"
-            if query_response.id_by:
-                query_title += f" identified by {query_response.id_by.login}"
-            if query_response.except_by:
-                query_title += f" except by {query_response.except_by.login}"
-            if query_response.project:
-                query_title += f" in {query_response.project.title}"
-            if query_response.place:
-                query_title += f" from {query_response.place.display_name}"
-            url = obs_url_from_v1(kwargs)
-            kwargs["per_page"] = 200
-            return (query_title, url, kwargs)
-
         async def get_query_args(query, keyword):
             kwargs = {}
             kw_lowered = ""
@@ -280,8 +124,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                 kw_lowered = keyword.lower()
                 if kw_lowered == "inactive":
                     url, kwargs = get_inactive_query_args(query)
-                elif kw_lowered == "obs":
-                    query_title, url, kwargs = await get_obs_query_args(query)
                 else:
                     kwargs["sources"] = kw_lowered
                     url += f"&sources={keyword}"
@@ -295,7 +137,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             per_embed_page = 10
             return (total_results, results, thumbnails, per_api_page, per_embed_page)
 
-        def get_button_controls(results, query_type):
+        def get_button_controls(results):
             all_buttons = [
                 "\U0001f1e6",  # :regional_indicator_a:
                 "\U0001f1e7",  # :regional_indicator_b:
@@ -310,22 +152,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             ][:per_embed_page]
             buttons_count = min(len(results), len(all_buttons))
             buttons = all_buttons[:buttons_count]
-            if query_type == "obs":
-                controls = {
-                    "⬆️": prev_result_reaction,
-                    "⬇️": next_result_reaction,
-                    "⬅️": prev_page_reaction,
-                    "➡️": next_page_reaction,
-                    "✅": display_selected_reaction,
-                    "❌": DEFAULT_CONTROLS["❌"],
-                }
-            else:
-                controls = DEFAULT_CONTROLS.copy()
-            letter_button_reaction = (
-                select_result_reaction
-                if query_type == "obs"
-                else update_and_display_selected_reaction
-            )
+            controls = DEFAULT_CONTROLS.copy()
+            letter_button_reaction = update_and_display_selected_reaction
             for button in buttons:
                 controls[button] = letter_button_reaction
             return (buttons, controls)
@@ -334,8 +162,6 @@ class CommandsSearch(INatEmbeds, MixinMeta):
             def text_style(i):
                 if query_type != "obs":
                     return ""
-
-                return "**" if i == selected else ""
 
             def format_result(result, i):
                 return " ".join((buttons[i], result))
@@ -375,30 +201,17 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         controls = []
         async with ctx.typing():
             try:
-                if keyword and keyword.lower() == "obs":
-                    try:
-                        _query = query or (await TaxonReplyConverter.convert(ctx, ""))
-                    except commands.BadArgument:
-                        _query = EMPTY_QUERY
-                else:
-                    _query = query
+                _query = query
                 query_type, query_title, url, kwargs = await get_query_args(
                     _query, keyword
                 )
-                if query_type == "obs":
-                    (
-                        results,
-                        total_results,
-                        per_api_page,
-                    ) = await self.obs_query.query_observations(ctx, _query)
-                else:
-                    (
-                        total_results,
-                        results,
-                        thumbnails,
-                        per_api_page,
-                        per_embed_page,
-                    ) = await query_formatted_results(_query, kwargs)
+                (
+                    total_results,
+                    results,
+                    thumbnails,
+                    per_api_page,
+                    per_embed_page,
+                ) = await query_formatted_results(_query, kwargs)
                 if not results:
                     if isinstance(_query, str) and "in" in _query.split():
                         raise LookupError(
@@ -412,27 +225,10 @@ class CommandsSearch(INatEmbeds, MixinMeta):
                             "Check for mistakes in spelling or syntax.\n"
                             f"Type `{ctx.clean_prefix}help search` for help.",
                         )
-                if query_type == "obs":
-                    per_page = 4
-                    pages = SearchMenuPages(
-                        source=SearchObsSource(
-                            self,
-                            ctx,
-                            _query,
-                            results,
-                            total_results,
-                            per_page,
-                            per_api_page,
-                            url,
-                            query_title,
-                        ),
-                        clear_reactions_after=True,
-                    )
-                else:
-                    buttons, controls = get_button_controls(results, query_type)
-                    embeds = format_embeds(
-                        results, total_results, per_api_page, per_embed_page, buttons
-                    )
+                buttons, controls = get_button_controls(results)
+                embeds = format_embeds(
+                    results, total_results, per_api_page, per_embed_page, buttons
+                )
 
             except LookupError as err:
                 error_msg = str(err)
@@ -562,11 +358,8 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         • The mechanic for selecting observations is slightly different from
           the main command and other subcommands:
 
-        **1.** Use the lettered reaction buttons to select an observation.
-        **2.** Use :white_check_mark: reaction on the selected observation to
-          keep it or :x: reaction to dismiss it.
-        **3.** Continue to select more observations if you wish. Once every
-          observation is either kept or dismissed, then you can react with
-          :x: on the search display to dismiss it.
+        **1.** Use the arrow buttons and menu to select a specific observation.
+        **2.** *Reply* to the menu with [p]obs to show just the selected observation.
+        **3.** You can continue to select and show other observations until the menu times out.
         """
         await self.bot.get_command("obs search")(ctx, query=query)
