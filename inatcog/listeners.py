@@ -1,4 +1,5 @@
 """Listeners module for inatcog."""
+
 from attrs import define
 from typing import Optional, Tuple, Union
 import asyncio
@@ -54,6 +55,7 @@ class PartialMessage:
 @define
 class PartialContext:
     "Partial Context synthesized from objects passed into listeners."
+
     bot: Red
     guild: discord.Guild
     channel: discord.ChannelType
@@ -65,7 +67,7 @@ class PartialContext:
     inat_client: iNatClient = None
 
     async def send(self, *args, **kwargs):
-        await self.channel.send(*args, **kwargs)
+        return await self.channel.send(*args, **kwargs)
 
 
 class Listeners(INatEmbeds, MixinMeta):
@@ -411,7 +413,7 @@ class Listeners(INatEmbeds, MixinMeta):
         """Central handler for reactions added to bot messages."""
         await self._ready_event.wait()
         try:
-            (member, message) = self.maybe_get_reaction(payload)
+            member, message = self.maybe_get_reaction(payload)
         except ValueError as err:
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
@@ -426,7 +428,7 @@ class Listeners(INatEmbeds, MixinMeta):
         """Central handler for reactions removed from bot messages."""
         await self._ready_event.wait()
         try:
-            (member, message) = self.maybe_get_reaction(payload)
+            member, message = self.maybe_get_reaction(payload)
         except ValueError as err:
             if self._log_ignored_reactions and str(err) != UNKNOWN_REACTION_MSG:
                 logger.debug(str(err) + "\n" + repr(payload))
