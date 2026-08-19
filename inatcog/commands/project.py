@@ -218,7 +218,6 @@ class CommandsProject(INatEmbeds, MixinMeta):
             ]
             await EmbedListMenu(
                 source=EmbedListSource(entries=embeds, per_page=1),
-                timeout=0,
             ).start(ctx=ctx)
         else:
             await apologize(ctx, "Nothing found")

@@ -188,7 +188,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
 
                     await EmbedMenu(
                         source=EmbedSource([embed]),
-                        timeout=0,
                     ).start(ctx=ctx, **initial_message_params)
 
     @obs.command(name="count")

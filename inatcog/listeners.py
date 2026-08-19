@@ -154,7 +154,6 @@ class Listeners(INatEmbeds, MixinMeta):
 
                     await EmbedMenu(
                         source=EmbedSource([embed]),
-                        timeout=0,
                     ).start(ctx=ctx, **initial_message_params)
                     self.bot.dispatch("commandstats_action", ctx)
 
