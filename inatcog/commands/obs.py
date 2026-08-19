@@ -28,7 +28,7 @@ from dronefly.discord.menus import (
     TaxonListMenu,
     TaxonListSource,
 )
-from pyinaturalist import Observation, RANK_EQUIVALENTS, RANK_LEVELS
+from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from inatcog.menus.generic import EmbedMenu, EmbedSource
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -41,7 +41,7 @@ from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
 from ..obs import get_formatted_user_counts, maybe_match_obs
 from ..taxa import TAXON_COUNTS_HEADER
-from ..utils import get_home, use_client
+from ..utils import use_client
 
 ObsResult = namedtuple("Singleobs", "obs url preview")
 logger = logging.getLogger("red.dronefly." + __name__)
@@ -618,18 +618,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """  # noqa: E501
         mat = re.search(PAT_OBS_LINK, query)
         if mat:
-            obs_id = int(mat["obs_id"])
-            url = mat["url"]
-
-            home = await get_home(ctx)
-            results = (
-                await self.api.get_observations(
-                    obs_id, include_new_projects=1, preferred_place_id=home
-                )
-            )["results"]
-            obs = Observation.from_json(results[0]) if results else None
-            embed = await self.make_obs_embed(ctx, obs, url)
-            await self.send_obs_embed(ctx, embed, obs)
+            await self.bot.get_command("obs")(ctx, query=mat["obs_id"])
             return
 
         mat = re.search(PAT_TAXON_LINK, query)
