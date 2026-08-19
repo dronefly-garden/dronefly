@@ -264,7 +264,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
             if result:
                 # - We output at least one page even if there are no photos.
                 # - Page numbers are 0-based
-                max_pages = max(len(result.obs.photos), 1)
+                max_pages = max(len(result.obs.photos or []), 1)
                 selected_page = min((number or 1), max_pages) - 1
                 async with ctx.typing():
                     embeds = []
