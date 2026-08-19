@@ -10,7 +10,13 @@ import urllib.parse
 from dronefly.core.constants import RANK_KEYWORDS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
-from dronefly.core.parsers.url import PAT_OBS_LINK, PAT_TAXON_LINK
+from dronefly.core.parsers.url import (
+    PAT_OBS_LINK,
+    PAT_TAXON_LINK,
+    PAT_PLACE_LINK,
+    PAT_PROJECT_LINK,
+    PAT_USER_LINK,
+)
 from dronefly.core.query.formatters import get_query_count_formatter
 from dronefly.core.query.query import (
     prepare_query_for_count,
@@ -637,6 +643,21 @@ class CommandsObs(INatEmbeds, MixinMeta):
         mat = re.search(PAT_TAXON_LINK, query)
         if mat:
             await self.bot.get_command("taxon")(ctx, query=mat["taxon_id"])
+            return
+
+        mat = re.search(PAT_USER_LINK, query)
+        if mat:
+            await self.bot.get_command("iuser")(ctx, query=mat["user_id"])
+            return
+
+        mat = re.search(PAT_PLACE_LINK, query)
+        if mat:
+            await self.bot.get_command("place")(ctx, query=mat["place_id"])
+            return
+
+        mat = re.search(PAT_PROJECT_LINK, query)
+        if mat:
+            await self.bot.get_command("project")(ctx, query=mat["project_id"])
             return
 
         await apologize(ctx)
