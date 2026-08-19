@@ -29,7 +29,7 @@ from dronefly.discord.menus import (
     TaxonListSource,
 )
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
-from inatcog.menus.generic import EmbedMenu, EmbedSource
+from inatcog.menus.generic import EmbedListMenu, EmbedListSource, EmbedMenu, EmbedSource
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
@@ -260,13 +260,26 @@ class CommandsObs(INatEmbeds, MixinMeta):
         - Command may be a *Reply* to an observation display instead of a query.
         - See `[p]query` and `[p]taxon_query` for help with *query* terms.
         """  # noqa: E501
-        async with self._single_obs(ctx, query) as res:
-            if res:
+        async with self._single_obs(ctx, query) as result:
+            if result:
+                # - We output at least one page even if there are no photos.
+                # - Page numbers are 0-based
+                max_pages = max(len(result.obs.photos), 1)
+                selected_page = min((number or 1), max_pages) - 1
                 async with ctx.typing():
-                    embed = await self.make_obs_embed(
-                        ctx, res.obs, res.url, preview=number or 1
+                    embeds = []
+                    for i in range(0, max_pages):
+                        # Image numbers are 1-based
+                        embeds.append(
+                            await self.make_obs_embed(
+                                ctx, result.obs, result.url, preview=i + 1
+                            )
+                        )
+                    menu = EmbedListMenu(
+                        source=EmbedListSource(entries=embeds, per_page=1),
                     )
-                await self.send_obs_embed(ctx, embed, res.obs)
+                    menu.current_page = selected_page
+                    await menu.start(ctx=ctx)
 
     @commands.hybrid_group(fallback="help")
     @checks.bot_has_permissions(embed_links=True)
