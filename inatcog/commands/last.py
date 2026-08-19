@@ -248,7 +248,7 @@ class CommandsLast(INatEmbeds, MixinMeta):
             await apologize(ctx, "Nothing found")
             return
 
-        await self.bot.get_command("taxon image")(ctx, query=str(last.taxon.id))
+        await self.bot.get_command("taxon image")(ctx, number, query=str(last.taxon.id))
 
     @last_taxon.command(name="related")
     @use_client
