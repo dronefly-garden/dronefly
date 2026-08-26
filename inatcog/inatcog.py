@@ -1,4 +1,5 @@
 """A cog for using the iNaturalist platform."""
+
 import asyncio
 import re
 from abc import ABC
@@ -122,6 +123,9 @@ class INatCog(
             autoobs_preview=None,
             dot_taxon=None,
         )
+        self.config.register_member(
+            auto_respond=None,
+        )
         self.config.register_user(
             home=None,
             inat_user_id=None,
@@ -160,7 +164,7 @@ class INatCog(
             # true` to be known in other servers.
             if self.bot.user.id in _DEVELOPER_BOT_IDS:
                 all_users = await self.config.all_users()
-                for (user_id, user_value) in all_users.items():
+                for user_id, user_value in all_users.items():
                     if user_value["inat_user_id"]:
                         await self.config.user_from_id(int(user_id)).known_in.set(
                             [_INAT_GUILD_ID]
@@ -173,7 +177,7 @@ class INatCog(
             # project id, and have optional creds and role attributes.
             # - see Issue #161
             all_guilds = await self.config.all_guilds()
-            for (guild_id, guild_value) in all_guilds.items():
+            for guild_id, guild_value in all_guilds.items():
                 user_projects = guild_value["user_projects"]
                 if user_projects:
                     await self.config.guild_from_id(int(guild_id)).user_projects.clear()
@@ -197,7 +201,7 @@ class INatCog(
             #   but event projects added hereafter via `[p]inat set event` default to main=False.
             # - A new string "teams" has been added to support team events.
             all_guilds = await self.config.all_guilds()
-            for (guild_id, guild_value) in all_guilds.items():
+            for guild_id, guild_value in all_guilds.items():
                 event_projects = guild_value["event_projects"]
                 if event_projects:
                     await self.config.guild_from_id(int(guild_id)).event_projects.set(

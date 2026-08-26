@@ -1,6 +1,7 @@
 """Listeners module for inatcog."""
 
 from attrs import define
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, Union
 import asyncio
 import contextlib
@@ -73,6 +74,65 @@ class PartialContext:
 class Listeners(INatEmbeds, MixinMeta):
     """Listeners mixin for inatcog."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Track when users last received the default-mode reminder to enforce the 24hr cooldown
+        self._default_prompt_cooldowns: dict[int, datetime] = {}
+
+    async def _handle_auto_response(self, message: discord.Message, coro) -> None:
+        """Helper to evaluate member response settings, execute the display coroutine,
+
+        and handle the 'default' mode self-deleting prompt with a 24hr cooldown.
+        """
+        if message.author.bot:
+            return
+
+        if message.guild is None:
+            effective_setting = "always"
+        else:
+            member_setting = await self.config.member(message.author).auto_respond()
+            effective_setting = member_setting if member_setting else "default"
+
+        if effective_setting == "never":
+            return
+
+        display_message = await coro()
+
+        if display_message and effective_setting == "default":
+            now = datetime.now(timezone.utc)
+            last_prompted = self._default_prompt_cooldowns.get(message.author.id)
+
+            if not last_prompted or (now - last_prompted) > timedelta(hours=24):
+                self._default_prompt_cooldowns[message.author.id] = now
+
+                prefix_list = await self.bot.get_prefix(message)
+
+                mention_regex = re.compile(r"^<@!?\d+>$")
+                non_mention = [
+                    p for p in prefix_list if not mention_regex.match(p.strip())
+                ]
+
+                if non_mention:
+                    chosen_prefix = non_mention[0].strip()
+                    usage_instruction = f"use `{chosen_prefix}auto` instead."
+                else:
+                    mention_prefix = prefix_list[0].strip()
+                    usage_instruction = (
+                        f"mention the bot (e.g., {mention_prefix} auto) instead."
+                    )
+
+                explanation = (
+                    "Use `/auto` to `always` or `never` respond to your messages "
+                    "with relevant iNaturalist displays like this. "
+                    "I will not prompt again for 24 hrs.\n"
+                    f"If the `/auto` slash command is unavailable, {usage_instruction}"
+                )
+                try:
+                    reminder_msg = await message.reply(explanation)
+                    await reminder_msg.delete(delay=20.0)
+                except discord.HTTPException:
+                    pass
+
     @commands.Cog.listener()
     async def on_message_without_command(self, message: discord.Message) -> None:
         """Handle links to iNat."""
@@ -83,7 +143,6 @@ class Listeners(INatEmbeds, MixinMeta):
         guild = message.guild
         channel = message.channel
 
-        # Autoobs and dot_taxon features both need embed_links:
         if guild:
             if not channel.permissions_for(guild.me).embed_links:
                 return
@@ -95,73 +154,55 @@ class Listeners(INatEmbeds, MixinMeta):
             ):
                 return
 
-            # - on_message_without_command only ignores bot prefixes for this instance
-            # - implementation as suggested by Trusty:
-            #   - https://cogboard.red/t/approved-dronefly/541/5?u=syntheticbee
             bot_prefixes = await guild_config.bot_prefixes()
-
             if bot_prefixes:
-                prefixes = r"|".join(
-                    re.escape(bot_prefix) for bot_prefix in bot_prefixes
-                )
-                prefix_pattern = re.compile(r"^({prefixes})".format(prefixes=prefixes))
-                if re.match(prefix_pattern, message.content):
+                prefixes = r"|".join(re.escape(bp) for bp in bot_prefixes)
+                if re.match(
+                    r"^({prefixes})".format(prefixes=prefixes), message.content
+                ):
                     return
+        else:
+            guild_config = None
 
-        if guild:
-            channel_autoobs = await self.config.channel(channel).autoobs()
-            channel_autoobs_preview = await self.config.channel(
-                channel
-            ).autoobs_preview()
-        else:
-            # i.e. channel is a DM: always enable the feature and assume a preview image
-            # will be attached by Discord, so don't include a preview image in the
-            # observation auto-display
-            channel_autoobs = True
-            channel_autoobs_preview = False
-        if channel_autoobs is None:
-            autoobs = await guild_config.autoobs()
-        else:
-            autoobs = channel_autoobs
-        if channel_autoobs_preview is None:
-            autoobs_preview = await guild_config.autoobs_preview()
-        else:
-            autoobs = channel_autoobs
-            autoobs_preview = channel_autoobs_preview
-
+        autoobs, autoobs_preview = await self._resolve_autoobs_config(
+            guild, channel, guild_config
+        )
         if autoobs:
             ctx = PartialContext(
                 self.bot, guild, channel, message.author, message, "msg autoobs", None
             )
             obs, url = await maybe_match_obs(self, ctx, message.content)
             if obs:
-                # Only output if an observation is found
-                async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
-                    ctx.inat_client = inat_client
-                    embed = await self.make_obs_embed(
-                        ctx, obs, url, preview=autoobs_preview
-                    )
-                    # Add extra sound embeds to the menu initial message if any
-                    initial_message_params = {}
-                    if obs.sounds:
-                        async with self.sound_message_params(
-                            ctx.channel, obs.sounds, embed=embed
-                        ) as params:
-                            if params:
-                                initial_message_params = params
-                    if not initial_message_params:
-                        initial_message_params["embed"] = embed
 
-                    await EmbedMenu(
-                        source=EmbedSource([embed]),
-                    ).start(ctx=ctx, **initial_message_params)
-                    self.bot.dispatch("commandstats_action", ctx)
+                async def send_obs_menu():
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        embed = await self.make_obs_embed(
+                            ctx, obs, url, preview=autoobs_preview
+                        )
+                        initial_message_params = {}
+                        if obs.sounds:
+                            async with self.sound_message_params(
+                                ctx.channel, obs.sounds, embed=embed
+                            ) as params:
+                                if params:
+                                    initial_message_params = params
+                        if not initial_message_params:
+                            initial_message_params["embed"] = embed
 
-        channel_dot_taxon = not guild or await self.config.channel(channel).dot_taxon()
-        if channel_dot_taxon is None:
+                        display_msg = await EmbedMenu(
+                            source=EmbedSource([embed]),
+                        ).start(ctx=ctx, **initial_message_params)
+                        self.bot.dispatch("commandstats_action", ctx)
+                        logger.info("autoobs_menu_message = %r", display_msg)
+                        return display_msg
+
+                await self._handle_auto_response(message, send_obs_menu)
+                return
+
+        dot_taxon = not guild or await self.config.channel(channel).dot_taxon()
+        if dot_taxon is None and guild_config:
             dot_taxon = await guild_config.dot_taxon()
-        else:
-            dot_taxon = channel_dot_taxon
 
         if dot_taxon:
             mat = re.search(DOT_TAXON_PAT, message.content)
@@ -175,77 +216,103 @@ class Listeners(INatEmbeds, MixinMeta):
                     "msg dot_taxon",
                     None,
                 )
-                async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
-                    ctx.inat_client = inat_client
-                    try:
-                        query = await NaturalQueryConverter.convert(ctx, mat["query"])
-                        if query.controlled_term:
-                            return
-                    except (BadArgument, LookupError):
+                try:
+                    query = await NaturalQueryConverter.convert(ctx, mat["query"])
+                    if query.controlled_term:
                         return
-                    # FIXME: refactor to eliminate duplication between the listener invocations
-                    # of tabulate and taxon menus vs. command invocations (more should be moved
-                    # down into dronefly-discord)
-                    try:
-                        if query.user or query.place or query.project:
-                            query_response = await prepare_query_for_count(
-                                ctx.inat_client, query
-                            )
-                            for_place = query_response.per == "place"
-                            count_formatter = await get_query_count_formatter(
-                                client=ctx.inat_client, query_response=query_response
-                            )
-                            await CountMenu(
-                                # Discord parameters
-                                delete_message_after=False,
-                                clear_reactions_after=True,
-                                timeout=0,
-                                # Dronefly-discord parameters
-                                cog=self,
-                                inat_client=ctx.inat_client,
-                                source=CountSource(
-                                    count=count_formatter.source.count,
-                                    formatter=count_formatter,
-                                ),
-                                # Core parameters
-                                for_place=for_place,
-                            ).start(ctx=ctx)
-                        else:
-                            query_response = await prepare_query_for_taxon(
-                                ctx.inat_client, query
-                            )
-                            if not query_response.per:
-                                if query_response.user:
-                                    query_response.per = "obs"
-                                elif query_response.place:
-                                    query_response.per = "place"
-                                else:
-                                    query_response.per = "obs"
-                            formatter_params = {
-                                "lang": ctx.inat_client.ctx.get_inat_user_default(
-                                    "inat_lang"
-                                ),
-                                "max_len": MAX_EMBED_DESCRIPTION_LEN,
-                                "with_url": False,
-                            }
-                            taxon_formatter = await get_query_taxon_formatter(
-                                ctx.inat_client,
-                                query_response,
-                                **formatter_params,
-                            )
-                            for_place = query_response.per == "place"
-                            await TaxonMenu(
-                                source=TaxonSource(taxon_formatter),
-                                inat_client=ctx.inat_client,
-                                for_place=for_place,
-                                delete_message_after=False,
-                                clear_reactions_after=True,
-                                timeout=0,
-                                cog=self,
-                            ).start(ctx=ctx)
-                        self.bot.dispatch("commandstats_action", ctx)
-                    except LookupError as err:
-                        logger.info("%s Ignoring query: %s", err, mat["query"])
+                except (BadArgument, LookupError):
+                    return
+
+                async def send_query_menu():
+                    async with self.inat_client.set_ctx_from_user(ctx) as inat_client:
+                        ctx.inat_client = inat_client
+                        try:
+                            if query.user or query.place or query.project:
+                                query_response = await prepare_query_for_count(
+                                    ctx.inat_client, query
+                                )
+                                for_place = query_response.per == "place"
+                                count_formatter = await get_query_count_formatter(
+                                    client=ctx.inat_client,
+                                    query_response=query_response,
+                                )
+                                menu = CountMenu(
+                                    delete_message_after=False,
+                                    clear_reactions_after=True,
+                                    timeout=0,
+                                    cog=self,
+                                    inat_client=ctx.inat_client,
+                                    source=CountSource(
+                                        count=count_formatter.source.count,
+                                        formatter=count_formatter,
+                                    ),
+                                    for_place=for_place,
+                                )
+                            else:
+                                query_response = await prepare_query_for_taxon(
+                                    ctx.inat_client, query
+                                )
+                                if not query_response.per:
+                                    query_response.per = (
+                                        "obs"
+                                        if (
+                                            query_response.user
+                                            or not query_response.place
+                                        )
+                                        else "place"
+                                    )
+                                formatter_params = {
+                                    "lang": ctx.inat_client.ctx.get_inat_user_default(
+                                        "inat_lang"
+                                    ),
+                                    "max_len": MAX_EMBED_DESCRIPTION_LEN,
+                                    "with_url": False,
+                                }
+                                taxon_formatter = await get_query_taxon_formatter(
+                                    ctx.inat_client, query_response, **formatter_params
+                                )
+                                for_place = query_response.per == "place"
+                                menu = TaxonMenu(
+                                    source=TaxonSource(taxon_formatter),
+                                    inat_client=ctx.inat_client,
+                                    for_place=for_place,
+                                    delete_message_after=False,
+                                    clear_reactions_after=True,
+                                    timeout=0,
+                                    cog=self,
+                                )
+
+                            display_msg = await menu.start(ctx=ctx)
+                            logger.info("dot_taxon_menu_message = %r", display_msg)
+                            self.bot.dispatch("commandstats_action", ctx)
+                            return display_msg
+                        except LookupError as err:
+                            logger.info("%s Ignoring query: %s", err, mat["query"])
+                            return None
+
+                await self._handle_auto_response(message, send_query_menu)
+
+    async def _resolve_autoobs_config(
+        self, guild, channel, guild_config
+    ) -> tuple[bool, bool]:
+        """Helper to parse channel vs guild autoobs and preview configurations."""
+        if guild:
+            channel_autoobs = await self.config.channel(channel).autoobs()
+            channel_autoobs_preview = await self.config.channel(
+                channel
+            ).autoobs_preview()
+        else:
+            return True, False
+
+        autoobs = (
+            channel_autoobs
+            if channel_autoobs is not None
+            else await guild_config.autoobs()
+        )
+        autoobs_preview = (
+            channel_autoobs_preview if channel_autoobs_preview is not None else autoobs
+        )
+        return autoobs, autoobs_preview
 
     async def handle_member_reaction(
         self,

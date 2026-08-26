@@ -24,8 +24,66 @@ LISTEN_VALUE = {
 }
 
 
+AUTO_HELP = (
+    "Available automatic response preferences are:\n"
+    "- **default:** *always* send automatic responses on this server; "
+    "will also send a reminder to set your preference\n"
+    "- **always: ** *always* send automatic responses on this server\n"
+    "- **never: ** *never* send automatic responses on this server"
+)
+
+
 class CommandsInat(INatEmbeds, MixinMeta):
     """Mixin providing inat command group."""
+
+    @commands.hybrid_group(guild_only=True, fallback="show")
+    @commands.guild_only()
+    async def auto(self, ctx: commands.Context):
+        """Show or set your automatic responses preference.
+
+        **__Usage:__**
+        `[p]auto` shows your preference
+        `[p]auto default` clears your preference
+        `[p]auto always` sets your preference to **always**
+        `[p]auto never` sets your preference to **never**
+        """
+        await self._show_preference(ctx)
+
+    async def _show_preference(self, ctx: commands.Context):
+        """Helper to display the current user preference."""
+        current = await self.config.member(ctx.author).auto_respond()
+        preference = current if current else "default"
+        await ctx.send(
+            f"{AUTO_HELP}\n\nYour current `auto` preference is: **{preference}**",
+            ephemeral=True,
+        )
+
+    @auto.command(name="default")
+    async def auto_default(self, ctx: commands.Context):
+        """Reset your automatic responses preference in this server."""
+        await self.config.member(ctx.author).auto_respond.set(None)
+        await ctx.send(
+            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **default**",
+            ephemeral=True,
+        )
+
+    @auto.command(name="never")
+    async def auto_never(self, ctx: commands.Context):
+        """Never automatically respond to you in this server."""
+        await self.config.member(ctx.author).auto_respond.set("never")
+        await ctx.send(
+            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **never**",
+            ephemeral=True,
+        )
+
+    @auto.command(name="always")
+    async def auto_always(self, ctx: commands.Context):
+        """Always automatically respond to you in this server."""
+        await self.config.member(ctx.author).auto_respond.set("always")
+        await ctx.send(
+            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **always**",
+            ephemeral=True,
+        )
 
     @commands.hybrid_group()
     async def describe(self, ctx):
