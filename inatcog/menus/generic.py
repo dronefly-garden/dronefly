@@ -62,7 +62,7 @@ class EmbedMenu(DiscordBaseMenu, CoreBaseMenu):
         self.ctx = ctx
         self.author = ctx.author
         self.add_item(self.stop_button)
-        await self.send_initial_message(ctx, **initial_message_params)
+        return await self.send_initial_message(ctx, **initial_message_params)
 
     async def interaction_check(self, interaction: discord.Interaction):
         """Allow only owner to use interactions."""
@@ -107,7 +107,9 @@ class EmbedListMenu(EmbedMenu):
         self.add_item(self.stop_button)
         self.add_item(self.forward_button)
         embed = await self.source.get_page(self.current_page)
-        await self.send_initial_message(ctx, embed=embed, **initial_message_params)
+        return await self.send_initial_message(
+            ctx, embed=embed, **initial_message_params
+        )
 
     async def show_page(
         self, page_number: int, interaction: discord.Interaction, selected: int = 0
