@@ -114,22 +114,22 @@ class Listeners(INatEmbeds, MixinMeta):
 
                 if non_mention:
                     chosen_prefix = non_mention[0].strip()
-                    usage_instruction = f"use `{chosen_prefix}auto` instead."
+                    usage_instruction = f"use `{chosen_prefix}auto`."
                 else:
                     mention_prefix = prefix_list[0].strip()
                     usage_instruction = (
-                        f"mention the bot (e.g., {mention_prefix} auto) instead."
+                        f"mention the bot (e.g., {mention_prefix} `auto`)."
                     )
 
                 explanation = (
-                    "Use `/auto` to `always` or `never` respond to your messages "
-                    "with relevant iNaturalist displays like this. "
+                    "Use `/auto always` or `/auto never` to record "
+                    "your preference for automatic displays like this.\n"
+                    f"Alternatively, {usage_instruction}\n"
                     "I will not prompt again for 24 hrs.\n"
-                    f"If the `/auto` slash command is unavailable, {usage_instruction}"
                 )
                 try:
                     reminder_msg = await message.reply(explanation)
-                    await reminder_msg.delete(delay=20.0)
+                    await reminder_msg.delete(delay=60.0)
                 except discord.HTTPException:
                     pass
 
