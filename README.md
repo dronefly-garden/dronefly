@@ -12,6 +12,7 @@ chat.
 
 - [Dronefly Bot Wiki](https://github.com/dronefly-garden/dronefly/wiki)
 - [Dronefly Project Documentation](https://dronefly.readthedocs.io/)
+- [Dronefly Privacy Policy](https://github.com/dronefly-garden/dronefly/blob/main/PRIVACY-POLICY.md)
 
 ## Support and Develpoment
 
