@@ -1,6 +1,6 @@
 # Privacy Policy for Dronefly Discord Bot
 
-This Privacy Policy governs the collection, use, and sharing of personal information by Dronefly, a Discord bot developed by the [Dronefly Project](https://github.com/dronefly-project/dronefly). By using Dronefly, you agree to the terms of this Privacy Policy.
+This Privacy Policy governs the collection, use, and sharing of personal information by Dronefly, a Discord bot developed by the [Dronefly Project](https://github.com/dronefly-garden). By using Dronefly, you agree to the terms of this Privacy Policy.
 
 ## Information We Collect
 
