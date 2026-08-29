@@ -12,7 +12,9 @@ chat.
 
 - [Dronefly Bot Wiki](https://github.com/dronefly-garden/dronefly/wiki)
 - [Dronefly Project Documentation](https://dronefly.readthedocs.io/)
+- [Dronefly Contributors](https://github.com/dronefly-garden/dronefly/blob/main/CONTRIBUTORS.md)
 - [Dronefly Privacy Policy](https://github.com/dronefly-garden/dronefly/blob/main/PRIVACY-POLICY.md)
+- [Dronefly Self-hosted Installation](https://github.com/dronefly-garden/dronefly/blob/main/INSTALL.md)
 
 ## Support and Develpoment
 
@@ -32,7 +34,3 @@ https://discord.gg/uskv2yx
 ## TODO
 
 Check the [Issues](https://github.com/dronefly-garden/dronefly/issues) for a comprehensive list of TODO items that are either already actionable, or on their way to becoming so.
-
-## Installation
-
-Read [INSTALL.md](INSTALL.md) if you are interested in installing [Red Discord Bot](https://github.com/Cog-Creators/Red-DiscordBot) to self-host your own bot running Dronefly's code.
