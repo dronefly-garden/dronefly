@@ -310,7 +310,9 @@ class Listeners(INatEmbeds, MixinMeta):
             else await guild_config.autoobs()
         )
         autoobs_preview = (
-            channel_autoobs_preview if channel_autoobs_preview is not None else autoobs
+            channel_autoobs_preview
+            if channel_autoobs_preview is not None
+            else await guild_config.autoobs_prevew()
         )
         return autoobs, autoobs_preview
 
