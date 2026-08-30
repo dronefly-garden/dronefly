@@ -29,7 +29,7 @@ and moral support.
     - Suggestions for & testing of new features. See mentions in
       [issues](https://github.com/dronefly-garden/dronefly/search?q=mws&type=Issues).
 
-- **[coniontises](https://www.inaturalist.org/people/coniontises)**
+- **C (`@cinnabarneon`)**
     - Dronefly profile picture artwork, used both on the iNaturalist
       [Dronefly profile](https://www.inaturalist.org/people/dronefly) and on
       Dronefly bot on Discord.
