@@ -1,4 +1,5 @@
 """Module for user command group."""
+
 import asyncio
 import contextlib
 from datetime import datetime
@@ -81,7 +82,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
             await apologize(ctx, error_msg)
 
     @user.command(name="me")
-    @known_inat_user()
     @checks.bot_has_permissions(embed_links=True)
     async def user_me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
@@ -619,16 +619,16 @@ class CommandsUser(INatEmbeds, MixinMeta):
                 if not filter_emoji:
                     raise BadArgument(
                         f"Project {abbrev} has a menu message but no emoji."
-                        f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                        f" To update it, use: `{ctx.clean_prefix}inat set event`"  # nosec: B608
                     )
                 try:
-                    (channel_id, message_id) = message.split("-")
+                    channel_id, message_id = message.split("-")
                     channel = ctx.guild.get_channel(int(channel_id))
                     filter_message = await channel.fetch_message(int(message_id))
                 except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                     raise BadArgument(
                         f"Project {abbrev} menu message can't be fetched."
-                        f" To update it, use: `{ctx.clean_prefix}inat set event`"
+                        f" To update it, use: `{ctx.clean_prefix}inat set event`"  # nosec: B608
                     )
 
         return (filter_roles, filter_emoji, filter_message)
@@ -813,7 +813,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # (i.e. `,user add` performed in this server) whether or not they
         # are still a member of this server:
         known_user_ids_by_inat_id = {}
-        for (discord_user_id, user_config) in all_users.items():
+        for discord_user_id, user_config in all_users.items():
             inat_user_id = user_config.get("inat_user_id")
             if inat_user_id and guild_id in user_config.get("known_in"):
                 if inat_user_id in known_user_ids_by_inat_id:
@@ -856,7 +856,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         # Restrict event lists to only users registered in this server, but
         # allow `,user list` to show also `known_all` users.
         anywhere = prj_id in main_event_project_ids
-        async for (dmember, iuser) in self.user_table.get_member_pairs(
+        async for dmember, iuser in self.user_table.get_member_pairs(
             ctx.guild, all_users, anywhere
         ):
             project_abbrevs = abbrevs_for_user(iuser.id, event_project_ids, projects)
@@ -1188,7 +1188,6 @@ class CommandsUser(INatEmbeds, MixinMeta):
         await ctx.send(format_user_url(inat_user))
 
     @commands.command()
-    @known_inat_user()
     @checks.bot_has_permissions(embed_links=True)
     async def me(self, ctx):  # pylint: disable=invalid-name
         """Show your iNat info & stats for this server."""
@@ -1203,7 +1202,7 @@ class CommandsUser(INatEmbeds, MixinMeta):
         Use `[p]my` subcommands below to show other iNat info
         for your account.
         """
-        await (self.bot.get_command("project stats")(ctx, project, user="me"))
+        await self.bot.get_command("project stats")(ctx, project, user="me")
 
     @my.command(name="inatyear")
     @known_inat_user()
@@ -1227,21 +1226,21 @@ class CommandsUser(INatEmbeds, MixinMeta):
     async def my_obs(self, ctx, *, query=""):
         """Search your observations (alias `[p]s obs my`)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
-        await (self.bot.get_command("search obs")(ctx, query=my_query))
+        await self.bot.get_command("search obs")(ctx, query=my_query)
 
     @my.command(name="map")
     @known_inat_user()
     async def my_map(self, ctx, *, query=""):
         """Map observations by you (alias `[p]map obs my` *query*)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} by me")
-        await (self.bot.get_command("map obs")(ctx, query=my_query))
+        await self.bot.get_command("map obs")(ctx, query=my_query)
 
     @my.command(name="idmap")
     @known_inat_user()
     async def my_idmap(self, ctx, *, query=""):
         """Map ided by you (alias `[p]map obs` *query* `id by me`)."""
         my_query = await NaturalQueryConverter.convert(ctx, f"{query} id by me")
-        await (self.bot.get_command("map obs")(ctx, query=my_query))
+        await self.bot.get_command("map obs")(ctx, query=my_query)
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
@@ -1249,4 +1248,4 @@ class CommandsUser(INatEmbeds, MixinMeta):
         self, ctx, project: str, *, user: str
     ):  # pylint: disable=invalid-name
         """Rank in *project* (alias `[p]prj stats `*project* *user*)."""
-        await (self.bot.get_command("project stats")(ctx, project, user=user))
+        await self.bot.get_command("project stats")(ctx, project, user=user)
