@@ -230,7 +230,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 observations = ctx.inat_client.observations.search(
                     limit=200, **obs_args
                 )
-                if not observations:
+                if not observations.count():
                     raise LookupError(
                         f"No observations {query_response.obs_query_description()}"
                     )
