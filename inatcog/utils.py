@@ -1,4 +1,5 @@
 """Utilities module."""
+
 import asyncio
 from contextlib import asynccontextmanager
 import functools
@@ -10,6 +11,7 @@ from dronefly.core.models.user import User as DroneflyUser
 from redbot.core import commands
 
 from .constants import COG_NAME, HUB_SERVERS
+from .partials import PartialContext
 
 COG_TO_CORE_USER_KEY = {
     "inat_user_id": "inat_user_id",
@@ -46,11 +48,11 @@ def use_client(coro_or_command):
 
     @functools.wraps(coro)
     async def wrapped(*args, **kwargs):
-        context: commands.Context = None
+        context: Union[commands.Context, PartialContext] = None
         cog: commands.Cog = None
 
         for arg in args:
-            if isinstance(arg, commands.Context):
+            if isinstance(arg, commands.Context) or isinstance(arg, PartialContext):
                 context = arg
                 cog = get_cog(context)
                 break
@@ -182,9 +184,9 @@ async def get_dronefly_user_defaults(
             value = user_config_dict.get(cog_key)
         if value is None and cog_key in COG_HAS_USER_DEFAULTS:
             if guild_config:
-                value = await (guild_config.get_attr(cog_key))()
+                value = await guild_config.get_attr(cog_key)()
             if value is None:
-                value = await (global_config.get_attr(cog_key))()
+                value = await global_config.get_attr(cog_key)()
         dronefly_user_params[core_key] = value
     return dronefly_user_params
 

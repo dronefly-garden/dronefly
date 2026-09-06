@@ -1,8 +1,7 @@
 """Listeners module for inatcog."""
 
-from attrs import define
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple, Union
+from typing import Tuple
 import asyncio
 import contextlib
 from copy import copy
@@ -11,15 +10,14 @@ import re
 
 import discord
 from redbot.core import commands
-from redbot.core.bot import Red
 from redbot.core.commands import BadArgument
-from .client import iNatClient
 from .converters.base import NaturalQueryConverter
 from .embeds.common import NoRoomInDisplay
 from .embeds.inat import INatEmbed, INatEmbeds, REACTION_EMOJI
 from .interfaces import MixinMeta
 from .menus.generic import EmbedMenu, EmbedSource
 from .obs import maybe_match_obs
+from .partials import PartialContext, PartialMessage
 from dronefly.core.query import prepare_query_for_count, prepare_query_for_taxon
 from dronefly.core.query.formatters import (
     get_query_count_formatter,
@@ -43,32 +41,6 @@ UNKNOWN_REACTION_MSG = "Not a known reaction."
 
 # pylint: disable=no-member, assigning-non-slot
 # - See https://github.com/PyCQA/pylint/issues/981
-
-
-@define
-class PartialMessage:
-    """Partial Message to satisfy bot & guild checks."""
-
-    author: discord.User
-    guild: discord.Guild
-
-
-@define
-class PartialContext:
-    "Partial Context synthesized from objects passed into listeners."
-
-    bot: Red
-    guild: discord.Guild
-    channel: discord.ChannelType
-    author: discord.User
-    message: Optional[Union[discord.Message, PartialMessage]]
-    command: Optional[str] = ""
-    assume_yes: bool = True
-    interaction: Optional[discord.Interaction] = None
-    inat_client: iNatClient = None
-
-    async def send(self, *args, **kwargs):
-        return await self.channel.send(*args, **kwargs)
 
 
 class Listeners(INatEmbeds, MixinMeta):
