@@ -97,15 +97,15 @@ class EmbedListMenu(EmbedMenu):
         self.current_page = current_page
         super().__init__(source=source, **kwargs)
         self.back_button = BackButton(discord.ButtonStyle.grey, 0)
-        self.stop_button = StopButton(discord.ButtonStyle.grey, 0)
         self.forward_button = ForwardButton(discord.ButtonStyle.grey, 0)
+        self.stop_button = StopButton(discord.ButtonStyle.grey, 0)
 
     async def start(self, ctx: commands.Context, **initial_message_params):
         self.ctx = ctx
         self.author = ctx.author
         self.add_item(self.back_button)
-        self.add_item(self.stop_button)
         self.add_item(self.forward_button)
+        self.add_item(self.stop_button)
         embed = await self.source.get_page(self.current_page)
         return await self.send_initial_message(
             ctx, embed=embed, **initial_message_params
