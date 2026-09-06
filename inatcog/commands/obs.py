@@ -246,11 +246,13 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     per_page=per_page,
                 )
                 formatter.source = source
+                obs_command = self.bot.get_command("obs")
                 await ObservationSearchMenu(
                     source=source,
                     cog=self,
                     delete_message_after=False,
-                    clear_reactions_after=True,
+                    clear_reactions_after=False,
+                    obs_command=obs_command,
                     timeout=0,
                 ).start(ctx=ctx)
             except (BadArgument, LookupError, ValueError) as err:
