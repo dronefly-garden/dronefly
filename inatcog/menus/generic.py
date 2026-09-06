@@ -51,7 +51,7 @@ class EmbedMenu(DiscordBaseMenu, CoreBaseMenu):
     ) -> None:
         self.source = source
         super().__init__()
-        self.stop_button = StopButton(discord.ButtonStyle.red, 0)
+        self.stop_button = StopButton(discord.ButtonStyle.grey, 0)
 
     async def send_initial_message(self, ctx: commands.Context, **params):
         self.ctx = ctx
@@ -97,7 +97,7 @@ class EmbedListMenu(EmbedMenu):
         self.current_page = current_page
         super().__init__(source=source, **kwargs)
         self.back_button = BackButton(discord.ButtonStyle.grey, 0)
-        self.stop_button = StopButton(discord.ButtonStyle.red, 0)
+        self.stop_button = StopButton(discord.ButtonStyle.grey, 0)
         self.forward_button = ForwardButton(discord.ButtonStyle.grey, 0)
 
     async def start(self, ctx: commands.Context, **initial_message_params):
