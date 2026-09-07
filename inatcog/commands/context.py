@@ -18,6 +18,8 @@ from ..embeds.inat import INatEmbed
 
 @app_commands.context_menu(name="Show taxon")
 async def show_taxon(interaction: discord.Interaction, message: discord.Message):
+    """Show a taxon for either a bot display or user message."""
+
     async def maybe_get_taxon_id_from_match(matched):
         taxon_id = None
         obs_id = matched["obs_id"]
