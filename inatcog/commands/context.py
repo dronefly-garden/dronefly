@@ -8,7 +8,6 @@ from redbot.core import app_commands
 
 from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
-    PAT_SELECTED_OBS_LINK,
     PAT_TAXON_LINK,
 )
 
@@ -32,9 +31,9 @@ async def show_taxon(interaction: discord.Interaction, message: discord.Message)
                     taxon_id = taxon.id
         return taxon_id
 
-    async def maybe_get_taxon_id_from_obs(content: str, matcher=PAT_OBS_LINK):
-        mat_obs = re.search(matcher, content)
+    async def maybe_get_taxon_id_from_obs(content: str):
         taxon_id = None
+        mat_obs = re.search(PAT_OBS_LINK, content)
         if mat_obs:
             taxon_id = await maybe_get_taxon_id_from_match(mat_obs)
         return taxon_id
@@ -56,16 +55,25 @@ async def show_taxon(interaction: discord.Interaction, message: discord.Message)
     if message.embeds:
         inat_embed = INatEmbed.from_discord_embed(message.embeds[0])
         if inat_embed:
-            params = inat_embed.get_params()
-            taxon_id = params.get("taxon_id")
-        if inat_embed.description:
-            if not taxon_id:
-                taxon_id = await maybe_get_taxon_id_from_obs(
-                    inat_embed.description, matcher=PAT_SELECTED_OBS_LINK
-                )
-            if not taxon_id:
-                taxon_id = await maybe_get_taxon_id_from_obs(inat_embed.description)
-    if not taxon_id and message.content:
+            # Prioritize taxon for multi observations as that will be
+            # the topic of that sort of display (obs search)
+            if inat_embed.has_observations():
+                url = inat_embed.obs_url
+                taxon_id = await maybe_get_taxon_id_from_obs(url)
+            else:
+                # i.e. either the id from a /taxa link or if absent,
+                # taxon_id from URL params
+                # - single obs display will also have a taxon link
+                #   already obtained from looking up the obs
+                # - otherwise this works for other sorts of display
+                #   for single or multiple taxa or a search that
+                #   has taxon_id in it
+                params = inat_embed.get_params()
+                taxon_id = params.get("taxon_id")
+    if not taxon_id and not inat_embed and message.content:
+        # Prioritize taxon link over obs for non-bot displays because
+        # a user's message may contain both, and the taxon is the
+        # more obvious one to show.
         mat_taxon = re.search(PAT_TAXON_LINK, message.content)
         if mat_taxon:
             taxon_id = mat_taxon["taxon_id"]
