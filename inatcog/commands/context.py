@@ -70,10 +70,10 @@ async def show_taxon(interaction: discord.Interaction, message: discord.Message)
                 #   has taxon_id in it
                 params = inat_embed.get_params()
                 taxon_id = params.get("taxon_id")
-    if not taxon_id and not inat_embed and message.content:
-        # Prioritize taxon link over obs for non-bot displays because
-        # a user's message may contain both, and the taxon is the
-        # more obvious one to show.
+    if not taxon_id and message.content:
+        # Prioritize taxon link over obs for non-embed displays because
+        # user messages may contain both, and the taxon is the more obvious one
+        # to show.
         mat_taxon = re.search(PAT_TAXON_LINK, message.content)
         if mat_taxon:
             taxon_id = mat_taxon["taxon_id"]
