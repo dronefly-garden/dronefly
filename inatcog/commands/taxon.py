@@ -242,8 +242,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 await TaxonListMenu(
                     source=source,
                     delete_message_after=False,
-                    clear_reactions_after=True,
-                    timeout=60,
+                    clear_reactions_after=False,
+                    timeout=None,
                     cog=self,
                     page_start=0,
                 ).start(ctx=ctx)
@@ -258,12 +258,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @taxon.command(name="map")
     async def taxon_map(self, ctx, *, taxa_list):
         """Show range map for one or more taxa."""
-        await (self.bot.get_command("map")(ctx, taxa_list=taxa_list))
+        await self.bot.get_command("map")(ctx, taxa_list=taxa_list)
 
     @taxon.command(name="search")
     async def taxon_search(self, ctx, *, query):
         """Search for matching taxa."""
-        await (self.bot.get_command("search taxa")(ctx, query=query))
+        await self.bot.get_command("search taxa")(ctx, query=query)
 
     @taxon.command()
     @use_client
@@ -346,7 +346,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     )
                 else:  # i.e. species
                     msg = await ctx.send(f"Map for: {full_name}\n{taxon_map_url}")
-                cancelled = await (self.bot.get_command("tabulate")(ctx, query=_query))
+                cancelled = await self.bot.get_command("tabulate")(ctx, query=_query)
                 if cancelled and msg:
                     with contextlib.suppress(discord.HTTPException):
                         await msg.delete()
@@ -548,8 +548,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 _taxa_list = f"{query_response.taxon.id},{taxa_list}"
             else:
                 _taxa_list = taxa_list
-            (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
-            (related_taxon, related_embed) = await self.make_related_embed(
+            taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
+            related_taxon, related_embed = await self.make_related_embed(
                 ctx, taxa, missing_taxa
             )
             related_query_response = QueryResponse(taxon=related_taxon)
@@ -562,7 +562,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.command(hidden=True)
     @checks.bot_has_permissions(embed_links=True)
     async def related(self, ctx, *, taxa_list: str):
-        await (self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list))
+        await self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list)
 
     @taxon.command(name="image", aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
@@ -589,4 +589,4 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def image_alias(
         self, ctx, number: Optional[int] = 1, *, query: Optional[str] = ""
     ):
-        await (self.bot.get_command("taxon image")(ctx, number, query=query))
+        await self.bot.get_command("taxon image")(ctx, number, query=query)

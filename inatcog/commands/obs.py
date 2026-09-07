@@ -437,8 +437,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 await TaxonListMenu(
                     source=source,
                     delete_message_after=False,
-                    clear_reactions_after=True,
-                    timeout=60,
+                    clear_reactions_after=False,
+                    timeout=None,
                     cog=self,
                     page_start=0,
                 ).start(ctx=ctx)
