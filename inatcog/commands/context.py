@@ -73,14 +73,28 @@ async def show_taxon(interaction: discord.Interaction, message: discord.Message)
                 params = inat_embed.get_params()
                 taxon_id = params.get("taxon_id")
     if not taxon_id and message.content:
+        content = message.content
         # Prioritize taxon link over obs for non-embed displays because
         # user messages may contain both, and the taxon is the more obvious one
         # to show.
-        mat_taxon = re.search(PAT_TAXON_LINK, message.content)
+        mat_taxon = re.search(PAT_TAXON_LINK, content)
         if mat_taxon:
             taxon_id = mat_taxon["taxon_id"]
         else:
-            taxon_id = await maybe_get_taxon_id_from_obs(message.content)
+            taxon_id = await maybe_get_taxon_id_from_obs(content)
+        if not taxon_id and not message.author.bot:
+            content = content.lower().replace(r"[^a-z]+", "")
+            words = content.split()[0:2]
+            # look for taxon in first 2 words
+            if all(len(word) > 1 for word in words):
+                if len(words) == 2 and words[1] in ["sp", "spp"]:
+                    content = words[0]
+                else:
+                    content = " ".join(words)
+                paginator = cog.inat_client.taxa.autocomplete(q=content, limit=1)
+                taxa = await paginator.async_all()
+                if len(taxa):
+                    taxon_id = taxa[0].id
     if taxon_id:
         taxon_command = bot.get_command("taxon")
         await taxon_command(ctx, query=str(taxon_id))
