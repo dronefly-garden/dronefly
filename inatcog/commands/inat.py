@@ -76,8 +76,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
                 "I have cleared your `auto` preference.\n"
                 "- Automatic responses will be sent by `default` if the "
                 "server/channel is configured to send them.\n"
-                f"- Use `{pfx}auto always` or `{pfx}auto never` to record your "
-                "preference to opt in or out of these automatic responses."
+                f"- Use `{pfx}auto always` or `{pfx}auto never` to "
+                "opt in or out of these automatic responses."
             ),
             ephemeral=True,
         )
