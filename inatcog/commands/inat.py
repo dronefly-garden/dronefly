@@ -44,10 +44,11 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Helper to display the current user preference."""
         current = await self.config.member(ctx.author).auto_respond()
         preference = current if current else "default"
+        pfx = ctx.clean_prefix
         if preference == "default":
             msg = (
                 "I send automatic responses if the server/channel is configured "
-                "to send them.\n- Use `[p]auto always` or `[p]auto never` to "
+                f"to send them.\n- Use `{pfx}auto always` or `{pfx}auto never` to "
                 "opt in or out of these automatic responses."
             )
         else:
@@ -60,8 +61,8 @@ class CommandsInat(INatEmbeds, MixinMeta):
             msg = (
                 f"I `{preference}` send automatic responses {when} the server/channel "
                 "is configured to send them.\n"
-                f"- Use `[p]auto {change_to}` to change your preference.\n"
-                "- Use `[p]auto default` to clear your preference."
+                f"- Use `{pfx}auto {change_to}` to change your preference.\n"
+                f"- Use `{pfx}auto default` to clear your preference."
             )
         await ctx.send(msg, ephemeral=True)
 
@@ -69,12 +70,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def auto_default(self, ctx: commands.Context):
         """Reset your automatic responses preference in this server."""
         await self.config.member(ctx.author).auto_respond.set(None)
+        pfx = ctx.clean_prefix
         await ctx.send(
             (
                 "I have cleared your `auto` preference.\n"
                 "- Automatic responses will be sent by `default` if the "
                 "server/channel is configured to send them.\n"
-                "- Use `[p]auto always` or `[p]auto never` to record your "
+                f"- Use `{pfx}auto always` or `{pfx}auto never` to record your "
                 "preference to opt in or out of these automatic responses."
             ),
             ephemeral=True,
@@ -84,12 +86,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def auto_never(self, ctx: commands.Context):
         """Never automatically respond to you in this server."""
         await self.config.member(ctx.author).auto_respond.set("never")
+        pfx = ctx.clean_prefix
         await ctx.send(
             (
                 "I will `never` send automatic responses even if the "
                 "server/channel is configured to send them.\n"
-                "- Use `[p]auto always` to change your preference.\n"
-                "- Use `[p]auto default` to clear your preference."
+                f"- Use `{pfx}auto always` to change your preference.\n"
+                f"- Use `{pfx}auto default` to clear your preference."
             ),
             ephemeral=True,
         )
@@ -98,12 +101,13 @@ class CommandsInat(INatEmbeds, MixinMeta):
     async def auto_always(self, ctx: commands.Context):
         """Always automatically respond to you in this server."""
         await self.config.member(ctx.author).auto_respond.set("always")
+        pfx = ctx.clean_prefix
         await ctx.send(
             (
                 "I will `always` send automatic responses when the "
                 "server/channel is configured to send them.\n"
-                "- Use `[p]auto always` to change your preference.\n"
-                "- Use `[p]auto default` to clear your preference."
+                f"- Use `{pfx}auto always` to change your preference.\n"
+                f"- Use `{pfx}auto default` to clear your preference."
             ),
             ephemeral=True,
         )
