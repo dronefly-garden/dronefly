@@ -85,18 +85,16 @@ class Listeners(INatEmbeds, MixinMeta):
                 ]
 
                 if non_mention:
-                    chosen_prefix = non_mention[0].strip()
-                    usage_instruction = f"use `{chosen_prefix}auto`."
+                    prefix = non_mention[0].strip()
                 else:
-                    mention_prefix = prefix_list[0].strip()
-                    usage_instruction = (
-                        f"mention the bot (e.g., {mention_prefix} `auto`)."
-                    )
+                    # Non-mention prefix should can only be used when the bot
+                    # has messages intent. If it's not defined, it implies the
+                    # user should be using a slash-command instead.
+                    prefix = "/"
 
                 explanation = (
-                    "Use `/auto always` or `/auto never` to record "
+                    f"Use `{prefix}auto always` or `{prefix}auto never` to record "
                     "your preference for automatic displays like this.\n"
-                    f"Alternatively, {usage_instruction}\n"
                     "I will not prompt again for 24 hrs.\n"
                 )
                 try:

@@ -24,15 +24,6 @@ LISTEN_VALUE = {
 }
 
 
-AUTO_HELP = (
-    "Available automatic response preferences are:\n"
-    "- **default:** *always* send automatic responses on this server; "
-    "will also send a reminder to set your preference\n"
-    "- **always: ** *always* send automatic responses on this server\n"
-    "- **never: ** *never* send automatic responses on this server"
-)
-
-
 class CommandsInat(INatEmbeds, MixinMeta):
     """Mixin providing inat command group."""
 
@@ -53,17 +44,39 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Helper to display the current user preference."""
         current = await self.config.member(ctx.author).auto_respond()
         preference = current if current else "default"
-        await ctx.send(
-            f"{AUTO_HELP}\n\nYour current `auto` preference is: **{preference}**",
-            ephemeral=True,
-        )
+        if preference == "default":
+            msg = (
+                "I send automatic responses if the server/channel is configured "
+                "to send them.\n- Use `[p]auto always` or `[p]auto never` to "
+                "opt in or out of these automatic responses."
+            )
+        else:
+            if preference == "always":
+                when = "when"
+                change_to = "never"
+            else:
+                when = "even if"
+                change_to = "always"
+            msg = (
+                f"I `{preference}` send automatic responses {when} the server/channel "
+                "is configured to send them.\n"
+                f"- Use `[p]auto {change_to}` to change your preference.\n"
+                "- Use `[p]auto default` to clear your preference."
+            )
+        await ctx.send(msg, ephemeral=True)
 
     @auto.command(name="default")
     async def auto_default(self, ctx: commands.Context):
         """Reset your automatic responses preference in this server."""
         await self.config.member(ctx.author).auto_respond.set(None)
         await ctx.send(
-            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **default**",
+            (
+                "I have cleared your `auto` preference.\n"
+                "- Automatic responses will be sent by `default` if the "
+                "server/channel is configured to send them.\n"
+                "- Use `[p]auto always` or `[p]auto never` to record your "
+                "preference to opt in or out of these automatic responses."
+            ),
             ephemeral=True,
         )
 
@@ -72,7 +85,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Never automatically respond to you in this server."""
         await self.config.member(ctx.author).auto_respond.set("never")
         await ctx.send(
-            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **never**",
+            (
+                "I will `never` send automatic responses even if the "
+                "server/channel is configured to send them.\n"
+                "- Use `[p]auto always` to change your preference.\n"
+                "- Use `[p]auto default` to clear your preference."
+            ),
             ephemeral=True,
         )
 
@@ -81,7 +99,12 @@ class CommandsInat(INatEmbeds, MixinMeta):
         """Always automatically respond to you in this server."""
         await self.config.member(ctx.author).auto_respond.set("always")
         await ctx.send(
-            f"{AUTO_HELP}\n\nYour `auto` preference has been set to: **always**",
+            (
+                "I will `always` send automatic responses when the "
+                "server/channel is configured to send them.\n"
+                "- Use `[p]auto always` to change your preference.\n"
+                "- Use `[p]auto default` to clear your preference."
+            ),
             ephemeral=True,
         )
 
