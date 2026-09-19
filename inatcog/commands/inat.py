@@ -106,7 +106,7 @@ class CommandsInat(INatEmbeds, MixinMeta):
             (
                 "I will `always` send automatic responses when the "
                 "server/channel is configured to send them.\n"
-                f"- Use `{pfx}auto always` to change your preference.\n"
+                f"- Use `{pfx}auto never` to change your preference.\n"
                 f"- Use `{pfx}auto default` to clear your preference."
             ),
             ephemeral=True,
