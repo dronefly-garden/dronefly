@@ -145,7 +145,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
         choices = []
-        if current:
+        if self.taxon_autocompleter and current:
             taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
             if taxa:
                 choices = [

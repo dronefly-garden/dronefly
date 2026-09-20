@@ -4,7 +4,9 @@ import asyncio
 import re
 from abc import ABC
 from datetime import timedelta
+import logging
 from functools import partial
+from pathlib import Path
 from typing import DefaultDict, Tuple
 
 import inflect
@@ -41,6 +43,8 @@ _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
 _INAT_GUILD_ID = 525711945270296587
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
+
+logger = logging.getLogger("red.dronefly." + __name__)
 
 
 class CompositeMetaClass(type(commands.Cog), type(ABC)):
@@ -92,7 +96,16 @@ class INatCog(
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
-        self.taxon_autocompleter = TaxonAutocompleter(db_path=DB_PATH)
+        self.taxon_autocompleter = None
+        if Path(DB_PATH).exists():
+            try:
+                self.taxon_autocompleter = TaxonAutocompleter(db_path=DB_PATH)
+            except IOError:
+                logger.warning("Could not read: %s", DB_PATH)
+        logger.info(
+            "Taxon autocompletion will be empty as the database is absent or unreadable: %s",
+            DB_PATH,
+        )
         self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
         self.predicate_locks = {}
