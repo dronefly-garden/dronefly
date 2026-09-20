@@ -162,6 +162,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @taxon.command(name="show")
     @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(taxon="Taxon name", query="Optional query terms (e.g. my)")
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon_show(self, ctx, taxon: str, query: Optional[str] = None):
