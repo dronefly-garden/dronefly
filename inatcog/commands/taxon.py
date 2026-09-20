@@ -172,7 +172,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         if taxon.startswith("id:"):
             query = taxon.split(":")[1]
         else:
-            query = taxon
+            query = taxon.replace(r"\(.*\)", "")
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if not query_response:
                 return
