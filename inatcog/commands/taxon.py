@@ -146,6 +146,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     ) -> List[app_commands.Choice[str]]:
         choices = []
         if self.taxon_autocompleter and current:
+            interaction.response.defer()
             taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
             if taxa:
                 choices = [
