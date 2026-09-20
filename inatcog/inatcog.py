@@ -102,10 +102,11 @@ class INatCog(
                 self.taxon_autocompleter = TaxonAutocompleter(db_path=DB_PATH)
             except IOError:
                 logger.warning("Could not read: %s", DB_PATH)
-        logger.info(
-            "Taxon autocompletion will be empty as the database is absent or unreadable: %s",
-            DB_PATH,
-        )
+        if not self.taxon_autocompleter:
+            logger.info(
+                "Taxon autocompletion will be empty as the database is absent or unreadable: %s",
+                DB_PATH,
+            )
         self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
         self.predicate_locks = {}

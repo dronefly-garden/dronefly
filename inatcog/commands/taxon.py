@@ -146,7 +146,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     ) -> List[app_commands.Choice[str]]:
         choices = []
         if self.taxon_autocompleter and current:
-            interaction.response.defer()
+            await interaction.response.defer()
             taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
             if taxa:
                 choices = [
@@ -164,16 +164,21 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @app_commands.autocomplete(taxon=taxon_autocomplete)
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def taxon_show(self, ctx, *, taxon: str):
+    async def taxon_show(self, ctx, taxon: str, query: Optional[str] = None):
         """Taxon information with autocomplete (taxon name only)."""
         error_msg = None
         await ctx.defer()
 
         if taxon.startswith("id:"):
-            query = taxon.split(":")[1]
+            combined_query = taxon.split(":")[1]
         else:
-            query = taxon.replace(r"\(.*\)", "")
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+            combined_query = taxon
+        if query:
+            combined_query = combined_query + " " + query
+        async with self._get_taxon_response(ctx, combined_query) as (
+            query_response,
+            _query,
+        ):
             if not query_response:
                 return
             try:
