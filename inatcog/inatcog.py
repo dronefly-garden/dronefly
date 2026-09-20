@@ -10,6 +10,10 @@ from typing import DefaultDict, Tuple
 import inflect
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
+
+from pyinaturalist_convert import TaxonAutocompleter
+from dronefly.miner import DB_PATH
+
 from .api import INatAPI
 from .constants import COG_NAME
 from .client import iNatClient
@@ -88,6 +92,7 @@ class INatCog(
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
+        self.taxon_autocompleter = TaxonAutocompleter(db_path=DB_PATH)
         self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
         self.predicate_locks = {}

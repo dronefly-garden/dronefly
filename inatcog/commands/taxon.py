@@ -7,13 +7,15 @@ import textwrap
 from typing import List, Optional
 
 import discord
+from discord import app_commands
+
+from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
+    TaxonListFormatter,
 )
-from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
-from dronefly.core.formatters.generic import TaxonListFormatter
 from dronefly.core.query import QueryResponse, prepare_query_for_taxon
 from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
@@ -23,6 +25,7 @@ from dronefly.discord.menus import (
     TaxonMenu,
     TaxonSource,
 )
+from dronefly.miner import taxon_autocomplete
 from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
@@ -110,7 +113,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             cog=self,
         ).start(ctx=ctx)
 
-    @commands.hybrid_group(aliases=["t"], fallback="show")
+    @commands.hybrid_group(aliases=["t"], fallback="query")
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon(self, ctx, *, query: Optional[str]):
@@ -128,6 +131,47 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """
 
         error_msg = None
+        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+        if error_msg:
+            await apologize(ctx, error_msg)
+
+    async def taxon_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> List[app_commands.Choice[str]]:
+        choices = []
+        if current:
+            taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
+            if taxa:
+                choices = [
+                    app_commands.Choice(
+                        name=format_taxon_name(
+                            taxon, with_term=True, with_italics=False
+                        ),
+                        value=f"id:{taxon.id}",
+                    )
+                    for taxon in taxa
+                ]
+        return choices
+
+    @taxon.command(name="show")
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def taxon_show(self, ctx, *, taxon: str):
+        """Taxon information with autocomplete (taxon name only)."""
+        error_msg = None
+        await ctx.defer()
+
+        if taxon.startswith("id:"):
+            query = taxon.split(":")[1]
+        else:
+            query = taxon
         async with self._get_taxon_response(ctx, query) as (query_response, _query):
             if not query_response:
                 return
