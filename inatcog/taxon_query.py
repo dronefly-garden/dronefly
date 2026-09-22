@@ -1,4 +1,5 @@
 """Module to query iNat taxa."""
+
 from redbot.core.commands import BadArgument, Context
 from dronefly.core.constants import RANK_EQUIVALENTS, RANK_LEVELS
 from dronefly.core.formatters.generic import format_taxon_name
@@ -187,14 +188,12 @@ class INatTaxonQuery:
 
         return taxon
 
-    async def query_taxa(self, ctx, query):
+    async def query_taxa(self, ctx, taxon_names: list[str]):
         """Query for one or more taxa and return list of matching taxa, if any."""
-        queries = query.split(",")
-
         # De-duplicate the query via dict:
         taxa = {}
         missing_taxa = []
-        for query_str in queries:
+        for query_str in taxon_names:
             try:
                 query = await NaturalQueryConverter.convert(ctx, query_str)
                 query_response = await self.cog.query.get(ctx, query)

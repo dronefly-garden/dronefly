@@ -160,7 +160,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
         return choices
 
-    @taxon.command(name="show")
+    @taxon.command(name="show", hidden=True)
     @app_commands.autocomplete(taxon=taxon_autocomplete)
     @app_commands.describe(taxon="Taxon name", query="Optional query terms (e.g. my)")
     @checks.bot_has_permissions(embed_links=True)
@@ -573,20 +573,69 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         if error_msg:
             await apologize(ctx, error_msg)
 
-    @taxon.command(name="related")
+    async def _taxon_related(self, ctx, taxon_names: list):
+        taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, taxon_names)
+        related_taxon, related_embed = await self.make_related_embed(
+            ctx, taxa, missing_taxa
+        )
+        related_query_response = QueryResponse(taxon=related_taxon)
+        await self._start_taxon_menu(
+            ctx, related_query_response, related_embed=related_embed
+        )
+
+    @taxon.command(name="related", hidden=True)
+    @app_commands.autocomplete(taxon1=taxon_autocomplete, taxon2=taxon_autocomplete)
+    @app_commands.describe(
+        taxon1="Name of first taxon",
+        taxon2="Name of second taxon",
+        more_names="Comma-separated list of additional taxon names",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def taxon_related(self, ctx, *, taxa_list: str):
+    async def taxon_related(
+        self, ctx, taxon1: str, taxon2: str, *, more_names: Optional[str] = ""
+    ):
         """Relatedness of a list of taxa.
+
+        [p]t related taxon1, taxon2
+
+          OR
+
+        [p]t related taxon1, taxon2, taxon3, ...
+
+        Put commas between taxon names to look up. The closest related
+        ancestor of all taxa that were matched is displayed.
 
         **Examples:**
         ```
-        [p]related 24255,24267
-        [p]related boreal chorus frog,western chorus frog
+        [p]t related 24255,24267
+        [p]t related boreal chorus frog,western chorus frog
         ```
         See `[p]taxon_query` for help specifying taxa.
         """
 
+        await ctx.defer()
+        taxon_names = []
+        if ctx.interaction:
+            for taxon_name in [taxon1, taxon2]:
+                if taxon_name.startswith("id:"):
+                    taxon_names.append(taxon_name.split(":")[1])
+                else:
+                    taxon_names.append(taxon_name)
+            if more_names:
+                taxon_names += more_names.split(",")
+        else:
+            # When invoked as a message-based command, treat all arguments
+            # as a single space-delimited argument, then split them all
+            # on comma for backwards compatibility with the original single
+            # globbed argument call signature.
+            taxon_names = " ".join([taxon1, taxon2, more_names]).split(",")
+        await self._taxon_related(ctx, taxon_names)
+
+    @commands.command(hidden=True)
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def related(self, ctx, *, taxa_list: str):
         if not taxa_list:
             await ctx.send_help()
             return
@@ -595,25 +644,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
             query_response = await prepare_query_for_taxon(ctx.inat_client, _query)
+            _taxa_list = taxa_list.split(",")
             if query_response and query_response.taxon:
-                _taxa_list = f"{query_response.taxon.id},{taxa_list}"
-            else:
-                _taxa_list = taxa_list
-            taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
-            related_taxon, related_embed = await self.make_related_embed(
-                ctx, taxa, missing_taxa
-            )
-            related_query_response = QueryResponse(taxon=related_taxon)
-            await self._start_taxon_menu(
-                ctx, related_query_response, related_embed=related_embed
-            )
+                _taxa_list.insert(0, str(query_response.taxon.id))
+            await self._taxon_related(ctx, _taxa_list)
         except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, err)
-
-    @commands.command(hidden=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def related(self, ctx, *, taxa_list: str):
-        await self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list)
 
     @taxon.command(name="image", aliases=["img", "photo"])
     @checks.bot_has_permissions(embed_links=True)
