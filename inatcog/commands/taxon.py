@@ -1,5 +1,6 @@
 """Module for taxon command group."""
 
+import asyncio
 import contextlib
 from contextlib import asynccontextmanager
 import re
@@ -144,12 +145,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def taxon_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        choices = []
-        if self.taxon_autocompleter and current:
-            await interaction.response.defer()
+        async def fetch_taxon_choices(current):
             taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
             if taxa:
-                choices = [
+                return [
                     app_commands.Choice(
                         name=format_taxon_name(
                             taxon, with_term=True, with_italics=False
@@ -158,7 +157,21 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     )
                     for taxon in taxa
                 ]
-        return choices
+            return []
+
+        if self.taxon_autocompleter and current:
+            try:
+                # Time out early so we don't exceed Discord's 3s limit.
+                # - typing more characters typically completes well within
+                #   the limit once autocomplete is warmed up
+                choices = await asyncio.wait_for(
+                    fetch_taxon_choices(current),
+                    timeout=2.5,
+                )
+                return choices
+            except TimeoutError:
+                pass
+        return []
 
     @taxon.command(name="show", hidden=True)
     @app_commands.autocomplete(taxon=taxon_autocomplete)
