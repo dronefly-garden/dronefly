@@ -618,18 +618,21 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         taxon_names = []
         if ctx.interaction:
             for taxon_name in [taxon1, taxon2]:
-                if taxon_name.startswith("id:"):
-                    taxon_names.append(taxon_name.split(":")[1])
-                else:
-                    taxon_names.append(taxon_name)
+                name = (
+                    taxon_name.split(":")[1]
+                    if taxon_name.startswith("id:")
+                    else taxon_name
+                )
+                taxon_names.append(name.strip())
             if more_names:
-                taxon_names += more_names.split(",")
+                taxon_names.extend(
+                    [t.strip() for t in more_names.split(",") if t.strip()]
+                )
         else:
-            # When invoked as a message-based command, treat all arguments
-            # as a single space-delimited argument, then split them all
-            # on comma for backwards compatibility with the original single
-            # globbed argument call signature.
-            taxon_names = " ".join([taxon1, taxon2, more_names]).split(",")
+            # combine with blanks then split on commas for compatibility with
+            # original message-based `,related` command
+            raw_input = " ".join(filter(None, [taxon1, taxon2, more_names]))
+            taxon_names = [t.strip() for t in raw_input.split(",") if t.strip()]
         await self._taxon_related(ctx, taxon_names)
 
     @commands.command(hidden=True)
