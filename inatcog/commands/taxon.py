@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 from contextlib import asynccontextmanager
+import logging
 import re
 import textwrap
 from typing import List, Optional
@@ -41,7 +42,10 @@ from ..interfaces import MixinMeta
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 
+logger = logging.getLogger("red.dronefly." + __name__)
+
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
+LANGUAGE_CODE_PAT = re.compile(r"[a-z]{2}(_[a-z]{2})? ", re.I)
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
@@ -118,7 +122,20 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
         async def fetch_taxon_choices(current):
-            taxa = taxon_autocomplete(current, autocompleter=self.taxon_autocompleter)
+            """Return choices from fast FTS taxon autocomplete search
+
+            - English common names by default, overridden by language code as the first word.
+            """
+            _current = current
+            mat = re.match(LANGUAGE_CODE_PAT, _current)
+            if mat:
+                language = mat[0].strip()
+                _current = LANGUAGE_CODE_PAT.sub("", _current)
+            else:
+                language = "en"
+            taxa = taxon_autocomplete(
+                _current, autocompleter=self.taxon_autocompleter, language=language
+            )
             if taxa:
                 return [
                     app_commands.Choice(
@@ -172,7 +189,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @app_commands.autocomplete(taxon=taxon_autocomplete)
-    @app_commands.describe(taxon="Taxon name", query="Optional query terms (e.g. my)")
+    @app_commands.describe(
+        taxon="Taxon name (e.g. aves, birds, fr oiseaux)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon(self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""):
