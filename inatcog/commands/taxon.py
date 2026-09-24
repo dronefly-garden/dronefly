@@ -114,34 +114,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             cog=self,
         ).start(ctx=ctx)
 
-    @commands.hybrid_group(aliases=["t"], fallback="query")
-    @checks.bot_has_permissions(embed_links=True)
-    @use_client
-    async def taxon(self, ctx, *, query: Optional[str]):
-        """Taxon information.
-
-        - *Taxon query terms* match a single taxon to display.
-        - *Observation query terms* match observation filters.
-        - *Reply* to another display to display its taxon.
-        - The *query* is optional when that display contains a taxon.
-        **Related help topics:**
-        - `[p]taxon_query` for *taxon query* terms
-        - `[p]query` for help with other *query* terms
-        - `[p]reactions` describes the *reaction buttons*
-        - `[p]help s taxa` to search and browse matching taxa
-        """
-
-        error_msg = None
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if not query_response:
-                return
-            try:
-                await self._start_taxon_menu(ctx, query_response)
-            except (BadArgument, LookupError) as err:
-                error_msg = str(err)
-        if error_msg:
-            await apologize(ctx, error_msg)
-
     async def taxon_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
@@ -173,34 +145,52 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 pass
         return []
 
-    @taxon.command(name="show", hidden=True)
-    @app_commands.autocomplete(taxon=taxon_autocomplete)
-    @app_commands.describe(taxon="Taxon name", query="Optional query terms (e.g. my)")
-    @checks.bot_has_permissions(embed_links=True)
-    @use_client
-    async def taxon_show(self, ctx, taxon: str, query: Optional[str] = None):
-        """Taxon information with autocomplete (taxon name only)."""
-        error_msg = None
-        await ctx.defer()
-
-        if taxon.startswith("id:"):
-            combined_query = taxon.split(":")[1]
+    @staticmethod
+    def combine_query_args(taxon_name, query):
+        if taxon_name.startswith("id:"):
+            combined_query = taxon_name.split(":")[1]
         else:
-            combined_query = taxon
+            combined_query = taxon_name
         if query:
             combined_query = combined_query + " " + query
-        async with self._get_taxon_response(ctx, combined_query) as (
+        return combined_query
+
+    async def show_taxon(self, ctx, query, **kwargs):
+        async with self._get_taxon_response(ctx, query, **kwargs) as (
             query_response,
             _query,
         ):
+            error_msg = None
             if not query_response:
                 return
             try:
                 await self._start_taxon_menu(ctx, query_response)
             except (BadArgument, LookupError) as err:
                 error_msg = str(err)
-        if error_msg:
-            await apologize(ctx, error_msg)
+            if error_msg:
+                await apologize(ctx, error_msg)
+
+    @commands.hybrid_group(aliases=["t"], fallback="show")
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(taxon="Taxon name", query="Optional query terms (e.g. my)")
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def taxon(self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""):
+        """Taxon information.
+
+        - *Taxon query terms* match a single taxon to display.
+        - *Observation query terms* match observation filters.
+        - *Reply* to another display to display its taxon.
+        - The *query* is optional when that display contains a taxon.
+        **Related help topics:**
+        - `[p]taxon_query` for *taxon query* terms
+        - `[p]query` for help with other *query* terms
+        - `[p]reactions` describes the *reaction buttons*
+        - `[p]help s taxa` to search and browse matching taxa
+        """
+        await ctx.defer()
+        combined_query = self.combine_query_args(taxon, query)
+        await self.show_taxon(ctx, combined_query)
 
     @taxon.command(name="list")
     @use_client
