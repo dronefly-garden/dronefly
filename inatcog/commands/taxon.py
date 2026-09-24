@@ -28,7 +28,7 @@ from dronefly.discord.menus import (
     TaxonSource,
 )
 from dronefly.miner import taxon_autocomplete
-from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
+from pyinaturalist import RANKS, RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
@@ -125,6 +125,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             """Return choices from fast FTS taxon autocomplete search
 
             - English common names by default, overridden by language code as the first word.
+            - Filtered on rank if the first word (or second if language specified) is a rank.
             """
             _current = current
             mat = re.match(LANGUAGE_CODE_PAT, _current)
@@ -133,8 +134,22 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 _current = LANGUAGE_CODE_PAT.sub("", _current)
             else:
                 language = "en"
+            words = _current.split(" ")
+            rank = None
+            if len(words) > 1:
+                first_word = words[0].lower()
+                if first_word in RANKS:
+                    rank = first_word
+                if not rank:
+                    rank = RANK_EQUIVALENTS.get(first_word)
+                if rank:
+                    words.remove(first_word)
+                    _current = " ".join(words)
             taxa = taxon_autocomplete(
-                _current, autocompleter=self.taxon_autocompleter, language=language
+                _current,
+                autocompleter=self.taxon_autocompleter,
+                language=language,
+                rank=rank,
             )
             if taxa:
                 return [
@@ -190,7 +205,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @commands.hybrid_group(aliases=["t"], fallback="show")
     @app_commands.autocomplete(taxon=taxon_autocomplete)
     @app_commands.describe(
-        taxon="Taxon name (e.g. aves, birds, fr oiseaux)",
+        taxon="Taxon name (e.g. aves, birds, fr oiseaux, genus birds)",
         query="Optional query terms (e.g. my)",
     )
     @checks.bot_has_permissions(embed_links=True)
