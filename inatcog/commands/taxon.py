@@ -344,10 +344,43 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             if msg:
                 await add_reactions_with_cancel(ctx, msg, [])
 
+    @staticmethod
+    def combine_taxon_name_args(ctx, taxon_names: list[str], more_names: str):
+        _taxon_names = []
+        if ctx.interaction:
+            for taxon_name in taxon_names:
+                name = (
+                    taxon_name.split(":")[1]
+                    if taxon_name.startswith("id:")
+                    else taxon_name
+                )
+                _taxon_names.append(name.strip())
+            if more_names:
+                _taxon_names.extend(
+                    [t.strip() for t in more_names.split(",") if t.strip()]
+                )
+        else:
+            # combine with blanks then split on commas for compatibility with
+            # original message-based `,related` command
+            raw_input = " ".join(filter(None, [*taxon_names, more_names]))
+            _taxon_names = [t.strip() for t in raw_input.split(",") if t.strip()]
+        return _taxon_names
+
     @taxon.command(name="map")
-    async def taxon_map(self, ctx, *, taxa_list):
+    @app_commands.autocomplete(taxon1=taxon_autocomplete, taxon2=taxon_autocomplete)
+    @app_commands.describe(
+        taxon1="Name of first taxon",
+        taxon2="Name of second taxon",
+        more_names="Comma-separated list of additional taxon names",
+    )
+    @checks.bot_has_permissions(embed_links=True)
+    async def taxon_map(
+        self, ctx, taxon1: str, taxon2: str, *, more_names: Optional[str] = ""
+    ):
         """Show range map for one or more taxa."""
-        await self.bot.get_command("map")(ctx, taxa_list=taxa_list)
+        await ctx.defer()
+        taxon_names = self.combine_taxon_name_args(ctx, [taxon1, taxon2], more_names)
+        await self.bot.get_command("map")(ctx, taxa_list=",".join(taxon_names))
 
     @taxon.command(name="search")
     async def taxon_search(self, ctx, *, query):
@@ -653,24 +686,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         """
 
         await ctx.defer()
-        taxon_names = []
-        if ctx.interaction:
-            for taxon_name in [taxon1, taxon2]:
-                name = (
-                    taxon_name.split(":")[1]
-                    if taxon_name.startswith("id:")
-                    else taxon_name
-                )
-                taxon_names.append(name.strip())
-            if more_names:
-                taxon_names.extend(
-                    [t.strip() for t in more_names.split(",") if t.strip()]
-                )
-        else:
-            # combine with blanks then split on commas for compatibility with
-            # original message-based `,related` command
-            raw_input = " ".join(filter(None, [taxon1, taxon2, more_names]))
-            taxon_names = [t.strip() for t in raw_input.split(",") if t.strip()]
+        taxon_names = self.combine_taxon_name_args(ctx, [taxon1, taxon2], more_names)
         await self._taxon_related(ctx, taxon_names)
 
     @commands.command(hidden=True)
