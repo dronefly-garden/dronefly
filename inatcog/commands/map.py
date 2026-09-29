@@ -46,16 +46,15 @@ class CommandsMap(INatEmbeds, MixinMeta):
             _taxa_list = str(query_response.taxon.id)
             if taxa_list:
                 _taxa_list = [_taxa_list, taxa_list]
-                _taxa_list = ",".join(_taxa_list)
         else:
-            _taxa_list = taxa_list
+            _taxa_list = taxa_list.split(",")
 
         if not _taxa_list:
             await ctx.send_help()
             return
 
         try:
-            (taxa, missing_taxa) = await self.taxon_query.query_taxa(ctx, _taxa_list)
+            taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
