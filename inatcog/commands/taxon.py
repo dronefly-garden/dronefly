@@ -190,10 +190,10 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             combined_query = combined_query + " " + query
         if with_number:
             if not autocompleted:
-                _number = combined_query.split(" ", 1).trim()
-                if _number[0].isdigit():
-                    combined_query = _number[1]
-                    number = int(_number[0])
+                _query = [w.strip() for w in combined_query.split(" ", 1)]
+                if _query[0].isdigit():
+                    combined_query = _query[1]
+                    number = int(_query[0])
             return (number, combined_query)
         return combined_query
 
