@@ -178,13 +178,23 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         return []
 
     @staticmethod
-    def combine_query_args(taxon_name, query):
+    def combine_query_args(taxon_name, query, with_number=False):
+        number = 1
+        autocompleted = False
         if taxon_name.startswith("id:"):
+            autocompleted = True
             combined_query = taxon_name.split(":")[1]
         else:
             combined_query = taxon_name
         if query:
             combined_query = combined_query + " " + query
+        if with_number:
+            if not autocompleted:
+                _number = combined_query.split(" ", 1).trim()
+                if _number[0].isdigit():
+                    combined_query = _number[1]
+                    number = int(_number[0])
+            return (number, combined_query)
         return combined_query
 
     async def show_taxon(self, ctx, query, **kwargs):
@@ -709,16 +719,32 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             await apologize(ctx, err)
 
     @taxon.command(name="image", aliases=["img", "photo"])
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(
+        taxon="Taxon name (e.g. aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon_image(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str]
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str]
     ):
-        """Default image for a taxon.
+        """Show default images for a taxon.
 
         See `[p]taxon_query` for *query* help."""
+        await ctx.defer()
+        # Undocumented initial `number` parameter is supported for compatibility
+        # with the original message-based command:
+        # - If the first word of the combined query is a number, it is treated
+        #   as the initial image to show (default: 1).
+        # - However, this is incompatible with using autocomplete. Simply use
+        #   the image select
+        number, combined_query = self.combine_query_args(taxon, query, with_number=True)
         error_msg = None
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+        async with self._get_taxon_response(ctx, combined_query) as (
+            query_response,
+            _query,
+        ):
             if not query_response:
                 return
             try:
@@ -730,7 +756,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def image_alias(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str] = ""
-    ):
-        await self.bot.get_command("taxon image")(ctx, number, query=query)
+    async def image_alias(self, ctx, *, query: Optional[str] = ""):
+        """Legacy message-based img command.
+
+        Just invokes `taxon image` with its single globbed argument.
+        """
+        await self.bot.get_command("taxon image")(ctx, taxon=query)
