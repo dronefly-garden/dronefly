@@ -28,8 +28,7 @@ def cache_busting_id():
     Discord parlance) to bust the cache.
 
     The Discord URL unfurl is reported here to be cached "up to 30 minutes":
-
-      - https://github.com/discord/discord-api-docs/issues/1663#issuecomment-632970964
+    https://github.com/discord/discord-api-docs/issues/1663#issuecomment-632970964
 
     Since that would be 4 digits, we're generous and generate IDs from 0 through 9999,
     so should work to bust their cache for roughly 2.78 hours.
