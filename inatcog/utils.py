@@ -150,19 +150,18 @@ async def get_dronefly_user_defaults(
 ) -> dict:
     """Return the user's Dronefly defaults.
 
-    Defaults are supplied from the user's own config, the guild config, or
-    global config, whichever is applicable according to the following rules.
+    Each default setting is supplied from the most specific config in the
+    current scope that has one defined: first, the user's own config, then
+    the guild config, and finally the global config.
 
-    - for each default:
-      - if the user is known either in the guild scope (`anywhere=False`)
-        or globally (`anywhere=True`) and their user config has that default,
-        use it
-      - otherwise use a guild default
-        - if `ctx.guild` if set and the guild config has that default,
-          use it
-        - otherwise if the user's config has `home_server` set and
-          that guild has the default, use it
-      - otherwise use a global default if there is one
+    1. **User default:** Selected if the user is known either in the
+      guild scope (`anywhere=False`) or globally (`anywhere=True`) and
+      their user config defines a default for the setting.
+    2. **Guild/home server default:** Selected when in a guild, or the user
+      has `home_server` set to a guild and the guild config defines a
+      default for the setting.
+    3. **Global default:** Any default not already supplied by the user or
+      guild config will fall back to the global default if defined.
     """
     _user = user or ctx.author
     try:
