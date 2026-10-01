@@ -4,7 +4,7 @@ set -euo pipefail
 # 1. Configuration & Prereq Checks
 REPO_NAME="dronefly"
 ORG_NAME="dronefly-garden"
-MEMBERS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly")
+MEMBERS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-doc" "dronefly-miner" "dronefly")
 TARGET_PYTHON="3.11"
 
 echo "=== Setting up Dronefly Monorepo Workspace ==="
