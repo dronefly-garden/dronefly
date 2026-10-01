@@ -63,12 +63,21 @@ echo "$TARGET_PYTHON" > .python-version
 echo "Generating root pyproject.toml..."
 cat << 'EOF' > pyproject.toml
 [tool.uv.workspace]
-members = ["dronefly-cli", "dronefly-core", "dronefly-discord", "dronefly"]
+members = [
+    "dronefly-cli",
+    "dronefly-core",
+    "dronefly-discord",
+    "dronefly-doc",
+    "dronefly-miner",
+    "dronefly"
+]
 
 [tool.uv.sources]
 dronefly-cli = { workspace = true }
 dronefly-core = { workspace = true }
 dronefly-discord = { workspace = true }
+dronefly-doc = { workspace = true }
+dronefly-miner = { workspace = true }
 dronefly = { workspace = true }
 EOF
 
@@ -110,7 +119,9 @@ cat << 'EOF' > "$MONOREPO_VSCODE/settings.json"
         "dronefly",
         "dronefly-cli",
         "dronefly-core",
-        "dronefly-discord"
+        "dronefly-discord",
+        "dronefly-doc",
+        "dronefly-miner"
     ]
 }
 EOF
