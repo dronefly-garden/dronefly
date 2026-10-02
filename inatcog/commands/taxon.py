@@ -727,7 +727,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon_image(
-        self, ctx, taxon: Optional[str] = "", *, query: Optional[str]
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
         """Show default images for a taxon.
 
