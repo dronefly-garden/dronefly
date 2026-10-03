@@ -4,7 +4,7 @@ set -euo pipefail
 # 1. Configuration & Prereq Checks
 REPO_NAME="dronefly"
 ORG_NAME="dronefly-garden"
-MEMBERS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly")
+MEMBERS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-doc" "dronefly-miner" "dronefly")
 TARGET_PYTHON="3.11"
 
 echo "=== Setting up Dronefly Monorepo Workspace ==="
@@ -63,12 +63,21 @@ echo "$TARGET_PYTHON" > .python-version
 echo "Generating root pyproject.toml..."
 cat << 'EOF' > pyproject.toml
 [tool.uv.workspace]
-members = ["dronefly-cli", "dronefly-core", "dronefly-discord", "dronefly"]
+members = [
+    "dronefly-cli",
+    "dronefly-core",
+    "dronefly-discord",
+    "dronefly-doc",
+    "dronefly-miner",
+    "dronefly"
+]
 
 [tool.uv.sources]
 dronefly-cli = { workspace = true }
 dronefly-core = { workspace = true }
 dronefly-discord = { workspace = true }
+dronefly-doc = { workspace = true }
+dronefly-miner = { workspace = true }
 dronefly = { workspace = true }
 EOF
 
@@ -110,7 +119,9 @@ cat << 'EOF' > "$MONOREPO_VSCODE/settings.json"
         "dronefly",
         "dronefly-cli",
         "dronefly-core",
-        "dronefly-discord"
+        "dronefly-discord",
+        "dronefly-doc",
+        "dronefly-miner"
     ]
 }
 EOF

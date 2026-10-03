@@ -13,11 +13,11 @@ __red_end_user_data_statement__ = get_end_user_data_statement(__file__)
 async def setup(bot):
     """Setup bot
 
-    - Supplies our custom formatter
-      - Note: incompatible with cogs providing their own help formatter, but inatcog
-        is such a special-purpose cog, it's not really intended to use it on a
-        general-purpose bot, so this is OK(-ish).
-    - Adds context commands
+    1. Supplies our custom help formatter. *Note: incompatible with cogs providing
+    their own help formatter, but inatcog is such a special-purpose cog, it's not
+    really intended to use it on a general-purpose bot, so this is OK(-ish).*
+
+    2. Registers context commands.
     """
     bot.set_help_formatter(INatHelp())
     cog = INatCog(bot)
