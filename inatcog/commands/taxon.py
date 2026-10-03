@@ -145,12 +145,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 if rank:
                     words.remove(first_word)
                     _current = " ".join(words)
-            taxa = taxon_autocomplete(
-                _current,
-                autocompleter=self.taxon_autocompleter,
-                language=language,
-                rank=rank,
-            )
+            taxa = None
+            if _current:
+                taxa = taxon_autocomplete(
+                    _current,
+                    autocompleter=self.taxon_autocompleter,
+                    language=language,
+                    rank=rank,
+                )
             if taxa:
                 return [
                     app_commands.Choice(
