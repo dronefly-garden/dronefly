@@ -43,6 +43,52 @@ After adding the repo as per Installation, install & load inatcog:
 [p]load inatcog
 ```
 
+#### Taxon autocompletion
+
+Commands that accept a taxon argument use an `observations.db`
+SQLite database built by `dronefly-miner`. If the database is
+absent or unreadable, the autocompletion results will be empty
+for those commands.
+
+Requirements:
+
+- Sufficient disk space for the files, about 300GB total:
+    - `~/.local/share/pyinaturalist/*`
+        - ~250GB iNaturalist DWC-A export files & derived work files
+    - `~/.local/share/dronefly-miner/observations.db`
+        - ~50GB database built from those files
+- Time to complete the job, roughly 1.5 hrs on a system/network
+  with the following specs:
+    - *System:* Ryzen 7 255, 32GB ram, and nvme ssd
+    - *Network:* 1Gbps residential FTH
+
+No script is provided yet in this release, as the feature is in
+early stages of development at this time, so nothing much has been
+done by way of packaging it neatly.
+
+Build the database as follows:
+
+```
+mkdir -p dronefly-miner
+cd dronefly-miner
+uv run --with dronefly-miner python -c "from dronefly.miner import * ; load_fts_taxa(db_path=DB_PATH, languages='all')"
+```
+
+When and how often you perform the database load is up to you.
+
+- The iNaturalist taxonomy DWC-A archive is updated monthly.
+- The iNaturalist observations DWC-A archive is updated weekly.
+  It is used to improve relevance ranking of autocompletion
+  results.
+- Files will only be downloaded if newer versions are available.
+- Daily, weekly, or monthly are all reasonable schedules:
+    - *Daily* updates the DB as soon as possible after new files
+      are published.
+    - *Weekly* balances timeliness of receiving updates with the
+      cost of performing them.
+    - *Monthly* stil provides good-enough update frequency while
+      reducing processing cost.
+
 ### ebirdcog
 
 *Note: This cog is no longer being actively developed. It is still supported, but no new features will be added.*
