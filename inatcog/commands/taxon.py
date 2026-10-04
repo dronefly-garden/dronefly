@@ -10,6 +10,7 @@ from typing import List, Optional
 
 import discord
 from discord import app_commands
+import sqlite3
 
 from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.constants import WWW_BASE_URL
@@ -165,6 +166,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
             return []
 
+        reason = "autocomplete not configured"
         if self.taxon_autocompleter and current:
             try:
                 # Time out early so we don't exceed Discord's 3s limit.
@@ -175,8 +177,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     timeout=2.5,
                 )
                 return choices
+            except (
+                sqlite3.OperationalError,
+                sqlite3.InterfaceError,
+                sqlite3.DatabaseError,
+            ):
+                reason = "autocomplete offline during rebuild"
             except TimeoutError:
-                pass
+                reason = "autocomplete timed out"
+        # When anything has been typed and autocomplete is not available for any
+        # reason, return the text verbatim as the only choice; the command
+        # argument will be looked up via the API.
+        if current:
+            return [
+                app_commands.Choice(
+                    name=f"{current} ({reason})",
+                    value=current,
+                )
+            ]
+        # Otherwise nothing has been typed:
         return []
 
     @staticmethod
