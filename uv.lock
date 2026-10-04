@@ -455,7 +455,7 @@ requires-dist = [
     { name = "aiohttp-retry", specifier = ">=2.4.5,<3" },
     { name = "aiolimiter", specifier = ">=1.0.0,<2" },
     { name = "dronefly-discord", specifier = ">=0.2.3,<0.3" },
-    { name = "dronefly-miner", specifier = ">=0.1.0" },
+    { name = "dronefly-miner", specifier = ">=0.2.0" },
     { name = "ebird-api", specifier = ">=3.0.6,<4" },
     { name = "filelock", specifier = ">=3.13.3,<4" },
     { name = "pip", specifier = ">=26.1.2" },
@@ -506,7 +506,7 @@ wheels = [
 
 [[package]]
 name = "dronefly-miner"
-version = "0.1.0"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
@@ -520,9 +520,9 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "xmltodict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/02/8a/08402e06a65c551216819233a5575a680c5f63b92f4469d902003068428b/dronefly_miner-0.1.0.tar.gz", hash = "sha256:5989bfb53b85c10545bc3a2ebc7bae74f50163e47c1ad6bb6573c1df8eb7fcaa", size = 2612, upload-time = "2026-10-03T14:05:54.581Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/49/dd/57fd5dfd5847619f55242cef4281060ee8de51d4e62a6236639e2df2ff2f/dronefly_miner-0.2.0.tar.gz", hash = "sha256:9d8e5a4e02f886b465bd0364eadb50dd05a77e08c4d36ed8457b4486ccd30286", size = 4446, upload-time = "2026-10-04T14:55:34.077Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/34/16db1a4cd6414a534355f75a2e7e61a171e1b5a77917503e5e97bc1df0b2/dronefly_miner-0.1.0-py3-none-any.whl", hash = "sha256:952cbd91b97960d45a0bd9019a9a8f61aa5dda0ed8c6e7fb5c59c69ef3ade6dc", size = 3182, upload-time = "2026-10-03T14:05:53.532Z" },
+    { url = "https://files.pythonhosted.org/packages/71/9c/2e72b94db0a803aae2748ef3bf3fe963881502d226913b558826ed3586a8/dronefly_miner-0.2.0-py3-none-any.whl", hash = "sha256:ccfa3e17af108d30c068e379b898a1e6992e8be93affaa8bb8520a8dc74a36a6", size = 5625, upload-time = "2026-10-04T14:55:33.051Z" },
 ]
 
 [[package]]
