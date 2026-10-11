@@ -1,14 +1,18 @@
 """Module to work with iNat taxa."""
+
 import copy
+import logging
+from pathlib import Path
 import re
+import sqlite3
 from typing import NamedTuple, Optional, Union
 
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
 from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Place, Taxon, User
+from pyinaturalist_convert import TaxonAutocompleter
 from redbot.core.commands import Context
-
 
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
@@ -19,6 +23,43 @@ TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
+
+logger = logging.getLogger("red.dronefly." + __name__)
+
+
+class TaxonAutocompleteManager:
+    """Manages the lifecycle of TaxonAutocompleter, auto-reloading when DB_PATH updates."""
+
+    def __init__(self, db_path: Path):
+        self.db_path = Path(db_path)
+        self.autocompleter: Optional[TaxonAutocompleter] = None
+        self._last_mtime: float = 0.0
+
+    def get_autocompleter(self) -> Optional[TaxonAutocompleter]:
+        if not self.db_path.exists():
+            self.autocompleter = None
+            return None
+
+        current_mtime = self.db_path.stat().st_mtime
+
+        if self.autocompleter is None or current_mtime != self._last_mtime:
+            try:
+                self.autocompleter = TaxonAutocompleter(db_path=self.db_path)
+                self._last_mtime = current_mtime
+                logger.info(
+                    "Loaded fresh TaxonAutocompleter from updated database: %s",
+                    self.db_path,
+                )
+            except (sqlite3.DatabaseError, IOError) as e:
+                logger.warning(
+                    "Could not initialize TaxonAutocompleter from %s: %s",
+                    self.db_path,
+                    e,
+                )
+                if self.autocompleter is None:
+                    return None
+
+        return self.autocompleter
 
 
 async def get_taxon_preferred_establishment_means(ctx, taxon):
@@ -98,9 +139,11 @@ def match_pat(record, pat, scientific_name=False, locale=None):
     return NameMatch(
         re.search(pat, record.matched_term),
         re.search(pat, record.name),
-        re.search(pat, record.preferred_common_name)
-        if record.preferred_common_name
-        else None,
+        (
+            re.search(pat, record.preferred_common_name)
+            if record.preferred_common_name
+            else None
+        ),
     )
 
 

@@ -148,9 +148,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     _current = " ".join(words)
             taxa = None
             if _current:
+                taxon_autocompleter = (
+                    self.taxon_autocomplete_manager.get_autocompleter()
+                )
                 taxa = taxon_autocomplete(
                     _current,
-                    autocompleter=self.taxon_autocompleter,
+                    autocompleter=taxon_autocompleter,
                     language=language,
                     rank=rank,
                 )
@@ -167,7 +170,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             return []
 
         reason = "autocomplete not configured"
-        if self.taxon_autocompleter and current:
+        if self.taxon_autocomplete_manager and current:
             try:
                 # Time out early so we don't exceed Discord's 3s limit.
                 # - typing more characters typically completes well within

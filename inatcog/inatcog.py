@@ -13,7 +13,6 @@ import inflect
 from redbot.core import commands, Config
 from redbot.core.utils.antispam import AntiSpam
 
-from pyinaturalist_convert import TaxonAutocompleter
 from dronefly.miner import DB_PATH
 
 from .api import INatAPI
@@ -35,6 +34,7 @@ from .projects import INatProjectTable
 from .query import INatQuery
 from .listeners import Listeners
 from .search import INatSiteSearch
+from .taxa import TaxonAutocompleteManager
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
@@ -96,13 +96,15 @@ class INatCog(
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
-        self.taxon_autocompleter = None
+        self.taxon_autocomplete_manager = None
         if Path(DB_PATH).exists():
             try:
-                self.taxon_autocompleter = TaxonAutocompleter(db_path=DB_PATH)
+                self.taxon_autocomplete_manager = TaxonAutocompleteManager(
+                    db_path=DB_PATH
+                )
             except IOError:
                 logger.warning("Could not read: %s", DB_PATH)
-        if not self.taxon_autocompleter:
+        if not self.taxon_autocomplete_manager:
             logger.warning(
                 (
                     "Autocompletions will be empty; db missing or unreadable: %s ("
