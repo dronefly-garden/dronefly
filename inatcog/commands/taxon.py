@@ -216,7 +216,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             if not autocompleted:
                 _query = [w.strip() for w in combined_query.split(" ", 1)]
                 if _query[0].isdigit():
-                    combined_query = _query[1]
+                    combined_query = _query[1] if len(_query) == 2 else ""
                     number = int(_query[0])
             return (number, combined_query)
         return combined_query
