@@ -46,7 +46,7 @@ from ..utils import get_lang, use_client
 logger = logging.getLogger("red.dronefly." + __name__)
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
-LANGUAGE_CODE_PAT = re.compile(r"[a-z]{2}(_[a-z]{2})? ", re.I)
+LANGUAGE_CODE_PAT = re.compile(r"^[a-z]{2}(_[a-z]{2})? ", re.I)
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
