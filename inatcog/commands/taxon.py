@@ -122,41 +122,49 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def taxon_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        async def fetch_taxon_choices(current):
+        async def fetch_taxon_choices(current: str):
             """Return choices from fast FTS taxon autocomplete search
 
             - English common names by default, overridden by language code as the first word.
             - Filtered on rank if the first word (or second if language specified) is a rank.
             """
-            _current = current
+            _current = current.strip()
+            if not _current:
+                return []
+
             mat = re.match(LANGUAGE_CODE_PAT, _current)
             if mat:
                 language = mat[0].strip()
-                _current = LANGUAGE_CODE_PAT.sub("", _current)
+                _current = LANGUAGE_CODE_PAT.sub("", _current).strip()
             else:
                 language = "en"
-            words = _current.split(" ")
+
+            words = _current.split()
             rank = None
             if len(words) > 1:
                 first_word = words[0].lower()
                 if first_word in RANKS:
                     rank = first_word
-                if not rank:
+                else:
                     rank = RANK_EQUIVALENTS.get(first_word)
+
                 if rank:
-                    words.remove(first_word)
-                    _current = " ".join(words)
-            taxa = None
-            if _current:
-                taxon_autocompleter = (
-                    self.taxon_autocomplete_manager.get_autocompleter()
-                )
-                taxa = taxon_autocomplete(
-                    _current,
-                    autocompleter=taxon_autocompleter,
-                    language=language,
-                    rank=rank,
-                )
+                    _current = " ".join(words[1:])
+
+            if not _current:
+                return []
+
+            taxon_autocompleter = self.taxon_autocomplete_manager.get_autocompleter()
+            if not taxon_autocompleter:
+                return []
+
+            taxa = taxon_autocomplete(
+                _current,
+                autocompleter=taxon_autocompleter,
+                language=language,
+                rank=rank,
+            )
+
             if taxa:
                 return [
                     app_commands.Choice(
@@ -173,8 +181,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         if self.taxon_autocomplete_manager and current:
             try:
                 # Time out early so we don't exceed Discord's 3s limit.
-                # - typing more characters typically completes well within
-                #   the limit once autocomplete is warmed up
                 choices = await asyncio.wait_for(
                     fetch_taxon_choices(current),
                     timeout=2.5,
@@ -188,9 +194,8 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 reason = "autocomplete offline during rebuild"
             except TimeoutError:
                 reason = "autocomplete timed out"
-        # When anything has been typed and autocomplete is not available for any
-        # reason, return the text verbatim as the only choice; the command
-        # argument will be looked up via the API.
+
+        # Fallback when autocomplete is unavailable or times out
         if current:
             return [
                 app_commands.Choice(
@@ -198,7 +203,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                     value=current,
                 )
             ]
-        # Otherwise nothing has been typed:
+
         return []
 
     @staticmethod

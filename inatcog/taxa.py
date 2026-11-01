@@ -36,11 +36,11 @@ class TaxonAutocompleteManager:
         self._last_mtime: float = 0.0
 
     def get_autocompleter(self) -> Optional[TaxonAutocompleter]:
-        if not self.db_path.exists():
+        try:
+            current_mtime = self.db_path.stat().st_mtime
+        except (FileNotFoundError, NotADirectoryError):
             self.autocompleter = None
             return None
-
-        current_mtime = self.db_path.stat().st_mtime
 
         if self.autocompleter is None or current_mtime != self._last_mtime:
             try:
