@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import logging
 import re
 import textwrap
+import time
 from typing import List, Optional
 
 import discord
@@ -122,7 +123,14 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def taxon_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        async def fetch_taxon_choices(current: str):
+        user_id = interaction.user.id
+
+        existing_task = self._user_search_tasks.get(user_id)
+        if existing_task and not existing_task.done():
+            logging.info("Previous autocomplete for user %i cancelled", user_id)
+            existing_task.cancel()
+
+        def fetch_taxon_choices(current: str):
             """Return choices from fast FTS taxon autocomplete search
 
             - English common names by default, overridden by language code as the first word.
@@ -151,7 +159,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 if rank:
                     _current = " ".join(words[1:])
 
-            if not _current:
+            if len(_current) < 3:
                 return []
 
             taxon_autocompleter = self.taxon_autocomplete_manager.get_autocompleter()
@@ -177,34 +185,55 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
             return []
 
-        reason = "autocomplete not configured"
-        if self.taxon_autocomplete_manager and current:
-            try:
-                # Time out early so we don't exceed Discord's 3s limit.
-                choices = await asyncio.wait_for(
-                    fetch_taxon_choices(current),
-                    timeout=2.5,
-                )
-                return choices
-            except (
-                sqlite3.OperationalError,
-                sqlite3.InterfaceError,
-                sqlite3.DatabaseError,
-            ):
-                reason = "autocomplete offline during rebuild"
-            except TimeoutError:
-                reason = "autocomplete timed out"
+        # Wrap the execution in a managed asyncio task to ensure
+        # back-to-back autocompletes for the same user don't pile up.
+        async def run_autocomplete():
+            reason = "autocomplete not configured"
+            if self.taxon_autocomplete_manager and current:
+                try:
+                    taxa = await asyncio.wait_for(
+                        self.bot.loop.run_in_executor(
+                            None, fetch_taxon_choices, current
+                        ),
+                        timeout=2.5,
+                    )
+                    return taxa
+                except (
+                    sqlite3.OperationalError,
+                    sqlite3.InterfaceError,
+                    sqlite3.DatabaseError,
+                ):
+                    reason = "autocomplete offline during rebuild"
+                except TimeoutError:
+                    reason = "autocomplete timed out"
 
-        # Fallback when autocomplete is unavailable or times out
-        if current:
-            return [
-                app_commands.Choice(
-                    name=f"{current} ({reason})",
-                    value=current,
-                )
-            ]
+            if current:
+                return [
+                    app_commands.Choice(
+                        name=f"{current} ({reason})",
+                        value=current,
+                    )
+                ]
+            return []
 
-        return []
+        task = self.bot.loop.create_task(run_autocomplete())
+        self._user_search_tasks[user_id] = task
+
+        start_time = time.perf_counter()
+        try:
+            # Await the task; if a newer keystroke cancels this task, it raises CancelledError
+            response = await task
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            logger.info(
+                f'autocompleted "{current}" in {elapsed_ms:.2f}ms (matched {len(response)})'
+            )
+            return response
+        except asyncio.CancelledError:
+            logger.info(f'autocomplete cancelled "{current}" after {elapsed_ms:.2f}ms')
+            return []
+        finally:
+            if self._user_search_tasks.get(user_id) == task:
+                self._user_search_tasks.pop(user_id, None)
 
     @staticmethod
     def combine_query_args(taxon_name, query, with_number=False):
