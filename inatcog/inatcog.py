@@ -161,7 +161,6 @@ class INatCog(
         self._init_task: asyncio.Task = self.bot.loop.create_task(self.initialize())
         self._log_ignored_reactions = False
         self._ready_event: asyncio.Event = asyncio.Event()
-        self._user_search_tasks: dict[int, asyncio.Task] = {}
 
     async def cog_before_invoke(self, ctx: commands.Context):
         """Initialization before cog is invoked."""
@@ -247,12 +246,6 @@ class INatCog(
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
-
-            # Cancel any active user autocomplete search tasks
-            for task in self._user_search_tasks.values():
-                if not task.done():
-                    task.cancel()
-            self._user_search_tasks.clear()
 
             await self.api.session.close()
             self._cleaned_up = True

@@ -123,13 +123,6 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
     async def taxon_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> List[app_commands.Choice[str]]:
-        user_id = interaction.user.id
-
-        existing_task = self._user_search_tasks.get(user_id)
-        if existing_task and not existing_task.done():
-            logging.info("Previous autocomplete for user %i cancelled", user_id)
-            existing_task.cancel()
-
         def fetch_taxon_choices(current: str):
             """Return choices from fast FTS taxon autocomplete search
 
@@ -185,55 +178,41 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 ]
             return []
 
-        # Wrap the execution in a managed asyncio task to ensure
-        # back-to-back autocompletes for the same user don't pile up.
-        async def run_autocomplete():
-            reason = "autocomplete not configured"
-            if self.taxon_autocomplete_manager and current:
-                try:
-                    taxa = await asyncio.wait_for(
-                        self.bot.loop.run_in_executor(
-                            None, fetch_taxon_choices, current
-                        ),
-                        timeout=2.5,
-                    )
-                    return taxa
-                except (
-                    sqlite3.OperationalError,
-                    sqlite3.InterfaceError,
-                    sqlite3.DatabaseError,
-                ):
-                    reason = "autocomplete offline during rebuild"
-                except TimeoutError:
-                    reason = "autocomplete timed out"
+        start_time = time.perf_counter()
+        reason = "autocomplete not configured"
+        response = []
 
-            if current:
-                return [
+        if self.taxon_autocomplete_manager and current:
+            try:
+                response = await asyncio.wait_for(
+                    self.bot.loop.run_in_executor(None, fetch_taxon_choices, current),
+                    timeout=2.5,
+                )
+            except (
+                sqlite3.OperationalError,
+                sqlite3.InterfaceError,
+                sqlite3.DatabaseError,
+            ) as e:
+                logger.error(
+                    "Database error during autocomplete for '%s': %s", current, e
+                )
+                reason = "autocomplete offline during rebuild"
+            except TimeoutError:
+                reason = "autocomplete timed out"
+
+            if not response and current and reason != "autocomplete not configured":
+                response = [
                     app_commands.Choice(
                         name=f"{current} ({reason})",
                         value=current,
                     )
                 ]
-            return []
 
-        task = self.bot.loop.create_task(run_autocomplete())
-        self._user_search_tasks[user_id] = task
-
-        start_time = time.perf_counter()
-        try:
-            # Await the task; if a newer keystroke cancels this task, it raises CancelledError
-            response = await task
-            elapsed_ms = (time.perf_counter() - start_time) * 1000
-            logger.info(
-                f'autocompleted "{current}" in {elapsed_ms:.2f}ms (matched {len(response)})'
-            )
-            return response
-        except asyncio.CancelledError:
-            logger.info(f'autocomplete cancelled "{current}" after {elapsed_ms:.2f}ms')
-            return []
-        finally:
-            if self._user_search_tasks.get(user_id) == task:
-                self._user_search_tasks.pop(user_id, None)
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        logger.debug(
+            f'autocompleted "{current}" in {elapsed_ms:.2f}ms (matched {len(response)})'
+        )
+        return response
 
     @staticmethod
     def combine_query_args(taxon_name, query, with_number=False):
