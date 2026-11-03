@@ -467,7 +467,6 @@ dependencies = [
     { name = "dronefly-miner" },
     { name = "ebird-api" },
     { name = "filelock" },
-    { name = "pip" },
     { name = "red-discordbot" },
     { name = "timeago" },
 ]
@@ -476,6 +475,7 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "flake8-pyproject" },
+    { name = "pip" },
     { name = "pre-commit" },
     { name = "pylint" },
     { name = "pytest" },
@@ -490,7 +490,6 @@ requires-dist = [
     { name = "dronefly-miner", specifier = ">=0.2.0" },
     { name = "ebird-api", specifier = ">=3.0.6,<4" },
     { name = "filelock", specifier = ">=3.13.3,<4" },
-    { name = "pip", specifier = ">=26.1.2" },
     { name = "red-discordbot", specifier = ">=3.5.24,<4" },
     { name = "timeago", specifier = ">=1.0.15,<2" },
 ]
@@ -499,6 +498,7 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=26.1.0,<27" },
     { name = "flake8-pyproject", specifier = ">=1.2.4,<2" },
+    { name = "pip", specifier = ">=26.3" },
     { name = "pre-commit", specifier = ">=4.6.0" },
     { name = "pylint", specifier = ">=4.1.3,<5" },
     { name = "pytest", specifier = ">=9.0,<10.dev0" },

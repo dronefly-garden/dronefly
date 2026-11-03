@@ -19,7 +19,6 @@ dependencies = [
     "timeago>=1.0.15,<2",
     "aiolimiter>=1.0.0,<2",
     "aiohttp-retry>=2.4.5,<3",
-    "pip>=26.1.2",
 ]
 
 [tool.black]
@@ -32,6 +31,7 @@ exclude_dirs = ["tests"]
 dev = [
     "black>=26.1.0,<27",
     "flake8-pyproject>=1.2.4,<2",
+    "pip>=26.3",
     "pytest>=9.0,<10.dev0",
     "pytest-asyncio>=1.4.0,<1.5",
     "pylint>=4.1.3,<5",
