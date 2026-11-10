@@ -11,7 +11,7 @@ from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
 from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Place, Taxon, User
-from pyinaturalist_convert import TaxonAutocompleter
+from pyinaturalist_convert import TaxonAutocompleter, TaxonAdvancedSearchStrategy
 from redbot.core.commands import Context
 
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
@@ -44,7 +44,9 @@ class TaxonAutocompleteManager:
 
         if self.autocompleter is None or current_mtime != self._last_mtime:
             try:
-                self.autocompleter = TaxonAutocompleter(db_path=self.db_path)
+                self.autocompleter = TaxonAutocompleter(
+                    db_path=self.db_path, strategy=TaxonAdvancedSearchStrategy()
+                )
                 self._last_mtime = current_mtime
                 logger.info(
                     "Loaded fresh TaxonAutocompleter from updated database: %s",

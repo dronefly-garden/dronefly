@@ -133,10 +133,12 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             if not _current:
                 return []
 
+            strict_language = False
             mat = re.match(LANGUAGE_CODE_PAT, _current)
             if mat:
                 language = mat[0].strip()
                 _current = LANGUAGE_CODE_PAT.sub("", _current).strip()
+                strict_language = True
             else:
                 language = "en"
 
@@ -164,6 +166,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                 autocompleter=taxon_autocompleter,
                 language=language,
                 rank=rank,
+                strict_language=strict_language,
             )
 
             if taxa:
