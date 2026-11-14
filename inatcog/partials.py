@@ -30,4 +30,21 @@ class PartialContext:
     inat_client: iNatClient = None
 
     async def send(self, *args, **kwargs):
+        if self.interaction:
+            # Strip kwargs unsupported by interaction webhooks if passed by legacy paths
+            kwargs.pop("reference", None)
+            kwargs.pop("mention_author", None)
+
+            if self.interaction.response.is_done():
+                return await self.interaction.followup.send(*args, **kwargs)
+
+            await self.interaction.response.send_message(*args, **kwargs)
+            return await self.interaction.original_response()
+
         return await self.channel.send(*args, **kwargs)
+
+    async def defer(self, *, ephemeral: bool = False, thinking: bool = True):
+        if self.interaction and not self.interaction.response.is_done():
+            return await self.interaction.response.defer(
+                ephemeral=ephemeral, thinking=thinking
+            )
