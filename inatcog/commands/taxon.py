@@ -175,7 +175,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
                         name=format_taxon_name(
                             taxon, with_term=True, with_italics=False
                         ),
-                        value=f"id:{taxon.id}",
+                        value=f"id:{taxon.id or taxon.uuid}",
                     )
                     for taxon in taxa
                 ]
