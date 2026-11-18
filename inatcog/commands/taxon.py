@@ -1,17 +1,14 @@
 """Module for taxon command group."""
 
-import asyncio
 import contextlib
 from contextlib import asynccontextmanager
 import logging
 import re
 import textwrap
-import time
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import discord
 from discord import app_commands
-import sqlite3
 
 from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.constants import WWW_BASE_URL
@@ -20,7 +17,7 @@ from dronefly.core.formatters.generic import (
     format_taxon_establishment_means,
     TaxonListFormatter,
 )
-from dronefly.core.query import QueryResponse, prepare_query_for_taxon
+from dronefly.core.query import Query, QueryResponse, prepare_query_for_taxon
 from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
@@ -29,12 +26,12 @@ from dronefly.discord.menus import (
     TaxonMenu,
     TaxonSource,
 )
-from dronefly.miner import taxon_autocomplete
-from pyinaturalist import RANKS, RANK_EQUIVALENTS, RANK_LEVELS
+from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from ..converters.reply import EmptyArgument, TaxonReplyConverter
+from .autocomplete import discord_taxon_autocomplete
+from ..converters.reply import EmptyArgument, parse_combined_query, TaxonReplyConverter
 from ..embeds.common import (
     add_reactions_with_cancel,
     apologize,
@@ -47,7 +44,6 @@ from ..utils import get_lang, use_client
 logger = logging.getLogger("red.dronefly." + __name__)
 
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
-LANGUAGE_CODE_PAT = re.compile(r"^[a-z]{2}(_[a-z]{2})? ", re.I)
 
 
 class CommandsTaxon(INatEmbeds, MixinMeta):
@@ -55,18 +51,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @asynccontextmanager
     async def _get_taxon_response(
-        self, ctx, query: Optional[str], ranks: Optional[List[str]] = None, **kwargs
+        self,
+        ctx,
+        query: Optional[Union[str, Query]],
+        ranks: Optional[List[str]] = None,
+        **kwargs,
     ):
         """Yield a query_response for one or more taxa and related info."""
         query_response = None
         _query = None
         try:
-            _query = await TaxonReplyConverter.convert(ctx, query)
+            if isinstance(query, Query):
+                _query = query
+            else:
+                _query = await TaxonReplyConverter.convert(ctx, query)
+            self.check_taxon_query(ctx, _query)
             if ranks:
                 _ranks = _query.main.ranks or []
                 _ranks.extend(ranks)
                 _query.main.ranks = _ranks
-            self.check_taxon_query(ctx, _query)
             query_response = await prepare_query_for_taxon(
                 ctx.inat_client, _query, **kwargs
             )
@@ -121,121 +124,16 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         ).start(ctx=ctx)
 
     async def taxon_autocomplete(
-        self, interaction: discord.Interaction, current: str
+        self,
+        interaction: discord.Interaction,
+        current: str,
     ) -> List[app_commands.Choice[str]]:
-        def fetch_taxon_choices(current: str):
-            """Return choices from fast FTS taxon autocomplete search
-
-            - English common names by default, overridden by language code as the first word.
-            - Filtered on rank if the first word (or second if language specified) is a rank.
-            """
-            _current = current.strip()
-            if not _current:
-                return []
-
-            strict_language = False
-            mat = re.match(LANGUAGE_CODE_PAT, _current)
-            if mat:
-                language = mat[0].strip()
-                _current = LANGUAGE_CODE_PAT.sub("", _current).strip()
-                strict_language = True
-            else:
-                language = "en"
-
-            words = _current.split()
-            rank = None
-            if len(words) > 1:
-                first_word = words[0].lower()
-                if first_word in RANKS:
-                    rank = first_word
-                else:
-                    rank = RANK_EQUIVALENTS.get(first_word)
-
-                if rank:
-                    _current = " ".join(words[1:])
-
-            if len(_current) < 3:
-                return []
-
-            taxon_autocompleter = self.taxon_autocomplete_manager.get_autocompleter()
-            if not taxon_autocompleter:
-                return []
-
-            taxa = taxon_autocomplete(
-                _current,
-                autocompleter=taxon_autocompleter,
-                language=language,
-                rank=rank,
-                strict_language=strict_language,
-            )
-
-            if taxa:
-                return [
-                    app_commands.Choice(
-                        name=format_taxon_name(
-                            taxon, with_term=True, with_italics=False
-                        ),
-                        value=f"id:{taxon.id or taxon.uuid}",
-                    )
-                    for taxon in taxa
-                ]
-            return []
-
-        start_time = time.perf_counter()
-        reason = "autocomplete not configured"
-        response = []
-
-        if self.taxon_autocomplete_manager and current:
-            try:
-                response = await asyncio.wait_for(
-                    self.bot.loop.run_in_executor(None, fetch_taxon_choices, current),
-                    timeout=2.5,
-                )
-            except (
-                sqlite3.OperationalError,
-                sqlite3.InterfaceError,
-                sqlite3.DatabaseError,
-            ) as e:
-                logger.error(
-                    "Database error during autocomplete for '%s': %s", current, e
-                )
-                reason = "autocomplete offline during rebuild"
-            except TimeoutError:
-                reason = "autocomplete timed out"
-
-            if not response and current and reason != "autocomplete not configured":
-                response = [
-                    app_commands.Choice(
-                        name=f"{current} ({reason})",
-                        value=current,
-                    )
-                ]
-
-        elapsed_ms = (time.perf_counter() - start_time) * 1000
-        logger.debug(
-            f'autocompleted "{current}" in {elapsed_ms:.2f}ms (matched {len(response)})'
+        return await discord_taxon_autocomplete(
+            self,
+            interaction,
+            current,
+            group_taxa={},
         )
-        return response
-
-    @staticmethod
-    def combine_query_args(taxon_name, query, with_number=False):
-        number = 1
-        autocompleted = False
-        if taxon_name.startswith("id:"):
-            autocompleted = True
-            combined_query = taxon_name.split(":")[1]
-        else:
-            combined_query = taxon_name
-        if query:
-            combined_query = combined_query + " " + query
-        if with_number:
-            if not autocompleted:
-                _query = [w.strip() for w in combined_query.split(" ", 1)]
-                if _query[0].isdigit():
-                    combined_query = _query[1] if len(_query) == 2 else ""
-                    number = int(_query[0])
-            return (number, combined_query)
-        return combined_query
 
     async def show_taxon(self, ctx, query, **kwargs):
         async with self._get_taxon_response(ctx, query, **kwargs) as (
@@ -274,7 +172,7 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]help s taxa` to search and browse matching taxa
         """
         await ctx.defer()
-        combined_query = self.combine_query_args(taxon, query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
         await self.show_taxon(ctx, combined_query)
 
     @taxon.command(name="list")
@@ -779,7 +677,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         #   as the initial image to show (default: 1).
         # - However, this is incompatible with using autocomplete. Simply use
         #   the image select
-        number, combined_query = self.combine_query_args(taxon, query, with_number=True)
+        number, combined_query = await parse_combined_query(
+            ctx, taxon, query, with_number=True
+        )
         error_msg = None
         async with self._get_taxon_response(ctx, combined_query) as (
             query_response,

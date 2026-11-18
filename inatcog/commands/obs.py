@@ -4,12 +4,14 @@ import logging
 import re
 from collections import namedtuple
 from contextlib import asynccontextmanager
-from typing import Optional, Union
+from typing import List, Optional, Union
 import urllib.parse
 
+from discord import app_commands, Interaction
 from dronefly.core.constants import RANK_KEYWORDS
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import TaxonListFormatter
+from dronefly.core.parsers.constants import VIRTUAL_TAXA
 from dronefly.core.parsers.url import (
     PAT_OBS_LINK,
     PAT_TAXON_LINK,
@@ -40,8 +42,9 @@ from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
+from .autocomplete import discord_taxon_autocomplete
 from ..common import grouper
-from ..converters.reply import EmptyArgument, TaxonReplyConverter
+from ..converters.reply import EmptyArgument, parse_combined_query, TaxonReplyConverter
 from ..embeds.common import apologize, add_reactions_with_cancel
 from ..embeds.inat import INatEmbed, INatEmbeds
 from ..interfaces import MixinMeta
@@ -196,10 +199,30 @@ class CommandsObs(INatEmbeds, MixinMeta):
                         source=EmbedSource([embed]),
                     ).start(ctx=ctx, **initial_message_params)
 
+    async def taxon_or_group_autocomplete(
+        bot,
+        interaction: Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        return await discord_taxon_autocomplete(
+            bot,
+            interaction,
+            current,
+            group_taxa=VIRTUAL_TAXA,
+        )
+
     @obs.command(name="count")
-    async def obs_count(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
+    async def obs_count(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Count matching observations."""
-        await self.bot.get_command("tabulate")(ctx, query=query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self.bot.get_command("tabulate")(ctx, query=combined_query)
 
     @obs.command(name="lifelist")
     async def obs_lifelist(self, ctx, *, query: Optional[TaxonReplyConverter]):

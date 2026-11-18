@@ -22,6 +22,7 @@ from dronefly.core.formatters.generic import (
     TaxonFormatter,
 )
 from dronefly.core.utils import obs_url_from_v1
+from dronefly.core.parsers.constants import GROUP_TAXON_IDS, taxon_group_members
 from dronefly.core.parsers.url import (
     MARKDOWN_LINK,
     PAT_OBS_LINK,
@@ -256,6 +257,8 @@ class INatEmbed(discord.Embed):
         if query.main and query.main.terms:
             main = query.main
             ancestor = query.ancestor
+        elif group_name := self.taxon_group():
+            main = TaxonQuery(terms=[group_name])
         elif self.taxon_id():
             main = TaxonQuery(taxon_id=self.taxon_id())
         user = query.user or self.user_id()
@@ -384,6 +387,19 @@ class INatEmbed(discord.Embed):
         project_id = self.params.get("project_id")
         return int(project_id) if project_id else None
 
+    def taxon_group(self) -> Optional[str]:
+        """Return matching virtual taxon group keyword (e.g. 'mothsonly'), if present."""
+        if not self.params:
+            return None
+        includes, excludes = taxon_group_members(self.params)
+        if not includes and not excludes:
+            return None
+
+        for group_name, members in GROUP_TAXON_IDS.items():
+            if includes == members["includes"] and excludes == members["excludes"]:
+                return group_name
+        return None
+
     def taxon_id(self):
         """Return taxon_id(s) from embed, if present."""
         taxon_id = self.params.get("taxon_id")
@@ -491,13 +507,26 @@ class INatEmbeds(MixinMeta):
         if not isinstance(query, Query):
             return
         if not query.main:
-            args = ctx.message.content.split(" ", 1)[1]
-            reason = (
-                "I don't understand that query.\nPerhaps you meant one of:\n"
-                f"`{ctx.clean_prefix}tab {args}`\n"
-                f"`{ctx.clean_prefix}obs {args}`\n"
-                f"`{ctx.clean_prefix}search obs {args}`"
-            )
+            reason = "Query is not for a single taxon.\nPerhaps you meant one of:\n"
+            logger.info("check_taxon_query message.content: %s", ctx.message.content)
+            if ctx.message.interaction:
+                reason += (
+                    f"`{ctx.clean_prefix}obs count`\n"
+                    f"`{ctx.clean_prefix}obs`\n"
+                    f"`{ctx.clean_prefix}obs search`"
+                )
+            else:
+                args = ctx.message.content.split(" ", 1)
+                if len(args) == 2:
+                    args = " " + args[1]
+                else:
+                    # guard code: should not happen with message-based command,
+                    args = ""
+                reason += (
+                    f"`{ctx.clean_prefix}tab{args}`\n"
+                    f"`{ctx.clean_prefix}obs{args}`\n"
+                    f"`{ctx.clean_prefix}search obs{args}`"
+                )
             raise BadArgument(reason)
 
     async def make_last_obs_embed(self, ctx, last):
