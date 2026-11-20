@@ -153,7 +153,7 @@ async def parse_combined_query(
     async def parse_query(ctx, query_str):
         return await TaxonReplyConverter.convert(ctx, query_str)
 
-    async def combine_query(ctx, taxon_query_str, query_str):
+    async def combine_query(ctx, taxon_query_str, query_str, require_taxon):
         if ctx.interaction:
             # Application commands can have an autocompleted taxon as the initial parameter.
             # The arguments cannot be simply joined together, as that might result in out-of-order
@@ -173,8 +173,15 @@ async def parse_combined_query(
             #   results if different taxa *are* specified in the two parts, as some
             #   are defined in terms of `query.main`, whereas others use
             #   `opt taxon_ids=#,#...` so don't rely on it producing good results!
+            _taxon_query_str = (
+                taxon_query_str or "any"
+                if ctx.interaction and not require_taxon
+                else taxon_query_str
+            )
             parsed_taxon_query = (
-                None if taxon_name == "any" else await parse_query(ctx, taxon_query_str)
+                None
+                if _taxon_query_str == "any"
+                else await parse_query(ctx, _taxon_query_str)
             )
             parsed_query = None if not query_str else await parse_query(ctx, query_str)
             if parsed_query:
@@ -215,7 +222,7 @@ async def parse_combined_query(
         autocompleted = True
         taxon_query_str = taxon_name.split(":")[1]
     else:
-        taxon_query_str = taxon_name if require_taxon else taxon_name or "any"
+        taxon_query_str = taxon_name
     if with_number:
         if not autocompleted:
             # Handle number in taxon_query_str from message-based `,img` command
@@ -223,8 +230,12 @@ async def parse_combined_query(
             # from `/taxon image`
             if taxon_query_str:
                 number, taxon_query_str = parse_number(taxon_query_str)
-        combined_query = await combine_query(ctx, taxon_query_str, query)
+        combined_query = await combine_query(
+            ctx, taxon_query_str, query, require_taxon=require_taxon
+        )
         return (number, combined_query)
 
-    combined_query = await combine_query(ctx, taxon_query_str, query)
+    combined_query = await combine_query(
+        ctx, taxon_query_str, query, require_taxon=require_taxon
+    )
     return combined_query
