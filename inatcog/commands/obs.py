@@ -84,14 +84,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
             for_place=for_place,
         ).start(ctx=ctx)
 
-    @asynccontextmanager
-    async def _single_obs(self, ctx, query):
-        """Return a single observation, its URL, and whether to preview it.
-
-        Image preview is only desired if it wasn't already auto-previewed
-        by Discord itself (i.e. the user pasted a URL, and did not use a
-        slash-command).
-        """
+    @staticmethod
+    def _check_obs_id_or_link(query):
+        id_or_link = None
         if query:
             id_or_link = None
             if query.isnumeric():
@@ -100,20 +95,43 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 mat = re.search(PAT_OBS_LINK, query)
                 if mat and mat["url"]:
                     id_or_link = query
-            if id_or_link:
-                async with ctx.typing():
-                    obs, url = await maybe_match_obs(
-                        self, ctx, id_or_link, id_permitted=True
-                    )
-                # Note: if the user specified an invalid or deleted id, a url is still
-                # produced (i.e. should 404).
-                if url:
-                    yield ObsResult(obs, url, ctx.interaction is not None)
-                    return
-                else:
-                    await apologize(ctx, "I don't understand")
-                    yield
-                    return
+        return id_or_link
+
+    @asynccontextmanager
+    async def _single_obs(self, ctx, query, taxon: Optional[str] = ""):
+        """Return a single observation, its URL, and whether to preview it.
+
+        Image preview is only desired if it wasn't already auto-previewed
+        by Discord itself (i.e. the user pasted a URL, and did not use a
+        slash-command).
+        """
+
+        if not ctx.interaction:
+            # i.e. for message-based command, simply reunite the first
+            # word & remaining words in query before checking
+            _query = " ".join([taxon, query])
+        else:
+            # otherwise, this is an application command: the taxon
+            # contains a taxon autocomplete result or taxon string to
+            # search for
+            # - note: taxon is ignored if the user specifies one
+            #   *and* puts an observation id# or link in the query
+            _query = query
+        id_or_link = self._check_obs_id_or_link(_query)
+        if id_or_link:
+            async with ctx.typing():
+                obs, url = await maybe_match_obs(
+                    self, ctx, id_or_link, id_permitted=True
+                )
+            # Note: if the user specified an invalid or deleted id, a url is still
+            # produced (i.e. should 404).
+            if url:
+                yield ObsResult(obs, url, ctx.interaction is not None)
+                return
+            else:
+                await apologize(ctx, "I don't understand")
+                yield
+                return
 
         try:
             ref = ctx.message.reference
@@ -152,10 +170,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
                                 yield ObsResult(obs, url, True)
                                 return
             async with ctx.typing():
-                # Otherwise try to get other usable info from reply
-                # to make a new observation query.
-                _query = await TaxonReplyConverter.convert(ctx, query)
-                obs = await self.obs_query.query_single_obs(ctx, _query)
+                # Otherwise the taxon and query arguments are combined, then
+                # searched for to match a single observation, e.g.
+                # - user specified `birds` with a `my` filter:
+                #   - `/obs taxon:birds query:my`
+                #   - `,obs my birds`
+                # - user picked `Aves (Birds)` autocompletion result:
+                #   - `/obs taxon:3 query:my`
+                combined_query = await parse_combined_query(ctx, taxon, query)
+                obs = await self.obs_query.query_single_obs(ctx, combined_query)
         except EmptyArgument:
             await ctx.send_help()
             yield
@@ -168,17 +191,34 @@ class CommandsObs(INatEmbeds, MixinMeta):
         url = f"{WWW_BASE_URL}/observations/{obs.id}"
         yield ObsResult(obs, url, True)
 
+    async def taxon_or_group_autocomplete(
+        bot,
+        interaction: Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        return await discord_taxon_autocomplete(
+            bot,
+            interaction,
+            current,
+            group_taxa=VIRTUAL_TAXA,
+        )
+
     @commands.hybrid_group(aliases=["observation"], fallback="show")
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def obs(self, ctx, *, query: Optional[str] = ""):
+    async def obs(self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""):
         """Observation matching query, link, or number.
 
         - See `[p]query` and `[p]taxon_query` for help with *query* terms.
         - Use `[p]search obs` to find more than one observation.
         - Normally just pasting a *link* will suffice in a channel where *autoobs* is on. See `[p]autoobs` for details.
         """  # noqa: E501
-        async with self._single_obs(ctx, query) as res:
+        async with self._single_obs(ctx, query, taxon) as res:
             if res:
                 async with ctx.typing():
                     embed = await self.make_obs_embed(
@@ -198,18 +238,6 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     await EmbedMenu(
                         source=EmbedSource([embed]),
                     ).start(ctx=ctx, **initial_message_params)
-
-    async def taxon_or_group_autocomplete(
-        bot,
-        interaction: Interaction,
-        current: str,
-    ) -> List[app_commands.Choice[str]]:
-        return await discord_taxon_autocomplete(
-            bot,
-            interaction,
-            current,
-            group_taxa=VIRTUAL_TAXA,
-        )
 
     @obs.command(name="count")
     @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
