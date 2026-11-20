@@ -253,9 +253,17 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await self.bot.get_command("tabulate")(ctx, query=combined_query)
 
     @obs.command(name="lifelist")
-    async def obs_lifelist(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
+    async def obs_lifelist(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Life list of matching taxa."""
-        await self.bot.get_command("life")(ctx, query=query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self.bot.get_command("life")(ctx, query=combined_query)
 
     @obs.command(name="map")
     async def obs_map(self, ctx, *, query: Optional[TaxonReplyConverter]):
