@@ -404,9 +404,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
                     menu.current_page = selected_page
                     await menu.start(ctx=ctx)
 
-    @commands.hybrid_group(fallback="help")
+    @commands.hybrid_group()
     @checks.bot_has_permissions(embed_links=True)
-    async def top(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def top(self, ctx):
         """Leaderboards for observations, species, identifications, etc."""
         await ctx.send_help()
 
