@@ -411,8 +411,15 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await ctx.send_help()
 
     @top.command(name="identifiers", aliases=["id", "ids"])
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @use_client
-    async def top_identifiers(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def top_identifiers(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Top observations IDed per IDer (alias `[p]topids`).
 
         • Leaderboard of up to 500 top identifiers of observations matching the *query* terms not made by themselves.
@@ -428,11 +435,19 @@ class CommandsObs(INatEmbeds, MixinMeta):
         → Top identifiers by number of arthropod observations they identified for others from Nova Scotia
         ```
         """  # noqa: E501
-        await self._tabulate_query(ctx, query, view="ids")
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self._tabulate_query(ctx, combined_query, view="ids")
 
     @top.command(name="observers", aliases=["obs"])
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @use_client
-    async def top_observers(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def top_observers(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Top observations per observer (alias `[p]topobs`).
 
         • Leaderboard of up to 500 top observers by observation count matching the *query* terms.
@@ -446,11 +461,19 @@ class CommandsObs(INatEmbeds, MixinMeta):
         `[p]topobs arthropods from nova scotia`
         → Top observers of arthropods from Nova Scotia
         """  # noqa: E501
-        await self._tabulate_query(ctx, query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self._tabulate_query(ctx, combined_query)
 
     @top.command(name="species", aliases=["spp", "sp"])
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @use_client
-    async def top_species(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def top_species(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Top species per observer (alias `[p]topspp`).
 
         • Leaderboard of up to 500 top observers by species count matching the *query* terms.
@@ -464,7 +487,8 @@ class CommandsObs(INatEmbeds, MixinMeta):
         `[p]topspp arthropods from nova scotia`
         → Top observers by spp of arthropods from NS
         """  # noqa: E501
-        await self._tabulate_query(ctx, query, view="spp")
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self._tabulate_query(ctx, combined_query, view="spp")
 
     @commands.command()
     @checks.bot_has_permissions(embed_links=True)
