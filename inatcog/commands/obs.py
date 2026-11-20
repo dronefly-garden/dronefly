@@ -98,7 +98,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         return id_or_link
 
     @asynccontextmanager
-    async def _single_obs(self, ctx, query, taxon: Optional[str] = ""):
+    async def _single_obs(
+        self, ctx, query, taxon: Optional[str] = "", with_number: Optional[bool] = False
+    ):
         """Return a single observation, its URL, and whether to preview it.
 
         Image preview is only desired if it wasn't already auto-previewed
@@ -106,6 +108,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         slash-command).
         """
 
+        number = 1
         if not ctx.interaction:
             # i.e. for message-based command, simply reunite the first
             # word & remaining words in query before checking
@@ -177,7 +180,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 #   - `,obs my birds`
                 # - user picked `Aves (Birds)` autocompletion result:
                 #   - `/obs taxon:3 query:my`
-                combined_query = await parse_combined_query(ctx, taxon, query)
+                if with_number:
+                    number, combined_query = await parse_combined_query(
+                        ctx, taxon, query, with_number=True
+                    )
+                else:
+                    combined_query = await parse_combined_query(ctx, taxon, query)
                 obs = await self.obs_query.query_single_obs(ctx, combined_query)
         except EmptyArgument:
             await ctx.send_help()
@@ -189,7 +197,22 @@ class CommandsObs(INatEmbeds, MixinMeta):
             return
 
         url = f"{WWW_BASE_URL}/observations/{obs.id}"
-        yield ObsResult(obs, url, True)
+        if with_number:
+            yield ObsResult(obs, url, True), number
+        else:
+            yield ObsResult(obs, url, True)
+
+    async def taxon_autocomplete(
+        self,
+        interaction: Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        return await discord_taxon_autocomplete(
+            self,
+            interaction,
+            current,
+            group_taxa={},
+        )
 
     async def taxon_or_group_autocomplete(
         bot,
@@ -266,24 +289,47 @@ class CommandsObs(INatEmbeds, MixinMeta):
         await self.bot.get_command("life")(ctx, query=combined_query)
 
     @obs.command(name="map")
-    async def obs_map(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
+    async def obs_map(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Show map of observations."""
-        await self.bot.get_command("map obs")(ctx, query=query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self.bot.get_command("map obs")(ctx, query=combined_query)
 
     @obs.command(name="maverick")
-    async def obs_maverick(self, ctx, *, query: Optional[str] = ""):
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
+    async def obs_maverick(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Count maverick observations."""
-        await self.bot.get_command("tabulate maverick")(ctx, query=query)
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self.bot.get_command("tabulate maverick")(ctx, query=combined_query)
 
     @obs.command(name="search")
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @use_client
-    async def obs_search(self, ctx, *, query: Optional[TaxonReplyConverter]):
+    async def obs_search(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Search for matching observations."""
         async with ctx.typing():
             try:
-                _query = query or await TaxonReplyConverter.convert(ctx, "")
+                combined_query = await parse_combined_query(ctx, taxon, query)
                 query_response = await prepare_query_for_search_obs(
-                    ctx.inat_client, _query
+                    ctx.inat_client, combined_query
                 )
                 obs_args = query_response.obs_args()
                 observations = ctx.inat_client.observations.search(
@@ -318,16 +364,26 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 await apologize(ctx, str(err))
 
     @obs.command(name="img", aliases=["image", "photo"])
+    @app_commands.autocomplete(taxon=taxon_or_group_autocomplete)
+    @app_commands.describe(
+        taxon="Optional taxon name (e.g. any, aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def obs_img(self, ctx, number: Optional[int], *, query: Optional[str] = ""):
+    async def obs_img(
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
+    ):
         """Image for observation.
 
         - Shows the image indicated by `number`, or if number is omitted, the first image.
         - Command may be a *Reply* to an observation display instead of a query.
         - See `[p]query` and `[p]taxon_query` for help with *query* terms.
         """  # noqa: E501
-        async with self._single_obs(ctx, query) as result:
+        async with self._single_obs(ctx, query, taxon, with_number=True) as (
+            result,
+            number,
+        ):
             if result:
                 # - We output at least one page even if there are no photos.
                 # - Page numbers are 0-based
@@ -555,7 +611,7 @@ class CommandsObs(INatEmbeds, MixinMeta):
         async with ctx.typing():
             try:
                 try:
-                    _query = await TaxonReplyConverter.convert(ctx, query)
+                    _query = query or await TaxonReplyConverter.convert(ctx, "")
                     if not _query.user:
                         _query.user = "me"
                 except BadArgument:
