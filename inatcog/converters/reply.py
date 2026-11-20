@@ -142,13 +142,13 @@ class TaxonReplyConverter:
             if allow_empty or ref:
                 return EMPTY_QUERY
             else:
-                raise EmptyArgument("This command requires an argument.")
+                raise EmptyArgument("This command requires a taxon argument.")
 
         return await NaturalQueryConverter.convert(ctx, query_str)
 
 
 async def parse_combined_query(
-    ctx: Context, taxon_name: str, query: str, with_number=False
+    ctx: Context, taxon_name: str, query: str, with_number=False, require_taxon=True
 ) -> Query:
     async def parse_query(ctx, query_str):
         return await TaxonReplyConverter.convert(ctx, query_str)
@@ -215,7 +215,7 @@ async def parse_combined_query(
         autocompleted = True
         taxon_query_str = taxon_name.split(":")[1]
     else:
-        taxon_query_str = taxon_name
+        taxon_query_str = taxon_name if require_taxon else taxon_name or "any"
     if with_number:
         if not autocompleted:
             # Handle number in taxon_query_str from message-based `,img` command

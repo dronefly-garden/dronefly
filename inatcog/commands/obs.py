@@ -182,10 +182,12 @@ class CommandsObs(INatEmbeds, MixinMeta):
                 #   - `/obs taxon:3 query:my`
                 if with_number:
                     number, combined_query = await parse_combined_query(
-                        ctx, taxon, query, with_number=True
+                        ctx, taxon, query, with_number=True, require_taxon=False
                     )
                 else:
-                    combined_query = await parse_combined_query(ctx, taxon, query)
+                    combined_query = await parse_combined_query(
+                        ctx, taxon, query, require_taxon=False
+                    )
                 obs = await self.obs_query.query_single_obs(ctx, combined_query)
         except EmptyArgument:
             await ctx.send_help()
@@ -272,7 +274,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
         """Count matching observations."""
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self.bot.get_command("tabulate")(ctx, query=combined_query)
 
     @obs.command(name="lifelist")
@@ -285,7 +289,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
         """Life list of matching taxa."""
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self.bot.get_command("life")(ctx, query=combined_query)
 
     @obs.command(name="map")
@@ -298,7 +304,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
         """Show map of observations."""
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self.bot.get_command("map obs")(ctx, query=combined_query)
 
     @obs.command(name="maverick")
@@ -311,7 +319,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
         """Count maverick observations."""
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self.bot.get_command("tabulate maverick")(ctx, query=combined_query)
 
     @obs.command(name="search")
@@ -327,7 +337,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         """Search for matching observations."""
         async with ctx.typing():
             try:
-                combined_query = await parse_combined_query(ctx, taxon, query)
+                combined_query = await parse_combined_query(
+                    ctx, taxon, query, require_taxon=False
+                )
                 query_response = await prepare_query_for_search_obs(
                     ctx.inat_client, combined_query
                 )
@@ -435,7 +447,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         → Top identifiers by number of arthropod observations they identified for others from Nova Scotia
         ```
         """  # noqa: E501
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self._tabulate_query(ctx, combined_query, view="ids")
 
     @top.command(name="observers", aliases=["obs"])
@@ -461,7 +475,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         `[p]topobs arthropods from nova scotia`
         → Top observers of arthropods from Nova Scotia
         """  # noqa: E501
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self._tabulate_query(ctx, combined_query)
 
     @top.command(name="species", aliases=["spp", "sp"])
@@ -487,7 +503,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         `[p]topspp arthropods from nova scotia`
         → Top observers by spp of arthropods from NS
         """  # noqa: E501
-        combined_query = await parse_combined_query(ctx, taxon, query)
+        combined_query = await parse_combined_query(
+            ctx, taxon, query, require_taxon=False
+        )
         await self._tabulate_query(ctx, combined_query, view="spp")
 
     @commands.command()
@@ -616,7 +634,9 @@ class CommandsObs(INatEmbeds, MixinMeta):
         ```
         """  # noqa: E501
         async with ctx.typing():
-            _query = query or await TaxonReplyConverter.convert(ctx, "")
+            _query = query or await TaxonReplyConverter.convert(
+                ctx, "", allow_empty=True
+            )
             try:
                 query_response = await prepare_query_for_count(ctx.inat_client, _query)
                 await self._start_count_menu(ctx, query_response)
