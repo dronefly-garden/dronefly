@@ -259,7 +259,7 @@ class CommandsSearch(INatEmbeds, MixinMeta):
           of result, e.g. `[p]help search taxa` describes taxa results,
           whether from `[p]search` or `[p]search taxa`.
         """
-        await self.bot.get_command("obs search")(ctx, query=query)
+        await self.bot.get_command("obs search")(ctx, taxon="", query=str(query))
 
     @search.command(name="site")
     @checks.bot_has_permissions(embed_links=True)
@@ -362,4 +362,4 @@ class CommandsSearch(INatEmbeds, MixinMeta):
         **2.** *Reply* to the menu with [p]obs to show just the selected observation.
         **3.** You can continue to select and show other observations until the menu times out.
         """
-        await self.bot.get_command("obs search")(ctx, query=query)
+        await self.bot.get_command("obs search")(ctx, taxon="", query=str(query))
