@@ -168,6 +168,10 @@ class INatCog(
 
     async def initialize(self) -> None:
         """Initialization after bot is ready."""
+        if self.taxon_autocomplete_manager is not None:
+            await self.bot.loop.run_in_executor(
+                None, self.taxon_autocomplete_manager.warm_up
+            )
         await self.bot.wait_until_ready()
         await self._migrate_config(await self.config.schema_version(), _SCHEMA_VERSION)
         await self._load_interactions()
@@ -246,6 +250,11 @@ class INatCog(
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
+
+            if self.taxon_autocomplete_manager is not None:
+                await self.bot.loop.run_in_executor(
+                    None, self.taxon_autocomplete_manager.close
+                )
 
             await self.api.session.close()
             self._cleaned_up = True
