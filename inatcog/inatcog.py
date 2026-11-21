@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import DefaultDict, Tuple
 
 import inflect
-from redbot.core import commands, Config
+from redbot.core import commands, Config, data_manager
 from redbot.core.utils.antispam import AntiSpam
 
 from dronefly.miner import DB_PATH
@@ -97,20 +97,24 @@ class INatCog(
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
         self.taxon_autocomplete_manager = None
-        if Path(DB_PATH).exists():
+        base_db = Path(DB_PATH)
+        bot_name = data_manager.instance_name()
+        instance_db = base_db.with_name(f"{base_db.stem}-{bot_name}{base_db.suffix}")
+        db_path = instance_db if instance_db.exists() else base_db
+        if Path(db_path).exists():
             try:
                 self.taxon_autocomplete_manager = TaxonAutocompleteManager(
-                    db_path=DB_PATH
+                    db_path=db_path
                 )
             except IOError:
-                logger.warning("Could not read: %s", DB_PATH)
+                logger.warning("Could not read: %s", db_path)
         if not self.taxon_autocomplete_manager:
             logger.warning(
                 (
                     "Autocompletions will be empty; db missing or unreadable: %s ("
                     "see INSTALL.md for details)."
                 ),
-                DB_PATH,
+                db_path,
             )
         self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
