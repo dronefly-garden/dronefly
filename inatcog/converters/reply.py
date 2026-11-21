@@ -179,7 +179,7 @@ async def parse_combined_query(
                 else taxon_query_str
             )
             parsed_taxon_query = (
-                None
+                EMPTY_QUERY
                 if _taxon_query_str == "any"
                 else await parse_query(ctx, _taxon_query_str)
             )
