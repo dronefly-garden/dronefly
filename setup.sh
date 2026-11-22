@@ -132,7 +132,7 @@ for repo in "${ALL_REPOS[@]}"; do
             echo "$TARGET_PYTHON" > .python-version
             if [ -f ".pre-commit-config.yaml" ]; then
                 echo "Installing pre-commit hooks for $repo..."
-                uv run --directory "$MONOREPO_DIR" pre-commit install
+                pre-commit install
             fi
         )
     fi
