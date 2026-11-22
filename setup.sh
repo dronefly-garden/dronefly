@@ -66,6 +66,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+tmp/
 EOF
 
 # 4. Write .python-version for Monorepo Root
