@@ -109,6 +109,7 @@ members = [
 ]
 dev = [
     "pip",
+    "pre-commit",
     "pyinaturalist",
     "tomlkit",
 ]
