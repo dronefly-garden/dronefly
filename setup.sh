@@ -8,7 +8,6 @@ set -euo pipefail
 # 1. Configuration & Prereq Checks
 ORG_NAME="dronefly-garden"
 ALL_REPOS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-doc" "dronefly-miner" "dronefly")
-OPTIONAL_SYMLINKS=("dronefly-cli" "dronefly-doc")
 TARGET_PYTHON="3.11"
 
 echo "=== Setting up Dronefly Monorepo Workspace ==="
@@ -52,16 +51,12 @@ for repo in "${ALL_REPOS[@]}"; do
     fi
 done
 
-# 3. Prepare Monorepo Directory (exclude dronefly-cli, dronefly-doc from uv lock; keep optional symlinks)
+# 3. Prepare Monorepo Directory (exclude dronefly-cli and dronefly-doc from uv lock)
 cd "$MONOREPO_DIR"
-for link in "${OPTIONAL_SYMLINKS[@]}"; do
+for link in "dronefly-cli" "dronefly-doc"; do
     if [ -L "$link" ]; then
         rm "$link"
-    elif [ -e "$link" ]; then
-        echo "Warning: $link exists as a file/dir in monorepo; removing before creating symlink..."
-        rm -rf "$link"
     fi
-    ln -s "../$link" "$link"
 done
 
 cat << 'EOF' > .gitignore
@@ -71,9 +66,6 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-tmp/
-dronefly-cli
-dronefly-doc
 EOF
 
 # 4. Write .python-version for Monorepo Root
