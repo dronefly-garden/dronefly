@@ -7,18 +7,23 @@ set -euo pipefail
 
 # 1. Configuration & Prereq Checks
 ORG_NAME="dronefly-garden"
-BOT_MEMBERS=("dronefly-core" "dronefly-discord" "dronefly-miner" "dronefly")
 ALL_REPOS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-doc" "dronefly-miner" "dronefly")
+OPTIONAL_SYMLINKS=("dronefly-cli" "dronefly-doc")
 TARGET_PYTHON="3.11"
 
 echo "=== Setting up Dronefly Monorepo Workspace ==="
 
-for cmd in git python3 uv pre-commit; do
+for cmd in git python3 uv; do
     if ! command -v "$cmd" &> /dev/null; then
         echo "Error: Required tool '$cmd' is not installed." >&2
         exit 1
     fi
 done
+
+if ! command -v uvx &> /dev/null && ! command -v pre-commit &> /dev/null; then
+    echo "Error: Neither 'uvx' nor 'pre-commit' is installed." >&2
+    exit 1
+fi
 
 # Ensure Python 3.11 is available via uv
 if ! uv python find "$TARGET_PYTHON" &> /dev/null; then
@@ -36,7 +41,7 @@ echo "Dronefly repo dir: $DRONEFLY_DIR"
 echo "Ensuring monorepo root at: $MONOREPO_DIR"
 mkdir -p "$MONOREPO_DIR"
 
-# Ensure all member repositories exist in the parent directory
+# Ensure all repositories exist in the parent directory
 cd "$PARENT_DIR"
 for repo in "${ALL_REPOS[@]}"; do
     if [ ! -d "$repo" ]; then
@@ -49,7 +54,7 @@ done
 
 # 3. Prepare Monorepo Directory (exclude dronefly-cli, dronefly-doc from uv lock; keep optional symlinks)
 cd "$MONOREPO_DIR"
-for link in "dronefly-cli" "dronefly-doc"; do
+for link in "${OPTIONAL_SYMLINKS[@]}"; do
     if [ -L "$link" ]; then
         rm "$link"
     elif [ -e "$link" ]; then
@@ -66,9 +71,9 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+tmp/
 dronefly-cli
 dronefly-doc
-tmp/
 EOF
 
 # 4. Write .python-version for Monorepo Root
@@ -89,6 +94,7 @@ members = []
 
 [tool.uv.sources]
 dronefly = { path = "../dronefly", editable = true }
+dronefly-cli = { path = "../dronefly-cli", editable = true }
 dronefly-core = { path = "../dronefly-core", editable = true }
 dronefly-discord = { path = "../dronefly-discord", editable = true }
 dronefly-miner = { path = "../dronefly-miner", editable = true }
@@ -104,13 +110,13 @@ override-dependencies = [
 [dependency-groups]
 members = [
     "dronefly",
+    "dronefly-cli",
     "dronefly-core",
     "dronefly-discord",
     "dronefly-miner",
 ]
 dev = [
     "pip",
-    "pre-commit",
     "pyinaturalist",
     "tomlkit",
 ]
@@ -118,7 +124,7 @@ EOF
 
 # 6. Create Virtual Environment, Lock & Sync Monorepo Dependencies, & Pre-commit
 echo "Creating monorepo root virtual environment..."
-uv venv --python "$TARGET_PYTHON" --seed
+uv venv --python "$TARGET_PYTHON" --seed --clear
 
 echo "Locking and syncing monorepo dependencies..."
 uv lock
@@ -136,32 +142,46 @@ for repo in "${ALL_REPOS[@]}"; do
                 echo "Installing pre-commit hooks for $repo..."
                 if command -v uvx &> /dev/null; then
                     uvx pre-commit install
-                elif command -v pre-commit &> /dev/null; then
-                    pre-commit install
                 else
-                    echo "Warning: Neither uvx nor pre-commit is available; skipping hook install for $repo." >&2
+                    pre-commit install
                 fi
             fi
         )
     fi
 done
 
-# 7. Configure VS Code Workspace and Member Settings
-echo "Configuring VS Code settings..."
+# 7. Configure VS Code Multi-Root Workspace and Member Settings
+echo "Configuring VS Code workspace and member settings..."
 
-MONOREPO_VSCODE="$MONOREPO_DIR/.vscode"
-mkdir -p "$MONOREPO_VSCODE"
-cat << 'EOF' > "$MONOREPO_VSCODE/settings.json"
+rm -f "$MONOREPO_DIR/.vscode/settings.json"
+if [ -d "$MONOREPO_DIR/.vscode" ] && [ -z "$(ls -A "$MONOREPO_DIR/.vscode")" ]; then
+    rmdir "$MONOREPO_DIR/.vscode"
+fi
+
+cat << 'EOF' > "$MONOREPO_DIR/dronefly.code-workspace"
 {
-    "python.analysis.diagnosticMode": "workspace",
-    "python.analysis.extraPaths": [
-        "dronefly",
-        "dronefly-cli",
-        "dronefly-core",
-        "dronefly-discord",
-        "dronefly-doc",
-        "dronefly-miner"
-    ]
+    "folders": [
+        { "name": "monorepo", "path": "." },
+        { "name": "dronefly", "path": "../dronefly" },
+        { "name": "dronefly-core", "path": "../dronefly-core" },
+        { "name": "dronefly-discord", "path": "../dronefly-discord" },
+        { "name": "dronefly-miner", "path": "../dronefly-miner" },
+        { "name": "dronefly-cli", "path": "../dronefly-cli" },
+        { "name": "dronefly-doc", "path": "../dronefly-doc" }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder:monorepo}/.venv/bin/python",
+        "python.analysis.diagnosticMode": "workspace",
+        "python.analysis.extraPaths": [
+            ".",
+            "../dronefly",
+            "../dronefly-core",
+            "../dronefly-discord",
+            "../dronefly-miner",
+            "../dronefly-cli",
+            "../dronefly-doc"
+        ]
+    }
 }
 EOF
 
@@ -172,12 +192,15 @@ for repo in "${ALL_REPOS[@]}"; do
         mkdir -p "$MEMBER_VSCODE"
         cat << 'EOF' > "$MEMBER_VSCODE/settings.json"
 {
-    "python-envs.pythonProjects": [
-        {
-            "path": ".",
-            "envManager": "ms-python.python:venv",
-            "packageManager": "ms-python.python:pip"
-        }
+    "python.defaultInterpreterPath": "${workspaceFolder}/../dronefly-monorepo/.venv/bin/python",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.extraPaths": [
+        "../dronefly",
+        "../dronefly-cli",
+        "../dronefly-core",
+        "../dronefly-discord",
+        "../dronefly-doc",
+        "../dronefly-miner"
     ]
 }
 EOF
