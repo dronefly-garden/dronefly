@@ -7,7 +7,7 @@ set -euo pipefail
 
 # 1. Configuration & Prereq Checks
 ORG_NAME="dronefly-garden"
-BOT_MEMBERS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-miner" "dronefly")
+BOT_MEMBERS=("dronefly-core" "dronefly-discord" "dronefly-miner" "dronefly")
 ALL_REPOS=("dronefly-cli" "dronefly-core" "dronefly-discord" "dronefly-doc" "dronefly-miner" "dronefly")
 TARGET_PYTHON="3.11"
 
@@ -28,7 +28,7 @@ fi
 
 # 2. Establish Monorepo Directory Structure and Clones
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DRONEFLY_DIR="$(dirname "$SCRIPT_DIR")"
+DRONEFLY_DIR="$SCRIPT_DIR"
 PARENT_DIR="$(dirname "$DRONEFLY_DIR")"
 MONOREPO_DIR="$PARENT_DIR/dronefly-monorepo"
 
@@ -47,15 +47,17 @@ for repo in "${ALL_REPOS[@]}"; do
     fi
 done
 
-# 3. Prepare Monorepo Directory (exclude dronefly-doc from uv lock; keep optional symlink)
+# 3. Prepare Monorepo Directory (exclude dronefly-cli, dronefly-doc from uv lock; keep optional symlinks)
 cd "$MONOREPO_DIR"
-if [ -L "dronefly-doc" ]; then
-    rm "dronefly-doc"
-elif [ -e "dronefly-doc" ]; then
-    echo "Warning: dronefly-doc exists as a file/dir in monorepo; removing before creating symlink..."
-    rm -rf "dronefly-doc"
-fi
-ln -s "../dronefly-doc" "dronefly-doc"
+for link in "dronefly-cli" "dronefly-doc"; do
+    if [ -L "$link" ]; then
+        rm "$link"
+    elif [ -e "$link" ]; then
+        echo "Warning: $link exists as a file/dir in monorepo; removing before creating symlink..."
+        rm -rf "$link"
+    fi
+    ln -s "../$link" "$link"
+done
 
 cat << 'EOF' > .gitignore
 .venv/
@@ -64,6 +66,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+dronefly-cli
 dronefly-doc
 tmp/
 EOF
@@ -86,7 +89,6 @@ members = []
 
 [tool.uv.sources]
 dronefly = { path = "../dronefly", editable = true }
-dronefly-cli = { path = "../dronefly-cli", editable = true }
 dronefly-core = { path = "../dronefly-core", editable = true }
 dronefly-discord = { path = "../dronefly-discord", editable = true }
 dronefly-miner = { path = "../dronefly-miner", editable = true }
@@ -102,7 +104,6 @@ override-dependencies = [
 [dependency-groups]
 members = [
     "dronefly",
-    "dronefly-cli",
     "dronefly-core",
     "dronefly-discord",
     "dronefly-miner",
@@ -133,7 +134,13 @@ for repo in "${ALL_REPOS[@]}"; do
             echo "$TARGET_PYTHON" > .python-version
             if [ -f ".pre-commit-config.yaml" ]; then
                 echo "Installing pre-commit hooks for $repo..."
-                pre-commit install
+                if command -v uvx &> /dev/null; then
+                    uvx pre-commit install
+                elif command -v pre-commit &> /dev/null; then
+                    pre-commit install
+                else
+                    echo "Warning: Neither uvx nor pre-commit is available; skipping hook install for $repo." >&2
+                fi
             fi
         )
     fi
