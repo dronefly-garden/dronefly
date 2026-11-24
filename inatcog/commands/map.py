@@ -35,19 +35,20 @@ class CommandsMap(INatEmbeds, MixinMeta):
         """
 
         query_response = None
-        _taxa_list = ""
+        _taxa_list = []
+        # Put referenced taxon (if any) at head of list
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
             query_response = await self.query.get(ctx, _query)
+            if query_response and query_response.taxon:
+                _taxa_list = [str(query_response.taxon.id)]
         except (BadArgument, LookupError) as err:
             await apologize(ctx, str(err))
             return
-        if query_response and query_response.taxon:
-            _taxa_list = str(query_response.taxon.id)
-            if taxa_list:
-                _taxa_list = [_taxa_list, taxa_list]
-        else:
-            _taxa_list = taxa_list.split(",")
+        if taxa_list:
+            _taxa_list.extend(
+                [taxon_name.strip() for taxon_name in taxa_list.split(",")]
+            )
 
         if not _taxa_list:
             await ctx.send_help()
