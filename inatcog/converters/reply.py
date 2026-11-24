@@ -201,7 +201,7 @@ async def parse_combined_query(
             # taxon query str and query str as if they had been globbed together
             # as a single query parameter.
             parsed_query = await parse_query(
-                ctx, " ".join([taxon_query_str, query_str])
+                ctx, " ".join([taxon_query_str, query_str]).strip()
             )
         return parsed_query
 

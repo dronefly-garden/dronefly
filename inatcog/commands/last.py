@@ -69,7 +69,9 @@ class CommandsLast(INatEmbeds, MixinMeta):
                 num = 1 if number is None else int(number)
             except ValueError:
                 num = 0
-            await self.bot.get_command("obs img")(ctx, num, query=str(last.obs.id))
+            await self.bot.get_command("obs img")(
+                ctx, taxon=str(num), query=str(last.obs.id)
+            )
         else:
             await apologize(ctx, "Nothing found")
 

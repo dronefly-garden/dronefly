@@ -112,7 +112,11 @@ class CommandsObs(INatEmbeds, MixinMeta):
         if not ctx.interaction:
             # i.e. for message-based command, simply reunite the first
             # word & remaining words in query before checking
-            _query = " ".join([taxon, query])
+            if with_number:
+                number = int(taxon)
+                _query = query
+            else:
+                _query = " ".join([taxon, query]).strip()
         else:
             # otherwise, this is an application command: the taxon
             # contains a taxon autocomplete result or taxon string to
@@ -129,7 +133,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
             # Note: if the user specified an invalid or deleted id, a url is still
             # produced (i.e. should 404).
             if url:
-                yield ObsResult(obs, url, ctx.interaction is not None)
+                if with_number:
+                    yield ObsResult(obs, url, ctx.interaction is not None), number
+                else:
+                    yield ObsResult(obs, url, ctx.interaction is not None)
                 return
             else:
                 await apologize(ctx, "I don't understand")
@@ -170,7 +177,10 @@ class CommandsObs(INatEmbeds, MixinMeta):
                             # If there is no query and we found a url, just yield
                             # the obs result for the matched obs with a preview.
                             if url and not query:
-                                yield ObsResult(obs, url, True)
+                                if with_number:
+                                    yield ObsResult(obs, url, True), number
+                                else:
+                                    yield ObsResult(obs, url, True)
                                 return
             async with ctx.typing():
                 # Otherwise the taxon and query arguments are combined, then
