@@ -2,19 +2,22 @@
 
 import contextlib
 from contextlib import asynccontextmanager
+import logging
 import re
 import textwrap
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import discord
+from discord import app_commands
+
+from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
 from dronefly.core.formatters.constants import WWW_BASE_URL
 from dronefly.core.formatters.generic import (
     format_taxon_name,
     format_taxon_establishment_means,
+    TaxonListFormatter,
 )
-from dronefly.core.constants import RANK_KEYWORDS, TRACHEOPHYTA_ID
-from dronefly.core.formatters.generic import TaxonListFormatter
-from dronefly.core.query import QueryResponse, prepare_query_for_taxon
+from dronefly.core.query import Query, QueryResponse, prepare_query_for_taxon
 from dronefly.core.query.formatters import get_query_taxon_formatter
 from dronefly.discord.embeds import make_embed, MAX_EMBED_DESCRIPTION_LEN
 from dronefly.discord.menus import (
@@ -27,7 +30,8 @@ from pyinaturalist import RANK_EQUIVALENTS, RANK_LEVELS
 from redbot.core import checks, commands
 from redbot.core.commands import BadArgument
 
-from ..converters.reply import EmptyArgument, TaxonReplyConverter
+from .autocomplete import discord_taxon_autocomplete
+from ..converters.reply import EmptyArgument, parse_combined_query, TaxonReplyConverter
 from ..embeds.common import (
     add_reactions_with_cancel,
     apologize,
@@ -37,6 +41,8 @@ from ..interfaces import MixinMeta
 from ..taxa import get_taxon
 from ..utils import get_lang, use_client
 
+logger = logging.getLogger("red.dronefly." + __name__)
+
 BOLD_BASE_URL = "http://www.boldsystems.org/index.php"
 
 
@@ -45,18 +51,25 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @asynccontextmanager
     async def _get_taxon_response(
-        self, ctx, query: Optional[str], ranks: Optional[List[str]] = None, **kwargs
+        self,
+        ctx,
+        query: Optional[Union[str, Query]],
+        ranks: Optional[List[str]] = None,
+        **kwargs,
     ):
         """Yield a query_response for one or more taxa and related info."""
         query_response = None
         _query = None
         try:
-            _query = await TaxonReplyConverter.convert(ctx, query)
+            if isinstance(query, Query):
+                _query = query
+            else:
+                _query = await TaxonReplyConverter.convert(ctx, query)
+            self.check_taxon_query(ctx, _query)
             if ranks:
                 _ranks = _query.main.ranks or []
                 _ranks.extend(ranks)
                 _query.main.ranks = _ranks
-            self.check_taxon_query(ctx, _query)
             query_response = await prepare_query_for_taxon(
                 ctx.inat_client, _query, **kwargs
             )
@@ -110,10 +123,42 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             cog=self,
         ).start(ctx=ctx)
 
+    async def taxon_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str,
+    ) -> List[app_commands.Choice[str]]:
+        return await discord_taxon_autocomplete(
+            self,
+            interaction,
+            current,
+            group_taxa={},
+        )
+
+    async def show_taxon(self, ctx, query, **kwargs):
+        async with self._get_taxon_response(ctx, query, **kwargs) as (
+            query_response,
+            _query,
+        ):
+            error_msg = None
+            if not query_response:
+                return
+            try:
+                await self._start_taxon_menu(ctx, query_response)
+            except (BadArgument, LookupError) as err:
+                error_msg = str(err)
+            if error_msg:
+                await apologize(ctx, error_msg)
+
     @commands.hybrid_group(aliases=["t"], fallback="show")
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(
+        taxon="Taxon name (e.g. aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def taxon(self, ctx, *, query: Optional[str]):
+    async def taxon(self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""):
         """Taxon information.
 
         - *Taxon query terms* match a single taxon to display.
@@ -126,17 +171,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         - `[p]reactions` describes the *reaction buttons*
         - `[p]help s taxa` to search and browse matching taxa
         """
-
-        error_msg = None
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
-            if not query_response:
-                return
-            try:
-                await self._start_taxon_menu(ctx, query_response)
-            except (BadArgument, LookupError) as err:
-                error_msg = str(err)
-        if error_msg:
-            await apologize(ctx, error_msg)
+        await ctx.defer()
+        combined_query = await parse_combined_query(ctx, taxon, query)
+        await self.show_taxon(ctx, combined_query)
 
     @taxon.command(name="list")
     @use_client
@@ -255,10 +292,43 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
             if msg:
                 await add_reactions_with_cancel(ctx, msg, [])
 
+    @staticmethod
+    def combine_taxon_name_args(ctx, taxon_names: list[str], more_names: str):
+        _taxon_names = []
+        if ctx.interaction:
+            for taxon_name in taxon_names:
+                name = (
+                    taxon_name.split(":")[1]
+                    if taxon_name.startswith("id:")
+                    else taxon_name
+                )
+                _taxon_names.append(name.strip())
+            if more_names:
+                _taxon_names.extend(
+                    [t.strip() for t in more_names.split(",") if t.strip()]
+                )
+        else:
+            # combine with blanks then split on commas for compatibility with
+            # original message-based `,related` command
+            raw_input = " ".join(filter(None, [*taxon_names, more_names]))
+            _taxon_names = [t.strip() for t in raw_input.split(",") if t.strip()]
+        return _taxon_names
+
     @taxon.command(name="map")
-    async def taxon_map(self, ctx, *, taxa_list):
+    @app_commands.autocomplete(taxon1=taxon_autocomplete, taxon2=taxon_autocomplete)
+    @app_commands.describe(
+        taxon1="Name of first taxon",
+        taxon2="Name of second taxon",
+        more_names="Comma-separated list of additional taxon names",
+    )
+    @checks.bot_has_permissions(embed_links=True)
+    async def taxon_map(
+        self, ctx, taxon1: str, taxon2: str, *, more_names: Optional[str] = ""
+    ):
         """Show range map for one or more taxa."""
-        await self.bot.get_command("map")(ctx, taxa_list=taxa_list)
+        await ctx.defer()
+        taxon_names = self.combine_taxon_name_args(ctx, [taxon1, taxon2], more_names)
+        await self.bot.get_command("map")(ctx, taxa_list=",".join(taxon_names))
 
     @taxon.command(name="search")
     async def taxon_search(self, ctx, *, query):
@@ -522,20 +592,55 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         if error_msg:
             await apologize(ctx, error_msg)
 
-    @taxon.command(name="related")
+    async def _taxon_related(self, ctx, taxon_names: list):
+        taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, taxon_names)
+        related_taxon, related_embed = await self.make_related_embed(
+            ctx, taxa, missing_taxa
+        )
+        related_query_response = QueryResponse(taxon=related_taxon)
+        await self._start_taxon_menu(
+            ctx, related_query_response, related_embed=related_embed
+        )
+
+    @taxon.command(name="related", hidden=True)
+    @app_commands.autocomplete(taxon1=taxon_autocomplete, taxon2=taxon_autocomplete)
+    @app_commands.describe(
+        taxon1="Name of first taxon",
+        taxon2="Name of second taxon",
+        more_names="Comma-separated list of additional taxon names",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
-    async def taxon_related(self, ctx, *, taxa_list: str):
+    async def taxon_related(
+        self, ctx, taxon1: str, taxon2: str, *, more_names: Optional[str] = ""
+    ):
         """Relatedness of a list of taxa.
+
+        [p]t related taxon1, taxon2
+
+          OR
+
+        [p]t related taxon1, taxon2, taxon3, ...
+
+        Put commas between taxon names to look up. The closest related
+        ancestor of all taxa that were matched is displayed.
 
         **Examples:**
         ```
-        [p]related 24255,24267
-        [p]related boreal chorus frog,western chorus frog
+        [p]t related 24255,24267
+        [p]t related boreal chorus frog,western chorus frog
         ```
         See `[p]taxon_query` for help specifying taxa.
         """
 
+        await ctx.defer()
+        taxon_names = self.combine_taxon_name_args(ctx, [taxon1, taxon2], more_names)
+        await self._taxon_related(ctx, taxon_names)
+
+    @commands.command(hidden=True)
+    @checks.bot_has_permissions(embed_links=True)
+    @use_client
+    async def related(self, ctx, *, taxa_list: str):
         if not taxa_list:
             await ctx.send_help()
             return
@@ -544,37 +649,42 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
         try:
             _query = await TaxonReplyConverter.convert(ctx, "", allow_empty=True)
             query_response = await prepare_query_for_taxon(ctx.inat_client, _query)
+            _taxa_list = taxa_list.split(",")
             if query_response and query_response.taxon:
-                _taxa_list = f"{query_response.taxon.id},{taxa_list}"
-            else:
-                _taxa_list = taxa_list
-            taxa, missing_taxa = await self.taxon_query.query_taxa(ctx, _taxa_list)
-            related_taxon, related_embed = await self.make_related_embed(
-                ctx, taxa, missing_taxa
-            )
-            related_query_response = QueryResponse(taxon=related_taxon)
-            await self._start_taxon_menu(
-                ctx, related_query_response, related_embed=related_embed
-            )
+                _taxa_list.insert(0, str(query_response.taxon.id))
+            await self._taxon_related(ctx, _taxa_list)
         except (BadArgument, LookupError, ValueError) as err:
             await apologize(ctx, err)
 
-    @commands.command(hidden=True)
-    @checks.bot_has_permissions(embed_links=True)
-    async def related(self, ctx, *, taxa_list: str):
-        await self.bot.get_command("taxon related")(ctx, taxa_list=taxa_list)
-
     @taxon.command(name="image", aliases=["img", "photo"])
+    @app_commands.autocomplete(taxon=taxon_autocomplete)
+    @app_commands.describe(
+        taxon="Taxon name (e.g. aves, birds, fr oiseaux, genus birds)",
+        query="Optional query terms (e.g. my)",
+    )
     @checks.bot_has_permissions(embed_links=True)
     @use_client
     async def taxon_image(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str]
+        self, ctx, taxon: Optional[str] = "", *, query: Optional[str] = ""
     ):
-        """Default image for a taxon.
+        """Show default images for a taxon.
 
         See `[p]taxon_query` for *query* help."""
+        await ctx.defer()
+        # Undocumented initial `number` parameter is supported for compatibility
+        # with the original message-based command:
+        # - If the first word of the combined query is a number, it is treated
+        #   as the initial image to show (default: 1).
+        # - However, this is incompatible with using autocomplete. Simply use
+        #   the image select
+        number, combined_query = await parse_combined_query(
+            ctx, taxon, query, with_number=True
+        )
         error_msg = None
-        async with self._get_taxon_response(ctx, query) as (query_response, _query):
+        async with self._get_taxon_response(ctx, combined_query) as (
+            query_response,
+            _query,
+        ):
             if not query_response:
                 return
             try:
@@ -586,7 +696,9 @@ class CommandsTaxon(INatEmbeds, MixinMeta):
 
     @commands.command(aliases=["img", "photo"], hidden=True)
     @checks.bot_has_permissions(embed_links=True)
-    async def image_alias(
-        self, ctx, number: Optional[int] = 1, *, query: Optional[str] = ""
-    ):
-        await self.bot.get_command("taxon image")(ctx, number, query=query)
+    async def image_alias(self, ctx, *, query: Optional[str] = ""):
+        """Legacy message-based img command.
+
+        Just invokes `taxon image` with its single globbed argument.
+        """
+        await self.bot.get_command("taxon image")(ctx, taxon=query)

@@ -1,49 +1,61 @@
 # Dronefly cog repository
 
-Dronefly bot is based on [Red Discord
-Bot](https://github.com/Cog-Creators/Red-DiscordBot) but it is also the name
-of the Red cog repository for the bot on GitHub. The latter
-provides the components that interact with sites of interest to its users,
-such as iNaturalist.
+**Dronefly** bot is based on [Red Discord
+Bot](https://github.com/Cog-Creators/Red-DiscordBot). Its iNaturalist and
+eBird commands are provided from two cogs, `inatcog` and `ebirdcog`
+respectively.
 
-While some developers and some users may have an interest in the repository,
-most will find it simplest to just use the bot on Discord. You don't need to
-download anything from this site to do that.
+While some developers and some users may have an interest in running their
+own Dronefly instance, most will find it simplest to just use Dronefly
+bot on Discord. You don't need to download anything from this site to do
+that.
 
-If you do want to run your own bot with the cogs from Dronefly repository on
-it, see the Installation instructions below.
+Otherwise, if you do want to run your own bot, follow the instructions
+below.
 
-## Installation
+# Installing Dronefly cogs
 
-### Prerequisites
+**Caveat: Dronefly is in alpha stage of development and may break from one release to the next. At particular times in the development cycle, the cog may be uninstallable from the cog repo or contain regressions. Reach out to us on the [Support and Development Discord](README.md#support-and-development) if you need assistance.**
 
-These Cogs provide commands for Red Bot V3. If you don't have that already, go get it, following the installation guide for your platform here: https://red-discordbot.readthedocs.io/en/latest/index.html
+## Prerequisites
 
-Any other python package dependencies of the cogs you install are automatically satisfied by the installation. See the next section.
-
-If you have not already, load the Red V3 downloader cog:
-
+1. Install Red Bot V3: https://red-discordbot.readthedocs.io/en/latest/index.html
+2. Create a bot instance and start it.
+3. Load the Red V3 downloader cog:
 ```
 [p]load downloader
 ```
-
-Then add the Dronefly repo and install the desired cog(s) as per:
-
+4. Add the Dronefly repo and install one or both cogs with:
 ```
 [p]repo add Dronefly https://github.com/dronefly-garden/dronefly
-[p]cog install Dronefly [cog-name]
+[p]cog install Dronefly inatcog
+[p]cog install Dronefly ebirdcog
 ```
 
-### inatcog
+## inatcog
 
-After adding the repo as per Installation, install & load inatcog:
+After adding the repo, install & load inatcog:
 
 ```
 [p]cog install Dronefly inatcog
 [p]load inatcog
 ```
 
-### ebirdcog
+### Taxon name autocompletion
+
+Taxon name autocompletion in some `inatcog` commands
+is supported via a database that must be built
+separately. See:
+
+https://github.com/dronefly-garden/dronefly-miner
+
+If the database is absent, users of slash commands
+with a `taxon` parameter, such as `/taxon show`
+will show an empty autocompletion select list. The
+command will still work, though, returning a
+"best match" for the text that was typed.
+
+## ebirdcog
 
 *Note: This cog is no longer being actively developed. It is still supported, but no new features will be added.*
 
@@ -54,13 +66,13 @@ After adding the repo as per Installation, install & load ebirdcog:
 [p]load ebirdcog
 ```
 
-## Configuration
+# Configuration
 
-### inatcog
+## inatcog
 
 To configure `inatcog`, follow the [server owner guide](https://github.com/dronefly-garden/dronefly/wiki/Server-owner-guide)
 
-### ebirdcog
+## ebirdcog
 
 Before you can access the eBird API, you must [generate an eBird API key](https://ebird.org/api/keygen) and set it in the [API key storage](https://docs.discord.red/en/stable/framework_apikeys.html) as follows (making sure to do this in DM so as to not expose the key to others!)
 
@@ -107,6 +119,4 @@ An example command to verify the alias works:
 > · 07:10, 15 Sep: 1 at Ipeúna--Mata do vira-folha
 
 *Tip: For scheduling execution of the hybrids command, use a scheduled command execution cog. We recommend `fifo` by Bobloy from the https://github.com/bobloy/Fox-V3 repository.*
-
-
 

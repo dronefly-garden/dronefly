@@ -4,12 +4,17 @@ import asyncio
 import re
 from abc import ABC
 from datetime import timedelta
+import logging
 from functools import partial
+from pathlib import Path
 from typing import DefaultDict, Tuple
 
 import inflect
-from redbot.core import commands, Config
+from redbot.core import commands, Config, data_manager
 from redbot.core.utils.antispam import AntiSpam
+
+from dronefly.miner import DB_PATH
+
 from .api import INatAPI
 from .constants import COG_NAME
 from .client import iNatClient
@@ -29,6 +34,7 @@ from .projects import INatProjectTable
 from .query import INatQuery
 from .listeners import Listeners
 from .search import INatSiteSearch
+from .taxa import TaxonAutocompleteManager
 from .taxon_query import INatTaxonQuery
 from .users import INatUserTable
 
@@ -37,6 +43,8 @@ _DEVELOPER_BOT_IDS = [614037008217800707, 620938327293558794]
 _INAT_GUILD_ID = 525711945270296587
 SPOILER_PAT = re.compile(r"\|\|")
 DOUBLE_BAR_LIT = "\\|\\|"
+
+logger = logging.getLogger("red.dronefly." + __name__)
 
 
 class CompositeMetaClass(type(commands.Cog), type(ABC)):
@@ -88,6 +96,26 @@ class INatCog(
         self.place_table = INatPlaceTable(self)
         self.project_table = INatProjectTable(self)
         self.site_search = INatSiteSearch(self)
+        self.taxon_autocomplete_manager = None
+        base_db = Path(DB_PATH)
+        bot_name = data_manager.instance_name()
+        instance_db = base_db.with_name(f"{base_db.stem}-{bot_name}{base_db.suffix}")
+        db_path = instance_db if instance_db.exists() else base_db
+        if Path(db_path).exists():
+            try:
+                self.taxon_autocomplete_manager = TaxonAutocompleteManager(
+                    db_path=db_path
+                )
+            except IOError:
+                logger.warning("Could not read: %s", db_path)
+        if not self.taxon_autocomplete_manager:
+            logger.warning(
+                (
+                    "Autocompletions will be empty; db missing or unreadable: %s ("
+                    "see INSTALL.md for details)."
+                ),
+                db_path,
+            )
         self.user_cache_init = {}  # Deprecated: no longer referenced
         self.reaction_locks = {}
         self.predicate_locks = {}
@@ -144,6 +172,10 @@ class INatCog(
 
     async def initialize(self) -> None:
         """Initialization after bot is ready."""
+        if self.taxon_autocomplete_manager is not None:
+            await self.bot.loop.run_in_executor(
+                None, self.taxon_autocomplete_manager.warm_up
+            )
         await self.bot.wait_until_ready()
         await self._migrate_config(await self.config.schema_version(), _SCHEMA_VERSION)
         await self._load_interactions()
@@ -222,5 +254,11 @@ class INatCog(
         if not self._cleaned_up:
             if self._init_task:
                 self._init_task.cancel()
+
+            if self.taxon_autocomplete_manager is not None:
+                await self.bot.loop.run_in_executor(
+                    None, self.taxon_autocomplete_manager.close
+                )
+
             await self.api.session.close()
             self._cleaned_up = True

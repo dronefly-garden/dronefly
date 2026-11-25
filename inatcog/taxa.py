@@ -1,14 +1,20 @@
 """Module to work with iNat taxa."""
+
 import copy
+import logging
+from pathlib import Path
 import re
+import sqlite3
+import threading
+import time
 from typing import NamedTuple, Optional, Union
 
 from dronefly.core.constants import RANK_LEVELS
 from dronefly.core.query.query import TaxonQuery
 from dronefly.core.utils import obs_url_from_v1
 from pyinaturalist.models import Place, Taxon, User
+from pyinaturalist_convert import TaxonAutocompleter, TaxonAdvancedSearchStrategy
 from redbot.core.commands import Context
-
 
 TAXON_PLACES_HEADER = "__obs# (spp#) from place:__"
 TAXON_PLACES_HEADER_PAT = re.compile(re.escape(TAXON_PLACES_HEADER) + "\n")
@@ -19,6 +25,94 @@ TAXON_IDBY_HEADER_PAT = re.compile(re.escape(TAXON_IDBY_HEADER) + "\n")
 TAXON_NOTBY_HEADER = "__obs# (spp#) unobserved by user:__"
 TAXON_NOTBY_HEADER_PAT = re.compile(re.escape(TAXON_NOTBY_HEADER) + "\n")
 TAXON_LIST_DELIMITER = [", ", " > "]
+
+logger = logging.getLogger("red.dronefly." + __name__)
+
+
+class TaxonAutocompleteManager:
+    """Manages the lifecycle of TaxonAutocompleter, auto-reloading when DB_PATH updates."""
+
+    def __init__(self, db_path: Path, warmup_query: Optional[str] = "chromista"):
+        self.db_path = Path(db_path)
+        self.warmup_query = warmup_query
+        self.autocompleter: Optional[TaxonAutocompleter] = None
+        self._last_mtime: float = 0.0
+        self._lock = threading.Lock()
+
+    def warm_up(self) -> None:
+        """Prime SQLite/OS caches with a lightweight query."""
+        if not self.warmup_query:
+            return
+        autocompleter = self.get_autocompleter()
+        if autocompleter is None:
+            return
+        start_time = time.perf_counter()
+        try:
+            results = autocompleter.search(self.warmup_query)
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            logger.info(
+                'Warmed up TaxonAutocompleter with "%s" in %.2fms (matched %d)',
+                self.warmup_query,
+                elapsed_ms,
+                len(results),
+            )
+        except Exception as e:
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            logger.info(
+                'Autocomplete warm-up failed for "%s" after %.2fms: %s',
+                self.warmup_query,
+                elapsed_ms,
+                e,
+            )
+
+    def get_autocompleter(self) -> Optional[TaxonAutocompleter]:
+        with self._lock:
+            try:
+                current_mtime = self.db_path.stat().st_mtime
+            except (FileNotFoundError, NotADirectoryError):
+                self.autocompleter = None
+                self._last_mtime = 0.0
+                return None
+
+            if self.autocompleter is None or current_mtime != self._last_mtime:
+                try:
+                    autocompleter = TaxonAutocompleter(
+                        db_path=self.db_path,
+                        strategy=TaxonAdvancedSearchStrategy(),
+                    )
+                    self.autocompleter = autocompleter
+                    self._last_mtime = current_mtime
+                    logger.info(
+                        "Loaded fresh TaxonAutocompleter from updated database: %s",
+                        self.db_path,
+                    )
+                except (sqlite3.DatabaseError, IOError) as e:
+                    logger.warning(
+                        "Could not initialize TaxonAutocompleter from %s: %s",
+                        self.db_path,
+                        e,
+                    )
+                    self._last_mtime = current_mtime
+                    if self.autocompleter is None:
+                        return None
+
+            return self.autocompleter
+
+    def close(self) -> None:
+        """Close any active autocompleter database connection."""
+        with self._lock:
+            if self.autocompleter is not None:
+                try:
+                    self.autocompleter.connection.close()
+                except sqlite3.Error as e:
+                    logger.warning(
+                        "Error closing TaxonAutocompleter connection for %s: %s",
+                        self.db_path,
+                        e,
+                    )
+                finally:
+                    self.autocompleter = None
+                    self._last_mtime = 0.0
 
 
 async def get_taxon_preferred_establishment_means(ctx, taxon):
@@ -98,9 +192,11 @@ def match_pat(record, pat, scientific_name=False, locale=None):
     return NameMatch(
         re.search(pat, record.matched_term),
         re.search(pat, record.name),
-        re.search(pat, record.preferred_common_name)
-        if record.preferred_common_name
-        else None,
+        (
+            re.search(pat, record.preferred_common_name)
+            if record.preferred_common_name
+            else None
+        ),
     )
 
 

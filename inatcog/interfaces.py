@@ -14,6 +14,7 @@ from .obs_query import INatObsQuery
 from .places import INatPlaceTable
 from .projects import INatProjectTable
 from .search import INatSiteSearch
+from .taxa import TaxonAutocompleteManager
 from .taxon_query import INatTaxonQuery
 from .query import INatQuery
 from .users import INatUserTable
@@ -40,6 +41,7 @@ class MixinMeta(ABC):
         self.place_table: INatPlaceTable
         self.project_table: INatProjectTable
         self.site_search: INatSiteSearch
+        self.taxon_autocomplete_manager: TaxonAutocompleteManager
         self.taxon_query: INatTaxonQuery
         self.query: INatQuery
         self.user_cache_init: dict
