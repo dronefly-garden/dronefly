@@ -30,14 +30,14 @@ This plan addresses problems with our efforts to migrate code out of the `Discor
 ### Phase 1: Foundations (Core)
 
 * **Define `Workspace` Entity:** Create the domain model in `dronefly-core` to encapsulate server-specific logic.
-* **Implement `UserProfileResult`:** Define the domain model inheriting from `pyinaturalist.models.BaseModel`.
+* **Implement `UserProfile`:** Define the domain model inheriting from `pyinaturalist.models.BaseModel`.
 * **Establish `ConfigService`:** Centralize `config.toml` parsing into a service that populates `Workspace` attributes.
 
 ### Phase 2: The "Tracer Bullet" (User Command Rewrite)
 
-* **PR 1 (Core Logic):** Add the `UserCommand.execute()` method to `dronefly-core`. It fetches raw data and hydrates the `UserProfileResult`, augmented by the current `Workspace` data.
-* **PR 2 (CLI Update):** Update the CLI to use the new `Workspace` and `UserProfileResult` objects.
-* **PR 3 (Discord Formatter):** Create a stateless function in `discord` that transforms `UserProfileResult` into a `discord.Embed`.
+* **PR 1 (Core Logic):** Add the `UserCommand.execute()` method to `dronefly-core`. It fetches raw data and hydrates the `UserProfile`, augmented by the current `Workspace` data.
+* **PR 2 (CLI Update):** Update the CLI to use the new `Workspace` and `UserProfile` objects.
+* **PR 3 (Discord Formatter):** Create a stateless function in `discord` that transforms `UserProfile` into a `discord.Embed`.
 * **PR 4 (Discord Port):** Simplify the `[p]user` cog into a thin "Traffic Cop" that requests a `Workspace` from the Core and delegates formatting to the new utility.
 
 ### Phase 3: Total Decoupling
@@ -50,7 +50,7 @@ This plan addresses problems with our efforts to migrate code out of the `Discor
 ## Action Item Checklist
 
 * [ ] Define `Workspace` in `dronefly-core`.
-* [ ] Define `UserProfileResult` (Inheriting from `BaseModel`).
+* [ ] Define `UserProfile` (Inheriting from `BaseModel`).
 * [ ] Create `ConfigService` in `dronefly-core`.
 * [ ] Develop stateless formatter in `dronefly-discord`.
 * [ ] Implement "Traffic Cop" in the Discord Cog.
