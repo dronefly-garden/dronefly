@@ -461,7 +461,7 @@ wheels = [
 
 [[package]]
 name = "dronefly"
-version = "0.5"
+version = "0.6.dev2"
 source = { virtual = "." }
 dependencies = [
     { name = "aiohttp-retry" },
@@ -489,7 +489,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp-retry", specifier = ">=2.4.5,<3" },
     { name = "aiolimiter", specifier = ">=1.0.0,<2" },
-    { name = "dronefly-discord", specifier = "==0.2.4.dev1" },
+    { name = "dronefly-discord", specifier = "==0.2.4.dev3" },
     { name = "dronefly-miner", specifier = ">=0.2.0" },
     { name = "ebird-api", specifier = ">=3.0.6,<4" },
     { name = "filelock", specifier = ">=3.13.3,<4" },
@@ -510,7 +510,7 @@ dev = [
 
 [[package]]
 name = "dronefly-core"
-version = "0.5.4.dev1"
+version = "0.5.4.dev3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dateparser" },
@@ -520,14 +520,14 @@ dependencies = [
     { name = "pyinaturalist" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/76/2a/ab7c28c6e22fe59fd808e669c39c66699d7fda2f329983bc864a0e44d98d/dronefly_core-0.5.4.dev1.tar.gz", hash = "sha256:ac5517346e6b54746a752087ec87627b1bcea3334ada76b5a4b6361668723b87", size = 55643, upload-time = "2026-11-22T15:56:50.314Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/a2/f665432fb7b218d95770577c6e3b21c23d02f912d59a464c205edf595b7e/dronefly_core-0.5.4.dev3.tar.gz", hash = "sha256:af46198fb55a47dc8ff3a132b6096b48a78ddaa031b5419772d6ec005d4d1ce8", size = 55914, upload-time = "2026-11-28T08:27:29.047Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/6d/aaefbb1421ef66dfa7796efe57ff0d4becaf29f0e36f910340402d62b7e9/dronefly_core-0.5.4.dev1-py3-none-any.whl", hash = "sha256:33e875d45aab18b4cf63fd7de4c489eb1dd9cc3e56c6c67a56c373626d04d5a9", size = 70473, upload-time = "2026-11-22T15:56:49.046Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/47/1d4aabd000ac702549e6aba61b5b944eb23e791acec4d7967a4adf3dd6cb/dronefly_core-0.5.4.dev3-py3-none-any.whl", hash = "sha256:08cb156f1ae64790e2e9876e366582f1f4a9f255616e0af065689ce3f3e40982", size = 70830, upload-time = "2026-11-28T08:27:28.01Z" },
 ]
 
 [[package]]
 name = "dronefly-discord"
-version = "0.2.4.dev1"
+version = "0.2.4.dev3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "discord-py" },
@@ -535,9 +535,9 @@ dependencies = [
     { name = "inflect" },
     { name = "pyinaturalist" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/e8/0fa327e7cf31b819e2c187aa95e7e6c899055dd06d7e51979fa79968287b/dronefly_discord-0.2.4.dev1.tar.gz", hash = "sha256:3dd4bdb928e57dd38d235b25f17322b973be9fc067ed9f49db8524ce2b4e773e", size = 11383, upload-time = "2026-11-25T12:55:28.648Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/25/0022dea7e0a935b219009c1f71dbecae2c43ebfa6557622401daffebcf3b/dronefly_discord-0.2.4.dev3.tar.gz", hash = "sha256:c09766bacda73c26f88d08f6da5a5d7379d38f7033b3e1c36c2d9204852c02b7", size = 11397, upload-time = "2026-11-28T08:29:43.617Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/d2/bc5a1526b1cfca71d5a585f7e97fffdd4b7314af7cef2b5d25693d56e55e/dronefly_discord-0.2.4.dev1-py3-none-any.whl", hash = "sha256:ecf14951c6e18c5a3b735b7e76d5fb9f0ffb8de7962d0d1e1bfb905c0f3344b8", size = 12774, upload-time = "2026-11-25T12:55:27.483Z" },
+    { url = "https://files.pythonhosted.org/packages/42/22/dec082a015d9f63905ca1f270e7da6108fa6653b69e5b2f0b148f2d3ca6e/dronefly_discord-0.2.4.dev3-py3-none-any.whl", hash = "sha256:9bc108a7ab40c5a2fdced74d83fb9a7a784daaece1cdd91d1ae379b178ebdcd5", size = 12774, upload-time = "2026-11-28T08:29:42.737Z" },
 ]
 
 [[package]]
@@ -1239,7 +1239,7 @@ wheels = [
 
 [[package]]
 name = "pyinaturalist"
-version = "1.0.0.dev2"
+version = "1.0.0.dev3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -1251,9 +1251,9 @@ dependencies = [
     { name = "requests-ratelimiter" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/10/5795acde16ec3348ba8a8148f2ab2a167e2d76b533be0d25a8129b7aabd8/pyinaturalist-1.0.0.dev2.tar.gz", hash = "sha256:b66573c0213bd80b45400a01871bee1a07a7e1f6fe121a892177c93a097dd2d4", size = 113193, upload-time = "2026-09-06T17:32:04.349Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/c6/332b8886608db549149b7f401862f568b1d9eb116bcc79af14f53dd1a726/pyinaturalist-1.0.0.dev3.tar.gz", hash = "sha256:0084b8351ef4b4b22d1eb65ee14f57cde410714a7c589d09b714ad6bc587f1a5", size = 113193, upload-time = "2026-11-28T00:40:25.394Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/d1/1807ac95198292e1f3e28fe539d8d4248f1e2a63da2c29b044c4209b4cc6/pyinaturalist-1.0.0.dev2-py3-none-any.whl", hash = "sha256:6f1efdb2b19bbaffd598d0d35788f7d8cdd0133bce6950c46fcf900ba5a2319e", size = 154874, upload-time = "2026-09-06T17:32:03.103Z" },
+    { url = "https://files.pythonhosted.org/packages/05/83/c162f7ec91cb916036ee6f6e139330e0d2c5d265ba350940b3abe01cd59f/pyinaturalist-1.0.0.dev3-py3-none-any.whl", hash = "sha256:866e55e13571797f7ff103e2cb45d213b1b1694a02c6788b1e14fba5cbbb66a9", size = 154876, upload-time = "2026-11-28T00:40:24.135Z" },
 ]
 
 [[package]]

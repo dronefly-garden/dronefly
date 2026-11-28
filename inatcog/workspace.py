@@ -4,7 +4,7 @@ from typing import Optional, Union
 from redbot.core.commands import BadArgument, Context
 from discord import Member, User
 
-from dronefly.core.models import BaseConfig
+from dronefly.core.models import BaseWorkspace
 
 from .common import DEQUOTE
 from .converters.base import MemberConverter
@@ -13,7 +13,7 @@ from .utils import get_cog, get_home_server, get_hub_server, get_valid_user_conf
 LOWEST_DISCORD_ID = 10**16
 
 
-class ContextConfig(BaseConfig):
+class ContextWorkspace(BaseWorkspace):
     """Config for the current context."""
 
     def __init__(

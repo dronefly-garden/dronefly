@@ -5,10 +5,10 @@ from typing import Optional, Union
 import asyncio
 import discord
 from dronefly.core.clients.inat import iNatClient as CoreiNatClient
-from dronefly.core.commands import Context as DroneflyContext
+from dronefly.core.models import Context as DroneflyContext
 from redbot.core import commands
 
-from .config import ContextConfig
+from .workspace import ContextWorkspace
 from .utils import get_dronefly_user
 
 
@@ -33,7 +33,7 @@ async def get_dronefly_ctx(
         red_ctx, user or red_ctx.author, anywhere=anywhere
     )
     return DroneflyContext(
-        author=dronefly_user, config=ContextConfig(red_ctx, discord_user)
+        author=dronefly_user, workspace=ContextWorkspace(red_ctx, discord_user)
     )
 
 
