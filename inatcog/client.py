@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from copy import copy
 from functools import partial
 from typing import Optional, Union
 
@@ -54,8 +55,9 @@ class iNatClient(CoreiNatClient):
         dronefly_ctx: Optional[DroneflyContext] = None,
     ):
         """A client with both Red and Dronefly command contexts."""
-        self.red_ctx = red_ctx
-        self.ctx = dronefly_ctx or await get_dronefly_ctx(
-            self.red_ctx, author or red_ctx.author
+        client = copy(self)
+        client.red_ctx = red_ctx
+        client.ctx = dronefly_ctx or await get_dronefly_ctx(
+            red_ctx, author or red_ctx.author
         )
-        yield self
+        yield client
